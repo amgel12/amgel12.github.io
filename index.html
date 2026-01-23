@@ -682,13 +682,106 @@
     
     let idAuditor = null; let myCurrentKey = ""; let currentEarnings = 0; let canSpin = false; let currentVideoId = null; let scrollTimeout = null; let audioActivadoGlobal = false; let isCommenting = false; let lastGameAd = 0;
     
-    // --- DATOS ACADEMIA INGLÉS (DUOLINGO) ---
+// --- DATOS ACADEMIA INGLÉS (10 PREGUNTAS POR NIVEL) ---
+    // Base de datos de palabras para generar opciones incorrectas
+    const wordBank = ["Blue", "Red", "Cat", "Dog", "One", "Two", "Yes", "No", "Bye", "Hello", "Thanks", "Please", "Water", "Milk", "Car", "Bus", "House", "City", "Friend", "Family", "Apple", "Bread", "Coffee", "Night", "Day"];
+
+    // Función auxiliar para generar opciones al azar
+    function getOptions(correctWord) {
+        const opts = [correctWord];
+        while (opts.length < 4) {
+            const randomW = wordBank[Math.floor(Math.random() * wordBank.length)];
+            if (!opts.includes(randomW)) opts.push(randomW);
+        }
+        return opts.sort(() => Math.random() - 0.5);
+    }
+
     const englishLessons = [
-        { id: 1, title: "Intro", icon: "⭐", questions: [{ w: "Hola", a: "Hello", opts: ["Bye", "Hello", "Thanks", "No"] }, { w: "Gato", a: "Cat", opts: ["Dog", "Cat", "Bird", "Fish"] }, { w: "Sí", a: "Yes", opts: ["No", "Yes", "Please", "Thanks"] }] },
-        { id: 2, title: "Saludos", icon: "👋", questions: [{ w: "Adiós", a: "Goodbye", opts: ["Hello", "Goodbye", "Please", "Hi"] }, { w: "Buenos días", a: "Good morning", opts: ["Good night", "Good morning", "Hello", "Bye"] }] },
-        // ... (Resumido para no alargar)
+        { 
+            id: 1, title: "Intro", icon: "⭐", 
+            questions: [
+                { w: "Hola", a: "Hello", opts: getOptions("Hello") },
+                { w: "Adiós", a: "Bye", opts: getOptions("Bye") },
+                { w: "Por favor", a: "Please", opts: getOptions("Please") },
+                { w: "Gracias", a: "Thanks", opts: getOptions("Thanks") },
+                { w: "Sí", a: "Yes", opts: getOptions("Yes") },
+                { w: "No", a: "No", opts: getOptions("No") },
+                { w: "Hombre", a: "Man", opts: ["Man", "Woman", "Boy", "Girl"] },
+                { w: "Mujer", a: "Woman", opts: ["Woman", "Man", "Boy", "Girl"] },
+                { w: "Gato", a: "Cat", opts: ["Cat", "Dog", "Bird", "Fish"] },
+                { w: "Perro", a: "Dog", opts: ["Dog", "Cat", "Mouse", "Cow"] }
+            ]
+        },
+        { 
+            id: 2, title: "Saludos", icon: "👋", 
+            questions: [
+                { w: "Buenos días", a: "Good morning", opts: ["Good morning", "Good night", "Hello", "Bye"] },
+                { w: "Buenas noches", a: "Good night", opts: ["Good night", "Good morning", "Hi", "Thanks"] },
+                { w: "Hola (informal)", a: "Hi", opts: ["Hi", "Hello", "Bye", "Yo"] },
+                { w: "¿Cómo estás?", a: "How are you?", opts: ["How are you?", "Who are you?", "I am fine", "Thanks"] },
+                { w: "Bien", a: "Fine", opts: ["Fine", "Bad", "Sad", "Mad"] },
+                { w: "Mal", a: "Bad", opts: ["Bad", "Good", "Fine", "Happy"] },
+                { w: "Bienvenido", a: "Welcome", opts: ["Welcome", "Go away", "Hello", "Thanks"] },
+                { w: "Lo siento", a: "Sorry", opts: ["Sorry", "Please", "Thanks", "Yes"] },
+                { w: "Disculpa", a: "Excuse me", opts: ["Excuse me", "Sorry", "Please", "No"] },
+                { w: "Nos vemos", a: "See you", opts: ["See you", "Hello", "Welcome", "Please"] }
+            ]
+        },
+        { 
+            id: 3, title: "Comida", icon: "🍎", 
+            questions: [
+                { w: "Agua", a: "Water", opts: ["Water", "Milk", "Juice", "Soda"] },
+                { w: "Pan", a: "Bread", opts: ["Bread", "Apple", "Meat", "Rice"] },
+                { w: "Manzana", a: "Apple", opts: ["Apple", "Orange", "Banana", "Grape"] },
+                { w: "Leche", a: "Milk", opts: ["Milk", "Water", "Coffee", "Tea"] },
+                { w: "Café", a: "Coffee", opts: ["Coffee", "Tea", "Water", "Milk"] },
+                { w: "Carne", a: "Meat", opts: ["Meat", "Fish", "Chicken", "Bread"] },
+                { w: "Pescado", a: "Fish", opts: ["Fish", "Meat", "Egg", "Rice"] },
+                { w: "Huevo", a: "Egg", opts: ["Egg", "Bread", "Cheese", "Ham"] },
+                { w: "Arroz", a: "Rice", opts: ["Rice", "Pasta", "Bread", "Soup"] },
+                { w: "Queso", a: "Cheese", opts: ["Cheese", "Milk", "Yogurt", "Butter"] }
+            ]
+        },
+        { 
+            id: 4, title: "Animales", icon: "🐶", 
+            questions: [
+                { w: "Pájaro", a: "Bird", opts: ["Bird", "Cat", "Dog", "Fish"] },
+                { w: "Pez", a: "Fish", opts: ["Fish", "Bird", "Cat", "Dog"] },
+                { w: "Caballo", a: "Horse", opts: ["Horse", "Cow", "Pig", "Sheep"] },
+                { w: "Vaca", a: "Cow", opts: ["Cow", "Horse", "Pig", "Chicken"] },
+                { w: "Cerdo", a: "Pig", opts: ["Pig", "Cow", "Horse", "Sheep"] },
+                { w: "Ratón", a: "Mouse", opts: ["Mouse", "Cat", "Dog", "Bird"] },
+                { w: "León", a: "Lion", opts: ["Lion", "Tiger", "Bear", "Wolf"] },
+                { w: "Tigre", a: "Tiger", opts: ["Tiger", "Lion", "Cat", "Dog"] },
+                { w: "Oso", a: "Bear", opts: ["Bear", "Lion", "Tiger", "Wolf"] },
+                { w: "Mono", a: "Monkey", opts: ["Monkey", "Dog", "Cat", "Bird"] }
+            ]
+        },
+        { 
+            id: 5, title: "Casa", icon: "🏠", 
+            questions: [
+                { w: "Casa", a: "House", opts: ["House", "Apartment", "Room", "Door"] },
+                { w: "Mesa", a: "Table", opts: ["Table", "Chair", "Bed", "Sofa"] },
+                { w: "Silla", a: "Chair", opts: ["Chair", "Table", "Bed", "Desk"] },
+                { w: "Cama", a: "Bed", opts: ["Bed", "Sofa", "Chair", "Table"] },
+                { w: "Puerta", a: "Door", opts: ["Door", "Window", "Wall", "Floor"] },
+                { w: "Ventana", a: "Window", opts: ["Window", "Door", "Wall", "Roof"] },
+                { w: "Baño", a: "Bathroom", opts: ["Bathroom", "Kitchen", "Bedroom", "Living room"] },
+                { w: "Cocina", a: "Kitchen", opts: ["Kitchen", "Bathroom", "Room", "Hall"] },
+                { w: "Jardín", a: "Garden", opts: ["Garden", "Garage", "Street", "Park"] },
+                { w: "Llave", a: "Key", opts: ["Key", "Door", "Lock", "Open"] }
+            ]
+        }
     ];
-    for(let i=3; i<=20; i++) englishLessons.push({id:i, title:`Nivel ${i}`, icon:"📚", questions:[{w:"Test", a:"Test", opts:["Test","A","B","C"]}]});
+
+    // Relleno automático para niveles 6 al 20 (Para que no de error)
+    for(let i=6; i<=20; i++) {
+        const qList = [];
+        for(let j=1; j<=10; j++) {
+            qList.push({ w: `Nivel ${i} - P${j}`, a: "Test", opts: ["Test", "A", "B", "C"] });
+        }
+        englishLessons.push({id:i, title:`Nivel ${i}`, icon:"📚", questions: qList });
+    }
     
     let currentLesson = null;
     let currentQIndex = 0;
@@ -782,6 +875,7 @@
         const cards = document.querySelectorAll('.option-card');
     
         if (selectedOptionText === correct) {
+            // --- RESPUESTA CORRECTA ---
             feedback.textContent = "¡CORRECTO! 🎉";
             feedback.style.color = "#58cc02";
             window.playSound('win');
@@ -790,6 +884,7 @@
             document.getElementById('btnCheckLesson').style.display = 'none';
             document.getElementById('btnNextLesson').style.display = 'block';
         } else {
+            // --- RESPUESTA INCORRECTA ---
             feedback.textContent = `Incorrecto. Era: ${correct}`;
             feedback.style.color = "#ff4b4b";
             window.playSound('gameover');
@@ -799,20 +894,28 @@
                 if(c.innerText === correct) c.classList.add('correct');
             });
     
+            // CORRECCIÓN AQUÍ: Manejo inteligente de vidas
             db.ref(`users/${idAuditor}/hearts`).transaction(currentHearts => {
-                return (currentHearts || 0) - 1;
+                // 1. Si es la primera vez (null), asumimos 5 iniciales - 1 error = 4
+                if (currentHearts === null) return 4;
+                // 2. Si ya está en 0, se queda en 0
+                if (currentHearts <= 0) return 0;
+                // 3. Si tiene vidas, restamos 1 normally
+                return currentHearts - 1;
             }, (error, committed, snapshot) => {
                 if (committed) {
                     const remaining = snapshot.val();
                     // ACTUALIZAR CONTADOR VISUAL
                     document.getElementById('displayVidasLesson').textContent = remaining;
                     
-                    notify(`💔 Pierdes 1 vida. Te quedan: ${remaining}`);
                     if (remaining <= 0) {
+                        notify("💔 ¡Te quedaste sin vidas!");
                         setTimeout(() => {
                             document.getElementById('modalLesson').style.display = 'none';
                             document.getElementById('modalNoVidas').style.display = 'flex';
                         }, 1500);
+                    } else {
+                        notify(`💔 Pierdes 1 vida. Te quedan: ${remaining}`);
                     }
                 }
             });
@@ -822,7 +925,6 @@
         }
         feedback.style.display = 'block';
     };
-    
     window.nextQuestion = () => {
         currentQIndex++;
         if (currentQIndex >= currentLesson.questions.length) {
