@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>PAGOCODE - SOCIAL V30</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* --- ESTILOS GENERALES --- */
+    * { box-sizing: border-box; margin:0; padding:0; user-select: none; -webkit-tap-highlight-color: transparent; }
+    html, body { overflow-x: hidden; width: 100%; height: 100%; position: fixed; font-family: 'Poppins', sans-serif; background: #0f172a; color: #334155; }
+    
+    /* PANTALLA DE CARGA */
+    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f9; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.3s; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #cbd5e1; border-top: 4px solid #0070ba; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    /* LAYOUT */
+    .app-wrapper { display: flex; width: 300vw; height: 100vh; transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); transform: translateX(-100vw); will-change: transform; transform: translateZ(0); backface-visibility: hidden; }
+    .screen { width: 100vw; height: 100vh; overflow-y: auto; padding-bottom: 120px; flex-shrink: 0; position: relative; background: #f4f7f9; touch-action: pan-y; }
+    
+    /* HEADER */
+    .header-fixed { position: fixed; top: 0; left: 0; width: 100%; background: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.05); z-index: 1000; height: 70px; }
+    .noti-icon-box { position: relative; margin-right: 15px; font-size: 1.4rem; color: #64748b; cursor: pointer; transition: transform 0.2s; }
+    .noti-icon-box:active { transform: scale(0.9); }
+    .noti-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 800; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; display: none; }
+    .badge-pts { background: #0070ba; color: white; padding: 6px 14px; border-radius: 50px; font-weight: 800; font-size: 0.85rem; transition: transform 0.2s; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    .badge-pts:active { transform: scale(0.95); }
+    .snake-wallet { border-left: 1px solid rgba(255,255,255,0.4); padding-left: 8px; color: #86efac; }
+    
+    /* NAV */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; border-top: 1px solid #e2e8f0; padding-bottom: 5px; z-index: 5000; height: 60px; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); }
+    .nav-item { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
+    .nav-icon { font-size: 1.2rem; margin-bottom: 2px; }
+    .nav-item.active { color: #0070ba; }
+    .nav-item.active .nav-icon { transform: scale(1.1); }
+    
+    /* ESTILOS DUOLINGO (ACADEMIA) */
+    .duo-path-container { display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 30px; }
+    .duo-level-btn { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white; position: relative; cursor: pointer; transition: transform 0.1s; box-shadow: 0 6px 0 rgba(0,0,0,0.2); z-index: 2; }
+    .duo-level-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+    .level-locked { background: #cbd5e1; color: #94a3b8; pointer-events: none; box-shadow: 0 6px 0 #94a3b8; }
+    .level-unlocked { background: #58cc02; box-shadow: 0 6px 0 #46a302; }
+    .level-completed { background: #fbbf24; box-shadow: 0 6px 0 #d97706; }
+    .level-label { position: absolute; bottom: -25px; font-size: 0.8rem; font-weight: 800; color: #475569; width: 120px; text-align: center; }
+    .star-crown { position: absolute; top: -15px; right: -5px; font-size: 1.5rem; color: #fbbf24; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); display: none; }
+    .completed .star-crown { display: block; animation: bounce 1s infinite; }
+    
+    /* MODAL LECCION INGLÉS */
+    #modalLesson { background: white; z-index: 25000; }
+    .lesson-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .progress-bar-bg { flex: 1; height: 12px; background: #e5e7eb; border-radius: 10px; margin: 0 15px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #58cc02; width: 0%; transition: width 0.3s; }
+    .question-box { text-align: center; margin-bottom: 30px; }
+    .q-title { font-size: 1.2rem; color: #4b5563; margin-bottom: 10px; }
+    .q-word { font-size: 1.8rem; font-weight: 800; color: #1f2937; padding: 20px; border: 2px dashed #e5e7eb; border-radius: 15px; display: inline-block; }
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .option-card { background: white; border: 2px solid #e5e7eb; border-radius: 15px; padding: 20px 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 1rem; color: #4b5563; transition: 0.2s; box-shadow: 0 4px 0 #e5e7eb; }
+    .option-card:active { transform: translateY(4px); box-shadow: none; }
+    .option-card.selected { background: #ddf4ff; border-color: #84d8ff; color: #1cb0f6; }
+    .option-card.correct { background: #d7ffb8; border-color: #58cc02; color: #58cc02; }
+    .option-card.wrong { background: #ffdfe0; border-color: #ff4b4b; color: #ff4b4b; }
+    .check-btn-area { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px; border-top: 1px solid #e5e7eb; background: white; }
+    
+    /* ESTILOS SOCIALES (Muro, etc) */
+    .sticky-leaderboard { position: sticky; top: 0; z-index: 900; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #e2e8f0; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
+    .leader-info { display: flex; align-items: center; gap: 10px; }
+    .crown-gold { color: #ffd700; font-size: 20px; animation: pulse 2s infinite; }
+    .leader-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ffd700; background-size: cover; background-color: #cbd5e1; }
+    .leader-text h4 { margin: 0; color: #1e293b; font-size: 14px; font-weight: 700; }
+    .leader-text span { font-size: 11px; color: #f59e0b; font-weight: bold; }
+    .leader-btn { background: #1e293b; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    
+    /* HISTORIAS */
+    .stories-container { background: transparent; padding: 0 0 15px 0; margin-bottom: 5px; }
+    .stories-title { padding: 0 5px 8px; font-size: 0.8rem; font-weight: 700; color: #64748b; }
+    .stories-scroll { display: flex; overflow-x: auto; gap: 12px; padding: 0 5px; scrollbar-width: none; -ms-overflow-style: none; }
+    .stories-scroll::-webkit-scrollbar { display: none; }
+    .story-item { display: flex; flex-direction: column; align-items: center; min-width: 60px; cursor: pointer; }
+    .story-avatar-box { position: relative; width: 52px; height: 52px; border-radius: 50%; padding: 2px; border: 2px solid #e2e8f0; background: white; display:flex; align-items:center; justify-content:center; }
+    .story-avatar-box.online { border-color: #10b981; }
+    .story-img { width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-color: #f1f5f9; }
+    .story-dot { position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; }
+    .dot-online { background: #10b981; }
+    .dot-offline { background: #cbd5e1; }
+    .story-name { margin-top: 5px; font-size: 0.7rem; color: #334155; text-align: center; max-width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .social-card { background: white; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
+    .card-header { padding: 12px 15px; display: flex; align-items: center; justify-content: space-between; }
+    .user-row { display: flex; align-items: center; gap: 10px; }
+    .card-avatar { width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0; background-size: cover; border: 1px solid #f1f5f9; }
+    .card-username { font-weight: 700; color: #1e293b; font-size: 14px; }
+    .card-time { font-size: 11px; color: #94a3b8; display: block; margin-top: -2px; }
+    .top-creator-glow { border: 2px solid #fbbf24; box-shadow: 0 0 15px rgba(251, 191, 36, 0.2); }
+    .top-badge { background: #fbbf24; color: #78350f; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; font-weight: 800; vertical-align: middle; text-transform: uppercase;}
+    .card-text-content { padding: 0 15px 12px; font-size: 14px; color: #334155; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+    .card-media { width: 100%; background: #000; position: relative; overflow: hidden; margin-bottom: 5px; }
+    .card-actions { padding: 8px 15px; display: flex; gap: 20px; border-top: 1px solid #f8fafc; }
+    .action-icon { font-size: 20px; color: #64748b; cursor: pointer; transition: 0.2s; background:none; border:none; display: flex; align-items: center; gap: 5px; }
+    .action-icon:active { transform: scale(0.9); }
+    .liked { color: #e11d48 !important; }
+    .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid #f1f5f9; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+    .btn-blue { background: #0070ba; color: white; padding: 15px; width: 100%; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
+    .btn-blue:disabled { background: #cbd5e1; cursor: not-allowed; }
+    input, textarea { width: 100%; padding: 12px; border: 2px solid #f1f5f9; border-radius: 12px; margin-bottom: 10px; text-align: center; outline: none; font-family: inherit; }
+    .btn-transfer { background: #8b5cf6; color: white; border: none; padding: 6px 10px; border-radius: 8px; font-size: 0.65rem; font-weight: 700; cursor: pointer; }
+    .tab-container { display: flex; gap: 10px; margin: 15px 0; }
+    .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; background: #e2e8f0; color: #64748b; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: 0.3s; }
+    .tab-active { background: #0070ba; color: white; box-shadow: 0 4px 10px rgba(0, 112, 186, 0.3); }
+    .btn-cta-muro { background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; border-radius: 16px; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3); cursor: pointer; border: 2px solid rgba(255,255,255,0.2); margin-bottom: 15px; }
+    .btn-cta-muro:active { transform: scale(0.97); }
+    .cta-icon-box { background: rgba(255,255,255,0.2); width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-right: 15px; }
+    .cta-texts { flex: 1; text-align: left; }
+    .cta-title { font-weight: 800; font-size: 1rem; line-height: 1.2; }
+    .cta-subtitle { font-size: 0.75rem; opacity: 0.9; margin-top: 2px; }
+    .cta-badge { background: #facc15; color: #854d0e; font-weight: 800; padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    
+    /* MODALES */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 20000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+    .modal-content { background: white; padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; max-height: 90vh; overflow-y: auto; position: relative; animation: slideIn 0.3s; }
+    #modalComments { display: none; align-items: flex-end !important; padding: 0 !important; background: rgba(0,0,0,0.1) !important; backdrop-filter: none !important; }
+    #modalComments .modal-content { width: 100% !important; max-width: 100% !important; height: 60vh !important; border-radius: 25px 25px 0 0 !important; margin: 0 !important; background: white; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 -5px 25px rgba(0,0,0,0.2); }
+    .modal-comments-area { height: 100%; display: flex; flex-direction: column; }
+    .modal-comments-list { flex: 1; overflow-y: auto; background: #f8fafc; padding: 15px; }
+    .comment-bubble { background: white; padding: 10px 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid #0070ba; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 0.85rem; }
+    .comment-author { font-weight: 700; color: #0070ba; font-size: 0.8rem; margin-bottom: 2px; }
+    .comment-text { color: #334155; line-height: 1.4; }
+    .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px; scrollbar-width: none; background: white; border-top: 1px solid #f1f5f9; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    
+    .task-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; transition: 0.3s; }
+    .task-icon { font-size: 1.2rem; margin-right: 12px; width: 30px; text-align: center; }
+    .task-info { flex: 1; display: flex; flex-direction: column; }
+    .task-title { font-weight: 700; font-size: 0.85rem; color: #334155; }
+    .task-reward { font-size: 0.7rem; color: #0070ba; font-weight: 600; }
+    .task-status { font-size: 1.2rem; color: #cbd5e1; }
+    .music-trigger { background: #f1f5f9; border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.3s; color: #64748b; font-size: 0.9rem; margin-bottom: 10px; }
+    .music-list-container { max-height: 300px; overflow-y: auto; margin-top: 15px; }
+    .music-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
+    
+    .ruleta-container { position: relative; width: 200px; height: 200px; margin: 0 auto 15px; touch-action: none; }
+    #wheel { width: 100%; height: 100%; border-radius: 50%; border: 6px solid #0070ba; background: conic-gradient(#ffcd3c 0deg 45deg, #ffffff 45deg 90deg, #ffcd3c 90deg 135deg, #ffffff 135deg 180deg, #ffcd3c 180deg 225deg, #ffffff 225deg 270deg, #ffcd3c 270deg 315deg, #ffffff 315deg 360deg); position: relative; overflow: hidden; transform: rotate(0deg); cursor: grab; }
+    .numero { position: absolute; width: 100%; height: 100%; text-align: center; font-weight: 800; font-size: 0.65rem; color: #333; padding-top: 10px; transform-origin: 50% 50%; pointer-events: none; }
+    .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 30px; height: 35px; background: #e11d48; clip-path: polygon(50% 100%, 0 0, 100% 0); z-index: 10; border-top: 3px solid white; pointer-events: none; }
+    
+    .toast { visibility: hidden; background: #1e293b; color: white; padding: 12px 25px; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); border-radius: 50px; z-index: 6000; transition: 0.3s; opacity: 0; }
+    .toast.show { visibility: visible; opacity: 1; bottom: 100px; }
+    
+    .historial-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.8rem; }
+    .noti-item { background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 10px; text-align: left; cursor: pointer; transition: 0.2s; }
+    .noti-item:active { background: #e2e8f0; transform: scale(0.98); }
+    .noti-text { font-size: 0.85rem; color: #334155; line-height: 1.4; }
+    
+    /* GAME & CHAT */
+    #gameContainer { position: fixed; inset: 0; background: #0f172a; z-index: 15000; display: none; flex-direction: column; align-items: center; justify-content: center; touch-action: none; }
+    #gameCanvas { background: #1e293b; border: 2px solid #334155; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); max-width: 90vw; max-height: 90vw; }
+    .d-pad { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+    .d-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 15px; color: white; font-size: 1.5rem; display: flex; justify-content: center; align-items: center; user-select: none; cursor: pointer; }
+    .d-btn:active { background: rgba(255,255,255,0.3); transform: scale(0.95); }
+    .game-score { color: #22d3ee; font-size: 1.2rem; margin-bottom: 10px; font-weight: bold; }
+    .btn-salir-game { position: absolute; top: 20px; right: 20px; bottom: auto; background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 50px; font-weight: bold; font-size: 0.8rem; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); cursor: pointer; }
+    
+    .chat-float-btn { position: fixed; bottom: 80px; right: 20px; width: 60px; height: 60px; background: linear-gradient(135deg, #0070ba, #0ea5e9); border-radius: 50%; color: white; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0, 112, 186, 0.5); z-index: 6000; cursor: pointer; transition: transform 0.2s; }
+    .chat-float-btn:active { transform: scale(0.9); }
+    .chat-badge { position: absolute; top: 0; right: 0; background: #ef4444; width: 15px; height: 15px; border-radius: 50%; border: 2px solid white; display: none; }
+    .chat-window { position: fixed; bottom: 0; right: 0; width: 100%; height: 85vh; background: #e5e5f7; border-radius: 20px 20px 0 0; z-index: 7000; transform: translateY(110%); transition: transform 0.25s cubic-bezier(0.19, 1, 0.22, 1); display: flex; flex-direction: column; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); will-change: transform; }
+    .chat-window.open { transform: translateY(0); }
+    .chat-header { padding: 15px; background: white; border-bottom: 1px solid #e2e8f0; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center; }
+    .chat-messages-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+    .msg-bubble { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 0.9rem; line-height: 1.4; position: relative; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: grab; transition: transform 0.2s ease-out; touch-action: pan-y; }
+    .msg-bubble:active { cursor: grabbing; }
+    .msg-mine { align-self: flex-end; background: #dcf8c6; color: #334155; border-bottom-right-radius: 2px; }
+    .msg-other { align-self: flex-start; background: white; color: #334155; border-bottom-left-radius: 2px; }
+    .msg-user { font-size: 0.7rem; color: #0070ba; margin-bottom: 2px; font-weight: bold; }
+    .msg-time { font-size: 0.65rem; text-align: right; margin-top: 4px; color: #94a3b8; }
+    .quoted-msg { background: rgba(0,0,0,0.05); border-left: 4px solid #0070ba; padding: 5px 8px; margin-bottom: 5px; border-radius: 4px; font-size: 0.75rem; display: flex; flex-direction: column; }
+    .quoted-author { font-weight: bold; color: #0070ba; font-size: 0.7rem; }
+    .quoted-text { color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+    .reply-bar { background: #f1f5f9; padding: 8px 15px; border-top: 1px solid #e2e8f0; display: none; align-items: center; justify-content: space-between; font-size: 0.8rem; border-left: 4px solid #0070ba; }
+    .typing-indicator { font-size: 0.7rem; color: #64748b; padding: 5px 15px; background: transparent; font-style: italic; display: none; align-items: center; gap: 5px; }
+    .typing-dots span { width: 4px; height: 4px; background: #64748b; border-radius: 50%; display: inline-block; animation: blink 1.4s infinite both; }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; } .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
+    .chat-input-area { padding: 10px; background: white; border-top: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+    #inputChatMsg { flex: 1; text-align: left; margin: 0; border-radius: 20px; background: #f0f2f5; border: none; padding: 12px 15px; }
+    
+    @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+  </style>
+</head>
+<body>
+    <div id="loadingOverlay"><div class="spinner"></div><div style="margin-top:20px; font-weight:bold; color:#64748b;">Cargando...</div></div>
+    
+    <div id="debugLog"><h3 style="color:white">⚠️ Diagnóstico</h3><button onclick="document.getElementById('debugLog').style.display='none'" style="margin-bottom:10px; padding:5px;">Cerrar</button><div id="logContent"></div></div>
+    
+    <header class="header-fixed">
+        <div class="app-title" id="pageTitle" style="font-weight: 800; font-size: 1.1rem; letter-spacing: 1px;">PAGOCODE</div>
+        <div style="display:flex; align-items:center;">
+            <div id="btnNotis" class="noti-icon-box" onclick="abrirNotificaciones()"><i class="fas fa-bell"></i><div id="badgeNotis" class="noti-badge">0</div></div>
+            <div class="badge-pts" id="ptsDisplay" onclick="abrirRifa()"><span id="mainPts">PTS: ...</span><span id="snakeWalletDisplay" class="snake-wallet">👾 ...</span></div>
+        </div>
+    </header>
+    <div id="toast" class="toast"></div>
+    
+    <div id="modalNotificaciones" class="modal-overlay">
+        <div class="modal-content">
+            <h3>🔔 Notificaciones</h3>
+            <div id="listaNotificaciones" style="max-height: 300px; overflow-y: auto;"><div style="padding:20px; color:#cbd5e1;">Sin notificaciones nuevas.</div></div>
+            <button onclick="document.getElementById('modalNotificaciones').style.display='none'" class="btn-blue" style="background:#94a3b8; margin-top:10px;">Cerrar</button>
+        </div>
+    </div>
+    
+    <div id="modalLesson" class="modal-overlay">
+        <div class="modal-content" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; border-radius: 0; display: flex; flex-direction: column;">
+            <div class="lesson-header">
+                <button onclick="cerrarLesson()" style="background:none; border:none; color:#cbd5e1; font-size:1.5rem;">✕</button>
+                <div class="progress-bar-bg"><div class="progress-fill" id="lessonProgress"></div></div>
+                <div style="font-size:1.2rem;">❤️</div>
+            </div>
+            
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <div class="question-box">
+                    <div class="q-title">Traduce esta palabra:</div>
+                    <div class="q-word" id="qWord">---</div>
+                </div>
+                <div class="options-grid" id="lessonOptions">
+                    
+                </div>
+            </div>
+            <div class="check-btn-area">
+                <div id="lessonFeedback" style="display:none; margin-bottom:15px; font-weight:bold; font-size:1.1rem;"></div>
+                <button id="btnCheckLesson" class="btn-blue" style="background:#58cc02; box-shadow: 0 4px 0 #46a302;" onclick="checkAnswer()">COMPROBAR</button>
+                <button id="btnNextLesson" class="btn-blue" style="display:none; background:#58cc02;" onclick="nextQuestion()">CONTINUAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalReferidos" class="modal-overlay">
+        <div class="modal-content">
+            <h3>👥 Mis Referidos</h3>
+            <div id="listaReferidos" style="max-height: 300px; overflow-y: auto; text-align: left;"><div style="text-align:center; padding:20px; color:#94a3b8;">Cargando...</div></div>
+            <button onclick="document.getElementById('modalReferidos').style.display='none'" class="btn-blue" style="background:#94a3b8; margin-top:10px;">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="gameContainer">
+        <button onclick="cerrarJuego()" class="btn-salir-game">✕ SALIR</button>
+        <div class="game-score" id="gameInfoText">PUNTOS: 0</div>
+        <canvas id="gameCanvas" width="300" height="300"></canvas>
+        <div class="d-pad"><div></div><div class="d-btn" onclick="inputGame(0, -1)">⬆️</div><div></div><div class="d-btn" onclick="inputGame(-1, 0)">⬅️</div><div class="d-btn" onclick="inputGame(0, 1)">⬇️</div><div class="d-btn" onclick="inputGame(1, 0)">➡️</div></div>
+    </div>
+
+    <div id="modalSoporte" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Soporte Técnico</h3>
+            <textarea id="soporteMsg" rows="4" placeholder="Cuéntanos que sucede..." style="width:100%; padding:10px; border:2px solid #cbd5e1; border-radius:12px; margin-bottom:10px;"></textarea>
+            <button onclick="enviarCorreoSoporte()" class="btn-blue">📧 Redactar Correo</button>
+            <button onclick="document.getElementById('modalSoporte').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modalComments" class="modal-overlay" style="z-index: 22000;">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding:10px 15px;">
+                <h3 style="margin:0; font-size:1rem;">💬 Comentarios</h3>
+                <button onclick="cerrarModalComentarios()" style="border:none; background:none; font-size:1.2rem;">✕</button>
+            </div>
+            <div class="modal-comments-area">
+                <div id="modalCommentsList" class="modal-comments-list"><div style="text-align:center; color:#94a3b8; padding:20px;">Cargando...</div></div>
+                <div class="chips-container" id="modalChips"></div>
+                <div style="display:flex; gap:8px; padding:10px; border-top:1px solid #f1f5f9; background:white;">
+                    <input type="text" id="modalCommentInput" placeholder="Escribe un comentario..." style="font-size:0.9rem; margin:0; text-align:left; background:#f0f2f5; border-radius:20px; border:none; padding:10px 15px; flex:1;">
+                    <button class="btn-blue" style="width:auto; padding:0 15px; font-size:1rem; border-radius:50%;" onclick="enviarComentarioModal(event)">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalRifa" class="modal-overlay">
+        <div class="modal-content" style="border: 4px solid #f59e0b; background: radial-gradient(circle, #fff, #fffbeb);">
+            <div style="font-size: 3.5rem; animation: bounce 2s infinite;">💸</div>
+            <h3 style="color:#b45309; font-size:1.4rem; margin-top:5px;">GRAN RIFA $50 USD</h3>
+            <div style="background:#fff7ed; padding:15px; border-radius:12px; margin:15px 0; border:2px dashed #f59e0b;">
+                <p style="font-size:0.8rem; color:#9a3412; margin-bottom:5px;">📅 Fecha del Sorteo:</p>
+                <h4 id="rifaDate" style="font-size:1.1rem; color:#ea580c; font-weight:800;">Calculando...</h4>
+                <div style="margin-top:10px; font-size:0.9rem; font-weight:bold; color:#333;">Precio Ticket: <span style="color:#d97706;">100 PTS</span></div>
+            </div>
+            <button onclick="comprarTicketRifa()" class="btn-blue" style="background: linear-gradient(135deg, #f59e0b, #d97706);">🎟️ COMPRAR TICKET</button>
+            <button onclick="document.getElementById('modalRifa').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="modalUnlockVIP" class="modal-overlay">
+        <div class="modal-content" style="border: 2px solid #a855f7;">
+            <h3 style="color:#7e22ce; font-size:1.5rem;">🚀 Siguiente Nivel</h3>
+            <button onclick="comprarAccesoVIP()" class="btn-blue" style="background:linear-gradient(to right, #9333ea, #c026d3);">⚡ Recargar Energía (-0.20)</button>
+            <button onclick="document.getElementById('modalUnlockVIP').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:10px; cursor:pointer;">Esperar a mañana</button>
+        </div>
+    </div>
+
+    <div id="modalTransfer" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Regalar Estrellas ✨</h3>
+            <p id="targetUserLabel" style="font-size:0.8rem; color:#64748b; margin-bottom:15px;">Para: ---</p>
+            <input type="number" id="amountTransfer" placeholder="Cantidad (Máx 20)">
+            <button id="btnConfirmTransfer" class="btn-blue" style="background:#8b5cf6;">✨ Enviar Regalo</button>
+            <button onclick="document.getElementById('modalTransfer').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modalCine" class="modal-overlay">
+        <div class="modal-content" style="background: #000; color: white; border: 1px solid #333; padding: 15px;">
+            <h3 style="margin-bottom: 10px;">📰 Novedades</h3>
+            <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius:10px; background:#111;">
+                <iframe id="videoPlayer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            <p id="cineTimer" style="margin-top: 15px; font-size: 0.8rem; color: #fbbf24;">⏳ Espera a que termine el video...</p>
+            <button id="btnReclamarCine" disabled onclick="reclamarCine()" class="btn-blue" style="background: #22c55e; margin-top: 10px; opacity: 0.5;">💰 Recoger Bono (+0.50)</button>
+            <button onclick="document.getElementById('modalCine').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="modalMision" class="modal-overlay">
+        <div class="modal-content">
+            
+            <div id="step1Mision">
+                <h3>🎵 Elige el Vibe</h3>
+                <p style="font-size:0.8rem; color:#64748b; margin-bottom:15px;">Antes de escribir, ponle música a tu momento.</p>
+                
+                <div id="btnMusicTrigger" class="music-trigger" onclick="abrirSelectorMusica()">
+                    <span id="musicDisplayLabel">🔍 Toca para buscar canción...</span><span>ᐳ</span>
+                </div>
+                
+                <button id="btnMisionNext" onclick="goToStep2()" class="btn-blue" style="margin-top:15px; opacity: 0.5;">Continuar ➡</button>
+            </div>
+
+            <div id="step2Mision" style="display:none; animation: slideIn 0.3s;">
+                <h3>✍️ Tu Mensaje</h3>
+                
+                <div style="background:#f0f9ff; padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid #bae6fd; display:flex; align-items:center; justify-content:space-between;">
+                    <button id="btnAudioControl" onclick="toggleAudio()" class="btn-blue" style="width: 50px; height: 50px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: #0070ba; box-shadow: 0 4px 10px rgba(0,112,186,0.3);">
+                        <i id="audioIcon" class="fas fa-play" style="margin-left: 4px;"></i>
+                    </button>
+                    
+                    <div style="flex:1; margin-left:15px; overflow:hidden;">
+                        <div style="font-size:0.7rem; color:#64748b;">Canción seleccionada:</div>
+                        <div id="songNamePreview" style="font-weight:bold; color:#0070ba; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">---</div>
+                    </div>
+                    
+                    <div id="invisiblePlayer" style="position:absolute; top:-9999px; left:-9999px;"></div>
+                </div>
+
+                <textarea id="mText" rows="4" style="width:100%; padding:10px; border:2px solid #f1f5f9; border-radius:12px; resize:none; outline:none; font-family:inherit; margin-bottom:10px;" placeholder="¿Qué estás pensando hoy?"></textarea>
+                
+                <div style="display:flex; gap:10px;">
+                    <button onclick="backToStep1()" class="btn-blue" style="background:#cbd5e1; color:#475569; flex:1;">⬅ Cambiar</button>
+                    <button id="btnEnviarMision" class="btn-blue" style="flex:2;">🚀 Publicar (+0.50)</button>
+                </div>
+            </div>
+
+            <input type="hidden" id="mMusic">
+            <button onclick="document.getElementById('modalMision').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modalNoVidas" class="modal-overlay">
+        <div class="modal-content" style="border: 4px solid #ef4444;">
+            <div style="font-size: 4rem; animation: pulse 1s infinite;">💔</div>
+            <h3 style="color:#b91c1c; margin-top:10px;">¡Oh no!</h3>
+            <p style="color:#64748b; margin-bottom:20px;">Te quedaste sin vidas.</p>
+            
+            <div style="background:#fef2f2; padding:15px; border-radius:12px; border:1px dashed #ef4444; margin-bottom:15px;">
+                <p style="font-size:0.9rem;">Necesitas corazones para aprender.</p>
+            </div>
+
+            <button onclick="recargarVidasConAnuncio()" class="btn-blue" style="background: #ef4444; box-shadow: 0 4px 0 #b91c1c;">
+                📺 Recuperar Vidas (Ver Video)
+            </button>
+            
+            <button onclick="document.getElementById('modalNoVidas').style.display='none'" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="modalMusicSelector" class="modal-overlay" style="z-index: 21000;">
+        <div class="modal-content" style="height: 80vh; max-height: 600px; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin:0;">🎵 Buscar Canción</h3>
+                <button onclick="cerrarSelectorMusica()" style="border:none; background:none; font-size:1.2rem;">✕</button>
+            </div>
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <input type="text" id="inputSearchMusic" placeholder="Ej: Bad Bunny, Linkin Park..." style="margin:0; flex:1; text-align:left; border:2px solid #0070ba;">
+                <button onclick="buscarEnYouTubeAPI()" class="btn-blue" style="width:auto; padding:0 15px; border-radius:10px;">🔍</button>
+            </div>
+            <div id="ytLoader" style="display:none; text-align:center; padding:20px; color:#0070ba;"><i class="fas fa-circle-notch fa-spin fa-2x"></i><br>Buscando en YouTube...</div>
+            <div id="musicResultsList" class="music-list-container" style="flex:1; overflow-y:auto;"><div style="text-align:center; color:#94a3b8; padding:30px;">Busca tu música favorita<br>para compartirla.</div></div>
+        </div>
+    </div>
+
+    <div id="modalTareas" class="modal-overlay" style="z-index: 20500;">
+        <div class="modal-content">
+            <h3 style="font-size: 1.2rem; margin-bottom: 5px;">🎯 Zona de Misiones</h3>
+            <div class="task-row" onclick="goToScreen(2); document.getElementById('modalTareas').style.display='none'"><div class="task-icon">🎰</div><div class="task-info"><span class="task-title">Jugar a la Ruleta</span><span class="task-reward">Premios varios</span></div><div class="task-status">○</div></div>
+            <div class="task-row"><div class="task-icon">📺</div><div class="task-info"><span class="task-title">Ver Anuncio</span><span class="task-reward">+0.25 PTS</span></div><div class="task-status"><button id="btnVerAnuncioModal" onclick="document.getElementById('btnVerAnuncio').click()" style="padding:5px 10px; border-radius:5px; border:none; background:#0070ba; color:white; font-size:0.7rem;">VER</button></div></div>
+            <div class="task-row" onclick="abrirCine(); document.getElementById('modalTareas').style.display='none'"><div class="task-icon">🍿</div><div class="task-info"><span class="task-title">Novedades YouTube</span><span class="task-reward">+0.50 PTS</span></div><div class="task-status">○</div></div>
+            <div class="task-row" onclick="prepararJuego('snake'); document.getElementById('modalTareas').style.display='none'"><div class="task-icon">🐍</div><div class="task-info"><span class="task-title">Arcade Snake</span><span class="task-reward">Bonos extras</span></div><div class="task-status">○</div></div>
+            <div class="task-row" onclick="abrirLichessConAd()">
+                <div class="task-icon">♟️</div>
+                <div class="task-info">
+                    <span class="task-title">Jugar Lichess</span>
+                    <span class="task-reward">Ad + Online</span>
+                </div>
+                <div class="task-status">ᐳ</div>
+            </div>
+            <div class="task-row" onclick="window.location.href='go:Damas';"><div class="task-icon">⚪</div><div class="task-info"><span class="task-title">Jugar Damas (VS CPU)</span><span class="task-reward">Nuevo</span></div><div class="task-status">ᐳ</div></div>
+            <button onclick="document.getElementById('modalTareas').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; margin-top:20px; cursor:pointer;">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="modalGameOver" class="modal-overlay">
+        <div class="modal-content" style="border: 4px solid #ef4444;">
+            <h3 style="color:#b91c1c; font-size:1.5rem; margin-bottom: 5px;">🏁 FIN DEL JUEGO</h3>
+            <div style="background:#fef2f2; padding:15px; border-radius:12px; margin-bottom:15px; border: 1px dashed #ef4444; text-align: left;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span style="color:#64748b;">Saldo Anterior:</span><span id="scoreOldBalance" style="color:#334155; font-weight:600;">0.00</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom: 1px solid #ddd; padding-bottom:5px;"><span style="color:#64748b;">Ganado (Neto):</span><span id="scoreWonDisplay" style="color:#10b981; font-weight:800;">+0.00</span></div>
+                <div style="display:flex; justify-content:space-between; margin-top:10px;"><span style="color:#333; font-weight:800;">NUEVO SALDO:</span><span id="scoreNewBalance" style="color:#0070ba; font-weight:800; font-size:1.3rem;">0.00</span></div>
+            </div>
+            <button onclick="cerrarModalGameOver()" class="btn-blue" style="background:#1e293b;">🔄 Jugar de nuevo</button>
+            <button onclick="document.getElementById('modalGameOver').style.display='none'; cerrarJuego();" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Salir al menú</button>
+        </div>
+    </div>
+
+    <div id="modalGiftReceived" class="modal-overlay" style="z-index: 30000;">
+        <div class="modal-content" style="border: 4px solid #8b5cf6;">
+            <div style="font-size: 4rem; animation: bounce 1s infinite;">🎁</div>
+            <h3 style="color:#7c3aed; margin-top:10px;">¡Recibiste Puntos!</h3>
+            <div style="background:#f5f3ff; padding:15px; border-radius:12px; margin:15px 0; border:1px dashed #8b5cf6;">
+                <p style="font-size:0.8rem; color:#64748b;">De parte de:</p>
+                <h4 id="giftSender" style="font-size:1.2rem; color:#5b21b6; font-weight:800;">---</h4>
+                <div style="font-size:2rem; font-weight:800; color:#10b981; margin-top:5px;">+<span id="giftAmount">0</span> PTS</div>
+            </div>
+            <p style="font-size:0.7rem; color:#94a3b8; margin-bottom:15px;">Los puntos ya están en tu saldo.</p>
+            <button id="btnThanks" class="btn-blue" style="background: #8b5cf6; display:flex; align-items:center; justify-content:center; gap:5px;">🙏 Dar las Gracias</button>
+            <button onclick="document.getElementById('modalGiftReceived').style.display='none'" style="background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cerrar</button>
+        </div>
+    </div>
+    
+    <div id="btnOpenChat" class="chat-float-btn" onclick="toggleChat()">💬 <div id="chatBadge" class="chat-badge"></div></div>
+    
+    <div id="chatWindow" class="chat-window">
+        <div class="chat-header"><h3 style="font-size:1rem;">💬 Chat Global</h3><button onclick="toggleChat()" style="border:none; background:none; font-size:1.2rem; cursor:pointer;">⬇️</button></div>
+        <div id="chatList" class="chat-messages-area"><div style="text-align:center; color:#94a3b8; font-size:0.8rem; margin-top:20px;">Cargando mensajes...</div></div>
+        <div id="typingIndicator" class="typing-indicator"><span id="typingText"></span><div class="typing-dots"><span></span><span></span><span></span></div></div>
+        <div id="replyBar" class="reply-bar">
+            <div class="reply-info"><span style="color:#0070ba; font-weight:bold;">Respondiendo a:</span><span id="replyTextPreview" style="color:#64748b; white-space:nowrap; overflow:hidden; max-width:200px;">...</span></div>
+            <button onclick="cancelReply()" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
+        </div>
+        <div class="chat-input-area"><input type="text" id="inputChatMsg" placeholder="Escribe un mensaje..." autocomplete="off"><button onclick="enviarTexto()" class="btn-blue" style="width:auto; padding: 12px 18px; border-radius:50%; background:#0070ba;">➤</button></div>
+    </div>
+
+    <div class="app-wrapper" id="appWrapper" style="transform: translateX(-100vw);">
+        
+        <div class="screen">
+            <div style="height: 80px;"></div>
+            <div style="padding: 0 20px; text-align: center;">
+                 <h2 style="color:#58cc02; margin-bottom: 5px;">Academia de Inglés</h2>
+                 <p style="color:#64748b; font-size: 0.8rem; margin-bottom: 20px;">Completa lecciones y gana puntos.</p>
+                 
+                 <div id="englishPath" class="duo-path-container">
+                     <div style="color:#cbd5e1;">Cargando niveles...</div>
+                 </div>
+            </div>
+        </div>
+
+        <div class="screen">
+            <div style="height: 20px;"></div>
+            
+            <div class="sticky-leaderboard" style="top: 2px;">
+                <div class="leader-info">
+                    <i class="fas fa-crown crown-gold"></i>
+                    <div class="leader-avatar" id="leaderAvatarImg"></div>
+                    <div class="leader-text">
+                        <h4 id="leaderName">Cargando...</h4>
+                        <span id="leaderScore">👑 --- PTS</span>
+                    </div>
+                </div>
+                <button class="leader-btn" onclick="goToScreen(2)">Ver Ranking</button>
+            </div>
+            
+            <div id="viewMuro" style="padding: 0 15px;">
+                
+                <div class="stories-container">
+                    <div class="stories-title">Usuarios Activos</div>
+                    <div id="listaUsuariosHorizontal" class="stories-scroll">
+                        <div style="padding:10px; font-size:0.8rem; color:#94a3b8;">Cargando...</div>
+                    </div>
+                </div>
+
+                <div class="tab-container"><button class="tab-btn tab-active" id="tabBtnMuro" onclick="switchTab('muro')">📝 Feed Social</button><button class="tab-btn" onclick="document.getElementById('modalTareas').style.display='flex'">🎯 Misiones</button></div>
+                
+                <div class="cta-container">
+                    <div id="btnMisionDestacado" class="btn-cta-muro" onclick="abrirMision()">
+                        <div style="display:flex; align-items:center;"><div class="cta-icon-box">✍️</div><div class="cta-texts"><div class="cta-title">Publicar Pensamiento</div><div id="misionStatusText" class="cta-subtitle">Comparte música o videos</div></div></div><div class="cta-badge">+0.50</div>
+                    </div>
+                </div>
+                
+                <div style="font-size:0.75rem; color:#94a3b8; margin:0 0 10px; font-weight:800; letter-spacing:1px;">LO QUE ESTÁ PASANDO</div>
+                <div id="muroReportes" style="min-height: 200px;"><div style='text-align:center; padding:40px; color:#64748b;'><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Cargando Feed Social...</div></div>
+                <div style="height: 20px;"></div>
+            </div>
+        </div>
+
+        <div class="screen">
+            <div style="padding: 90px 20px 20px;">
+                <div style="text-align:center; margin-bottom:20px;"><div style="font-size:3.5rem; margin-bottom:5px;">👤</div><h2 id="profKey" style="color:#1e293b;">---</h2><p id="profRank" style="font-size:0.8rem; font-weight:700; color:#0070ba; margin-top:5px;">AUDITOR NIVEL 1</p></div>
+                
+                <div class="card" style="text-align:center;">
+                     <div class="ruleta-container">
+                        <div class="pointer"></div>
+                        <div id="wheel">
+                            <div class="numero" style="transform: rotate(22.5deg);">0.25</div><div class="numero" style="transform: rotate(67.5deg);">VACÍO</div><div class="numero" style="transform: rotate(112.5deg);">0.50</div><div class="numero" style="transform: rotate(157.5deg);">VACÍO</div>
+                            <div class="numero" style="transform: rotate(202.5deg);">0.75</div><div class="numero" style="transform: rotate(247.5deg);">VACÍO</div><div class="numero" style="transform: rotate(292.5deg);">0.25</div><div class="numero" style="transform: rotate(337.5deg);">0.50</div>
+                        </div>
+                    </div>
+                    <button id="btnSpin" onclick="triggerSpin()" class="btn-blue" style="background:#f59e0b; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">🎰 Girar Ruleta</button>
+                    <p id="spinInfo" style="text-align:center; font-size:0.7rem; margin-top:10px; color:#64748b;"></p>
+                    
+                    <div style="margin-top: 20px;">
+                        <div style="margin-bottom:15px; border: 2px dashed #0070ba; border-radius: 15px; padding: 5px; background: #f0f9ff;">
+                            <button id="btnVerAnuncio" style="width:100%; border:none; background:none; padding:10px; font-weight:800; color:#0070ba; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">📺 Video (+0.25) & 🎰</button>
+                        </div>
+                        <button onclick="abrirCine()" style="width:100%; padding:15px; background:#1e293b; color:#fbbf24; border-radius:15px; font-weight:800; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🍿 Tutorial/Novedades <span style="background:#fbbf24; color:#78350f; padding:2px 8px; border-radius:6px; font-size:0.8rem;">+0.50</span></button>
+                        
+                        <div style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                            <p style="font-size:0.75rem; color:#64748b; margin-bottom:10px; font-weight:700;">JUEGOS RÁPIDOS</p>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button onclick="prepararJuego('snake')" class="btn-blue" style="background: #10b981; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #059669;">🐍 Snake</button>
+                                <button onclick="prepararJuego('race')" class="btn-blue" style="background: #ef4444; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b91c1c;">🏎️ Carrera</button>
+                                <button onclick="abrirLichessConAd()" class="btn-blue" style="background: #3b82f6; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #1d4ed8;">♟️ Lichess</button>
+                                <button onclick="window.location.href='go:Damas'" class="btn-blue" style="background: #f59e0b; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b45309;">⚪ Damas</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="font-size:0.9rem;">Tu Clave Única</h3>
+                    <div id="myKeyDisplay" style="background:#f8fafc; padding:12px; border-radius:10px; text-align:center; font-size:1.2rem; font-weight:800; margin:10px 0; color:#0070ba; border:1px dashed #cbd5e1;">---</div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="copiarClave()" class="btn-blue" style="font-size:0.8rem; padding:10px; background:white; color:#0070ba; border:1px solid #0070ba; flex:1;">📋 Copiar</button>
+                        <button onclick="verReferidos()" class="btn-blue" style="font-size:0.8rem; padding:10px; flex:1;">👥 Ver Referidos</button>
+                    </div>
+                    <div style="margin-top:15px; border-top:1px solid #f1f5f9; padding-top:10px;">
+                        <p style="font-size:0.7rem; color:#64748b; margin-bottom:5px;">Canjear código de amigo:</p>
+                        <div style="display:flex; gap:5px;">
+                            <input type="text" id="inputFolio" placeholder="INV-XXXXX" style="margin:0; text-transform:uppercase;">
+                            <button id="btnValidar" class="btn-blue" style="width:auto; margin:0;">OK</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 style="font-size:0.9rem; margin-bottom:10px;">Historial de Puntos</h3>
+                    <div id="historialList"></div>
+                </div>
+                
+                <button onclick="abrirSoporte()" class="btn-blue" style="background:#cbd5e1; color:#475569; margin-top:20px;">🛠️ Soporte Técnico</button>
+                <div style="height: 20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item" id="nav0" onclick="goToScreen(0, true)"><span class="nav-icon"><i class="fas fa-graduation-cap"></i></span><span>Aprender</span></button>
+        <button class="nav-item active" id="nav1" onclick="goToScreen(1, true)"><span class="nav-icon"><i class="fas fa-home"></i></span><span>Muro</span></button>
+        <button class="nav-item" id="nav2" onclick="goToScreen(2, true)"><span class="nav-icon"><i class="fas fa-user"></i></span><span>Perfil</span></button>
+    </nav>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script>
+    console.log("🔥 JS PRINCIPAL CARGADO");
+    const firebaseConfig = { apiKey: "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A", authDomain: "ingresos-minimos.firebaseapp.com", databaseURL: "https://ingresos-minimos-default-rtdb.firebaseio.com", projectId: "ingresos-minimos", storageBucket: "ingresos-minimos.firebasestorage.app", messagingSenderId: "104886265441", appId: "1:104886265441:web:2272d88ad1129919ea6c20", measurementId: "G-SN89X63V38" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+    
+    const audioLibrary = { click: new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_2d057750b3.mp3'), coin: new Audio('https://cdn.pixabay.com/audio/2021/08/09/audio_88447e769f.mp3'), win: new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_12b0c7443c.mp3'), gameover: new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_c6ccf3232f.mp3') };
+    window.playSound = (name) => { if (audioLibrary[name]) { audioLibrary[name].currentTime = 0; audioLibrary[name].volume = 0.5; audioLibrary[name].play().catch(e => console.log("Audio bloqueado")); } };
+    document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('button').forEach(btn => { btn.addEventListener('click', () => playSound('click')); }); });
+    
+    let idAuditor = null; let myCurrentKey = ""; let currentEarnings = 0; let canSpin = false; let currentVideoId = null; let scrollTimeout = null; let audioActivadoGlobal = false; let isCommenting = false;
+    
+    // --- DATOS ACADEMIA INGLÉS (DUOLINGO) ---
+    // --- DATOS ACADEMIA INGLÉS (DUOLINGO) ---
+    const englishLessons = [
+        {
+            id: 1, title: "Intro", icon: "⭐", questions: [
+                { w: "Hola", a: "Hello", opts: ["Bye", "Hello", "Thanks", "No"] },
+                { w: "Gato", a: "Cat", opts: ["Dog", "Cat", "Bird", "Fish"] },
+                { w: "Sí", a: "Yes", opts: ["No", "Yes", "Please", "Thanks"] },
+                { w: "No", a: "No", opts: ["Yes", "No", "Hello", "Bye"] },
+                { w: "Gracias", a: "Thanks", opts: ["Please", "Sorry", "Thanks", "Hello"] },
+                { w: "Por favor", a: "Please", opts: ["Thanks", "Please", "No", "Yes"] },
+                { w: "Hombre", a: "Man", opts: ["Woman", "Man", "Boy", "Girl"] },
+                { w: "Mujer", a: "Woman", opts: ["Man", "Woman", "Cat", "Dog"] },
+                { w: "Niño", a: "Boy", opts: ["Girl", "Boy", "Man", "Woman"] },
+                { w: "Niña", a: "Girl", opts: ["Boy", "Girl", "Woman", "Man"] }
+            ]
+        },
+        {
+            id: 2, title: "Saludos", icon: "👋", questions: [
+                { w: "Adiós", a: "Goodbye", opts: ["Hello", "Goodbye", "Please", "Hi"] },
+                { w: "Buenos días", a: "Good morning", opts: ["Good night", "Good morning", "Hello", "Bye"] },
+                { w: "Buenas noches", a: "Good night", opts: ["Good morning", "Good night", "Thanks", "Please"] },
+                { w: "¿Cómo estás?", a: "How are you?", opts: ["Who are you?", "How are you?", "I am fine", "Thanks"] },
+                { w: "Bien", a: "Fine", opts: ["Bad", "Fine", "Sad", "Angry"] },
+                { w: "Mal", a: "Bad", opts: ["Good", "Bad", "Happy", "Fine"] },
+                { w: "Hasta luego", a: "See you", opts: ["Hello", "See you", "Please", "Thanks"] },
+                { w: "Mucho gusto", a: "Nice to meet you", opts: ["See you", "Nice to meet you", "Good morning", "Bye"] },
+                { w: "Bienvenido", a: "Welcome", opts: ["Goodbye", "Welcome", "Sorry", "Please"] },
+                { w: "Hola (informal)", a: "Hi", opts: ["Bye", "Hi", "Sir", "Madam"] }
+            ]
+        },
+        {
+            id: 3, title: "Viajes", icon: "✈️", questions: [
+                { w: "Pasaporte", a: "Passport", opts: ["Ticket", "Visa", "Passport", "Map"] },
+                { w: "Aeropuerto", a: "Airport", opts: ["Station", "Airport", "Hotel", "Bus"] },
+                { w: "Boleto", a: "Ticket", opts: ["Passport", "Ticket", "Money", "Bag"] },
+                { w: "Hotel", a: "Hotel", opts: ["House", "Hotel", "Room", "School"] },
+                { w: "Taxi", a: "Taxi", opts: ["Bus", "Taxi", "Car", "Train"] },
+                { w: "Autobús", a: "Bus", opts: ["Car", "Bus", "Plane", "Bike"] },
+                { w: "Tren", a: "Train", opts: ["Bus", "Train", "Taxi", "Car"] },
+                { w: "Avión", a: "Plane", opts: ["Car", "Plane", "Bus", "Ship"] },
+                { w: "Maleta", a: "Suitcase", opts: ["Bag", "Suitcase", "Box", "Paper"] },
+                { w: "Dinero", a: "Money", opts: ["Card", "Money", "Passport", "Map"] }
+            ]
+        },
+        {
+            id: 4, title: "Comida", icon: "🍔", questions: [
+                { w: "Pan", a: "Bread", opts: ["Milk", "Bread", "Water", "Egg"] },
+                { w: "Agua", a: "Water", opts: ["Milk", "Water", "Juice", "Soda"] },
+                { w: "Leche", a: "Milk", opts: ["Water", "Milk", "Tea", "Coffee"] },
+                { w: "Café", a: "Coffee", opts: ["Tea", "Coffee", "Water", "Milk"] },
+                { w: "Manzana", a: "Apple", opts: ["Banana", "Apple", "Orange", "Grape"] },
+                { w: "Naranja", a: "Orange", opts: ["Apple", "Orange", "Lemon", "Pear"] },
+                { w: "Huevo", a: "Egg", opts: ["Bread", "Egg", "Cheese", "Meat"] },
+                { w: "Queso", a: "Cheese", opts: ["Milk", "Cheese", "Butter", "Yogurt"] },
+                { w: "Carne", a: "Meat", opts: ["Fish", "Meat", "Chicken", "Bread"] },
+                { w: "Pescado", a: "Fish", opts: ["Meat", "Fish", "Chicken", "Egg"] }
+            ]
+        },
+        {
+            id: 5, title: "Animales", icon: "🐶", questions: [
+                { w: "Perro", a: "Dog", opts: ["Cat", "Dog", "Mouse", "Cow"] },
+                { w: "Gato", a: "Cat", opts: ["Dog", "Cat", "Bird", "Fish"] },
+                { w: "Pájaro", a: "Bird", opts: ["Cat", "Bird", "Dog", "Mouse"] },
+                { w: "Caballo", a: "Horse", opts: ["Cow", "Horse", "Pig", "Sheep"] },
+                { w: "Vaca", a: "Cow", opts: ["Horse", "Cow", "Pig", "Goat"] },
+                { w: "Cerdo", a: "Pig", opts: ["Cow", "Pig", "Horse", "Sheep"] },
+                { w: "Ratón", a: "Mouse", opts: ["Cat", "Mouse", "Dog", "Bird"] },
+                { w: "León", a: "Lion", opts: ["Tiger", "Lion", "Bear", "Wolf"] },
+                { w: "Oso", a: "Bear", opts: ["Lion", "Bear", "Wolf", "Fox"] },
+                { w: "Pez", a: "Fish", opts: ["Bird", "Fish", "Dog", "Cat"] }
+            ]
+        },
+        {
+            id: 6, title: "Colores", icon: "🎨", questions: [
+                { w: "Rojo", a: "Red", opts: ["Blue", "Red", "Green", "Yellow"] },
+                { w: "Azul", a: "Blue", opts: ["Red", "Black", "Blue", "White"] },
+                { w: "Verde", a: "Green", opts: ["Yellow", "Green", "Blue", "Red"] },
+                { w: "Amarillo", a: "Yellow", opts: ["Green", "Yellow", "Orange", "Pink"] },
+                { w: "Negro", a: "Black", opts: ["White", "Black", "Grey", "Brown"] },
+                { w: "Blanco", a: "White", opts: ["Black", "White", "Grey", "Red"] },
+                { w: "Naranja", a: "Orange", opts: ["Pink", "Orange", "Red", "Yellow"] },
+                { w: "Rosa", a: "Pink", opts: ["Purple", "Pink", "Red", "Blue"] },
+                { w: "Gris", a: "Grey", opts: ["Black", "Grey", "White", "Brown"] },
+                { w: "Marrón", a: "Brown", opts: ["Black", "Brown", "Grey", "Red"] }
+            ]
+        },
+        {
+            id: 7, title: "Familia", icon: "👨‍👩‍👧", questions: [
+                { w: "Madre", a: "Mother", opts: ["Father", "Sister", "Mother", "Brother"] },
+                { w: "Padre", a: "Father", opts: ["Mother", "Father", "Sister", "Brother"] },
+                { w: "Hermano", a: "Brother", opts: ["Sister", "Brother", "Son", "Dad"] },
+                { w: "Hermana", a: "Sister", opts: ["Brother", "Sister", "Mom", "Aunt"] },
+                { w: "Hijo", a: "Son", opts: ["Daughter", "Son", "Father", "Uncle"] },
+                { w: "Hija", a: "Daughter", opts: ["Son", "Daughter", "Mother", "Aunt"] },
+                { w: "Abuelo", a: "Grandfather", opts: ["Grandmother", "Grandfather", "Father", "Uncle"] },
+                { w: "Abuela", a: "Grandmother", opts: ["Grandfather", "Grandmother", "Mother", "Aunt"] },
+                { w: "Tío", a: "Uncle", opts: ["Aunt", "Uncle", "Father", "Brother"] },
+                { w: "Tía", a: "Aunt", opts: ["Uncle", "Aunt", "Mother", "Sister"] }
+            ]
+        },
+        {
+            id: 8, title: "Ropa", icon: "👕", questions: [
+                { w: "Camisa", a: "Shirt", opts: ["Pants", "Shirt", "Shoes", "Hat"] },
+                { w: "Pantalones", a: "Pants", opts: ["Shirt", "Pants", "Socks", "Dress"] },
+                { w: "Zapatos", a: "Shoes", opts: ["Socks", "Shoes", "Gloves", "Coat"] },
+                { w: "Vestido", a: "Dress", opts: ["Skirt", "Dress", "Shirt", "Hat"] },
+                { w: "Sombrero", a: "Hat", opts: ["Gloves", "Hat", "Scarf", "Shoes"] },
+                { w: "Abrigo", a: "Coat", opts: ["Jacket", "Coat", "Shirt", "Dress"] },
+                { w: "Calcetines", a: "Socks", opts: ["Shoes", "Socks", "Pants", "Gloves"] },
+                { w: "Falda", a: "Skirt", opts: ["Dress", "Skirt", "Pants", "Shirt"] },
+                { w: "Guantes", a: "Gloves", opts: ["Hat", "Gloves", "Socks", "Scarf"] },
+                { w: "Bufanda", a: "Scarf", opts: ["Hat", "Scarf", "Gloves", "Coat"] }
+            ]
+        },
+        {
+            id: 9, title: "Verbos 1", icon: "🏃", questions: [
+                { w: "Correr", a: "Run", opts: ["Walk", "Run", "Jump", "Sleep"] },
+                { w: "Caminar", a: "Walk", opts: ["Run", "Walk", "Sit", "Stand"] },
+                { w: "Comer", a: "Eat", opts: ["Drink", "Eat", "Cook", "Buy"] },
+                { w: "Beber", a: "Drink", opts: ["Eat", "Drink", "Sleep", "Run"] },
+                { w: "Dormir", a: "Sleep", opts: ["Wake", "Sleep", "Run", "Walk"] },
+                { w: "Leer", a: "Read", opts: ["Write", "Read", "Speak", "Listen"] },
+                { w: "Escribir", a: "Write", opts: ["Read", "Write", "Talk", "See"] },
+                { w: "Hablar", a: "Speak", opts: ["Listen", "Speak", "Read", "Write"] },
+                { w: "Escuchar", a: "Listen", opts: ["Speak", "Listen", "Look", "Hear"] },
+                { w: "Ver", a: "See", opts: ["Look", "See", "Watch", "Hear"] }
+            ]
+        },
+        {
+            id: 10, title: "Escuela", icon: "📚", questions: [
+                { w: "Libro", a: "Book", opts: ["Pen", "Desk", "Book", "Paper"] },
+                { w: "Lápiz", a: "Pencil", opts: ["Pen", "Pencil", "Book", "Ruler"] },
+                { w: "Maestro", a: "Teacher", opts: ["Student", "Doctor", "Teacher", "Driver"] },
+                { w: "Estudiante", a: "Student", opts: ["Teacher", "Student", "Boy", "Girl"] },
+                { w: "Escuela", a: "School", opts: ["House", "School", "Park", "Shop"] },
+                { w: "Clase", a: "Class", opts: ["School", "Class", "Room", "Desk"] },
+                { w: "Papel", a: "Paper", opts: ["Book", "Paper", "Pen", "Pencil"] },
+                { w: "Escritorio", a: "Desk", opts: ["Chair", "Desk", "Table", "Board"] },
+                { w: "Silla", a: "Chair", opts: ["Desk", "Chair", "Table", "Floor"] },
+                { w: "Pizarra", a: "Board", opts: ["Desk", "Board", "Wall", "Door"] }
+            ]
+        },
+        {
+            id: 11, title: "Casa", icon: "🏠", questions: [
+                { w: "Casa", a: "House", opts: ["Apartment", "House", "Room", "Building"] },
+                { w: "Cocina", a: "Kitchen", opts: ["Bedroom", "Kitchen", "Bathroom", "Garden"] },
+                { w: "Baño", a: "Bathroom", opts: ["Kitchen", "Bathroom", "Living room", "Hall"] },
+                { w: "Dormitorio", a: "Bedroom", opts: ["Kitchen", "Bedroom", "Garden", "Garage"] },
+                { w: "Sala", a: "Living room", opts: ["Bedroom", "Living room", "Kitchen", "Bath"] },
+                { w: "Jardín", a: "Garden", opts: ["Park", "Garden", "Street", "Yard"] },
+                { w: "Puerta", a: "Door", opts: ["Window", "Door", "Wall", "Floor"] },
+                { w: "Ventana", a: "Window", opts: ["Door", "Window", "Roof", "Wall"] },
+                { w: "Mesa", a: "Table", opts: ["Chair", "Table", "Desk", "Bed"] },
+                { w: "Cama", a: "Bed", opts: ["Table", "Chair", "Bed", "Sofa"] }
+            ]
+        },
+        {
+            id: 12, title: "Cuerpo", icon: "👀", questions: [
+                { w: "Ojos", a: "Eyes", opts: ["Ears", "Nose", "Eyes", "Mouth"] },
+                { w: "Nariz", a: "Nose", opts: ["Eyes", "Nose", "Mouth", "Face"] },
+                { w: "Boca", a: "Mouth", opts: ["Nose", "Mouth", "Teeth", "Lips"] },
+                { w: "Orejas", a: "Ears", opts: ["Eyes", "Ears", "Head", "Hair"] },
+                { w: "Cabeza", a: "Head", opts: ["Hand", "Head", "Foot", "Arm"] },
+                { w: "Mano", a: "Hand", opts: ["Foot", "Leg", "Hand", "Arm"] },
+                { w: "Pie", a: "Foot", opts: ["Hand", "Foot", "Leg", "Finger"] },
+                { w: "Brazo", a: "Arm", opts: ["Leg", "Arm", "Hand", "Foot"] },
+                { w: "Pierna", a: "Leg", opts: ["Arm", "Leg", "Foot", "Hand"] },
+                { w: "Dedo", a: "Finger", opts: ["Toe", "Finger", "Hand", "Arm"] }
+            ]
+        },
+        {
+            id: 13, title: "Tiempo", icon: "⏰", questions: [
+                { w: "Hora", a: "Hour", opts: ["Minute", "Day", "Hour", "Week"] },
+                { w: "Minuto", a: "Minute", opts: ["Second", "Minute", "Hour", "Day"] },
+                { w: "Día", a: "Day", opts: ["Night", "Day", "Week", "Month"] },
+                { w: "Noche", a: "Night", opts: ["Day", "Night", "Morning", "Evening"] },
+                { w: "Semana", a: "Week", opts: ["Month", "Week", "Year", "Day"] },
+                { w: "Mes", a: "Month", opts: ["Year", "Month", "Week", "Day"] },
+                { w: "Año", a: "Year", opts: ["Month", "Year", "Week", "Day"] },
+                { w: "Hoy", a: "Today", opts: ["Tomorrow", "Yesterday", "Today", "Now"] },
+                { w: "Mañana", a: "Tomorrow", opts: ["Today", "Tomorrow", "Yesterday", "Later"] },
+                { w: "Ayer", a: "Yesterday", opts: ["Today", "Yesterday", "Tomorrow", "Now"] }
+            ]
+        },
+        {
+            id: 14, title: "Ciudad", icon: "🏙️", questions: [
+                { w: "Ciudad", a: "City", opts: ["Town", "City", "Village", "Country"] },
+                { w: "Calle", a: "Street", opts: ["Park", "Street", "Shop", "Road"] },
+                { w: "Tienda", a: "Shop", opts: ["Bank", "Shop", "School", "Home"] },
+                { w: "Parque", a: "Park", opts: ["Garden", "Park", "Street", "School"] },
+                { w: "Banco", a: "Bank", opts: ["Shop", "Bank", "Office", "Hospital"] },
+                { w: "Hospital", a: "Hospital", opts: ["School", "Hospital", "Bank", "Shop"] },
+                { w: "Restaurante", a: "Restaurant", opts: ["Cafe", "Restaurant", "Bar", "Shop"] },
+                { w: "Mercado", a: "Market", opts: ["Shop", "Market", "Store", "Mall"] },
+                { w: "Puente", a: "Bridge", opts: ["Street", "Bridge", "Road", "River"] },
+                { w: "Edificio", a: "Building", opts: ["House", "Building", "School", "Bank"] }
+            ]
+        },
+        {
+            id: 15, title: "Trabajo", icon: "💼", questions: [
+                { w: "Trabajo", a: "Job", opts: ["Work", "Job", "Boss", "Office"] },
+                { w: "Jefe", a: "Boss", opts: ["Worker", "Boss", "Client", "Friend"] },
+                { w: "Oficina", a: "Office", opts: ["Home", "Office", "Factory", "Store"] },
+                { w: "Doctor", a: "Doctor", opts: ["Nurse", "Doctor", "Teacher", "Driver"] },
+                { w: "Enfermera", a: "Nurse", opts: ["Doctor", "Nurse", "Teacher", "Cook"] },
+                { w: "Policía", a: "Police", opts: ["Fireman", "Police", "Doctor", "Guard"] },
+                { w: "Bombero", a: "Firefighter", opts: ["Police", "Firefighter", "Doctor", "Driver"] },
+                { w: "Cocinero", a: "Cook", opts: ["Waiter", "Cook", "Chef", "Baker"] },
+                { w: "Conductor", a: "Driver", opts: ["Pilot", "Driver", "Mechanic", "Worker"] },
+                { w: "Granjero", a: "Farmer", opts: ["Gardener", "Farmer", "Worker", "Driver"] }
+            ]
+        },
+        {
+            id: 16, title: "Emociones", icon: "😀", questions: [
+                { w: "Feliz", a: "Happy", opts: ["Sad", "Angry", "Happy", "Tired"] },
+                { w: "Triste", a: "Sad", opts: ["Happy", "Sad", "Excited", "Bored"] },
+                { w: "Enojado", a: "Angry", opts: ["Happy", "Angry", "Sad", "Calm"] },
+                { w: "Cansado", a: "Tired", opts: ["Sleepy", "Tired", "Energetic", "Happy"] },
+                { w: "Miedo", a: "Scared", opts: ["Brave", "Scared", "Happy", "Sad"] },
+                { w: "Sorprendido", a: "Surprised", opts: ["Bored", "Surprised", "Calm", "Angry"] },
+                { w: "Aburrido", a: "Bored", opts: ["Fun", "Bored", "Excited", "Happy"] },
+                { w: "Enfermo", a: "Sick", opts: ["Healthy", "Sick", "Tired", "Sad"] },
+                { w: "Hambriento", a: "Hungry", opts: ["Thirsty", "Hungry", "Full", "Sick"] },
+                { w: "Sediento", a: "Thirsty", opts: ["Hungry", "Thirsty", "Happy", "Sad"] }
+            ]
+        },
+        {
+            id: 17, title: "Naturaleza", icon: "🌳", questions: [
+                { w: "Árbol", a: "Tree", opts: ["Flower", "Grass", "Tree", "Sun"] },
+                { w: "Sol", a: "Sun", opts: ["Moon", "Star", "Sun", "Cloud"] },
+                { w: "Luna", a: "Moon", opts: ["Sun", "Moon", "Star", "Sky"] },
+                { w: "Estrella", a: "Star", opts: ["Moon", "Star", "Sun", "Planet"] },
+                { w: "Cielo", a: "Sky", opts: ["Sea", "Sky", "Land", "Cloud"] },
+                { w: "Nube", a: "Cloud", opts: ["Rain", "Cloud", "Sun", "Wind"] },
+                { w: "Lluvia", a: "Rain", opts: ["Snow", "Rain", "Wind", "Sun"] },
+                { w: "Nieve", a: "Snow", opts: ["Rain", "Snow", "Ice", "Cold"] },
+                { w: "Mar", a: "Sea", opts: ["River", "Sea", "Lake", "Ocean"] },
+                { w: "Río", a: "River", opts: ["Sea", "River", "Lake", "Water"] }
+            ]
+        },
+        {
+            id: 18, title: "Deportes", icon: "⚽", questions: [
+                { w: "Fútbol", a: "Soccer", opts: ["Tennis", "Golf", "Soccer", "Basket"] },
+                { w: "Pelota", a: "Ball", opts: ["Bat", "Net", "Ball", "Goal"] },
+                { w: "Baloncesto", a: "Basketball", opts: ["Soccer", "Basketball", "Tennis", "Golf"] },
+                { w: "Tenis", a: "Tennis", opts: ["Golf", "Tennis", "Soccer", "Ball"] },
+                { w: "Natación", a: "Swimming", opts: ["Running", "Swimming", "Jump", "Walk"] },
+                { w: "Correr", a: "Running", opts: ["Walking", "Running", "Swimming", "Play"] },
+                { w: "Juego", a: "Game", opts: ["Sport", "Game", "Play", "Match"] },
+                { w: "Equipo", a: "Team", opts: ["Player", "Team", "Group", "Club"] },
+                { w: "Jugador", a: "Player", opts: ["Team", "Player", "Coach", "Fan"] },
+                { w: "Gol", a: "Goal", opts: ["Score", "Goal", "Point", "Win"] }
+            ]
+        },
+        {
+            id: 19, title: "Números", icon: "🔢", questions: [
+                { w: "Uno", a: "One", opts: ["Two", "One", "Three", "Four"] },
+                { w: "Dos", a: "Two", opts: ["One", "Two", "Three", "Four"] },
+                { w: "Tres", a: "Three", opts: ["Two", "Three", "Four", "Five"] },
+                { w: "Cuatro", a: "Four", opts: ["Three", "Four", "Five", "Six"] },
+                { w: "Cinco", a: "Five", opts: ["Four", "Five", "Six", "Seven"] },
+                { w: "Diez", a: "Ten", opts: ["Nine", "Ten", "Eleven", "Twelve"] },
+                { w: "Veinte", a: "Twenty", opts: ["Twelve", "Twenty", "Thirty", "Ten"] },
+                { w: "Treinta", a: "Thirty", opts: ["Twenty", "Thirty", "Forty", "Fifty"] },
+                { w: "Cien", a: "One hundred", opts: ["Thousand", "One hundred", "Fifty", "Zero"] },
+                { w: "Mil", a: "Thousand", opts: ["Hundred", "Thousand", "Million", "Ten"] }
+            ]
+        },
+        {
+            id: 20, title: "Graduación", icon: "🎓", questions: [
+                { w: "Éxito", a: "Success", opts: ["Fail", "Luck", "Success", "Try"] },
+                { w: "Futuro", a: "Future", opts: ["Past", "Present", "Future", "Time"] },
+                { w: "Meta", a: "Goal", opts: ["Dream", "Goal", "Plan", "Idea"] },
+                { w: "Sueño", a: "Dream", opts: ["Sleep", "Dream", "Goal", "Wish"] },
+                { w: "Estudiar", a: "Study", opts: ["Learn", "Study", "Read", "Write"] },
+                { w: "Aprender", a: "Learn", opts: ["Teach", "Learn", "Know", "Study"] },
+                { w: "Examen", a: "Exam", opts: ["Test", "Exam", "Quiz", "Paper"] },
+                { w: "Grado", a: "Degree", opts: ["Grade", "Degree", "Level", "Class"] },
+                { w: "Diploma", a: "Diploma", opts: ["Paper", "Diploma", "Card", "Book"] },
+                { w: "Fiesta", a: "Party", opts: ["Meeting", "Party", "Dinner", "Event"] }
+            ]
+        }
+    ];
+    
+    let currentLesson = null;
+    let currentQIndex = 0;
+    let userEnglishLevel = 1; 
+    
+    // --- FUNCIONES ACADEMIA ---
+    function renderEnglishPath() {
+        const container = document.getElementById('englishPath');
+        if(!container) return;
+        let html = "";
+        
+        englishLessons.forEach((lesson, index) => {
+            const levelNum = index + 1;
+            let statusClass = "level-locked";
+            let statusIcon = "🔒";
+            
+            if (levelNum < userEnglishLevel) {
+                statusClass = "level-completed completed";
+                statusIcon = lesson.icon;
+            } else if (levelNum === userEnglishLevel) {
+                statusClass = "level-unlocked";
+                statusIcon = lesson.icon;
+            }
+            const margin = (index % 2 === 0) ? '0' : '50px';
+            
+            html += `
+            <div class="duo-level-btn ${statusClass}" style="margin-left:${margin}" onclick="startLesson(${levelNum})">
+                ${statusIcon}
+                <div class="star-crown">👑</div>
+                <div class="level-label">${lesson.title}</div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+    
+    window.startLesson = (level) => {
+        if (level > userEnglishLevel) return notify("🔒 Nivel bloqueado");
+        
+        // VERIFICACIÓN DE VIDAS
+        db.ref(`users/${idAuditor}/hearts`).once('value').then(snap => {
+            const hearts = (snap.exists()) ? snap.val() : 5;
+            
+            if (hearts <= 0) {
+                document.getElementById('modalNoVidas').style.display = 'flex';
+                window.playSound('gameover');
+                return;
+            }
+    
+            currentLesson = englishLessons.find(l => l.id === level);
+            if(!currentLesson) return notify("Error de nivel"); 
+            
+            currentQIndex = 0;
+            document.getElementById('modalLesson').style.display = 'flex';
+            showQuestion();
+        });
+    };
+    
+    function showQuestion() {
+        const q = currentLesson.questions[currentQIndex];
+        document.getElementById('qWord').textContent = q.w;
+        document.getElementById('lessonProgress').style.width = ((currentQIndex / currentLesson.questions.length) * 100) + "%";
+        
+        const opts = [...q.opts].sort(() => Math.random() - 0.5);
+        let html = "";
+        opts.forEach(opt => {
+            html += `<div class="option-card" onclick="selectOption(this, '${opt}')">${opt}</div>`;
+        });
+        document.getElementById('lessonOptions').innerHTML = html;
+        
+        document.getElementById('lessonFeedback').style.display = 'none';
+        document.getElementById('btnCheckLesson').style.display = 'block';
+        document.getElementById('btnNextLesson').style.display = 'none';
+        selectedOptionText = null;
+    }
+    
+    let selectedOptionText = null;
+    window.selectOption = (el, text) => {
+        document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedOptionText = text;
+        window.playSound('click');
+    };
+    
+    window.checkAnswer = () => {
+        if (!selectedOptionText) return notify("Selecciona una respuesta");
+        
+        const correct = currentLesson.questions[currentQIndex].a;
+        const feedback = document.getElementById('lessonFeedback');
+        const cards = document.querySelectorAll('.option-card');
+    
+        if (selectedOptionText === correct) {
+            feedback.textContent = "¡CORRECTO! 🎉";
+            feedback.style.color = "#58cc02";
+            window.playSound('win');
+            cards.forEach(c => { if(c.innerText === correct) c.classList.add('correct'); });
+            
+            document.getElementById('btnCheckLesson').style.display = 'none';
+            document.getElementById('btnNextLesson').style.display = 'block';
+        } else {
+            feedback.textContent = `Incorrecto. Era: ${correct}`;
+            feedback.style.color = "#ff4b4b";
+            window.playSound('gameover');
+            
+            cards.forEach(c => {
+                if(c.innerText === selectedOptionText) c.classList.add('wrong');
+                if(c.innerText === correct) c.classList.add('correct');
+            });
+    
+            db.ref(`users/${idAuditor}/hearts`).transaction(currentHearts => {
+                return (currentHearts || 0) - 1;
+            }, (error, committed, snapshot) => {
+                if (committed) {
+                    const remaining = snapshot.val();
+                    notify(`💔 Pierdes 1 vida. Te quedan: ${remaining}`);
+                    if (remaining <= 0) {
+                        setTimeout(() => {
+                            document.getElementById('modalLesson').style.display = 'none';
+                            document.getElementById('modalNoVidas').style.display = 'flex';
+                        }, 1500);
+                    }
+                }
+            });
+            
+            document.getElementById('btnCheckLesson').style.display = 'none';
+            document.getElementById('btnNextLesson').style.display = 'block';
+        }
+        feedback.style.display = 'block';
+    };
+    
+    window.nextQuestion = () => {
+        currentQIndex++;
+        if (currentQIndex >= currentLesson.questions.length) {
+            document.getElementById('modalLesson').style.display = 'none';
+            completeLevel();
+        } else {
+            showQuestion();
+        }
+    };
+    
+    function completeLevel() {
+        const bonus = 0.50; 
+        userEnglishLevel++;
+        
+        db.ref(`users/${idAuditor}`).update({
+            englishLevel: userEnglishLevel,
+            earnings: firebase.database.ServerValue.increment(bonus)
+        });
+        
+        registrarHistorial("Nivel Inglés", bonus);
+        notify(`🎉 ¡NIVEL COMPLETADO! +${bonus} PTS`);
+        window.playSound('win');
+        renderEnglishPath();
+        
+        document.getElementById('giftSender').textContent = "Academia";
+        document.getElementById('giftAmount').textContent = bonus;
+        document.getElementById('modalGiftReceived').style.display = 'flex';
+    }
+    
+    window.cerrarLesson = () => {
+        document.getElementById('modalLesson').style.display = 'none';
+    };
+    
+    // --- FUNCIONES CORE ---
+    function notify(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+    function escapeHtml(text) {
+        if (!text) return text;
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+    function getAvatarUrl(seed) { if (!seed) seed = "anon"; return `https://api.dicebear.com/7.x/micah/svg?seed=${seed}&radius=50&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc`; }
+    function getYouTubeID(url) { if (!url) return null; const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
+    
+    function registrarHistorial(motivo, puntos) { if (!idAuditor) return; var ruta = 'users/' + idAuditor + '/historial'; db.ref(ruta).push({ motivo: motivo, puntos: parseFloat(puntos), fecha: firebase.database.ServerValue.TIMESTAMP }); }
+    
+    // --- NAVEGACION ---
+    const wrapper = document.getElementById('appWrapper'); let currentScreen = 1;
+    window.goToScreen = (index, userAction = false) => {
+        if (userAction && index !== 1) {
+            window.history.pushState({screen: index}, "");
+        }
+        currentScreen = index;
+        const wrapper = document.getElementById('appWrapper');
+        wrapper.style.transform = `translateX(-${index * 100}vw)`;
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(`nav${index}`).classList.add('active');
+    };
+    window.switchTab = (tab) => { if (tab === 'muro') { document.getElementById('viewMuro').style.display = 'block'; document.getElementById('tabBtnMuro').classList.add('tab-active'); } };
+    
+    // --- LOGICA VIDEOS ---
+    function checkScrollVideos() {
+        const modal = document.getElementById('modalComments'); if (modal && modal.style.display === 'flex') return;
+        if (currentScreen !== 1) return;
+        const videos = document.querySelectorAll('.smart-video-container'); const centerLine = window.innerHeight / 2; let closestVideo = null; let minDistance = 9999;
+        videos.forEach(div => { const rect = div.getBoundingClientRect(); const videoCenter = rect.top + (rect.height / 2); const distance = Math.abs(centerLine - videoCenter); if (distance < minDistance && distance < 250) { minDistance = distance; closestVideo = div; } });
+        
+        if (closestVideo) {
+            const newId = closestVideo.id;
+            if (newId !== currentVideoId) {
+                if (currentVideoId) { const oldDiv = document.getElementById(currentVideoId); if (oldDiv) { oldDiv.querySelector('.vid-frame').innerHTML = ""; oldDiv.querySelector('.vid-poster').style.display = 'block'; const oldBtn = oldDiv.querySelector('.unmute-btn'); if (oldBtn) oldBtn.remove(); } }
+                const ytId = closestVideo.getAttribute('data-yt'); closestVideo.querySelector('.vid-poster').style.display = 'none'; const muteState = audioActivadoGlobal ? 0 : 1;
+                closestVideo.querySelector('.vid-frame').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&mute=${muteState}&rel=0&playsinline=1" style="${audioActivadoGlobal ? '' : 'pointer-events:none;'}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                if (!audioActivadoGlobal) { if (!closestVideo.querySelector('.unmute-btn')) { const btnDiv = document.createElement('div'); btnDiv.className = 'unmute-btn'; btnDiv.style.cssText = "position:absolute; inset:0; z-index:10; display:flex; align-items:center; justify-content:center; cursor:pointer;"; btnDiv.innerHTML = `<div style="background:rgba(0,0,0,0.6); padding:10px 20px; border-radius:50px; color:white; font-weight:bold; border:2px solid white; display:flex; align-items:center; gap:10px; box-shadow:0 4px 15px rgba(0,0,0,0.3);"><i class="fas fa-volume-up"></i> ACTIVAR SONIDO</div>`; btnDiv.onclick = () => window.activarSonido(newId, ytId); closestVideo.appendChild(btnDiv); } }
+                currentVideoId = newId;
+            }
+        } else { if (currentVideoId) { const oldDiv = document.getElementById(currentVideoId); if (oldDiv) { oldDiv.querySelector('.vid-frame').innerHTML = ""; oldDiv.querySelector('.vid-poster').style.display = 'block'; const oldBtn = oldDiv.querySelector('.unmute-btn'); if (oldBtn) oldBtn.remove(); } currentVideoId = null; } }
+    }
+    
+    window.activarSonido = (id, ytId) => { audioActivadoGlobal = true; const container = document.getElementById(id); if (container) { container.querySelector('.vid-frame').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=1&mute=0&rel=0&playsinline=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`; const btn = container.querySelector('.unmute-btn'); if (btn) btn.style.display = 'none'; } };
+    
+    const pantallaMuro = document.querySelectorAll('.screen')[1]; if (pantallaMuro) { pantallaMuro.addEventListener('scroll', function() { if (scrollTimeout) clearTimeout(scrollTimeout); scrollTimeout = setTimeout(() => { checkScrollVideos(); }, 100); }); }
+    
+    // --- CARGAR USUARIOS HORIZONTALES ---
+    function cargarBarraUsuarios() {
+        db.ref('users').orderByChild('lastSeen').limitToLast(30).on('value', snapshot => {
+            const contenedor = document.getElementById('listaUsuariosHorizontal');
+            if (!contenedor) return;
+            let html = "";
+            const ahora = Date.now();
+            const lista = [];
+            snapshot.forEach(child => {
+                const u = child.val();
+                if (child.key === idAuditor) return;
+                const tiempo = u.lastSeen || 0;
+                const esOnline = (ahora - tiempo) < (15 * 60 * 1000); // 15 min
+                let nombreMostrar = "User";
+                if (u.myInviteKey) nombreMostrar = u.myInviteKey.split('-')[1] || "User"; 
+                lista.push({ key: child.key, nombre: nombreMostrar, online: esOnline });
+            });
+            lista.sort((a, b) => (a.online === b.online) ? 0 : a.online ? -1 : 1);
+            lista.forEach(user => {
+                const claseBorde = user.online ? "online" : "";
+                const clasePunto = user.online ? "dot-online" : "dot-offline";
+                const avatar = getAvatarUrl(user.key);
+                html += `
+                <div class="story-item" onclick="mostrarPerfilUsuario('${user.key}', '${user.nombre}')">
+                    <div class="story-avatar-box ${claseBorde}">
+                        <div class="story-img" style="background-image:url('${avatar}')"></div>
+                        <div class="story-dot ${clasePunto}"></div>
+                    </div>
+                    <div class="story-name">${user.nombre}</div>
+                </div>`;
+            });
+            contenedor.innerHTML = html || '<div style="padding:10px; color:#999;">Sin usuarios</div>';
+        });
+    }
+    
+    window.mostrarPerfilUsuario = (uid, nombre) => {
+        window.openTransfer(uid, nombre);
+    };
+    
+    // --- MURO ---
+    function cargarMuroReportes() {
+        const container = document.getElementById('muroReportes');
+        db.ref('reportes').limitToLast(50).on('value', snap => {
+            if (!snap.exists()) {
+                container.innerHTML = "<div style='text-align:center; padding:40px; color:#cbd5e1;'>📭 Muro vacío.</div>";
+                return;
+            }
+            let posts = [];
+            snap.forEach(c => {
+                posts.push({ k: c.key, ...c.val() });
+            });
+            posts.reverse();
+            let html = "";
+    
+            posts.forEach(post => {
+                const avatarUrl = getAvatarUrl(post.uid);
+                const nombre = post.autorClave || "Anónimo";
+                let numComentarios = post.comentarios ? Object.keys(post.comentarios).length : 0;
+    
+                let tiempo = "Reciente";
+                if (post.fecha) {
+                    const min = Math.floor((Date.now() - post.fecha) / 60000);
+                    if (min > 60) tiempo = `Hace ${Math.floor(min/60)}h`;
+                    else if (min > 0) tiempo = `Hace ${min}m`;
+                }
+    
+                let mediaBlock = "";
+                const ytId = getYouTubeID(post.musica);
+                if (ytId) {
+                    mediaBlock = `<div class="card-media smart-video-container" id="feed-vid-${post.k}" data-yt="${ytId}" style="position:relative;width:100%;padding-bottom:56.25%;background:#000;"><div class="vid-poster" style="position:absolute;inset:0;width:100%;height:100%;"><img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;opacity:0.8;"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-play" style="color:white;font-size:2rem;"></i></div></div><div class="vid-frame" style="position:absolute;inset:0;width:100%;height:100%;"></div></div>`;
+                }
+    
+                const isTop = (nombre === document.getElementById('leaderName').textContent);
+                const iLikedIt = (post.likes && post.likes[idAuditor]) ? true : false;
+                const heartClass = iLikedIt ? 'fas fa-heart liked' : 'far fa-heart';
+    
+                html += `<article id="post-${post.k}" class="social-card ${isTop?'top-creator-glow':''}"><div class="card-header"><div class="user-row"><div class="card-avatar" style="background-image:url('${avatarUrl}');border-color:${isTop?'#fbbf24':'#f1f5f9'}"></div><div><span class="card-username" style="color:${isTop?'#b45309':'#1e293b'}">${escapeHtml(nombre)} ${isTop?'<span class="top-badge">TOP 1</span>':''}</span><span class="card-time">${tiempo}</span></div></div><button onclick="window.abrirModalComentarios('${post.k}')" style="border:none;background:none;color:#94a3b8;"><i class="fas fa-ellipsis-h"></i></button></div>${mediaBlock}<div class="card-text-content">${escapeHtml(post.texto)}</div><div class="card-actions"><button class="action-icon" onclick="likePost('${post.k}', '${post.uid}', this)"><i class="${heartClass}"></i><span>${post.vCount||0}</span></button><button class="action-icon" onclick="window.abrirModalComentarios('${post.k}')"><i class="far fa-comment"></i><span>${numComentarios}</span></button></div></article>`;
+            });
+            container.innerHTML = html;
+            setTimeout(checkScrollVideos, 500);
+        });
+    }
+    
+    window.likePost = function(key, ownerUid, btn) {
+        if (typeof btn === 'undefined' && typeof ownerUid === 'object') {
+            btn = ownerUid; ownerUid = null;
+        }
+        if (!idAuditor) return notify("Inicia sesión para dar like");
+        const icon = btn.querySelector('i');
+        const span = btn.querySelector('span');
+        
+        if (icon.classList.contains('far')) {
+            icon.classList.remove('far');
+            icon.classList.add('fas', 'liked');
+            let val = parseInt(span.innerText) || 0;
+            span.innerText = val + 1;
+            
+            db.ref(`reportes/${key}/vCount`).set(firebase.database.ServerValue.increment(1));
+            db.ref(`reportes/${key}/likes/${idAuditor}`).set(true);
+            notify("❤️ Like enviado");
+            
+            if (ownerUid && ownerUid !== 'undefined' && ownerUid !== idAuditor) {
+                db.ref(`users/${ownerUid}/notifications`).push({
+                    from: myCurrentKey,
+                    type: 'like',
+                    text: "❤️ Le gustó tu publicación",
+                    extra: key,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    read: false
+                });
+            }
+        }
+    };
+    
+    function cargarLeaderboard() { db.ref('users').orderByChild('earnings').limitToLast(1).on('value', snap => { if (!snap.exists()) return; snap.forEach(child => { const u = child.val(); document.getElementById('leaderName').textContent = u.myInviteKey || "Anónimo"; document.getElementById('leaderScore').textContent = `👑 ${parseFloat(u.earnings||0).toFixed(2)} PTS`; document.getElementById('leaderAvatarImg').style.backgroundImage = `url('${getAvatarUrl(child.key)}')`; }); }); }
+    
+    // --- ACCIONES DE USUARIO ---
+    window.copiarClave = () => { const textArea = document.createElement("textarea"); textArea.value = myCurrentKey; document.body.appendChild(textArea); textArea.select(); try { document.execCommand('copy'); notify("✅ Copiado"); } catch (e) {} document.body.removeChild(textArea); };
+    window.verReferidos = () => { if (!idAuditor) return notify("Inicia sesión"); document.getElementById('modalReferidos').style.display = 'flex'; db.ref(`users/${idAuditor}/referidos`).once('value').then(snap => { let html = ""; if (!snap.exists()) html = "<div style='text-align:center;padding:20px;color:#64748b;'>Sin referidos.</div>"; else snap.forEach(c => { const d = c.val(); html += `<div style="display:flex;align-items:center;padding:12px;border-bottom:1px solid #f1f5f9;"><div style="width:40px;height:40px;border-radius:50%;background-image:url('${getAvatarUrl(d.clave)}');background-size:cover;"></div><div style="margin-left:10px;"><div style="font-weight:700;">${d.clave}</div></div><div style="margin-left:auto;font-weight:800;color:#10b981;">+0.50</div></div>`; }); document.getElementById('listaReferidos').innerHTML = html; }); };
+    
+    // BOTON REFERIDO
+    const btnValidar = document.getElementById('btnValidar');
+    if (btnValidar) {
+        btnValidar.onclick = () => {
+            const input = document.getElementById('inputFolio'); const codigo = input.value.trim().toUpperCase();
+            if (!idAuditor) return notify("❌ Inicia sesión"); if (!codigo || codigo === myCurrentKey) return notify("❌ Código inválido");
+            db.ref(`users/${idAuditor}/referredBy`).once('value').then(snap => {
+                if (snap.exists()) return notify("⚠️ Ya canjeado.");
+                db.ref('users').orderByChild('myInviteKey').equalTo(codigo).once('value').then(userSnap => {
+                    if (!userSnap.exists()) return notify("❌ No existe.");
+                    let ownerId = Object.keys(userSnap.val())[0];
+                    const updates = {}; const fecha = firebase.database.ServerValue.TIMESTAMP;
+                    updates[`users/${ownerId}/earnings`] = firebase.database.ServerValue.increment(0.50);
+                    updates[`users/${idAuditor}/earnings`] = firebase.database.ServerValue.increment(0.25);
+                    const refKey = db.ref(`users/${ownerId}/referidos`).push().key;
+                    updates[`users/${ownerId}/referidos/${refKey}`] = { uid: idAuditor, clave: myCurrentKey, fecha: fecha };
+                    updates[`users/${idAuditor}/referredBy`] = codigo;
+                    const notiKey = db.ref(`users/${ownerId}/notifications`).push().key;
+                    updates[`users/${ownerId}/notifications/${notiKey}`] = { from: myCurrentKey, type: 'referido', text: "🎉 ¡Usó tu código!", timestamp: fecha, read: false };
+                    db.ref().update(updates).then(() => { notify("✅ ¡Éxito! +0.25 PTS"); registrarHistorial("Bono Referido", 0.25); input.value = ""; try{window.playSound('win');}catch(e){} });
+                });
+            });
+        };
+    }
+    
+    // --- MISION & POSTS ---
+    function abrirMision() { 
+        if (currentVideoId) { document.getElementById(currentVideoId).querySelector('.vid-frame').innerHTML=""; currentVideoId=null; } 
+        
+        db.ref(`users/${idAuditor}`).once('value').then(snap => { 
+            const u = snap.val(); 
+            const hoy = new Date().toISOString().split('T')[0]; 
+            if (u.lastMissionDate === hoy && (u.missionCount || 0) >= 2) return notify("✅ Vuelve mañana"); 
+            
+            // RESETEAR INTERFAZ
+            document.getElementById('modalMision').style.display = 'flex';
+            document.getElementById('step1Mision').style.display = 'block';
+            document.getElementById('step2Mision').style.display = 'none';
+            
+            // LIMPIEZA DE AUDIO Y CAMPOS
+            document.getElementById('invisiblePlayer').innerHTML = ""; 
+            if(window.resetAudioControls) window.resetAudioControls();
+            
+            document.getElementById('mMusic').value = "";
+            document.getElementById('mText').value = "";
+            document.getElementById('musicDisplayLabel').textContent = "🔍 Toca para buscar canción...";
+            document.getElementById('songNamePreview').textContent = "---";
+            
+            document.getElementById('btnMisionNext').style.opacity = "0.5";
+            document.getElementById('btnMisionNext').disabled = true; 
+        }); 
+    }
+    
+    document.getElementById('btnEnviarMision').onclick = () => { 
+        const txt = document.getElementById('mText').value; 
+        const mus = document.getElementById('mMusic').value; 
+        if (!txt) return notify("Escribe algo..."); 
+        
+        localStorage.setItem('pendingPost', JSON.stringify({ texto: txt, musica: mus })); 
+        notify("📢 Procesando..."); 
+        document.getElementById('btnEnviarMision').textContent = "Publicando..."; 
+        document.getElementById('btnEnviarMision').disabled = true; 
+        setTimeout(() => { window.location.href = "go:s7"; }, 500); 
+    };
+    
+    function procesarPublicacionPendiente() {
+        const pending = localStorage.getItem('pendingPost');
+        if (pending && idAuditor) {
+            const data = JSON.parse(pending); const hoy = new Date().toISOString().split('T')[0];
+            db.ref(`users/${idAuditor}`).once('value').then(snap => {
+                const u = snap.val();
+                db.ref('reportes').push({ uid: idAuditor, autorClave: myCurrentKey, texto: data.texto, musica: data.musica, vCount: 0, fecha: firebase.database.ServerValue.TIMESTAMP });
+                db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.50), lastMissionDate: hoy, missionCount: ((u.lastMissionDate === hoy) ? (u.missionCount || 0) : 0) + 1 });
+                registrarHistorial("Misión: Publicar", 0.50); notify("✅ Publicado (+0.50)"); localStorage.removeItem('pendingPost'); document.getElementById('mText').value = "";
+            });
+        }
+    }
+    
+    // --- LÓGICA DE PASOS MISION ---
+    window.seleccionarVideo = (id, title) => {
+        document.getElementById('mMusic').value = `https://www.youtube.com/watch?v=${id}`;
+        const titleShort = title.substring(0, 25) + "...";
+        document.getElementById('musicDisplayLabel').innerHTML = `🎵 ${titleShort}`;
+        document.getElementById('songNamePreview').textContent = titleShort;
+        document.getElementById('modalMusicSelector').style.display = 'none';
+        const btnNext = document.getElementById('btnMisionNext');
+        btnNext.style.opacity = "1";
+        btnNext.disabled = false;
+        notify("🎵 Canción elegida");
+    };
+    
+    // --- LÓGICA DE AUDIO (YOUTUBE API) ---
+    let audioPlayer = null;
+    let isPlaying = false;
+    
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    
+    window.goToStep2 = () => {
+        const musicValue = document.getElementById('mMusic').value;
+        if (!musicValue) return notify("⚠️ Elige una canción primero");
+        
+        const ytId = getYouTubeID(musicValue);
+        if (!ytId) return notify("Error con la canción");
+    
+        document.getElementById('step1Mision').style.display = 'none';
+        document.getElementById('step2Mision').style.display = 'block';
+        resetAudioControls();
+    
+        if (audioPlayer) {
+            audioPlayer.loadVideoById(ytId);
+        } else {
+            window.onYouTubeIframeAPIReady = () => {
+                audioPlayer = new YT.Player('invisiblePlayer', {
+                    height: '1', width: '1', videoId: ytId,
+                    playerVars: { 'playsinline': 1, 'controls': 0, 'disablekb': 1, 'fs': 0, 'rel': 0 },
+                    events: { 'onStateChange': onPlayerStateChange }
+                });
+            };
+            if (window.YT && window.YT.Player) window.onYouTubeIframeAPIReady();
+        }
+        setTimeout(() => document.getElementById('mText').focus(), 100);
+    };
+    
+    window.toggleAudio = () => {
+        if (!audioPlayer || typeof audioPlayer.getPlayerState !== 'function') return;
+        const playerState = audioPlayer.getPlayerState();
+        if (playerState === YT.PlayerState.PLAYING) audioPlayer.pauseVideo();
+        else audioPlayer.playVideo();
+    };
+    
+    function onPlayerStateChange(event) {
+        const icon = document.getElementById('audioIcon');
+        const btn = document.getElementById('btnAudioControl');
+        if (event.data === YT.PlayerState.PLAYING) {
+            isPlaying = true;
+            icon.className = 'fas fa-pause'; icon.style.marginLeft = "0";
+            btn.style.background = '#ef4444'; btn.style.boxShadow = '0 4px 10px rgba(239, 68, 68, 0.3)';
+        } else {
+            isPlaying = false;
+            icon.className = 'fas fa-play'; icon.style.marginLeft = "4px";
+            btn.style.background = '#0070ba'; btn.style.boxShadow = '0 4px 10px rgba(0,112,186,0.3)';
+        }
+    }
+    
+    function resetAudioControls() {
+        isPlaying = false;
+        document.getElementById('audioIcon').className = 'fas fa-play';
+        document.getElementById('audioIcon').style.marginLeft = "4px";
+        const btn = document.getElementById('btnAudioControl');
+        if(btn) { btn.style.background = '#0070ba'; btn.style.boxShadow = '0 4px 10px rgba(0,112,186,0.3)'; }
+        if (audioPlayer && typeof audioPlayer.stopVideo === 'function') audioPlayer.stopVideo();
+    }
+    
+    window.backToStep1 = () => {
+        resetAudioControls();
+        document.getElementById('step2Mision').style.display = 'none';
+        document.getElementById('step1Mision').style.display = 'block';
+    };
+    
+    // --- BLOQUE MAESTRO DE COMENTARIOS ---
+    let commentsRef = null;
+    window.abrirModalComentarios = (postKey) => {
+        isCommenting = true;
+        currentPostId = postKey;
+        const modal = document.getElementById('modalComments');
+        const list = document.getElementById('modalCommentsList');
+        modal.style.display = 'flex';
+        list.innerHTML = '<div style="text-align:center;padding:20px;">Cargando...</div>';
+        cargarChips();
+        if (commentsRef) commentsRef.off();
+        commentsRef = db.ref(`reportes/${postKey}/comentarios`);
+        let isEmpty = true;
+        commentsRef.on('value', snap => {
+            if (!snap.exists()) list.innerHTML = '<div style="text-align:center;padding:40px;">Sé el primero en comentar.</div>';
+        });
+        commentsRef.limitToLast(50).on('child_added', s => {
+            if (isEmpty) { list.innerHTML = ""; isEmpty = false; }
+            const c = s.val();
+            const esMio = (c.uid === idAuditor);
+            const d = document.createElement('div');
+            d.className = "comment-bubble";
+            d.style.borderLeft = esMio ? '3px solid #10b981' : '3px solid #0070ba';
+            const nombreSeguro = (c.autor || 'Anónimo').replace(/'/g, "\\'");
+            d.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="comment-author">${escapeHtml(c.autor)}</span>
+                    <button onclick="replyToUser('${nombreSeguro}')" style="border:none; background:none; color:#0070ba; font-size:0.7rem; font-weight:bold; cursor:pointer; padding:2px 5px;">Responder ↩</button>
+                </div>
+                <div class="comment-text">${escapeHtml(c.texto)}</div>
+            `;
+            list.appendChild(d);
+            list.scrollTop = list.scrollHeight;
+        });
+    };
+    window.replyToUser = (user) => {
+        const inp = document.getElementById('modalCommentInput');
+        inp.value = `@${user} ` + inp.value;
+        inp.focus();
+    };
+    window.enviarComentarioModal = (e) => {
+        if (e) e.preventDefault();
+        const inp = document.getElementById('modalCommentInput');
+        const txt = inp.value.trim();
+        if (!txt) return; 
+        db.ref(`reportes/${currentPostId}/comentarios`).push({ uid: idAuditor, autor: myCurrentKey, texto: txt, timestamp: firebase.database.ServerValue.TIMESTAMP });
+        detectarYEnvarMenciones(txt, "comentario");
+        db.ref(`reportes/${currentPostId}`).once('value').then(snap => {
+            if (snap.exists()) {
+                const post = snap.val();
+                if (post.uid !== idAuditor) {
+                    db.ref(`users/${post.uid}/notifications`).push({ from: myCurrentKey, type: 'comentario', text: "💬 Comentó tu video", extra: currentPostId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false });
+                }
+            }
+        });
+        inp.value = ""; inp.focus();
+    };
+    window.cerrarModalComentarios = () => {
+        document.getElementById('modalComments').style.display = 'none';
+        if (commentsRef) commentsRef.off();
+        isCommenting = false;
+    };
+    function cargarChips() { return; }
+    
+    // --- AUTH ---
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            idAuditor = user.uid;
+            document.getElementById('loadingOverlay').style.display = 'none';
+            setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 20000);
+            
+            db.ref(`users/${idAuditor}`).on('value', snap => {
+                const d = snap.val(); 
+                if (!d) { db.ref(`users/${idAuditor}`).set({ earnings: 0, myInviteKey: "INV-" + idAuditor.substring(0, 5).toUpperCase() }); return; }
+                
+                currentEarnings = parseFloat(d.earnings || 0); 
+                myCurrentKey = d.myInviteKey || "---";
+                
+                userEnglishLevel = d.englishLevel || 1;
+                
+                let userHearts = (typeof d.hearts !== 'undefined') ? d.hearts : 5;
+                actualizarVisualVidas(userHearts);
+                
+                renderEnglishPath();
+                
+                document.getElementById('mainPts').textContent = `${currentEarnings.toFixed(2)} PTS`; 
+                document.getElementById('snakeWalletDisplay').textContent = `👾 ${parseFloat(d.snakeTotal || 0).toFixed(2)}`;
+                document.getElementById('profKey').textContent = myCurrentKey; 
+                document.getElementById('myKeyDisplay').textContent = myCurrentKey;
+                
+                canSpin = ((d.lastSpinDate === new Date().toISOString().split('T')[0]) ? (d.spinsUsed || 0) : 0) < 3; 
+                document.getElementById('spinInfo').textContent = canSpin ? "Giros disponibles" : "Vuelve mañana";
+                
+                if (d.notifications) {
+                    const count = Object.keys(d.notifications).length;
+                    document.getElementById('badgeNotis').style.display = count > 0 ? 'flex' : 'none';
+                    document.getElementById('badgeNotis').textContent = count;
+                    let h = "";
+                    Object.entries(d.notifications).reverse().slice(0, 20).forEach(([k, n]) => {
+                        const idVideo = n.extra || ""; 
+                        h += `<div id="noti-${k}" class="noti-item" onclick="irANotificacion('${n.type}', '${idVideo}', '${k}')"><strong>${n.from}</strong><div class="noti-text">${n.text}</div></div>`;
+                    });
+                    document.getElementById('listaNotificaciones').innerHTML = h || "<div style='padding:20px; color:#cbd5e1;'>Sin notificaciones.</div>";
+                }
+                if (d.historial) { 
+                    let h = ""; 
+                    Object.values(d.historial).reverse().slice(0,10).forEach(x => { 
+                        h += `<div class="historial-item"><span>${x.motivo}</span><span style="color:${x.puntos>0?'#10b981':'red'}">${x.puntos}</span></div>`; 
+                    }); 
+                    document.getElementById('historialList').innerHTML = h; 
+                }
+            });
+            
+            cargarLeaderboard();
+            cargarMuroReportes();
+            cargarBarraUsuarios();
+            iniciarChat();
+            procesarPublicacionPendiente();
+        } else {
+            auth.signInAnonymously().catch(e => alert("Error Auth: " + e.message));
+        }
+    });
+    
+    // --- EXTRAS ---
+    window.triggerSpin = () => { if(!canSpin) return notify("Sin giros"); const btn = document.getElementById('btnSpin'); btn.disabled = true; const w = document.getElementById('wheel'); w.style.transition = "transform 3s"; w.style.transform = `rotate(${360*5+20}deg)`; setTimeout(() => { w.style.transition = "none"; w.style.transform = `rotate(20deg)`; db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.25), lastSpinDate: new Date().toISOString().split('T')[0], spinsUsed: firebase.database.ServerValue.increment(1) }); registrarHistorial("Ruleta", 0.25); notify("🎉 +0.25 PTS"); btn.disabled = false; }, 3000); };
+    window.abrirSoporte = () => document.getElementById('modalSoporte').style.display = 'flex';
+    window.abrirRifa = () => {
+        document.getElementById('modalRifa').style.display = 'flex';
+        const hoy = new Date();
+        const diasFaltantes = 7 - hoy.getDay();
+        const fechaSorteo = new Date(hoy);
+        fechaSorteo.setDate(hoy.getDate() + (diasFaltantes === 0 ? 7 : diasFaltantes));
+        const dia = fechaSorteo.getDate().toString().padStart(2, '0');
+        const mes = (fechaSorteo.getMonth() + 1).toString().padStart(2, '0');
+        const anio = fechaSorteo.getFullYear();
+        document.getElementById('rifaDate').textContent = `${dia}/${mes}/${anio}`;
+        document.getElementById('rifaDate').style.color = "#ea580c";
+    };
+    window.comprarTicketRifa = () => { if(currentEarnings<100) return notify("Faltan PTS"); db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(-100) }); registrarHistorial("Ticket Rifa", -100); notify("Ticket comprado"); };
+    
+    window.openTransfer = (tid, tname) => {
+        document.getElementById('targetUserLabel').textContent = "Para: " + tname;
+        document.getElementById('modalTransfer').style.display = 'flex';
+        document.getElementById('btnConfirmTransfer').onclick = () => {
+            const am = parseFloat(document.getElementById('amountTransfer').value);
+            if (!am || am <= 0) return notify("Cantidad inválida");
+            db.ref(`users/${idAuditor}`).once('value', s => {
+                if ((s.val().earnings || 0) < am) return notify("Saldo insuficiente");
+                const u = {}; const fecha = firebase.database.ServerValue.TIMESTAMP;
+                u[`users/${idAuditor}/earnings`] = firebase.database.ServerValue.increment(-am);
+                u[`users/${tid}/earnings`] = firebase.database.ServerValue.increment(am);
+                const notiKey = db.ref(`users/${tid}/notifications`).push().key;
+                u[`users/${tid}/notifications/${notiKey}`] = { from: myCurrentKey, type: 'gift', text: `🎁 Te envió un regalo de ${am} PTS`, extra: `${am}|${idAuditor}`, timestamp: fecha, read: false };
+                db.ref().update(u).then(() => { notify("✅ Regalo enviado"); document.getElementById('modalTransfer').style.display = 'none'; document.getElementById('amountTransfer').value = ""; registrarHistorial("Regalo Enviado", -am); });
+            });
+        };
+    };
+    window.darLasGracias = (targetUid) => { db.ref(`users/${targetUid}/notifications`).push({ from: myCurrentKey, type: 'simple', text: "🙏 ¡Te envió las gracias por el regalo!", timestamp: firebase.database.ServerValue.TIMESTAMP, read: false }).then(() => { notify("❤️ Agradecimiento enviado"); document.getElementById('modalGiftReceived').style.display = 'none'; }); };
+    
+    // CINE
+    let cineTimerInterval = null;
+    window.abrirCine = () => { db.ref(`users/${idAuditor}`).once('value', s => { const u = s.val(); if(u.lastCineDate === new Date().toISOString().split('T')[0] && (u.cineCount||0)>=2) return notify("Vuelve mañana"); document.getElementById('modalCine').style.display='flex'; document.getElementById('videoPlayer').src = "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&controls=0"; let t = 15; const btn = document.getElementById('btnReclamarCine'); btn.disabled=true; btn.style.opacity=0.5; if(cineTimerInterval) clearInterval(cineTimerInterval); cineTimerInterval = setInterval(() => { t--; document.getElementById('cineTimer').textContent = `Espera ${t}s...`; if(t<=0) { clearInterval(cineTimerInterval); btn.disabled=false; btn.style.opacity=1; } }, 1000); }); };
+    window.reclamarCine = () => { const hoy = new Date().toISOString().split('T')[0]; db.ref(`users/${idAuditor}`).once('value', s => { const u=s.val(); db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.50), lastCineDate: hoy, cineCount: ((u.lastCineDate===hoy)?(u.cineCount||0):0)+1 }); registrarHistorial("Cine", 0.50); window.cerrarCine(); window.playSound('win'); notify("+0.50 PTS"); }); };
+    window.cerrarCine = () => { document.getElementById('modalCine').style.display = 'none'; document.getElementById('videoPlayer').src = ""; };
+    
+    // VIDEO ADMOB
+    const btnAd = document.getElementById('btnVerAnuncio');
+    if (btnAd) {
+        btnAd.onclick = () => {
+            btnAd.disabled = true; btnAd.style.opacity = "0.5";
+            db.ref(`users/${idAuditor}`).once('value', s => {
+                const u = s.val(); const hoy = new Date().toISOString().split('T')[0]; const contadorHoy = (u.lastAdDate === hoy) ? (u.adCount || 0) : 0;
+                if (contadorHoy >= 5) { notify("⚠️ Límite diario alcanzado (5/5)"); btnAd.disabled = false; btnAd.style.opacity = "1"; return; }
+                db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.25), lastAdDate: hoy, adCount: contadorHoy + 1 });
+                registrarHistorial("Video Ad", 0.25); notify("💰 +0.25 PTS"); setTimeout(() => { window.location.href = "go:s6"; btnAd.disabled = false; btnAd.style.opacity = "1"; }, 2000);
+            });
+        };
+    }
+    
+    // CHAT
+    let isChatOpen = false;
+    window.toggleChat = () => {
+        const w = document.getElementById('chatWindow');
+        if (!isChatOpen) { w.classList.add('open'); isChatOpen = true; document.getElementById('chatBadge').style.display = 'none'; scrollToBottom(); window.history.pushState({chat: true}, ""); } else { w.classList.remove('open'); isChatOpen = false; document.getElementById('inputChatMsg').blur(); }
+    };
+    window.enviarTexto = () => { const i = document.getElementById('inputChatMsg'); const t = i.value.trim(); if(!t) return; i.value=""; db.ref('chat_global').push({ uid: idAuditor, autor: myCurrentKey, texto: t, fecha: firebase.database.ServerValue.TIMESTAMP }); detectarYEnvarMenciones(t, "chat"); };
+    function iniciarChat() { const l = document.getElementById('chatList'); db.ref('chat_global').limitToLast(50).on('child_added', s => { const m = s.val(); const div = document.createElement('div'); div.className = `msg-bubble ${m.uid===idAuditor?'msg-mine':'msg-other'}`; div.innerHTML = `<div><span class="msg-user">${escapeHtml(m.autor)}</span></div><div>${escapeHtml(m.texto)}</div>`; l.appendChild(div); scrollToBottom(); if(m.uid!==idAuditor && !isChatOpen) document.getElementById('chatBadge').style.display='block'; }); }
+    function scrollToBottom() { const d = document.getElementById('chatList'); setTimeout(() => d.scrollTop = d.scrollHeight, 100); }
+    
+    // MENCIONES
+    function detectarYEnvarMenciones(txt, type) {
+        const regex = /inv-[a-z0-9]{5}/gi; const menciones = txt.match(regex);
+        if (menciones) {
+            const unicos = [...new Set(menciones)];
+            unicos.forEach(codigo => {
+                if (codigo.toUpperCase() !== myCurrentKey) {
+                    db.ref('users').orderByChild('myInviteKey').equalTo(codigo.toUpperCase()).once('value', snap => {
+                        snap.forEach(userSnap => {
+                            const targetUid = userSnap.key; let tituloNoti = "Te mencionó"; if (txt.trim().startsWith(`@${codigo}`)) { tituloNoti = "💬 Respondió a tu comentario"; }
+                            db.ref(`users/${targetUid}/notifications`).push({ from: myCurrentKey, type: type, text: tituloNoti, extra: currentPostId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false });
+                        });
+                    });
+                }
+            });
+        }
+    }
+    
+    window.irANotificacion = (type, extra, key) => {
+        let nombreEmisor = "Alguien";
+        const notiElement = document.getElementById(`noti-${key}`);
+        if (notiElement) { nombreEmisor = notiElement.querySelector('strong').innerText; notiElement.style.display = 'none'; }
+        db.ref(`users/${idAuditor}/notifications/${key}`).remove();
+        document.getElementById('modalNotificaciones').style.display = 'none';
+        
+        if (type === 'chat') {
+            if (!isChatOpen) toggleChat();
+        } 
+        else if (type === 'comentario' || type === 'like') {
+            goToScreen(1); 
+            setTimeout(() => {
+                const vid = document.getElementById('post-' + extra);
+                if (vid) {
+                    vid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    vid.style.transition = "0.3s";
+                    vid.style.border = "3px solid #0070ba";
+                    setTimeout(() => { vid.style.border = "1px solid #f1f5f9"; }, 1500);
+                }
+                if (type === 'comentario') {
+                    if (window.abrirModalComentarios) window.abrirModalComentarios(extra);
+                }
+            }, 600);
+        }
+        else if (type === 'gift') {
+            const partes = extra.split('|'); const cantidad = partes[0]; const uidEmisor = partes[1];
+            document.getElementById('giftSender').textContent = nombreEmisor;
+            document.getElementById('giftAmount').textContent = cantidad;
+            document.getElementById('modalGiftReceived').style.display = 'flex';
+            try { window.playSound('win'); } catch(e) {}
+            document.getElementById('btnThanks').onclick = () => { darLasGracias(uidEmisor); };
+        }
+    };
+    
+    window.solicitarPermisoNotificaciones = () => { if(Notification.permission !== "granted") Notification.requestPermission(); else notify("Activas"); };
+    
+    // YOUTUBE SEARCH
+    const YOUTUBE_API_KEY = "AIzaSyAqswfC8HsBown7vyWtOfrWc-lbf4HFsbM";
+    function buscarEnYouTubeAPI() { const q = document.getElementById('inputSearchMusic').value.trim(); if(!q) return; document.getElementById('ytLoader').style.display='block'; fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q)}&key=${YOUTUBE_API_KEY}`).then(r=>r.json()).then(d=>{ document.getElementById('ytLoader').style.display='none'; let h=""; d.items.forEach(i=>{ h+=`<div class="music-item" onclick="seleccionarVideo('${i.id.videoId}','${escapeHtml(i.snippet.title)}')"><img src="${i.snippet.thumbnails.default.url}" style="width:60px;margin-right:10px;"><div>${escapeHtml(i.snippet.title)}</div></div>`; }); document.getElementById('musicResultsList').innerHTML=h; }); }
+    function seleccionarVideo(id, t) { document.getElementById('mMusic').value = `https://www.youtube.com/watch?v=${id}`; document.getElementById('musicDisplayLabel').innerHTML = `🎵 ${t.substring(0,20)}...`; document.getElementById('modalMusicSelector').style.display='none'; }
+    window.cerrarSelectorMusica = () => document.getElementById('modalMusicSelector').style.display='none'; 
+    window.abrirSelectorMusica = () => document.getElementById('modalMusicSelector').style.display='flex';
+    
+    // JUEGOS
+    const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d'); let activeGameMode = null; let gameInterval = null; let score = 0; let snake = []; let food = {}; let velocity = {}; 
+    window.prepararJuego = (m) => { notify("Cargando..."); setTimeout(() => { activeGameMode = m; document.getElementById('gameContainer').style.display='flex'; if(m==='snake') resetSnake(); }, 1500); };
+    window.cerrarJuego = () => { clearInterval(gameInterval); document.getElementById('gameContainer').style.display='none'; };
+    window.cerrarModalGameOver = () => { document.getElementById('modalGameOver').style.display='none'; cerrarJuego(); };
+    window.inputGame = (x, y) => { if(activeGameMode==='snake') { if((x===1 && velocity.x===-1) || (x===-1 && velocity.x===1) || (y===1 && velocity.y===-1) || (y===-1 && velocity.y===1)) return; velocity={x,y}; } };
+    function resetSnake() { snake = [{x:10,y:10}]; velocity = {x:0,y:-1}; score=0; food={x:5,y:5}; gameInterval=setInterval(updateSnake, 200); }
+    function updateSnake() {
+        const h = {x:snake[0].x+velocity.x, y:snake[0].y+velocity.y};
+        if(h.x<0||h.x>=15||h.y<0||h.y>=15) return gameOver();
+        for(let i=0;i<snake.length;i++) if(h.x===snake[i].x && h.y===snake[i].y) return gameOver();
+        snake.unshift(h);
+        if(h.x===food.x && h.y===food.y) { score+=10; document.getElementById('gameInfoText').textContent="PUNTOS: "+score; food={x:Math.floor(Math.random()*15),y:Math.floor(Math.random()*15)}; window.playSound('coin'); } else snake.pop();
+        ctx.fillStyle='#1e293b'; ctx.fillRect(0,0,300,300); ctx.fillStyle='#ef4444'; ctx.fillRect(food.x*20,food.y*20,18,18); ctx.fillStyle='#10b981'; for(let i=0;i<snake.length;i++) ctx.fillRect(snake[i].x*20,snake[i].y*20,18,18);
+    }
+    function gameOver() { clearInterval(gameInterval); const gain = (score/10)*0.05; if(gain>0) { db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(gain), snakeTotal: firebase.database.ServerValue.increment(gain) }); registrarHistorial("Juego", gain); } document.getElementById('scoreWonDisplay').textContent = "+"+gain.toFixed(2); document.getElementById('modalGameOver').style.display='flex'; window.playSound('gameover'); }
+    
+    // LIChess Anti-Crash
+    window.abrirLichessConAd = () => {
+        const adTrigger = document.createElement('iframe');
+        adTrigger.style.display = 'none'; adTrigger.src = 'go:interstitial';
+        document.body.appendChild(adTrigger);
+        setTimeout(() => { document.body.removeChild(adTrigger); }, 500);
+        setTimeout(() => { window.open('https://lichess.org/', '_blank'); }, 1000);
+    };
+    
+    // Función para actualizar visualmente los corazones (Necesaria para que no falle el script)
+    function actualizarVisualVidas(cantidad) {
+        if(cantidad <= 0) notify("💔 0 Vidas");
+    }
+    
+    window.recargarVidasConAnuncio = () => {
+        const adTrigger = document.createElement('iframe');
+        adTrigger.style.display = 'none'; adTrigger.src = 'go:interstitial';
+        document.body.appendChild(adTrigger);
+        setTimeout(() => { document.body.removeChild(adTrigger); }, 500);
+        setTimeout(() => {
+            db.ref(`users/${idAuditor}`).update({ hearts: 5 });
+            notify("❤️ ¡Vidas recargadas!");
+            document.getElementById('modalNoVidas').style.display = 'none';
+            window.playSound('win');
+        }, 2000);
+    };
+    
+    // BOTON ATRAS
+    window.addEventListener('load', () => { window.history.pushState({init: true}, ""); });
+    window.addEventListener('popstate', (e) => {
+        let seCerroAlgo = false;
+        const modales = ['modalNotificaciones', 'modalReferidos', 'modalSoporte', 'modalRifa', 'modalUnlockVIP', 'modalTransfer', 'modalMision', 'modalTareas', 'modalGiftReceived', 'modalCine', 'modalMusicSelector', 'modalComments', 'modalGameOver', 'modalLesson', 'modalNoVidas'];
+        modales.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.style.display === 'flex') {
+                el.style.display = 'none';
+                if (id === 'modalComments' && window.cerrarModalComentarios) window.cerrarModalComentarios();
+                if (id === 'modalMision' && window.backToStep1) window.backToStep1(); 
+                seCerroAlgo = true;
+            }
+        });
+        if (document.getElementById('chatWindow').classList.contains('open')) { window.toggleChat(); seCerroAlgo = true; }
+        if (document.getElementById('gameContainer').style.display === 'flex') { window.cerrarJuego(); seCerroAlgo = true; }
+        if (seCerroAlgo) { window.history.pushState({stopper: true}, ""); return; }
+        if (currentScreen !== 1) { goToScreen(1); } else { window.history.pushState({stopper: true}, ""); notify("🏠 Estás en el Inicio"); }
+    });
+    
+    window.abrirNotificaciones = () => { document.getElementById('modalNotificaciones').style.display = 'flex'; document.getElementById('badgeNotis').style.display = 'none'; };
+    </script>
+</body>
+</html>
