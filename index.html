@@ -684,7 +684,7 @@
     
 // --- DATOS ACADEMIA INGLÉS (10 PREGUNTAS POR NIVEL) ---
     // Base de datos de palabras para generar opciones incorrectas
-    const wordBank = ["Blue", "Red", "Cat", "Dog", "One", "Two", "Yes", "No", "Bye", "Hello", "Thanks", "Please", "Water", "Milk", "Car", "Bus", "House", "City", "Friend", "Family", "Apple", "Bread", "Coffee", "Night", "Day"];
+    const wordBank = ["Blue", "Red", "Cat", "Dog", "One", "Two", "Yes", "No", "Bye", "Hello", "Thanks", "Please", "Water", "Milk", "Car", "Bus", "House", "City", "Friend", "Family", "Apple", "Bread", "Coffee", "Night", "Day", "Mother", "Father", "Sister", "School", "Teacher", "Book", "Pen", "Computer", "Phone", "Shoes", "Shirt", "Pants", "Run", "Walk", "Eat", "Sleep", "Sun", "Moon", "Rain", "Snow", "Happy", "Sad", "Big", "Small"];
 
     // Función auxiliar para generar opciones al azar
     function getOptions(correctWord) {
@@ -770,19 +770,236 @@
                 { w: "Cocina", a: "Kitchen", opts: ["Kitchen", "Bathroom", "Room", "Hall"] },
                 { w: "Jardín", a: "Garden", opts: ["Garden", "Garage", "Street", "Park"] },
                 { w: "Llave", a: "Key", opts: ["Key", "Door", "Lock", "Open"] }
+                
             ]
-        }
-    ];
-
-    // Relleno automático para niveles 6 al 20 (Para que no de error)
-    for(let i=6; i<=20; i++) {
-        const qList = [];
-        for(let j=1; j<=10; j++) {
-            qList.push({ w: `Nivel ${i} - P${j}`, a: "Test", opts: ["Test", "A", "B", "C"] });
-        }
-        englishLessons.push({id:i, title:`Nivel ${i}`, icon:"📚", questions: qList });
-    }
-    
+        },
+        { 
+            id: 6, title: "Familia", icon: "👨‍👩‍👧", 
+            questions: [
+                { w: "Madre", a: "Mother", opts: getOptions("Mother") },
+                { w: "Padre", a: "Father", opts: getOptions("Father") },
+                { w: "Hermano", a: "Brother", opts: getOptions("Brother") },
+                { w: "Hermana", a: "Sister", opts: getOptions("Sister") },
+                { w: "Abuelo", a: "Grandfather", opts: ["Grandfather", "Father", "Uncle", "Brother"] },
+                { w: "Abuela", a: "Grandmother", opts: ["Grandmother", "Mother", "Aunt", "Sister"] },
+                { w: "Hijo", a: "Son", opts: ["Son", "Daughter", "Father", "Boy"] },
+                { w: "Hija", a: "Daughter", opts: ["Daughter", "Son", "Mother", "Girl"] },
+                { w: "Familia", a: "Family", opts: getOptions("Family") },
+                { w: "Amigo", a: "Friend", opts: getOptions("Friend") }
+            ]
+        },
+        { 
+            id: 7, title: "Colores", icon: "🎨", 
+            questions: [
+                { w: "Rojo", a: "Red", opts: ["Red", "Blue", "Green", "Yellow"] },
+                { w: "Azul", a: "Blue", opts: ["Blue", "Red", "Black", "White"] },
+                { w: "Verde", a: "Green", opts: ["Green", "Yellow", "Red", "Purple"] },
+                { w: "Amarillo", a: "Yellow", opts: ["Yellow", "Green", "Orange", "Pink"] },
+                { w: "Negro", a: "Black", opts: ["Black", "White", "Gray", "Brown"] },
+                { w: "Blanco", a: "White", opts: ["White", "Black", "Red", "Blue"] },
+                { w: "Naranja", a: "Orange", opts: ["Orange", "Purple", "Pink", "Red"] },
+                { w: "Rosa", a: "Pink", opts: ["Pink", "Red", "White", "Blue"] },
+                { w: "Gris", a: "Gray", opts: ["Gray", "Black", "White", "Brown"] },
+                { w: "Marrón", a: "Brown", opts: ["Brown", "Black", "Red", "Green"] }
+            ]
+        },
+        { 
+            id: 8, title: "Ropa", icon: "👕", 
+            questions: [
+                { w: "Zapatos", a: "Shoes", opts: getOptions("Shoes") },
+                { w: "Camisa", a: "Shirt", opts: getOptions("Shirt") },
+                { w: "Pantalones", a: "Pants", opts: getOptions("Pants") },
+                { w: "Vestido", a: "Dress", opts: getOptions("Dress") },
+                { w: "Sombrero", a: "Hat", opts: ["Hat", "Cap", "Shirt", "Shoes"] },
+                { w: "Abrigo", a: "Coat", opts: ["Coat", "Shirt", "Pants", "Dress"] },
+                { w: "Calcetines", a: "Socks", opts: ["Socks", "Shoes", "Feet", "Hands"] },
+                { w: "Falda", a: "Skirt", opts: ["Skirt", "Dress", "Shirt", "Pants"] },
+                { w: "Reloj", a: "Watch", opts: ["Watch", "Clock", "Time", "Hand"] },
+                { w: "Gafas", a: "Glasses", opts: ["Glasses", "Eyes", "Hat", "Watch"] }
+            ]
+        },
+        { 
+            id: 9, title: "Cuerpo", icon: "👀", 
+            questions: [
+                { w: "Cabeza", a: "Head", opts: ["Head", "Hand", "Foot", "Leg"] },
+                { w: "Mano", a: "Hand", opts: ["Hand", "Arm", "Leg", "Foot"] },
+                { w: "Pie", a: "Foot", opts: ["Foot", "Hand", "Head", "Eye"] },
+                { w: "Ojo", a: "Eye", opts: ["Eye", "Ear", "Nose", "Mouth"] },
+                { w: "Nariz", a: "Nose", opts: ["Nose", "Mouth", "Eye", "Ear"] },
+                { w: "Boca", a: "Mouth", opts: ["Mouth", "Nose", "Ear", "Eye"] },
+                { w: "Oreja", a: "Ear", opts: ["Ear", "Eye", "Nose", "Hand"] },
+                { w: "Brazo", a: "Arm", opts: ["Arm", "Leg", "Hand", "Foot"] },
+                { w: "Pierna", a: "Leg", opts: ["Leg", "Arm", "Foot", "Hand"] },
+                { w: "Pelo", a: "Hair", opts: ["Hair", "Head", "Face", "Eye"] }
+            ]
+        },
+        { 
+            id: 10, title: "Escuela", icon: "🎒", 
+            questions: [
+                { w: "Escuela", a: "School", opts: getOptions("School") },
+                { w: "Profesor", a: "Teacher", opts: getOptions("Teacher") },
+                { w: "Estudiante", a: "Student", opts: getOptions("Student") },
+                { w: "Libro", a: "Book", opts: getOptions("Book") },
+                { w: "Lápiz", a: "Pencil", opts: ["Pencil", "Pen", "Book", "Desk"] },
+                { w: "Bolígrafo", a: "Pen", opts: ["Pen", "Pencil", "Paper", "Book"] },
+                { w: "Papel", a: "Paper", opts: ["Paper", "Book", "Pen", "Desk"] },
+                { w: "Escritorio", a: "Desk", opts: ["Desk", "Chair", "Table", "Room"] },
+                { w: "Tarea", a: "Homework", opts: ["Homework", "Work", "School", "Book"] },
+                { w: "Clase", a: "Class", opts: ["Class", "School", "Room", "Teacher"] }
+            ]
+        },
+        { 
+            id: 11, title: "Trabajo", icon: "💼", 
+            questions: [
+                { w: "Trabajo", a: "Job", opts: getOptions("Job") },
+                { w: "Doctor", a: "Doctor", opts: ["Doctor", "Nurse", "Teacher", "Driver"] },
+                { w: "Enfermera", a: "Nurse", opts: ["Nurse", "Doctor", "Woman", "Teacher"] },
+                { w: "Policía", a: "Police", opts: ["Police", "Doctor", "Fireman", "Man"] },
+                { w: "Jefe", a: "Boss", opts: ["Boss", "Worker", "Job", "Office"] },
+                { w: "Oficina", a: "Office", opts: ["Office", "House", "Room", "School"] },
+                { w: "Dinero", a: "Money", opts: ["Money", "Cash", "Bank", "Card"] },
+                { w: "Conductor", a: "Driver", opts: ["Driver", "Car", "Bus", "Police"] },
+                { w: "Cocinero", a: "Chef", opts: ["Chef", "Cook", "Food", "Doctor"] },
+                { w: "Cantante", a: "Singer", opts: ["Singer", "Music", "Song", "Artist"] }
+            ]
+        },
+        { 
+            id: 12, title: "Ciudad", icon: "🏙️", 
+            questions: [
+                { w: "Ciudad", a: "City", opts: getOptions("City") },
+                { w: "Calle", a: "Street", opts: ["Street", "Road", "Way", "City"] },
+                { w: "Parque", a: "Park", opts: ["Park", "Garden", "City", "Street"] },
+                { w: "Hospital", a: "Hospital", opts: ["Hospital", "School", "House", "Bank"] },
+                { w: "Banco", a: "Bank", opts: ["Bank", "Store", "Shop", "Money"] },
+                { w: "Tienda", a: "Store", opts: ["Store", "Shop", "Bank", "House"] },
+                { w: "Restaurante", a: "Restaurant", opts: ["Restaurant", "Food", "Cafe", "Store"] },
+                { w: "Cine", a: "Cinema", opts: ["Cinema", "Movie", "Theater", "Park"] },
+                { w: "Hotel", a: "Hotel", opts: ["Hotel", "House", "Room", "Bed"] },
+                { w: "Aeropuerto", a: "Airport", opts: ["Airport", "Plane", "Station", "Bus"] }
+            ]
+        },
+        { 
+            id: 13, title: "Verbos", icon: "🏃", 
+            questions: [
+                { w: "Correr", a: "Run", opts: ["Run", "Walk", "Jump", "Sit"] },
+                { w: "Caminar", a: "Walk", opts: ["Walk", "Run", "Stand", "Sleep"] },
+                { w: "Comer", a: "Eat", opts: ["Eat", "Drink", "Cook", "Food"] },
+                { w: "Beber", a: "Drink", opts: ["Drink", "Eat", "Water", "Milk"] },
+                { w: "Dormir", a: "Sleep", opts: ["Sleep", "Wake", "Bed", "Night"] },
+                { w: "Hablar", a: "Speak", opts: ["Speak", "Listen", "Hear", "Say"] },
+                { w: "Escuchar", a: "Listen", opts: ["Listen", "Speak", "Hear", "Ear"] },
+                { w: "Mirar", a: "Look", opts: ["Look", "See", "Watch", "Eye"] },
+                { w: "Jugar", a: "Play", opts: ["Play", "Run", "Game", "Fun"] },
+                { w: "Trabajar", a: "Work", opts: ["Work", "Job", "Play", "Sleep"] }
+            ]
+        },
+        { 
+            id: 14, title: "Adjetivos", icon: "📏", 
+            questions: [
+                { w: "Grande", a: "Big", opts: ["Big", "Small", "Tall", "Short"] },
+                { w: "Pequeño", a: "Small", opts: ["Small", "Big", "Little", "Large"] },
+                { w: "Feliz", a: "Happy", opts: ["Happy", "Sad", "Good", "Bad"] },
+                { w: "Triste", a: "Sad", opts: ["Sad", "Happy", "Angry", "Bad"] },
+                { w: "Bueno", a: "Good", opts: ["Good", "Bad", "Fine", "Nice"] },
+                { w: "Malo", a: "Bad", opts: ["Bad", "Good", "Wrong", "Right"] },
+                { w: "Caliente", a: "Hot", opts: ["Hot", "Cold", "Warm", "Sun"] },
+                { w: "Frío", a: "Cold", opts: ["Cold", "Hot", "Cool", "Ice"] },
+                { w: "Nuevo", a: "New", opts: ["New", "Old", "Young", "Good"] },
+                { w: "Viejo", a: "Old", opts: ["Old", "New", "Age", "Time"] }
+            ]
+        },
+        { 
+            id: 15, title: "Tiempo", icon: "☀️", 
+            questions: [
+                { w: "Sol", a: "Sun", opts: getOptions("Sun") },
+                { w: "Luna", a: "Moon", opts: getOptions("Moon") },
+                { w: "Lluvia", a: "Rain", opts: getOptions("Rain") },
+                { w: "Nieve", a: "Snow", opts: getOptions("Snow") },
+                { w: "Viento", a: "Wind", opts: ["Wind", "Air", "Rain", "Cold"] },
+                { w: "Cielo", a: "Sky", opts: ["Sky", "Blue", "Sun", "Cloud"] },
+                { w: "Nube", a: "Cloud", opts: ["Cloud", "Sky", "Rain", "White"] },
+                { w: "Día", a: "Day", opts: ["Day", "Night", "Morning", "Sun"] },
+                { w: "Noche", a: "Night", opts: ["Night", "Day", "Moon", "Dark"] },
+                { w: "Hoy", a: "Today", opts: ["Today", "Tomorrow", "Yesterday", "Now"] }
+            ]
+        },
+        { 
+            id: 16, title: "Deportes", icon: "⚽", 
+            questions: [
+                { w: "Fútbol", a: "Soccer", opts: ["Soccer", "Football", "Ball", "Sport"] },
+                { w: "Pelota", a: "Ball", opts: ["Ball", "Game", "Play", "Sport"] },
+                { w: "Juego", a: "Game", opts: ["Game", "Play", "Sport", "Fun"] },
+                { w: "Equipo", a: "Team", opts: ["Team", "Group", "Friends", "Play"] },
+                { w: "Ganar", a: "Win", opts: ["Win", "Lose", "Game", "Play"] },
+                { w: "Perder", a: "Lose", opts: ["Lose", "Win", "Lost", "Game"] },
+                { w: "Correr", a: "Run", opts: ["Run", "Walk", "Play", "Fast"] },
+                { w: "Nadar", a: "Swim", opts: ["Swim", "Water", "Pool", "Run"] },
+                { w: "Tenis", a: "Tennis", opts: ["Tennis", "Ball", "Sport", "Game"] },
+                { w: "Gol", a: "Goal", opts: ["Goal", "Win", "Point", "Score"] }
+            ]
+        },
+        { 
+            id: 17, title: "Viajes", icon: "✈️", 
+            questions: [
+                { w: "Avión", a: "Plane", opts: ["Plane", "Car", "Bus", "Train"] },
+                { w: "Tren", a: "Train", opts: ["Train", "Bus", "Car", "Plane"] },
+                { w: "Autobús", a: "Bus", opts: ["Bus", "Car", "Train", "Stop"] },
+                { w: "Coche", a: "Car", opts: ["Car", "Bus", "Taxi", "Bike"] },
+                { w: "Bicicleta", a: "Bike", opts: ["Bike", "Car", "Walk", "Ride"] },
+                { w: "Barco", a: "Boat", opts: ["Boat", "Ship", "Water", "Sea"] },
+                { w: "Mapa", a: "Map", opts: ["Map", "Paper", "World", "City"] },
+                { w: "Mundo", a: "World", opts: ["World", "Map", "Earth", "Land"] },
+                { w: "Viaje", a: "Trip", opts: ["Trip", "Travel", "Go", "Way"] },
+                { w: "Pasaporte", a: "Passport", opts: ["Passport", "Book", "ID", "Card"] }
+            ]
+        },
+        { 
+            id: 18, title: "Naturaleza", icon: "🌳", 
+            questions: [
+                { w: "Árbol", a: "Tree", opts: ["Tree", "Plant", "Flower", "Green"] },
+                { w: "Flor", a: "Flower", opts: ["Flower", "Tree", "Plant", "Rose"] },
+                { w: "Río", a: "River", opts: ["River", "Water", "Sea", "Lake"] },
+                { w: "Mar", a: "Sea", opts: ["Sea", "Ocean", "Water", "Blue"] },
+                { w: "Montaña", a: "Mountain", opts: ["Mountain", "Hill", "High", "Rock"] },
+                { w: "Bosque", a: "Forest", opts: ["Forest", "Tree", "Park", "Wood"] },
+                { w: "Fuego", a: "Fire", opts: ["Fire", "Hot", "Burn", "Red"] },
+                { w: "Tierra", a: "Earth", opts: ["Earth", "World", "Ground", "Land"] },
+                { w: "Piedra", a: "Stone", opts: ["Stone", "Rock", "Hard", "Ground"] },
+                { w: "Playa", a: "Beach", opts: ["Beach", "Sea", "Sand", "Sun"] }
+            ]
+        },
+        { 
+            id: 19, title: "Tecnología", icon: "📱", 
+            questions: [
+                { w: "Teléfono", a: "Phone", opts: ["Phone", "Call", "Mobile", "Computer"] },
+                { w: "Ordenador", a: "Computer", opts: ["Computer", "Laptop", "Screen", "Phone"] },
+                { w: "Internet", a: "Internet", opts: ["Internet", "Web", "Net", "Wifi"] },
+                { w: "Juego", a: "Game", opts: ["Game", "Play", "App", "Phone"] },
+                { w: "Música", a: "Music", opts: ["Music", "Song", "Sound", "Listen"] },
+                { w: "Video", a: "Video", opts: ["Video", "Movie", "Watch", "Screen"] },
+                { w: "Cámara", a: "Camera", opts: ["Camera", "Photo", "Picture", "Phone"] },
+                { w: "Foto", a: "Photo", opts: ["Photo", "Picture", "Camera", "Image"] },
+                { w: "Mensaje", a: "Message", opts: ["Message", "Text", "Email", "Chat"] },
+                { w: "Wifi", a: "Wifi", opts: ["Wifi", "Internet", "Connect", "Net"] }
+            ]
+        },
+        { 
+            id: 20, title: "Examen", icon: "🎓", 
+            questions: [
+                { w: "Todo", a: "Everything", opts: ["Everything", "All", "Nothing", "Something"] },
+                { w: "Nada", a: "Nothing", opts: ["Nothing", "Zero", "Empty", "All"] },
+                { w: "Siempre", a: "Always", opts: ["Always", "Never", "Sometimes", "Forever"] },
+                { w: "Nunca", a: "Never", opts: ["Never", "No", "Stop", "Always"] },
+                { w: "Pregunta", a: "Question", opts: ["Question", "Ask", "Answer", "What"] },
+                { w: "Respuesta", a: "Answer", opts: ["Answer", "Question", "Reply", "Talk"] },
+                { w: "Correcto", a: "Correct", opts: ["Correct", "Right", "Good", "Yes"] },
+                { w: "Error", a: "Error", opts: ["Error", "Wrong", "Mistake", "Bad"] },
+                { w: "Fácil", a: "Easy", opts: ["Easy", "Simple", "Hard", "Good"] },
+                { w: "Difícil", a: "Hard", opts: ["Hard", "Difficult", "Easy", "Bad"] }
+            ]
+        } ];
+        
+   
     let currentLesson = null;
     let currentQIndex = 0;
     let userEnglishLevel = 1; 
