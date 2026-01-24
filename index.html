@@ -661,7 +661,7 @@
                         <div style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
                             <p style="font-size:0.75rem; color:#64748b; margin-bottom:10px; font-weight:700;">JUEGOS RÁPIDOS</p>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                               <button class="btn-blue" style="background: #10b981; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #059669;" onclick="jugarSnakeConAnuncio()">🐍 Snake</button>
+                               <button class="btn-blue" style="background: #10b981; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #059669;" onclick="prepararJuego('snake')">🐍 Snake</button>
                                 <button onclick="prepararJuego('race')" class="btn-blue" style="background: #ef4444; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b91c1c;">🏎️ Carrera</button>
                                 <button onclick="abrirLichessConAd()" class="btn-blue" style="background: #3b82f6; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #1d4ed8;">♟️ Lichess</button>
                                 <button onclick="window.location.href='go:Damas'" class="btn-blue" style="background: #f59e0b; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b45309;">⚪ Damas</button>
@@ -2690,28 +2690,31 @@ window.abrirMision = () => {
     
     window.abrirNotificaciones = () => { document.getElementById('modalNotificaciones').style.display = 'flex'; document.getElementById('badgeNotis').style.display = 'none'; };
    // --- FUNCIÓN SNAKE CON ANUNCIO (CORREGIDA) ---
-    // --- FUNCIÓN SNAKE CON ANUNCIO (MÉTODO IFRAME) ---
-    window.jugarSnakeConAnuncio = () => {
-        // 1. Sonido
-        try { window.playSound('click'); } catch(e){}
-        
-        // 2. TRUCO: Creamos un iframe invisible que carga el anuncio "go:s7"
-        // Esto le dice a AppCreator24 "Muestra el anuncio" sin cerrar tu juego.
+   window.jugarSnakeConAnuncio = () => {
+    // 1. Sonido y Feedback inmediato
+    try { window.playSound('click'); } catch(e){}
+    notify("🐍 Cargando Snake..."); // Avisamos al usuario que sí funcionó el click
+
+    // 2. Intentar mostrar anuncio (protegido contra errores)
+    try {
         const adTrigger = document.createElement('iframe');
-        adTrigger.style.display = 'none'; // Invisible
-        adTrigger.src = 'go:s7'; 
+        adTrigger.style.display = 'none';
+        adTrigger.src = 'go:s7'; // Tu código de anuncio
         document.body.appendChild(adTrigger);
-
-        // 3. Borramos el iframe fantasma a los 3 segundos (ya cumplió su misión)
+        
+        // Limpieza del iframe
         setTimeout(() => {
-            document.body.removeChild(adTrigger);
+            try { document.body.removeChild(adTrigger); } catch(e){}
         }, 3000);
+    } catch(err) {
+        console.log("Error al cargar anuncio, abriendo juego igual...");
+    }
 
-        // 4. Abrimos el juego inmediatamente (quedará detrás del anuncio)
-        setTimeout(() => {
-            prepararJuego('snake');
-        }, 800);
-    };
+    // 3. Abrir el juego (Reducimos el tiempo de espera a 500ms para que sea más ágil)
+    setTimeout(() => {
+        prepararJuego('snake');
+    }, 500);
+};
     // --- 1. FUNCIÓN PARA ABRIR CORREO REAL ---
     window.enviarCorreoSoporte = () => {
         const asunto = "Ayuda PAGOCODE - ID: " + (myCurrentKey || "Usuario");
