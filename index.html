@@ -2690,18 +2690,27 @@ window.abrirMision = () => {
     
     window.abrirNotificaciones = () => { document.getElementById('modalNotificaciones').style.display = 'flex'; document.getElementById('badgeNotis').style.display = 'none'; };
    // --- FUNCIÓN SNAKE CON ANUNCIO (CORREGIDA) ---
+    // --- FUNCIÓN SNAKE CON ANUNCIO (MÉTODO IFRAME) ---
     window.jugarSnakeConAnuncio = () => {
         // 1. Sonido
         try { window.playSound('click'); } catch(e){}
         
-        // 2. Lanzar anuncio
-        window.location.href = 'go:s7';
-        
-        // 3. Iniciar el juego automáticamente después de 1 segundo
+        // 2. TRUCO: Creamos un iframe invisible que carga el anuncio "go:s7"
+        // Esto le dice a AppCreator24 "Muestra el anuncio" sin cerrar tu juego.
+        const adTrigger = document.createElement('iframe');
+        adTrigger.style.display = 'none'; // Invisible
+        adTrigger.src = 'go:s7'; 
+        document.body.appendChild(adTrigger);
+
+        // 3. Borramos el iframe fantasma a los 3 segundos (ya cumplió su misión)
         setTimeout(() => {
-            // Usamos la función oficial que ya abre el gameContainer y resetea la serpiente
+            document.body.removeChild(adTrigger);
+        }, 3000);
+
+        // 4. Abrimos el juego inmediatamente (quedará detrás del anuncio)
+        setTimeout(() => {
             prepararJuego('snake');
-        }, 1000);
+        }, 800);
     };
     // --- 1. FUNCIÓN PARA ABRIR CORREO REAL ---
     window.enviarCorreoSoporte = () => {
