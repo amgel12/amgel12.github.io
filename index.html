@@ -8,6 +8,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+  /* ESTILO PARA LOS BOTONES DE SUGERENCIA */
+    .chip-btn {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 20px;
+        padding: 8px 15px;
+        font-size: 0.75rem;
+        color: #475569;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .chip-btn:active {
+        background: #0070ba;
+        color: white;
+        border-color: #0070ba;
+        transform: scale(0.95);
+    }
     /* --- ESTILOS GENERALES --- */
     * { box-sizing: border-box; margin:0; padding:0; user-select: none; -webkit-tap-highlight-color: transparent; }
     html, body { overflow-x: hidden; width: 100%; height: 100%; position: fixed; font-family: 'Poppins', sans-serif; background: #0f172a; color: #334155; }
@@ -306,9 +324,28 @@
     <div id="modalSoporte" class="modal-overlay">
         <div class="modal-content">
             <h3>Soporte Técnico</h3>
-            <textarea id="soporteMsg" rows="4" placeholder="Cuéntanos que sucede..." style="width:100%; padding:10px; border:2px solid #cbd5e1; border-radius:12px; margin-bottom:10px;"></textarea>
-            <button onclick="enviarCorreoSoporte()" class="btn-blue">📧 Redactar Correo</button>
-            <button onclick="document.getElementById('modalSoporte').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cancelar</button>
+            <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 20px;">
+                ¿Tienes algún problema? Envíanos un correo directo con tu caso.
+            </p>
+            
+            <button onclick="enviarCorreoSoporte()" class="btn-blue" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                📧 Redactar Correo
+            </button>
+
+            <div style="margin-top: 25px; text-align: left; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span style="font-weight:700; font-size:0.75rem; color:#334155;">NIVEL DE LEALTAD</span>
+                    <span id="labelLoyalty" style="color:#0070ba; font-weight:800; font-size:0.8rem;">0%</span>
+                </div>
+                <div style="background:#cbd5e1; border-radius:10px; height:10px; overflow:hidden;">
+                    <div id="barLoyalty" style="background: linear-gradient(90deg, #10b981, #34d399); width:0%; height:100%; transition:width 0.5s; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);"></div>
+                </div>
+                <p style="font-size:0.65rem; color:#94a3b8; margin-top:8px;">
+                    📅 Completa 5 misión diaria para subir <b>1%</b> cada día.
+                </p>
+            </div>
+
+            <button onclick="document.getElementById('modalSoporte').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cerrar</button>
         </div>
     </div>
 
@@ -434,18 +471,49 @@
         </div>
     </div>
 
-    <div id="modalMusicSelector" class="modal-overlay" style="z-index: 21000;">
-        <div class="modal-content" style="height: 80vh; max-height: 600px; display: flex; flex-direction: column;">
+<div id="modalMusicSelector" class="modal-overlay" style="z-index: 21000;">
+        <div class="modal-content" style="height: 85vh; max-height: 600px; display: flex; flex-direction: column;">
+            
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="margin:0;">🎵 Buscar Canción</h3>
+                <h3 style="margin:0; font-size:1.1rem;">🎵 Buscar Canción</h3>
                 <button onclick="cerrarSelectorMusica()" style="border:none; background:none; font-size:1.2rem;">✕</button>
             </div>
+            
             <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <input type="text" id="inputSearchMusic" placeholder="Ej: Bad Bunny, Linkin Park..." style="margin:0; flex:1; text-align:left; border:2px solid #0070ba;">
+                <input type="text" id="inputSearchMusic" placeholder="Escribe artista o canción..." style="margin:0; flex:1; text-align:left; border:2px solid #0070ba;">
                 <button onclick="buscarEnYouTubeAPI()" class="btn-blue" style="width:auto; padding:0 15px; border-radius:10px;">🔍</button>
             </div>
-            <div id="ytLoader" style="display:none; text-align:center; padding:20px; color:#0070ba;"><i class="fas fa-circle-notch fa-spin fa-2x"></i><br>Buscando en YouTube...</div>
-            <div id="musicResultsList" class="music-list-container" style="flex:1; overflow-y:auto;"><div style="text-align:center; color:#94a3b8; padding:30px;">Busca tu música favorita<br>para compartirla.</div></div>
+
+            <div id="previewContainer" style="display:none; width:100%; aspect-ratio: 16/9; background:#000; margin-bottom:10px; border-radius:12px; overflow:hidden; position:relative; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                 <div id="previewFrame" style="width:100%; height:100%;"></div>
+                 <button onclick="stopPreview()" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.7); color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold;">✕</button>
+                 <div style="position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.6); color:white; font-size:0.7rem; padding:5px; text-align:center;">
+                     Vista Previa
+                 </div>
+            </div>
+
+            <div id="ytLoader" style="display:none; text-align:center; padding:20px; color:#0070ba;"><i class="fas fa-circle-notch fa-spin fa-2x"></i><br>Buscando...</div>
+<div id="musicResultsList" class="music-list-container" style="flex:1; overflow-y:auto; border-top: 1px solid #f1f5f9; padding: 15px;">
+                
+                <div style="text-align:center; color:#94a3b8; margin-bottom: 20px;">
+                    <i class="fas fa-headphones-alt" style="font-size: 2rem; margin-bottom: 10px; color: #cbd5e1;"></i>
+                    <p style="font-size: 0.8rem;">Busca tu canción o elige una tendencia:</p>
+                </div>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+                    <button onclick="sugerirBusqueda('Bad Bunny')" class="chip-btn">🐰 Bad Bunny</button>
+                    <button onclick="sugerirBusqueda('Karol G')" class="chip-btn">🌸 Karol G</button>
+                    <button onclick="sugerirBusqueda('Feid')" class="chip-btn">💚 Feid</button>
+                    <button onclick="sugerirBusqueda('Peso Pluma')" class="chip-btn">🪶 Peso Pluma</button>
+                    <button onclick="sugerirBusqueda('Grupo Frontera')" class="chip-btn">🤠 Grupo Frontera</button>
+                    <button onclick="sugerirBusqueda('Shakira')" class="chip-btn">🐺 Shakira</button>
+                    <button onclick="sugerirBusqueda('Romeo Santos')" class="chip-btn">👑 Romeo Santos</button>
+                    <button onclick="sugerirBusqueda('Junior H')" class="chip-btn">Sad Boyz</button>
+                    <button onclick="sugerirBusqueda('Luis Miguel')" class="chip-btn">☀️ Luis Miguel</button>
+                    <button onclick="sugerirBusqueda('Musica Electronica')" class="chip-btn">⚡ Electrónica</button>
+                </div>
+
+            </div>
         </div>
     </div>
 
@@ -593,7 +661,7 @@
                         <div style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
                             <p style="font-size:0.75rem; color:#64748b; margin-bottom:10px; font-weight:700;">JUEGOS RÁPIDOS</p>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                <button onclick="prepararJuego('snake')" class="btn-blue" style="background: #10b981; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #059669;">🐍 Snake</button>
+                               <button class="btn-blue" style="background: #10b981; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #059669;" onclick="jugarSnakeConAnuncio()">🐍 Snake</button>
                                 <button onclick="prepararJuego('race')" class="btn-blue" style="background: #ef4444; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b91c1c;">🏎️ Carrera</button>
                                 <button onclick="abrirLichessConAd()" class="btn-blue" style="background: #3b82f6; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #1d4ed8;">♟️ Lichess</button>
                                 <button onclick="window.location.href='go:Damas'" class="btn-blue" style="background: #f59e0b; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b45309;">⚪ Damas</button>
@@ -1218,37 +1286,78 @@
     const pantallaMuro = document.querySelectorAll('.screen')[1]; if (pantallaMuro) { pantallaMuro.addEventListener('scroll', function() { if (scrollTimeout) clearTimeout(scrollTimeout); scrollTimeout = setTimeout(() => { checkScrollVideos(); }, 100); }); }
     
     // --- CARGAR USUARIOS HORIZONTALES ---
+    // --- BARRA DE USUARIOS CON TIEMPO REAL ---
     function cargarBarraUsuarios() {
+        // Traemos los últimos 30 usuarios activos
         db.ref('users').orderByChild('lastSeen').limitToLast(30).on('value', snapshot => {
             const contenedor = document.getElementById('listaUsuariosHorizontal');
             if (!contenedor) return;
+            
             let html = "";
             const ahora = Date.now();
             const lista = [];
+
             snapshot.forEach(child => {
                 const u = child.val();
+                // No mostrarse a uno mismo
                 if (child.key === idAuditor) return;
+
                 const tiempo = u.lastSeen || 0;
-                const esOnline = (ahora - tiempo) < (15 * 60 * 1000); // 15 min
+                const diff = ahora - tiempo;
+                const minutos = Math.floor(diff / 60000);
+                
+                // Consideramos Online si estuvo hace menos de 10 min
+                const esOnline = minutos < 10; 
+
+                // Generar texto de tiempo (Ej: "5 min", "2 h")
+                let textoTiempo = "";
+                if (minutos < 1) textoTiempo = "🟢 Ahora";
+                else if (minutos < 60) textoTiempo = `${minutos} min`;
+                else if (minutos < 1440) textoTiempo = `${Math.floor(minutos/60)} h`;
+                else textoTiempo = `${Math.floor(minutos/1440)} d`;
+
+                // Nombre corto
                 let nombreMostrar = "User";
-                if (u.myInviteKey) nombreMostrar = u.myInviteKey.split('-')[1] || "User"; 
-                lista.push({ key: child.key, nombre: nombreMostrar, online: esOnline });
+                if (u.myInviteKey) nombreMostrar = u.myInviteKey.split('-')[1] || "User";
+
+                lista.push({ 
+                    key: child.key, 
+                    nombre: nombreMostrar, 
+                    online: esOnline, 
+                    textoTiempo: textoTiempo,
+                    rawTime: tiempo 
+                });
             });
-            lista.sort((a, b) => (a.online === b.online) ? 0 : a.online ? -1 : 1);
+
+            // ORDENAR: Primero Online, luego por fecha más reciente
+            lista.sort((a, b) => {
+                if (a.online && !b.online) return -1;
+                if (!a.online && b.online) return 1;
+                return b.rawTime - a.rawTime; // El más reciente primero
+            });
+
+            // GENERAR HTML
             lista.forEach(user => {
                 const claseBorde = user.online ? "online" : "";
                 const clasePunto = user.online ? "dot-online" : "dot-offline";
                 const avatar = getAvatarUrl(user.key);
+
                 html += `
                 <div class="story-item" onclick="mostrarPerfilUsuario('${user.key}', '${user.nombre}')">
                     <div class="story-avatar-box ${claseBorde}">
                         <div class="story-img" style="background-image:url('${avatar}')"></div>
                         <div class="story-dot ${clasePunto}"></div>
                     </div>
-                    <div class="story-name">${user.nombre}</div>
+                    <div class="story-name">
+                        ${user.nombre}
+                        <div style="font-size:0.6rem; color:${user.online ? '#10b981' : '#94a3b8'}; font-weight:${user.online ? 'bold' : 'normal'}; margin-top:-2px;">
+                            ${user.textoTiempo}
+                        </div>
+                    </div>
                 </div>`;
             });
-            contenedor.innerHTML = html || '<div style="padding:10px; color:#999;">Sin usuarios</div>';
+
+            contenedor.innerHTML = html || '<div style="padding:10px; color:#999; font-size:0.8rem;">Esperando usuarios...</div>';
         });
     }
     
@@ -1695,13 +1804,40 @@
                     });
                     document.getElementById('listaNotificaciones').innerHTML = h || "<div style='padding:20px; color:#cbd5e1;'>Sin notificaciones.</div>";
                 }
-                if (d.historial) { 
-                    let h = ""; 
-                    Object.values(d.historial).reverse().slice(0,10).forEach(x => { 
-                        h += `<div class="historial-item"><span>${x.motivo}</span><span style="color:${x.puntos>0?'#10b981':'red'}">${x.puntos}</span></div>`; 
-                    }); 
-                    document.getElementById('historialList').innerHTML = h; 
-                }
+                // --- HISTORIAL MEJORADO CON FECHA ---
+                if (d.historial) {
+                     let h = "";
+                     // Tomamos los últimos 10 movimientos
+                     Object.values(d.historial).reverse().slice(0,10).forEach(x => {
+                         
+                         // 1. Calcular Fecha y Hora
+                         const fechaObj = new Date(x.fecha || Date.now());
+                         const dia = fechaObj.getDate().toString().padStart(2, '0');
+                         const mes = (fechaObj.getMonth() + 1).toString().padStart(2, '0');
+                         const hora = fechaObj.getHours().toString().padStart(2, '0');
+                         const min = fechaObj.getMinutes().toString().padStart(2, '0');
+                         const fechaTexto = `${dia}/${mes} ${hora}:${min}`;
+
+                         // 2. Definir Color (Verde para ganar, Rojo para gastar)
+                         const colorPuntos = x.puntos > 0 ? '#10b981' : '#ef4444';
+                         const signo = x.puntos > 0 ? '+' : '';
+
+                         // 3. Crear el HTML
+                         h += `
+                         <div class="historial-item">
+                             <div style="text-align:left;">
+                                 <div style="font-weight:600; font-size:0.85rem; color:#334155;">${x.motivo}</div>
+                                 <div style="font-size:0.65rem; color:#94a3b8;">📅 ${fechaTexto}</div>
+                             </div>
+                             <span style="color:${colorPuntos}; font-weight:800; font-size:0.9rem;">
+                                 ${signo}${parseFloat(x.puntos)}
+                             </span>
+                         </div>`;
+                     });
+                     document.getElementById('historialList').innerHTML = h;
+                 } else {
+                     document.getElementById('historialList').innerHTML = "<div style='text-align:center; padding:20px; color:#cbd5e1;'>Sin movimientos aún.</div>";
+                 }
             });
             
             cargarLeaderboard();
@@ -1715,7 +1851,65 @@
     });
     
     // --- EXTRAS ---
-    window.triggerSpin = () => { if(!canSpin) return notify("Sin giros"); const btn = document.getElementById('btnSpin'); btn.disabled = true; const w = document.getElementById('wheel'); w.style.transition = "transform 3s"; w.style.transform = `rotate(${360*5+20}deg)`; setTimeout(() => { w.style.transition = "none"; w.style.transform = `rotate(20deg)`; db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.25), lastSpinDate: new Date().toISOString().split('T')[0], spinsUsed: firebase.database.ServerValue.increment(1) }); registrarHistorial("Ruleta", 0.25); notify("🎉 +0.25 PTS"); btn.disabled = false; }, 3000); };
+    // --- RULETA SINCRONIZADA ---
+    // --- RULETA CON MENSAJES EXACTOS ---
+    window.triggerSpin = () => {
+        if (!canSpin) return notify("🚫 Vuelve mañana para más giros");
+        
+        const btn = document.getElementById('btnSpin');
+        const w = document.getElementById('wheel');
+        btn.disabled = true;
+
+        // 1. CONFIGURACIÓN EXACTA (Ángulos y Premios)
+        const segmentos = [
+            { rot: 338, val: 0.25, msg: "¡0.25 Ganamos!" },
+            { rot: 293, val: 0,    msg: "😢 Caíste en un espacio VACÍO" },
+            { rot: 248, val: 0.50, msg: "¡0.50 Ganamos!" },
+            { rot: 203, val: 0,    msg: "😢 Caíste en un espacio VACÍO" },
+            { rot: 158, val: 0.75, msg: "¡Uff! 0.75 Ganamos (PREMIO MAYOR)" },
+            { rot: 113, val: 0,    msg: "😢 Caíste en un espacio VACÍO" },
+            { rot: 68,  val: 0.25, msg: "¡0.25 Ganamos!" },
+            { rot: 23,  val: 0.50, msg: "¡0.50 Ganamos!" }
+        ];
+
+        // 2. ELEGIR RESULTADO
+        const resultado = segmentos[Math.floor(Math.random() * segmentos.length)];
+
+        // 3. GIRAR (Animación)
+        w.style.transition = "transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)";
+        w.style.transform = `rotate(${360 * 5 + resultado.rot}deg)`;
+
+        // 4. RESULTADO FINAL
+        setTimeout(() => {
+            w.style.transition = "none";
+            w.style.transform = `rotate(${resultado.rot}deg)`;
+
+            const hoy = new Date().toISOString().split('T')[0];
+            const updates = {
+                lastSpinDate: hoy,
+                spinsUsed: firebase.database.ServerValue.increment(1)
+            };
+
+            // MENSAJES PERSONALIZADOS AQUÍ 👇
+            notify(resultado.msg);
+
+            if (resultado.val > 0) {
+                // Si ganó puntos
+                updates['earnings'] = firebase.database.ServerValue.increment(resultado.val);
+                registrarHistorial("Ruleta", resultado.val);
+                try { window.playSound('win'); } catch(e){}
+                
+                // Misión diaria
+                if(window.checarProgresoDiario) window.checarProgresoDiario();
+            } else {
+                // Si cayó en vacío
+                try { window.playSound('gameover'); } catch(e){}
+            }
+
+            db.ref(`users/${idAuditor}`).update(updates);
+            btn.disabled = false;
+        }, 3000);
+    };
     window.abrirSoporte = () => document.getElementById('modalSoporte').style.display = 'flex';
     window.abrirRifa = () => {
         document.getElementById('modalRifa').style.display = 'flex';
@@ -1793,16 +1987,51 @@
     window.reclamarCine = () => { const hoy = new Date().toISOString().split('T')[0]; db.ref(`users/${idAuditor}`).once('value', s => { const u=s.val(); db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.50), lastCineDate: hoy, cineCount: ((u.lastCineDate===hoy)?(u.cineCount||0):0)+1 }); registrarHistorial("Cine", 0.50); window.cerrarCine(); window.playSound('win'); notify("+0.50 PTS"); }); };
     window.cerrarCine = () => { document.getElementById('modalCine').style.display = 'none'; document.getElementById('videoPlayer').src = ""; };
     
-    // VIDEO ADMOB
+   // VIDEO ADMOB (Ahora regala: +0.25 PTS y +1 GIRO)
     const btnAd = document.getElementById('btnVerAnuncio');
     if (btnAd) {
         btnAd.onclick = () => {
-            btnAd.disabled = true; btnAd.style.opacity = "0.5";
+            btnAd.disabled = true; 
+            btnAd.style.opacity = "0.5";
+
             db.ref(`users/${idAuditor}`).once('value', s => {
-                const u = s.val(); const hoy = new Date().toISOString().split('T')[0]; const contadorHoy = (u.lastAdDate === hoy) ? (u.adCount || 0) : 0;
-                if (contadorHoy >= 5) { notify("⚠️ Límite diario alcanzado (5/5)"); btnAd.disabled = false; btnAd.style.opacity = "1"; return; }
-                db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.25), lastAdDate: hoy, adCount: contadorHoy + 1 });
-                registrarHistorial("Video Ad", 0.25); notify("💰 +0.25 PTS"); setTimeout(() => { window.location.href = "go:s6"; btnAd.disabled = false; btnAd.style.opacity = "1"; }, 2000);
+                const u = s.val(); 
+                const hoy = new Date().toISOString().split('T')[0]; 
+                const contadorHoy = (u.lastAdDate === hoy) ? (u.adCount || 0) : 0;
+
+                if (contadorHoy >= 5) { 
+                    notify("⚠️ Límite diario alcanzado (5/5)"); 
+                    btnAd.disabled = false; 
+                    btnAd.style.opacity = "1"; 
+                    return; 
+                }
+
+                // ACTUALIZAMOS LA BASE DE DATOS
+                db.ref(`users/${idAuditor}`).update({ 
+                    earnings: firebase.database.ServerValue.increment(0.25), 
+                    lastAdDate: hoy, 
+                    adCount: contadorHoy + 1,
+                    
+                    // 🔥 EL TRUCO: Restamos 1 a los "giros usados".
+                    // Si ya habías gastado tus 3 giros, ahora te contará como 2
+                    // y podrás girar de nuevo.
+                    spinsUsed: firebase.database.ServerValue.increment(-1)
+                });
+
+                registrarHistorial("Video Ad (+Giro)", 0.25); 
+                
+                // Misión diaria del 1%
+                if(window.checarProgresoDiario) window.checarProgresoDiario();
+
+                // MENSAJE DE ÉXITO (Solo sale este, no el negro molesto)
+                notify("💰 +0.25 PTS & 🎰 ¡GIRO GRATIS!");
+
+                // Lanzar el anuncio
+                setTimeout(() => { 
+                    window.location.href = "go:s6"; 
+                    btnAd.disabled = false; 
+                    btnAd.style.opacity = "1"; 
+                }, 2000);
             });
         };
     }
@@ -1981,10 +2210,104 @@
     window.solicitarPermisoNotificaciones = () => { if(Notification.permission !== "granted") Notification.requestPermission(); else notify("Activas"); };
     
     // YOUTUBE SEARCH
-    const YOUTUBE_API_KEY = "AIzaSyAqswfC8HsBown7vyWtOfrWc-lbf4HFsbM";
-    function buscarEnYouTubeAPI() { const q = document.getElementById('inputSearchMusic').value.trim(); if(!q) return; document.getElementById('ytLoader').style.display='block'; fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q)}&key=${YOUTUBE_API_KEY}`).then(r=>r.json()).then(d=>{ document.getElementById('ytLoader').style.display='none'; let h=""; d.items.forEach(i=>{ h+=`<div class="music-item" onclick="seleccionarVideo('${i.id.videoId}','${escapeHtml(i.snippet.title)}')"><img src="${i.snippet.thumbnails.default.url}" style="width:60px;margin-right:10px;"><div>${escapeHtml(i.snippet.title)}</div></div>`; }); document.getElementById('musicResultsList').innerHTML=h; }); }
-    function seleccionarVideo(id, t) { document.getElementById('mMusic').value = `https://www.youtube.com/watch?v=${id}`; document.getElementById('musicDisplayLabel').innerHTML = `🎵 ${t.substring(0,20)}...`; document.getElementById('modalMusicSelector').style.display='none'; }
-    window.cerrarSelectorMusica = () => document.getElementById('modalMusicSelector').style.display='none'; 
+    // --- NUEVA BÚSQUEDA DE YOUTUBE CON PREVIEW ---
+    const YOUTUBE_API_KEY = "AIzaSyAqswfC8HsBown7vyWtOfrWc-lbf4HFsbM"; // Tu API Key actual
+
+    // --- BÚSQUEDA YOUTUBE (CON BOTÓN VOLVER) ---
+    window.buscarEnYouTubeAPI = () => { 
+        const q = document.getElementById('inputSearchMusic').value.trim(); 
+        if(!q) return; 
+        
+        stopPreview();
+        document.getElementById('ytLoader').style.display='block'; 
+        document.getElementById('musicResultsList').innerHTML = "";
+
+        fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q)}&key=${YOUTUBE_API_KEY}`)
+        .then(r => r.json())
+        .then(d => { 
+            document.getElementById('ytLoader').style.display='none'; 
+            
+            // 1. AGREGAMOS EL BOTÓN "VOLVER" AL PRINCIPIO
+            let h = `<div style="padding:10px; text-align:center; border-bottom:1px solid #f1f5f9;">
+                        <button onclick="volverATendencias()" style="background:none; border:none; color:#0070ba; font-weight:bold; cursor:pointer; font-size:0.9rem;">
+                            ⬅ Volver a Tendencias
+                        </button>
+                     </div>`;
+            
+            if(!d.items || d.items.length === 0) {
+                document.getElementById('musicResultsList').innerHTML = h + "<div style='text-align:center;padding:20px;'>No se encontraron resultados.</div>";
+                return;
+            }
+
+            // 2. LUEGO LOS RESULTADOS
+            d.items.forEach(i => { 
+                const title = escapeHtml(i.snippet.title);
+                const thumb = i.snippet.thumbnails.default.url;
+                const vidId = i.id.videoId;
+
+                h += `
+                <div class="music-item" style="display:flex; align-items:center; padding:10px; border-bottom:1px solid #f1f5f9;">
+                    <div onclick="previewMusic('${vidId}')" style="position:relative; width:80px; height:60px; margin-right:15px; cursor:pointer; flex-shrink:0;">
+                        <img src="${thumb}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); border-radius:8px;">
+                             <i class="fas fa-play" style="color:white; font-size:1.2rem;"></i>
+                        </div>
+                    </div>
+                    <div style="flex:1; overflow:hidden;">
+                        <div style="font-size:0.8rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; color:#334155;">${title}</div>
+                        <button class="btn-blue" style="width:auto; padding:6px 15px; font-size:0.75rem; height:auto; background:#10b981;" onclick="seleccionarVideo('${vidId}', '${title}')">
+                            ✅ Elegir
+                        </button>
+                    </div>
+                </div>`; 
+            }); 
+            
+            document.getElementById('musicResultsList').innerHTML = h; 
+        })
+        .catch(e => {
+            document.getElementById('ytLoader').style.display='none';
+            // También mostramos el botón volver si hay error
+            document.getElementById('musicResultsList').innerHTML = `<div style="padding:10px;"><button onclick="volverATendencias()">⬅ Volver</button></div><div style='text-align:center;padding:20px;'>Error de conexión.</div>`;
+        });
+    };
+    // --- FUNCIÓN PARA VER PREVIEW EN EL MISMO MODAL ---
+    window.previewMusic = (id) => {
+        const container = document.getElementById('previewContainer');
+        const frame = document.getElementById('previewFrame');
+        
+        container.style.display = 'block';
+        frame.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1&controls=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    };
+
+    window.stopPreview = () => {
+        const container = document.getElementById('previewContainer');
+        const frame = document.getElementById('previewFrame');
+        if(container) container.style.display = 'none';
+        if(frame) frame.innerHTML = "";
+    };
+
+    // Al cerrar el modal, paramos la música
+    window.cerrarSelectorMusica = () => { 
+        stopPreview();
+        document.getElementById('modalMusicSelector').style.display='none'; 
+    };
+
+    // (La función seleccionarVideo se queda igual, solo la llamamos desde el botón ✅)
+    window.seleccionarVideo = (id, t) => { 
+        stopPreview(); // Parar preview si estaba sonando
+        document.getElementById('mMusic').value = `https://www.youtube.com/watch?v=${id}`; 
+        document.getElementById('musicDisplayLabel').innerHTML = `🎵 ${t.substring(0,20)}...`; 
+        document.getElementById('songNamePreview').textContent = t.substring(0,30) + "...";
+        document.getElementById('modalMusicSelector').style.display='none'; 
+        
+        // Habilitar botón de continuar
+        const btnNext = document.getElementById('btnMisionNext');
+        if(btnNext) {
+            btnNext.style.opacity = "1";
+            btnNext.disabled = false;
+        }
+        notify("🎵 Canción elegida"); 
+    };
     window.abrirSelectorMusica = () => document.getElementById('modalMusicSelector').style.display='flex';
     
     // ==========================================
@@ -2081,7 +2404,7 @@
         velocity = {x:0,y:-1}; 
         score=0; 
         food={x:5,y:5}; 
-        gameInterval=setInterval(updateSnake, 200); 
+        gameInterval=setInterval(updateSnake, 350); 
     }
     
     function updateSnake() {
@@ -2207,18 +2530,19 @@
     }
     
     window.recargarVidasConAnuncio = () => {
-        const adTrigger = document.createElement('iframe');
-        adTrigger.style.display = 'none'; adTrigger.src = 'go:interstitial';
-        document.body.appendChild(adTrigger);
-        setTimeout(() => { document.body.removeChild(adTrigger); }, 500);
+        // 1. Primero te damos las vidas en la base de datos
+        db.ref(`users/${idAuditor}`).update({ hearts: 5 });
+
+        // 2. Cerramos el modal y avisamos
+        document.getElementById('modalNoVidas').style.display = 'none';
+        notify("❤️ ¡Vidas recargadas!");
+        try { window.playSound('win'); } catch(e){}
+
+        // 3. Lanzamos el anuncio con go:s7
         setTimeout(() => {
-            db.ref(`users/${idAuditor}`).update({ hearts: 5 });
-            notify("❤️ ¡Vidas recargadas!");
-            document.getElementById('modalNoVidas').style.display = 'none';
-            window.playSound('win');
-        }, 2000);
+            window.location.href = 'go:s7'; 
+        }, 500);
     };
-    
     // --- FUNCIÓN PARA ABRIR TOP 4 ---
     window.abrirRanking = () => {
         document.getElementById('modalRanking').style.display = 'flex';
@@ -2278,6 +2602,177 @@
     });
     
     window.abrirNotificaciones = () => { document.getElementById('modalNotificaciones').style.display = 'flex'; document.getElementById('badgeNotis').style.display = 'none'; };
+   
+   // --- FUNCIÓN SNAKE CON ANUNCIO ---
+    // --- FUNCIÓN SNAKE CON ANUNCIO ---
+    window.jugarSnakeConAnuncio = () => {
+        // 1. Reproducir sonido de clic (opcional)
+        try { window.playSound('click'); } catch(e){}
+
+        // 2. Lanzar el anuncio Intersticial
+        window.location.href = 'go:s7';
+
+        // 3. Abrir el juego (Esperamos medio segundo para que el anuncio cargue primero)
+        setTimeout(() => {
+            // AQUÍ PONES EL ID DE TU MODAL DE SNAKE
+            const modal = document.getElementById('modalSnake'); 
+            if(modal) {
+                modal.style.display = 'flex';
+                modal.classList.add('show');
+                
+                // Si tienes una función para reiniciar el juego, llámala aquí:
+                // if(window.iniciarSnake) window.iniciarSnake();
+            } else {
+                console.error("No encontré el modal con id='modalSnake'. Revisa el nombre.");
+            }
+        }, 500);
+    };
+   // --- 1. FUNCIÓN PARA ABRIR CORREO REAL ---
+    // --- 1. FUNCIÓN PARA ABRIR CORREO REAL ---
+    window.enviarCorreoSoporte = () => {
+        const asunto = "Ayuda PAGOCODE - ID: " + (myCurrentKey || "Usuario");
+        const cuerpo = "Hola, necesito ayuda con lo siguiente:%0D%0A%0D%0A(Escribe aquí tu problema)...";
+        
+        // AQUÍ ES DONDE PONES TU CORREO REAL:
+        window.location.href = `mailto:codec3865@gmail.com?subject=${asunto}&body=${cuerpo}`;
+    };
+    // Esta función se debe llamar cuando el usuario complete una misión (Video o Publicación)
+    // --- FUNCIÓN PARA SUBIR EL 1% (META: 5 MISIONES) ---
+    window.checarProgresoDiario = () => {
+        const hoy = new Date().toISOString().split('T')[0];
+        
+        db.ref(`users/${idAuditor}`).once('value').then(snap => {
+            const u = snap.val();
+            
+            // Datos de Lealtad
+            let porcentajeActual = u.loyaltyPercent || 0;
+            let fechaUltimoPunto = u.lastLoyaltyDate || ""; 
+            
+            // Datos del Contador Diario
+            let fechaConteo = u.dailyMissionDate || "";
+            // Si es un nuevo día, el contador empieza en 0
+            let contadorHoy = (fechaConteo === hoy) ? (u.dailyMissionCount || 0) : 0;
+
+            // 1. Sumamos la misión actual
+            contadorHoy++;
+            
+            const updates = {};
+            updates['dailyMissionDate'] = hoy;
+            updates['dailyMissionCount'] = contadorHoy;
+
+            // 2. ¿Llegó a la meta de 5? ¿Y ya cobró hoy?
+            if (contadorHoy >= 5) {
+                if (fechaUltimoPunto !== hoy) {
+                    // ¡BINGO! Llegó a 5 y no había cobrado
+                    if (porcentajeActual < 100) {
+                        porcentajeActual++;
+                        updates['loyaltyPercent'] = porcentajeActual;
+                        updates['lastLoyaltyDate'] = hoy; // Marcamos que hoy ya cobró
+                        
+                        notify("🚀 ¡META DIARIA (5/5)! Lealtad +1%");
+                        window.playSound('win');
+                    }
+                } else {
+                    // Ya hizo más de 5 y ya cobró hoy
+                    notify(`✅ Misión extra (${contadorHoy})`);
+                }
+            } else {
+                // Aún le falta para llegar a 5
+                notify(`📈 Misión ${contadorHoy}/5 completada`);
+            }
+
+            // 3. Guardamos en la base de datos
+            db.ref(`users/${idAuditor}`).update(updates);
+            
+            // Actualizar la barra visualmente si el modal está abierto
+            if(document.getElementById('modalSoporte') && document.getElementById('modalSoporte').style.display === 'flex') {
+                 document.getElementById('labelLoyalty').textContent = porcentajeActual + "%";
+                 document.getElementById('barLoyalty').style.width = porcentajeActual + "%";
+            }
+        });
+    };
+    // Reemplaza tu función window.abrirSoporte anterior por esta:
+    window.abrirSoporte = () => {
+        document.getElementById('modalSoporte').style.display = 'flex';
+        
+        // Leemos el porcentaje de la base de datos para mostrarlo
+        db.ref(`users/${idAuditor}/loyaltyPercent`).once('value').then(snap => {
+            const val = snap.val() || 0;
+            document.getElementById('labelLoyalty').textContent = val + "%";
+            document.getElementById('barLoyalty').style.width = val + "%";
+        });
+    };
+    // --- PARCHE FINAL: SILENCIAR AL CERRAR ---
+    
+    // 1. Función para matar el video
+    window.stopPreview = () => {
+        const container = document.getElementById('previewContainer');
+        const frame = document.getElementById('previewFrame');
+        
+        // Ocultamos el contenedor
+        if(container) container.style.display = 'none';
+        
+        // ¡ESTO ES LO IMPORTANTE! Borramos el iframe para que deje de sonar
+        if(frame) frame.innerHTML = ""; 
+    };
+
+    // 2. Función de cerrar que llama al apagado
+    window.cerrarSelectorMusica = () => {
+        // Primero paramos la música
+        stopPreview(); 
+        
+        // Luego cerramos la ventana
+        const modal = document.getElementById('modalMusicSelector');
+        if(modal) modal.style.display = 'none';
+    };
+    const _musicModal = document.getElementById('modalMusicSelector');
+    if (_musicModal) {
+        const _observer = new MutationObserver(() => {
+            if (_musicModal.style.display === 'none' || _musicModal.style.display === '') {
+                // ¡LA VENTANA SE CERRÓ! -> ELIMINAR RASTRO DEL VIDEO
+                const _frame = document.getElementById('previewFrame');
+                if(_frame) _frame.innerHTML = ""; 
+            }
+        });
+        _observer.observe(_musicModal, { attributes: true, attributeFilter: ['style'] });
+    }
+    // --- FUNCIÓN PARA LOS BOTONES DE SUGERENCIA ---
+    window.sugerirBusqueda = (texto) => {
+        const input = document.getElementById('inputSearchMusic');
+        if(input) {
+            input.value = texto;
+            buscarEnYouTubeAPI(); // Lanza la búsqueda automáticamente
+        }
+    };
+    // --- VARIABLE PARA GUARDAR EL DISEÑO DE TENDENCIAS ---
+    const htmlTendencias = `
+        <div style="text-align:center; color:#94a3b8; margin-bottom: 20px; margin-top:10px;">
+            <i class="fas fa-headphones-alt" style="font-size: 2rem; margin-bottom: 10px; color: #cbd5e1;"></i>
+            <p style="font-size: 0.8rem;">Busca tu canción o elige una tendencia:</p>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding-bottom:20px;">
+            <button onclick="sugerirBusqueda('Bad Bunny')" class="chip-btn">🐰 Bad Bunny</button>
+            <button onclick="sugerirBusqueda('Karol G')" class="chip-btn">🌸 Karol G</button>
+            <button onclick="sugerirBusqueda('Feid')" class="chip-btn">💚 Feid</button>
+            <button onclick="sugerirBusqueda('Peso Pluma')" class="chip-btn">🪶 Peso Pluma</button>
+            <button onclick="sugerirBusqueda('Grupo Frontera')" class="chip-btn">🤠 Grupo Frontera</button>
+            <button onclick="sugerirBusqueda('Shakira')" class="chip-btn">🐺 Shakira</button>
+            <button onclick="sugerirBusqueda('Romeo Santos')" class="chip-btn">👑 Romeo Santos</button>
+            <button onclick="sugerirBusqueda('Junior H')" class="chip-btn">Sad Boyz</button>
+            <button onclick="sugerirBusqueda('Luis Miguel')" class="chip-btn">☀️ Luis Miguel</button>
+            <button onclick="sugerirBusqueda('Musica Electronica')" class="chip-btn">⚡ Electrónica</button>
+        </div>
+    `;
+
+    // --- FUNCIÓN PARA VOLVER A MOSTRAR LOS BOTONES ---
+    window.volverATendencias = () => {
+        const input = document.getElementById('inputSearchMusic');
+        if(input) input.value = ""; // Limpia el texto
+        
+        stopPreview(); // Detiene la música si estaba sonando
+        
+        document.getElementById('musicResultsList').innerHTML = htmlTendencias;
+    };
     </script>
 </body>
 </html>
