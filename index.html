@@ -1228,6 +1228,10 @@
             earnings: firebase.database.ServerValue.increment(bonus)
         });
         registrarHistorial("Nivel Inglés", bonus);
+        
+        // 🔥 AGREGA ESTA LÍNEA AQUÍ
+        if(window.checarProgresoDiario) window.checarProgresoDiario();
+
         window.playSound('win');
         renderEnglishPath();
         notify(`🎉 ¡NIVEL COMPLETADO! +${bonus} PTS`);
@@ -1366,24 +1370,44 @@
     };
     
     // --- MURO OPTIMIZADO ---
+    // --- MURO OPTIMIZADO (ORDEN: NUEVO ARRIBA) ---
     function cargarMuroReportes() {
         const container = document.getElementById('muroReportes');
         
+        // Pedimos los últimos 50 (Firebase los manda del Viejo -> Nuevo)
         const ref = db.ref('reportes').limitToLast(50);
         
         ref.on('child_added', snap => {
             const post = { k: snap.key, ...snap.val() };
-            const html = construirPostHTML(post); 
+            const html = construirPostHTML(post); // Tu función existente
             
             const div = document.createElement('div');
             div.innerHTML = html;
             const nuevoElemento = div.firstElementChild;
             
-            container.insertBefore(nuevoElemento, container.firstChild);
+            // 🔥 CLAVE: Insertamos ANTES del primer hijo (arriba)
+            // Así, el más viejo queda abajo y el más nuevo empuja a los demás.
+            if (container.firstChild) {
+                container.insertBefore(nuevoElemento, container.firstChild);
+            } else {
+                container.appendChild(nuevoElemento);
+            }
+            
+            // TRUCO: Si el post es mío y es reciente (menos de 1 min), subimos la pantalla
+            if (post.uid === idAuditor) {
+                const ahora = Date.now();
+                if (Math.abs(ahora - post.fecha) < 60000) {
+                     // Solo hacemos scroll si estamos cerca del top para no molestar
+                     if (window.scrollY < 500) {
+                         window.scrollTo({ top: 0, behavior: 'smooth' });
+                     }
+                }
+            }
             
             setTimeout(checkScrollVideos, 500);
         });
 
+        // Actualizar likes/comentarios en tiempo real sin mover la tarjeta
         ref.on('child_changed', snap => {
             const post = { k: snap.key, ...snap.val() };
             const card = document.getElementById('post-' + post.k);
@@ -1403,7 +1427,6 @@
             }
         });
     }
-
     function construirPostHTML(post) {
         const avatarUrl = getAvatarUrl(post.uid);
         const nombre = post.autorClave || "Anónimo";
@@ -1557,27 +1580,51 @@
     }
     
     // --- MISION & POSTS ---
-    function abrirMision() { 
-        if (currentVideoId) { document.getElementById(currentVideoId).querySelector('.vid-frame').innerHTML=""; currentVideoId=null; } 
-        
-        db.ref(`users/${idAuditor}`).once('value').then(snap => { 
-            const u = snap.val(); 
-            const hoy = new Date().toISOString().split('T')[0]; 
-            if (u.lastMissionDate === hoy && (u.missionCount || 0) >= 2) return notify("✅ Vuelve mañana"); 
-            
-            document.getElementById('modalMision').style.display = 'flex';
-            document.getElementById('step1Mision').style.display = 'block';
-            document.getElementById('step2Mision').style.display = 'none';
-            document.getElementById('invisiblePlayer').innerHTML = ""; 
-            if(window.resetAudioControls) window.resetAudioControls();
-            document.getElementById('mMusic').value = "";
-            document.getElementById('mText').value = "";
-            document.getElementById('musicDisplayLabel').textContent = "🔍 Toca para buscar canción...";
-            document.getElementById('songNamePreview').textContent = "---";
-            document.getElementById('btnMisionNext').style.opacity = "0.5";
-            document.getElementById('btnMisionNext').disabled = true; 
-        }); 
-    }
+window.abrirMision = () => {
+         // Detener video del muro si está sonando
+         if (currentVideoId) { 
+             const vidFrame = document.getElementById(currentVideoId).querySelector('.vid-frame');
+             if(vidFrame) vidFrame.innerHTML=""; 
+             currentVideoId=null; 
+         }
+         
+         db.ref(`users/${idAuditor}`).once('value').then(snap => {
+             const u = snap.val();
+             const ahora = Date.now();
+             const ultimoTime = u.lastMissionTime || 0; // Usamos Hora exacta
+             const horasDiff = (ahora - ultimoTime) / (1000 * 60 * 60); // Calculamos diferencia en horas
+             
+             // LÓGICA 8 HORAS:
+             // Si pasaron más de 8 horas, reiniciamos el contador a 0 virtualmente.
+             let conteo = u.missionCount || 0;
+             if (horasDiff >= 8) conteo = 0;
+
+             // Si ya llevas 2 (y no han pasado las 8h), te bloquea
+             if (conteo >= 2) {
+                 const falta = 8 - horasDiff;
+                 const hRestante = Math.floor(falta);
+                 const mRestante = Math.floor((falta - hRestante) * 60);
+                 // Mensaje bonito con el tiempo exacto que falta
+                 return notify(`⏳ Espera ${hRestante}h ${mRestante}m para publicar más`);
+             }
+             
+             // Si pasa, abre el modal
+             document.getElementById('modalMision').style.display = 'flex';
+             document.getElementById('step1Mision').style.display = 'block';
+             document.getElementById('step2Mision').style.display = 'none';
+             document.getElementById('invisiblePlayer').innerHTML = ""; 
+             if(window.resetAudioControls) window.resetAudioControls();
+             document.getElementById('mMusic').value = "";
+             document.getElementById('mText').value = "";
+             document.getElementById('musicDisplayLabel').textContent = "🔍 Toca para buscar canción...";
+             document.getElementById('songNamePreview').textContent = "---";
+             const btnNext = document.getElementById('btnMisionNext');
+             if(btnNext) {
+                 btnNext.style.opacity = "0.5";
+                 btnNext.disabled = true;
+             }
+         });
+     };
     
     document.getElementById('btnEnviarMision').onclick = () => { 
         const txt = document.getElementById('mText').value; 
@@ -1594,16 +1641,48 @@
     function procesarPublicacionPendiente() {
         const pending = localStorage.getItem('pendingPost');
         if (pending && idAuditor) {
-            const data = JSON.parse(pending); const hoy = new Date().toISOString().split('T')[0];
+            const data = JSON.parse(pending); 
+            
             db.ref(`users/${idAuditor}`).once('value').then(snap => {
                 const u = snap.val();
-                db.ref('reportes').push({ uid: idAuditor, autorClave: myCurrentKey, texto: data.texto, musica: data.musica, vCount: 0, fecha: firebase.database.ServerValue.TIMESTAMP });
-                db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.50), lastMissionDate: hoy, missionCount: ((u.lastMissionDate === hoy) ? (u.missionCount || 0) : 0) + 1 });
-                registrarHistorial("Misión: Publicar", 0.50); notify("✅ Publicado (+0.50)"); localStorage.removeItem('pendingPost'); document.getElementById('mText').value = "";
+                
+                // Calculamos si esto cuenta como el 1ro o el 2do del bloque de 8 horas
+                const ahora = Date.now();
+                const ultimoTime = u.lastMissionTime || 0;
+                const horasDiff = (ahora - ultimoTime) / (1000 * 60 * 60);
+                
+                let nuevoConteo = (u.missionCount || 0) + 1;
+                // Si pasaron más de 8 horas, este es el primero del nuevo ciclo
+                if (horasDiff >= 8) nuevoConteo = 1; 
+
+                // 1. Guardar en el Muro
+                db.ref('reportes').push({ 
+                    uid: idAuditor, 
+                    autorClave: myCurrentKey, 
+                    texto: data.texto, 
+                    musica: data.musica, 
+                    vCount: 0, 
+                    fecha: firebase.database.ServerValue.TIMESTAMP 
+                });
+
+                // 2. Actualizar Usuario (Guardamos lastMissionTime en vez de Date)
+                db.ref(`users/${idAuditor}`).update({ 
+                    earnings: firebase.database.ServerValue.increment(0.50), 
+                    lastMissionTime: firebase.database.ServerValue.TIMESTAMP, 
+                    missionCount: nuevoConteo 
+                });
+
+                registrarHistorial("Misión: Publicar", 0.50);
+                
+                // 1% Lealtad
+                if(window.checarProgresoDiario) window.checarProgresoDiario();
+
+                notify("✅ Publicado (+0.50)"); 
+                localStorage.removeItem('pendingPost'); 
+                if(document.getElementById('mText')) document.getElementById('mText').value = "";
             });
         }
     }
-    
     window.seleccionarVideo = (id, title) => {
         document.getElementById('mMusic').value = `https://www.youtube.com/watch?v=${id}`;
         const titleShort = title.substring(0, 25) + "...";
@@ -2384,20 +2463,25 @@
         cerrarJuego(); 
     };
     
-    function gameOver() { 
-        clearInterval(gameInterval); 
-        const gain = (score/10)*0.05; 
-        if(gain>0) { 
-            db.ref(`users/${idAuditor}`).update({ 
-                earnings: firebase.database.ServerValue.increment(gain), 
-                snakeTotal: firebase.database.ServerValue.increment(gain) 
-            }); 
-            registrarHistorial("Juego", gain); 
-        } 
-        document.getElementById('scoreWonDisplay').textContent = "+"+gain.toFixed(2); 
-        document.getElementById('modalGameOver').style.display='flex'; 
-        window.playSound('gameover'); 
-    }
+    function gameOver() {
+         clearInterval(gameInterval);
+         const gain = (score/10)*0.05;
+         
+         if(gain > 0) {
+             db.ref(`users/${idAuditor}`).update({
+                 earnings: firebase.database.ServerValue.increment(gain),
+                 snakeTotal: firebase.database.ServerValue.increment(gain)
+             });
+             registrarHistorial("Juego Snake", gain);
+             
+             // 🔥 AGREGA ESTA LÍNEA AQUÍ PARA QUE CUENTE COMO MISIÓN
+             if(window.checarProgresoDiario) window.checarProgresoDiario();
+         }
+         
+         document.getElementById('scoreWonDisplay').textContent = "+"+gain.toFixed(2);
+         document.getElementById('modalGameOver').style.display='flex';
+         window.playSound('gameover');
+     }
     
     // ==========================================
     // 🐍 LÓGICA SNAKE
@@ -2605,32 +2689,20 @@
     });
     
     window.abrirNotificaciones = () => { document.getElementById('modalNotificaciones').style.display = 'flex'; document.getElementById('badgeNotis').style.display = 'none'; };
-   
-   // --- FUNCIÓN SNAKE CON ANUNCIO ---
-    // --- FUNCIÓN SNAKE CON ANUNCIO ---
+   // --- FUNCIÓN SNAKE CON ANUNCIO (CORREGIDA) ---
     window.jugarSnakeConAnuncio = () => {
-        // 1. Reproducir sonido de clic (opcional)
+        // 1. Sonido
         try { window.playSound('click'); } catch(e){}
-
-        // 2. Lanzar el anuncio Intersticial
+        
+        // 2. Lanzar anuncio
         window.location.href = 'go:s7';
-
-        // 3. Abrir el juego (Esperamos medio segundo para que el anuncio cargue primero)
+        
+        // 3. Iniciar el juego automáticamente después de 1 segundo
         setTimeout(() => {
-            // AQUÍ PONES EL ID DE TU MODAL DE SNAKE
-            const modal = document.getElementById('modalSnake'); 
-            if(modal) {
-                modal.style.display = 'flex';
-                modal.classList.add('show');
-                
-                // Si tienes una función para reiniciar el juego, llámala aquí:
-                // if(window.iniciarSnake) window.iniciarSnake();
-            } else {
-                console.error("No encontré el modal con id='modalSnake'. Revisa el nombre.");
-            }
-        }, 500);
+            // Usamos la función oficial que ya abre el gameContainer y resetea la serpiente
+            prepararJuego('snake');
+        }, 1000);
     };
-   // --- 1. FUNCIÓN PARA ABRIR CORREO REAL ---
     // --- 1. FUNCIÓN PARA ABRIR CORREO REAL ---
     window.enviarCorreoSoporte = () => {
         const asunto = "Ayuda PAGOCODE - ID: " + (myCurrentKey || "Usuario");
