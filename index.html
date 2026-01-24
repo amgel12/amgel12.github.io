@@ -1855,7 +1855,10 @@
     // --- RULETA CON MENSAJES EXACTOS ---
     window.triggerSpin = () => {
         if (!canSpin) return notify("🚫 Vuelve mañana para más giros");
-        
+        // 🔊 SONIDO RULETA
+        const sonidoGiro = new Audio('https://amgel12.github.io/ruleta.mp3'); 
+        sonidoGiro.volume = 0.5; 
+        sonidoGiro.play().catch(e => console.log("Audio bloqueado"));
         const btn = document.getElementById('btnSpin');
         const w = document.getElementById('wheel');
         btn.disabled = true;
