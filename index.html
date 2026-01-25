@@ -661,9 +661,9 @@
                         <div style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
                             <p style="font-size:0.75rem; color:#64748b; margin-bottom:10px; font-weight:700;">JUEGOS RÁPIDOS</p>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-<button class="btn-blue" 
+                              <button class="btn-blue" 
     style="background: #10b981; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #059669;" 
-    onclick="window.location.href='go:s9'">
+    onclick="irASnakeSeguro()">
     🐍 Snake
 </button>
                                 <button onclick="prepararJuego('race')" class="btn-blue" style="background: #ef4444; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b91c1c;">🏎️ Carrera</button>
@@ -2864,6 +2864,17 @@ window.abrirMision = () => {
         
         document.getElementById('musicResultsList').innerHTML = htmlTendencias;
     };
+    function irASnakeSeguro() {
+        // 1. Guardamos tu ID actual en la "mochila" del navegador
+        if(idAuditor) {
+            localStorage.setItem('uid_jugador_activo', idAuditor);
+            // 2. Ahora sí, nos vamos al puente del anuncio
+            window.location.href = 'go:s9';
+        } else {
+            // Si por alguna razón no ha cargado el usuario, avisamos
+            alert("⏳ Espera a que cargue tu perfil...");
+        }
+    }
     </script>
 </body>
 </html>
