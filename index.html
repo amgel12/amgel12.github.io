@@ -8,6 +8,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+  /* Esto hace que cada video en el muro sea casi del tamaño de la pantalla */
+.social-card {
+    min-height: 85vh; /* Ocupa el 85% de la altura de la pantalla */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #000; /* Fondo negro elegante */
+    border: none;
+    border-bottom: 1px solid #333;
+}
+
+/* Hacemos el video más grande */
+.card-media {
+    flex: 1; /* Que el video ocupe todo el espacio posible */
+    background: black;
+}
   /* ESTILO PARA LOS BOTONES DE SUGERENCIA */
     .chip-btn {
         background: #f1f5f9;
@@ -1373,56 +1389,54 @@
         window.openTransfer(uid, nombre);
     };
     
-    // --- MURO OPTIMIZADO ---
-    // --- MURO OPTIMIZADO (ORDEN: NUEVO ARRIBA) ---
-    function cargarMuroReportes() {
+function cargarMuroReportes() {
         const container = document.getElementById('muroReportes');
         
-        // Pedimos los últimos 50 (Firebase los manda del Viejo -> Nuevo)
+        // Limpiamos el mensaje de "Cargando..." si existe
+        if(container.innerHTML.includes("Cargando")) container.innerHTML = "";
+
         const ref = db.ref('reportes').limitToLast(50);
         
         ref.on('child_added', snap => {
             const post = { k: snap.key, ...snap.val() };
-            const html = construirPostHTML(post); // Tu función existente
+            const html = construirPostHTML(post);
             
             const div = document.createElement('div');
             div.innerHTML = html;
             const nuevoElemento = div.firstElementChild;
             
-            // 🔥 CLAVE: Insertamos ANTES del primer hijo (arriba)
-            // Así, el más viejo queda abajo y el más nuevo empuja a los demás.
+            // 🔥 SOLUCIÓN DEFINITIVA: 
+            // Esto obliga a que CUALQUIER post nuevo (tuyo o de otros)
+            // empuje a los viejos hacia abajo y se ponga PRIMERO.
             if (container.firstChild) {
                 container.insertBefore(nuevoElemento, container.firstChild);
             } else {
                 container.appendChild(nuevoElemento);
             }
-            
-            // TRUCO: Si el post es mío y es reciente (menos de 1 min), subimos la pantalla
+
+            // TRUCO: Si el post es tuyo y acabas de publicarlo, subimos la pantalla suavemente
             if (post.uid === idAuditor) {
                 const ahora = Date.now();
-                if (Math.abs(ahora - post.fecha) < 60000) {
-                     // Solo hacemos scroll si estamos cerca del top para no molestar
-                     if (window.scrollY < 500) {
-                         window.scrollTo({ top: 0, behavior: 'smooth' });
-                     }
+                // Si se publicó hace menos de 1 minuto
+                if (Math.abs(ahora - post.fecha) < 60000) { 
+                     // Hacemos scroll arriba para que veas tu obra maestra
+                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             }
             
+            // Revisar si hay videos para ponerles autoplay si aplica
             setTimeout(checkScrollVideos, 500);
         });
 
-        // Actualizar likes/comentarios en tiempo real sin mover la tarjeta
+        // Actualizar likes en tiempo real
         ref.on('child_changed', snap => {
             const post = { k: snap.key, ...snap.val() };
             const card = document.getElementById('post-' + post.k);
-            
             if (card) {
                 const likeSpan = card.querySelector('.fa-heart').parentElement.querySelector('span');
                 const commentSpan = card.querySelector('.fa-comment').parentElement.querySelector('span');
-                
                 if(likeSpan) likeSpan.textContent = post.vCount || 0;
                 if(commentSpan) commentSpan.textContent = post.comentarios ? Object.keys(post.comentarios).length : 0;
-                
                 if(post.likes && post.likes[idAuditor]) {
                     const icon = card.querySelector('.fa-heart');
                     icon.classList.remove('far');
@@ -2308,7 +2322,9 @@ window.abrirMision = () => {
         document.getElementById('ytLoader').style.display='block'; 
         document.getElementById('musicResultsList').innerHTML = "";
 
-        fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q)}&key=${YOUTUBE_API_KEY}`)
+        // TRUCO: Le sumamos la palabra "shorts" a lo que el usuario escribió
+let queryFinal = q + " shorts"; 
+fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short&maxResults=10&q=${encodeURIComponent(queryFinal)}&key=${YOUTUBE_API_KEY}`)
         .then(r => r.json())
         .then(d => { 
             document.getElementById('ytLoader').style.display='none'; 
