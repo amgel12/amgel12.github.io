@@ -8,6 +8,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+  /* ESTILOS PARA EL MODAL DE RETIRO */
+.card-retiro {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.card-retiro:active { transform: scale(0.95); }
+.card-retiro.selected {
+    border-color: #0070ba;
+    background: #f0f9ff;
+    box-shadow: 0 4px 10px rgba(0, 112, 186, 0.2);
+}
+.monto-dolar { font-size: 1.2rem; font-weight: 800; color: #334155; }
+.costo-pts { font-size: 0.75rem; color: #f59e0b; font-weight: 700; margin-top: 5px; }
   /* Esto hace que cada video en el muro sea casi del tamaño de la pantalla */
 .social-card {
     min-height: 85vh; /* Ocupa el 85% de la altura de la pantalla */
@@ -52,7 +70,11 @@
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
     /* LAYOUT */
-    .app-wrapper { display: flex; width: 300vw; height: 100vh; transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); transform: translateX(-100vw); will-change: transform; transform: translateZ(0); backface-visibility: hidden; }
+    .app-wrapper { 
+    display: flex; 
+    width: 500vw; /* ANTES 400vw, AHORA 500vw */
+    height: 100vh; 
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); transform: translateX(-100vw); will-change: transform; transform: translateZ(0); backface-visibility: hidden; }
     .screen { width: 100vw; height: 100vh; overflow-y: auto; padding-bottom: 120px; flex-shrink: 0; position: relative; background: #f4f7f9; touch-action: pan-y; }
     
     /* HEADER */
@@ -199,8 +221,29 @@
     .numero { position: absolute; width: 100%; height: 100%; text-align: center; font-weight: 800; font-size: 0.65rem; color: #333; padding-top: 10px; transform-origin: 50% 50%; pointer-events: none; }
     .pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 30px; height: 35px; background: #e11d48; clip-path: polygon(50% 100%, 0 0, 100% 0); z-index: 10; border-top: 3px solid white; pointer-events: none; }
     
-    .toast { visibility: hidden; background: #1e293b; color: white; padding: 12px 25px; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); border-radius: 50px; z-index: 6000; transition: 0.3s; opacity: 0; }
-    .toast.show { visibility: visible; opacity: 1; bottom: 100px; }
+    .toast { 
+    visibility: hidden; 
+    background: #1e293b; 
+    color: white; 
+    padding: 12px 25px; 
+    position: fixed; 
+    bottom: 80px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    border-radius: 50px; 
+    
+    /* 🔥 ESTE ES EL CAMBIO (99999) PARA QUE SALGA AL FRENTE */
+    z-index: 99999 !important; 
+    
+    transition: 0.3s; 
+    opacity: 0; 
+}
+
+.toast.show { 
+    visibility: visible; 
+    opacity: 1; 
+    bottom: 100px; 
+}
     
     .historial-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.8rem; }
     .noti-item { background: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 10px; text-align: left; cursor: pointer; transition: 0.2s; }
@@ -252,12 +295,23 @@
     <div id="loadingOverlay"><div class="spinner"></div><div style="margin-top:20px; font-weight:bold; color:#64748b;">Cargando...</div></div>
     
     <div id="debugLog"><h3 style="color:white">⚠️ Diagnóstico</h3><button onclick="document.getElementById('debugLog').style.display='none'" style="margin-bottom:10px; padding:5px;">Cerrar</button><div id="logContent"></div></div>
-    
-    <header class="header-fixed">
-        <div class="app-title" id="pageTitle" style="font-weight: 800; font-size: 1.1rem; letter-spacing: 1px;">PAGOCODE</div>
-        <div style="display:flex; align-items:center;">
-            <div id="btnNotis" class="noti-icon-box" onclick="abrirNotificaciones()"><i class="fas fa-bell"></i><div id="badgeNotis" class="noti-badge">0</div></div>
-            <div class="badge-pts" id="ptsDisplay" onclick="abrirRifa()"><span id="mainPts">PTS: ...</span><span id="snakeWalletDisplay" class="snake-wallet">👾 ...</span></div>
+<header class="header-fixed">
+        <div class="app-title" id="pageTitle" style="font-weight: 800; font-size: 1.1rem; letter-spacing: 1px; color: #1e293b;">
+            PAGOCODE
+        </div>
+
+        <div style="display:flex; align-items:center; gap: 10px;">
+            
+            <div id="btnNotis" class="noti-icon-box" onclick="abrirNotificaciones()" style="margin-right:0;">
+                <i class="fas fa-bell"></i>
+                <div id="badgeNotis" class="noti-badge">0</div>
+            </div>
+
+            <div class="badge-pts" id="ptsDisplay" onclick="abrirRetiro()">
+                <span id="mainPts">0.00 PTS</span>
+                <span id="snakeWalletDisplay" class="snake-wallet">👾 0.00</span>
+            </div>
+
         </div>
     </header>
 
@@ -394,8 +448,77 @@
             <button onclick="comprarTicketRifa()" class="btn-blue" style="background: linear-gradient(135deg, #f59e0b, #d97706);">🎟️ COMPRAR TICKET</button>
             <button onclick="document.getElementById('modalRifa').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cerrar</button>
         </div>
-    </div>
+    </div><div id="modalRetiro" class="modal-overlay">
+        <div class="modal-content" style="background: #f8fafc; text-align: left;">
+            
+            <div style="text-align:center; margin-bottom:15px;">
+                <h3 style="color:#334155; margin:0;">Mi Billetera</h3>
+            </div>
 
+            <div style="background: white; padding: 2px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 1px;">
+                <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">SALDO DISPONIBLE</div>
+                <div style="font-size: 2.5rem; font-weight: 800; color: #0070ba; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span id="retiroSaldoDisplay">0.00</span> <span style="font-size:1.2rem;">PTS</span>
+                </div>
+            </div>
+
+            <div onclick="abrirRifa(); document.getElementById('modalRetiro').style.display='none'" style="background: linear-gradient(135deg, #fffbeb, #fff7ed); border: 2px dashed #f59e0b; padding: 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="font-size: 1.5rem;">🎟️</div>
+                    <div>
+                        <div style="font-weight: 800; color: #b45309; font-size: 0.9rem;">GRAN RIFA $50 USD</div>
+                        <div style="font-size: 0.7rem; color: #d97706;">Costo: 100 PTS</div>
+                    </div>
+                </div>
+                <div style="background: #f59e0b; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: bold;">
+                    JUGAR
+                </div>
+            </div>
+
+            <p style="font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:10px;">Solicitar Pago (PayPal):</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <div class="card-retiro" id="promoRetiro" onclick="seleccionarMonto(this, 0.10, 100)">
+                    <div style="position:absolute; top:-10px; right:-10px; background:#ef4444; color:white; font-size:0.6rem; padding:2px 6px; border-radius:4px; font-weight:bold;">¡NUEVO!</div>
+                    <div class="monto-dolar">$0.10 USD</div>
+                    <div class="costo-pts">⚡ 100 PTS</div>
+                </div>
+
+                <div class="card-retiro" onclick="seleccionarMonto(this, 1.50, 1500)">
+                    <div class="monto-dolar">$1.50 USD</div>
+                    <div class="costo-pts">⚡ 1,500 PTS</div>
+                </div>
+
+                <div class="card-retiro" onclick="seleccionarMonto(this, 5.00, 5000)">
+                    <div class="monto-dolar">$5.00 USD</div>
+                    <div class="costo-pts">⚡ 5,000 PTS</div>
+                </div>
+
+                <div class="card-retiro" onclick="seleccionarMonto(this, 10.00, 10000)">
+                    <div class="monto-dolar">$10.00 USD</div>
+                    <div class="costo-pts">⚡ 10,000 PTS</div>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border: 1px solid #e2e8f0;">
+                <span style="font-weight: 700; font-size: 0.9rem;">Método:</span>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" style="height: 20px;">
+            </div>
+
+            <input type="email" id="inputPaypal" placeholder="Tu Correo de PayPal" style="width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 10px; text-align: left; margin-bottom: 10px;">
+
+            <button id="btnSolicitarRetiro" onclick="procesarRetiro()" class="btn-blue" disabled style="background: #cbd5e1; box-shadow: none;">
+                Solicitar Retiro
+            </button>
+            <div style="margin-top: 15px; font-size: 0.65rem; color: #94a3b8; line-height: 1.4;">
+                1. Los pagos llegan en 1-7 días hábiles.<br>
+                2. El uso de trampas anulará el pago.<br>
+                3. Google no está afiliado a estas recompensas.
+            </div>
+
+            <button onclick="document.getElementById('modalRetiro').style.display='none'" style="width:100%; margin-top:15px; background:none; border:none; color:#64748b;">Cancelar</button>
+        </div>
+    </div>
     <div id="modalUnlockVIP" class="modal-overlay">
         <div class="modal-content" style="border: 2px solid #a855f7;">
             <h3 style="color:#7e22ce; font-size:1.5rem;">🚀 Siguiente Nivel</h3>
@@ -585,159 +708,203 @@
             <button id="btnThanks" class="btn-blue" style="background: #8b5cf6; display:flex; align-items:center; justify-content:center; gap:5px;">🙏 Dar las Gracias</button>
             <button onclick="document.getElementById('modalGiftReceived').style.display='none'" style="background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cerrar</button>
         </div>
-    </div>
-    
-    <div id="btnOpenChat" class="chat-float-btn" onclick="toggleChat()">💬 <div id="chatBadge" class="chat-badge"></div></div>
-    
-    <div id="chatWindow" class="chat-window">
-        <div class="chat-header"><h3 style="font-size:1rem;">💬 Chat Global</h3><button onclick="toggleChat()" style="border:none; background:none; font-size:1.2rem; cursor:pointer;">⬇️</button></div>
-        <div id="chatList" class="chat-messages-area"><div style="text-align:center; color:#94a3b8; font-size:0.8rem; margin-top:20px;">Cargando mensajes...</div></div>
-        <div id="typingIndicator" class="typing-indicator"><span id="typingText"></span><div class="typing-dots"><span></span><span></span><span></span></div></div>
-        <div id="replyBar" class="reply-bar">
-            <div class="reply-info"><span style="color:#0070ba; font-weight:bold;">Respondiendo a:</span><span id="replyTextPreview" style="color:#64748b; white-space:nowrap; overflow:hidden; max-width:200px;">...</span></div>
-            <button onclick="cancelReply()" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">✕</button>
+   </div>
+  <div class="app-wrapper" id="appWrapper" style="transform: translateX(-100vw);">
+
+    <div class="screen">
+        <div style="height: 80px;"></div>
+        <div style="padding: 0 20px; text-align: center;">
+             <h2 style="color:#58cc02; margin-bottom: 5px;">Academia de Inglés</h2>
+             <p style="color:#64748b; font-size: 0.8rem; margin-bottom: 20px;">Completa lecciones y gana puntos.</p>
+             <div id="englishPath" class="duo-path-container">
+                 <div style="color:#cbd5e1;">Cargando niveles...</div>
+             </div>
         </div>
-        <div class="chat-input-area"><input type="text" id="inputChatMsg" placeholder="Escribe un mensaje..." autocomplete="off"><button onclick="enviarTexto()" class="btn-blue" style="width:auto; padding: 12px 18px; border-radius:50%; background:#0070ba;">➤</button></div>
     </div>
 
-    <div class="app-wrapper" id="appWrapper" style="transform: translateX(-100vw);">
+    <div class="screen">
+        <div style="height: 20px;"></div>
+        <div class="sticky-leaderboard" style="top: 0;">
+            <div class="leader-info">
+                <div class="leader-avatar" id="barraMiAvatar"></div>
+                <div class="leader-text">
+                    <h4 id="barraMiNombre" style="color: #0070ba;">Cargando...</h4>
+                    <span id="barraMisPuntos" style="color: #1e293b;">--- PTS</span>
+                </div>
+            </div>
+            <button class="leader-btn" onclick="abrirRanking()" style="background: linear-gradient(90deg, #f59e0b, #d97706); box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4);">
+                🏆 Ver Ranking
+            </button>
+        </div>
         
-        <div class="screen">
-            <div style="height: 80px;"></div>
-            <div style="padding: 0 20px; text-align: center;">
-                 <h2 style="color:#58cc02; margin-bottom: 5px;">Academia de Inglés</h2>
-                 <p style="color:#64748b; font-size: 0.8rem; margin-bottom: 20px;">Completa lecciones y gana puntos.</p>
-                 
-                 <div id="englishPath" class="duo-path-container">
-                     <div style="color:#cbd5e1;">Cargando niveles...</div>
-                 </div>
+        <div id="viewMuro" style="padding: 0 15px;">
+            <div class="stories-container">
+                <div class="stories-title">Usuarios Activos</div>
+                <div id="listaUsuariosHorizontal" class="stories-scroll">
+                    <div style="padding:10px; font-size:0.8rem; color:#94a3b8;">Cargando...</div>
+                </div>
             </div>
-        </div>
-
-        <div class="screen">
+            <div class="tab-container"><button class="tab-btn tab-active" id="tabBtnMuro" onclick="switchTab('muro')">📝 Feed Social</button><button class="tab-btn" onclick="document.getElementById('modalTareas').style.display='flex'">🎯 Misiones</button></div>
+            <div class="cta-container">
+                <div id="btnMisionDestacado" class="btn-cta-muro" onclick="abrirMision()">
+                    <div style="display:flex; align-items:center;"><div class="cta-icon-box">✍️</div><div class="cta-texts"><div class="cta-title">Publicar Pensamiento</div><div id="misionStatusText" class="cta-subtitle">Comparte música o videos</div></div></div><div class="cta-badge">+0.50</div>
+                </div>
+            </div>
+            <div style="font-size:0.75rem; color:#94a3b8; margin:0 0 10px; font-weight:800; letter-spacing:1px;">LO QUE ESTÁ PASANDO</div>
+            <div id="muroReportes" style="min-height: 200px;"><div style='text-align:center; padding:40px; color:#64748b;'><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Cargando Feed Social...</div></div>
             <div style="height: 20px;"></div>
-            
-            <div class="sticky-leaderboard" style="top: 0;">
-                <div class="leader-info">
-                    <div class="leader-avatar" id="barraMiAvatar"></div>
-                    <div class="leader-text">
-                        <h4 id="barraMiNombre" style="color: #0070ba;">Cargando...</h4>
-                        <span id="barraMisPuntos" style="color: #1e293b;">--- PTS</span>
-                    </div>
-                </div>
-                <button class="leader-btn" onclick="abrirRanking()" style="background: linear-gradient(90deg, #f59e0b, #d97706); box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4);">
-                    🏆 Ver Ranking
-                </button>
-            </div>
-            
-            <div id="viewMuro" style="padding: 0 15px;">
-                
-                <div class="stories-container">
-                    <div class="stories-title">Usuarios Activos</div>
-                    <div id="listaUsuariosHorizontal" class="stories-scroll">
-                        <div style="padding:10px; font-size:0.8rem; color:#94a3b8;">Cargando...</div>
-                    </div>
-                </div>
-
-                <div class="tab-container"><button class="tab-btn tab-active" id="tabBtnMuro" onclick="switchTab('muro')">📝 Feed Social</button><button class="tab-btn" onclick="document.getElementById('modalTareas').style.display='flex'">🎯 Misiones</button></div>
-                
-                <div class="cta-container">
-                    <div id="btnMisionDestacado" class="btn-cta-muro" onclick="abrirMision()">
-                        <div style="display:flex; align-items:center;"><div class="cta-icon-box">✍️</div><div class="cta-texts"><div class="cta-title">Publicar Pensamiento</div><div id="misionStatusText" class="cta-subtitle">Comparte música o videos</div></div></div><div class="cta-badge">+0.50</div>
-                    </div>
-                </div>
-                
-                <div style="font-size:0.75rem; color:#94a3b8; margin:0 0 10px; font-weight:800; letter-spacing:1px;">LO QUE ESTÁ PASANDO</div>
-                <div id="muroReportes" style="min-height: 200px;"><div style='text-align:center; padding:40px; color:#64748b;'><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Cargando Feed Social...</div></div>
-                <div style="height: 20px;"></div>
-            </div>
         </div>
+    </div>
 
-        <div class="screen">
-            <div style="padding: 90px 20px 20px;">
-                <div style="text-align:center; margin-bottom:20px;"><div style="font-size:3.5rem; margin-bottom:5px;">👤</div><h2 id="profKey" style="color:#1e293b;">---</h2><p id="profRank" style="font-size:0.8rem; font-weight:700; color:#0070ba; margin-top:5px;">AUDITOR NIVEL 1</p></div>
-                
-                <div class="card" style="text-align:center;">
-                     <div class="ruleta-container">
-                        <div class="pointer"></div>
-                        <div id="wheel">
-                            <div class="numero" style="transform: rotate(22.5deg);">0.25</div><div class="numero" style="transform: rotate(67.5deg);">VACÍO</div><div class="numero" style="transform: rotate(112.5deg);">0.50</div><div class="numero" style="transform: rotate(157.5deg);">VACÍO</div>
-                            <div class="numero" style="transform: rotate(202.5deg);">0.75</div><div class="numero" style="transform: rotate(247.5deg);">VACÍO</div><div class="numero" style="transform: rotate(292.5deg);">0.25</div><div class="numero" style="transform: rotate(337.5deg);">0.50</div>
-                        </div>
+    <div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #e5e5f7;">
+        <div style="height: 25px; flex-shrink: 0; background:white;"></div>
+        <div style="padding: 10px 15px; background: white; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; display:flex; justify-content:space-between; align-items:center;">
+             <h3 style="margin:0; font-size:1rem; color:#1e293b;">💬 Grupo Social</h3>
+             <span style="font-size:0.7rem; color:#10b981; background:#ecfdf5; padding:4px 8px; border-radius:10px; font-weight:bold;">● En línea</span>
+        </div>
+<div id="chatList" class="chat-messages-area" style="flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 20px;">
+     <div style="text-align:center; padding:20px; color:#94a3b8;">Cargando comunidad...</div>
+</div>
+
+<div id="typingIndicator" class="typing-indicator" style="background:transparent;"><span id="typingText"></span>...</div>
+<div id="replyBar" class="reply-bar">
+    <div class="reply-info"><span style="color:#0070ba; font-weight:bold;">Respondiendo:</span> <span id="replyTextPreview">...</span></div>
+    <button onclick="cancelReply()" style="background:none; border:none; font-size:1.2rem;">✕</button>
+</div>
+
+<div style="background: White; width: 100%; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 1px; flex-shrink: 0; padding: 1px; padding-bottom: -70px; margin-bottom: -60px; z-index: 200;">
+     
+     <input type="text" id="inputChatMsg" placeholder="Escribe..." autocomplete="off" 
+            style="background:#f0f2f5; border:none; border-radius:20px; flex:1; min-width: 0; margin:0; padding: 0 15px; height: 40px; font-size: 0.95rem; color: #333;">
+     
+     <button onclick="enviarTexto()" class="btn-blue" 
+             style="width: 40px; height: 40px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: #0070ba; color: white; border: none; box-shadow: none; flex-shrink: 0;">
+         ➤
+     </button>
+
+</div>
+</div>
+
+    <div class="screen">
+        <div style="height: 80px;"></div>
+        <div style="padding: 20px; 20px; text-align: center;">
+            <h2 style="color:#f59e0b; margin-bottom: 5px;">Zona de Misiones</h2>
+            <p style="color:#64748b; font-size: 0.8rem; margin-bottom: 20px;">Juega y gana puntos diarios.</p>
+            <div class="card" style="text-align:center;">
+                 <div class="ruleta-container">
+                    <div class="pointer"></div>
+                    <div id="wheel">
+                        <div class="numero" style="transform: rotate(22.5deg);">0.25</div>
+                        <div class="numero" style="transform: rotate(67.5deg);">VACÍO</div>
+                        <div class="numero" style="transform: rotate(112.5deg);">0.50</div>
+                        <div class="numero" style="transform: rotate(157.5deg);">VACÍO</div>
+                        <div class="numero" style="transform: rotate(202.5deg);">0.75</div>
+                        <div class="numero" style="transform: rotate(247.5deg);">VACÍO</div>
+                        <div class="numero" style="transform: rotate(292.5deg);">0.25</div>
+                        <div class="numero" style="transform: rotate(337.5deg);">0.50</div>
                     </div>
-                    <button id="btnSpin" onclick="triggerSpin()" class="btn-blue" style="background:#f59e0b; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">🎰 Girar Ruleta</button>
-                    <p id="spinInfo" style="text-align:center; font-size:0.7rem; margin-top:10px; color:#64748b;"></p>
-                    
-                    <div style="margin-top: 20px;">
-                        <div style="margin-bottom:15px; border: 2px dashed #0070ba; border-radius: 15px; padding: 5px; background: #f0f9ff;">
-                            <button id="btnVerAnuncio" style="width:100%; border:none; background:none; padding:10px; font-weight:800; color:#0070ba; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">📺 Video (+0.25) & 🎰</button>
-                        </div>
-                        <button onclick="abrirCine()" style="width:100%; padding:15px; background:#1e293b; color:#fbbf24; border-radius:15px; font-weight:800; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🍿 Tutorial/Novedades <span style="background:#fbbf24; color:#78350f; padding:2px 8px; border-radius:6px; font-size:0.8rem;">+0.50</span></button>
-                        
-                        <div style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                            <p style="font-size:0.75rem; color:#64748b; margin-bottom:10px; font-weight:700;">JUEGOS RÁPIDOS</p>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                              <button class="btn-blue" 
-    style="background: #10b981; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #059669;" 
-    onclick="irASnakeSeguro()">
-    🐍 Snake
-</button>
-                                <button onclick="prepararJuego('race')" class="btn-blue" style="background: #ef4444; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b91c1c;">🏎️ Carrera</button>
-                                <button onclick="abrirLichessConAd()" class="btn-blue" style="background: #3b82f6; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #1d4ed8;">♟️ Lichess</button>
-                                <button onclick="window.location.href='go:Damas'" class="btn-blue" style="background: #f59e0b; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b45309;">⚪ Damas</button>
-                            </div>
+                </div>
+                <button id="btnSpin" onclick="triggerSpin()" class="btn-blue" style="background:#f59e0b; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">🎰 Girar Ruleta</button>
+                <p id="spinInfo" style="text-align:center; font-size:0.7rem; margin-top:10px; color:#64748b;"></p>
+                <div style="margin-top: 20px;">
+                    <div style="margin-bottom:15px; border: 2px dashed #0070ba; border-radius: 15px; padding: 5px; background: #f0f9ff;">
+                        <button id="btnVerAnuncio" style="width:100%; border:none; background:none; padding:10px; font-weight:800; color:#0070ba; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                            📺 Video (+0.25) & 🎰
+                        </button>
+                    </div>
+                    <button onclick="abrirCine()" style="width:100%; padding:15px; background:#1e293b; color:#fbbf24; border-radius:15px; font-weight:800; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                        🍿 Tutorial/Novedades <span style="background:#fbbf24; color:#78350f; padding:2px 8px; border-radius:6px; font-size:0.8rem;">+0.50</span>
+                    </button>
+                    <div style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                        <p style="font-size:0.75rem; color:#64748b; margin-bottom:10px; font-weight:700;">ARCADE</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                          <button class="btn-blue" style="background: #10b981; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #059669;" onclick="irASnakeSeguro()">🐍 Snake</button>
+                          <button onclick="prepararJuego('race')" class="btn-blue" style="background: #ef4444; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b91c1c;">🏎️ Carrera</button>
+                          <button onclick="abrirLichessConAd()" class="btn-blue" style="background: #3b82f6; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #1d4ed8;">♟️ Lichess</button>
+                          <button onclick="window.location.href='go:Damas'" class="btn-blue" style="background: #f59e0b; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b45309;">⚪ Damas</button>
                         </div>
                     </div>
                 </div>
-<div class="card">
-                    <h3 style="font-size:0.9rem;">Tu Clave Única</h3>
-                    <div id="myKeyDisplay" style="background:#f8fafc; padding:12px; border-radius:10px; text-align:center; font-size:1.2rem; font-weight:800; margin:10px 0; color:#0070ba; border:1px dashed #cbd5e1;">---</div>
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="copiarClave()" class="btn-blue" style="font-size:0.8rem; padding:10px; background:white; color:#0070ba; border:1px solid #0070ba; flex:1;">📋 Copiar</button>
-                        <button onclick="verReferidos()" class="btn-blue" style="font-size:0.8rem; padding:10px; flex:1;">👥 Ver Referidos</button>
-                    </div>
-                    <div style="margin-top:15px; border-top:1px solid #f1f5f9; padding-top:10px;">
-                        <p style="font-size:0.7rem; color:#64748b; margin-bottom:5px;">
-                            Canjear código de amigo <b id="contadorAmigos" style="color:#0070ba;">(0/3)</b>:
-                        </p>
-                        <div style="display:flex; gap:5px;">
-                            <input type="text" id="inputFolio" placeholder="INV-XXXXX" style="margin:0; text-transform:uppercase;">
-                            <button id="btnValidar" class="btn-blue" style="width:auto; margin:0;">OK</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <h3 style="font-size:0.9rem; margin-bottom:10px;">Historial de Puntos</h3>
-                    <div id="historialList"></div>
-                </div>
-                
-                <button onclick="abrirSoporte()" class="btn-blue" style="background:#cbd5e1; color:#475569; margin-top:20px;">🛠️ Soporte Técnico</button>
-                <div style="height: 20px;"></div>
             </div>
         </div>
     </div>
+
+    <div class="screen">
+        <div style="height: 80px;"></div>
+        <div style="padding: 0 20px 20px;">
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="font-size:3.5rem; margin-bottom:5px;">👤</div>
+                <h2 id="profKey" style="color:#1e293b;">---</h2>
+                <p id="profRank" style="font-size:0.8rem; font-weight:700; color:#0070ba; margin-top:5px;">AUDITOR NIVEL 1</p>
+            </div>
+            <div class="card">
+                <h3 style="font-size:0.9rem;">Tu Clave Única</h3>
+                <div id="myKeyDisplay" style="background:#f8fafc; padding:12px; border-radius:10px; text-align:center; font-size:1.2rem; font-weight:800; margin:10px 0; color:#0070ba; border:1px dashed #cbd5e1;">---</div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="copiarClave()" class="btn-blue" style="font-size:0.8rem; padding:10px; background:white; color:#0070ba; border:1px solid #0070ba; flex:1;">📋 Copiar</button>
+                    <button onclick="verReferidos()" class="btn-blue" style="font-size:0.8rem; padding:10px; flex:1;">👥 Ver Referidos</button>
+                </div>
+                <div style="margin-top:15px; border-top:1px solid #f1f5f9; padding-top:10px;">
+                    <p style="font-size:0.7rem; color:#64748b; margin-bottom:5px;">
+                        Canjear código de amigo <b id="contadorAmigos" style="color:#0070ba;">(0/3)</b>:
+                    </p>
+                    <div style="display:flex; gap:5px;">
+                        <input type="text" id="inputFolio" placeholder="INV-XXXXX" style="margin:0; text-transform:uppercase;">
+                        <button id="btnValidar" class="btn-blue" style="width:auto; margin:0;">OK</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h3 style="font-size:0.9rem; margin-bottom:10px;">Historial de Movimientos</h3>
+                <div id="historialList"></div>
+            </div>
+            <button onclick="abrirSoporte()" class="btn-blue" style="background:#cbd5e1; color:#475569; margin-top:20px;">
+                🛠️ Soporte Técnico
+            </button>
+            <div style="height: 30px;"></div>
+        </div>
+    </div>
+</div>
+
 <div id="modalChatOptions" class="modal-overlay" style="z-index: 24000; align-items: flex-end;">
-        <div class="modal-content" style="width:100%; max-width: 100%; border-radius: 20px 20px 0 0; padding: 0; margin: 0; background: #f8fafc; animation: slideUp 0.2s;">
-            
-            <button onclick="copiarTextoSeleccionado()" class="btn-blue" style="margin: 15px 15px 5px; background: white; color: #334155; border: 1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; gap:10px;">
-                📋 Copiar Texto
-            </button>
-
-            <button id="btnBorrarMensaje" onclick="borrarMensajeSeleccionado()" class="btn-blue" style="margin: 5px 15px 15px; background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; display:flex; align-items:center; justify-content:center; gap:10px;">
-                🗑️ Borrar para todos
-            </button>
-
-            <div style="height:10px; background:#f1f5f9; border-top:1px solid #e2e8f0;"></div>
-            
-            <button onclick="document.getElementById('modalChatOptions').style.display='none'" style="width:100%; padding:15px; border:none; background:white; font-weight:bold; color:#64748b; cursor:pointer;">
-                Cancelar
-            </button>
-        </div>
+    <div class="modal-content" style="width:100%; max-width: 100%; border-radius: 20px 20px 0 0; padding: 0; margin: 0; background: #f8fafc; animation: slideUp 0.2s;">
+        <button onclick="copiarTextoSeleccionado()" class="btn-blue" style="margin: 15px 15px 5px; background: white; color: #334155; border: 1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; gap:10px;">
+            📋 Copiar Texto
+        </button>
+        <button id="btnBorrarMensaje" onclick="borrarMensajeSeleccionado()" class="btn-blue" style="margin: 5px 15px 15px; background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; display:flex; align-items:center; justify-content:center; gap:10px;">
+            🗑️ Borrar para todos
+        </button>
+        <div style="height:10px; background:#f1f5f9; border-top:1px solid #e2e8f0;"></div>
+        <button onclick="document.getElementById('modalChatOptions').style.display='none'" style="width:100%; padding:15px; border:none; background:white; font-weight:bold; color:#64748b; cursor:pointer;">
+            Cancelar
+        </button>
     </div>
-    <nav class="bottom-nav">
-        <button class="nav-item" id="nav0" onclick="goToScreen(0, true)"><span class="nav-icon"><i class="fas fa-graduation-cap"></i></span><span>Aprender</span></button>
-        <button class="nav-item active" id="nav1" onclick="goToScreen(1, true)"><span class="nav-icon"><i class="fas fa-home"></i></span><span>Muro</span></button>
-        <button class="nav-item" id="nav2" onclick="goToScreen(2, true)"><span class="nav-icon"><i class="fas fa-user"></i></span><span>Perfil</span></button>
+</div>
+   <nav class="bottom-nav">
+        <button class="nav-item" id="nav0" onclick="goToScreen(0, true)">
+            <span class="nav-icon"><i class="fas fa-graduation-cap"></i></span>
+            <span>Aprender</span>
+        </button>
+
+        <button class="nav-item active" id="nav1" onclick="goToScreen(1, true)">
+            <span class="nav-icon"><i class="fas fa-home"></i></span>
+            <span>Muro</span>
+        </button>
+
+        <button class="nav-item" id="nav2" onclick="goToScreen(2, true)">
+            <span class="nav-icon"><i class="fas fa-comments"></i></span>
+            <span>Grupo</span>
+        </button>
+
+        <button class="nav-item" id="nav3" onclick="goToScreen(3, true)">
+            <span class="nav-icon"><i class="fas fa-gamepad"></i></span>
+            <span>Misiones</span>
+        </button>
+
+        <button class="nav-item" id="nav4" onclick="goToScreen(4, true)">
+            <span class="nav-icon"><i class="fas fa-user-circle"></i></span>
+            <span>Perfil</span>
+        </button>
     </nav>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -2891,6 +3058,86 @@ fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&vide
             alert("⏳ Espera a que cargue tu perfil...");
         }
     }
+    // VARIABLES GLOBALES PARA RETIRO
+    let retiroMontoSeleccionado = 0;
+    let retiroCostoPuntos = 0;
+
+    // ABRIR MODAL
+    window.abrirRetiro = () => {
+        document.getElementById('modalRetiro').style.display = 'flex';
+        // Actualizamos el saldo visual
+        document.getElementById('retiroSaldoDisplay').textContent = currentEarnings.toFixed(2);
+    };
+
+    // SELECCIONAR OPCIÓN
+    window.seleccionarMonto = (elemento, dolares, puntos) => {
+        // 1. Quitar selección anterior
+        document.querySelectorAll('.card-retiro').forEach(el => el.classList.remove('selected'));
+        
+        // 2. Marcar nuevo
+        elemento.classList.add('selected');
+        
+        // 3. Guardar datos
+        retiroMontoSeleccionado = dolares;
+        retiroCostoPuntos = puntos;
+
+        // 4. Activar botón si alcanza el saldo
+        const btn = document.getElementById('btnSolicitarRetiro');
+        if (currentEarnings >= puntos) {
+            btn.disabled = false;
+            btn.style.background = "#0070ba";
+            btn.style.boxShadow = "0 4px 15px rgba(0,112,186,0.3)";
+            btn.textContent = `Retirar $${dolares} USD`;
+        } else {
+            btn.disabled = true;
+            btn.style.background = "#cbd5e1";
+            btn.style.boxShadow = "none";
+            btn.textContent = `Faltan ${(puntos - currentEarnings).toFixed(2)} PTS`;
+        }
+    };
+
+    // PROCESAR RETIRO
+    window.procesarRetiro = () => {
+        const correo = document.getElementById('inputPaypal').value.trim();
+        
+        if (!correo || !correo.includes('@')) return notify("Ingresa un correo PayPal válido");
+        if (currentEarnings < retiroCostoPuntos) return notify("Saldo insuficiente");
+
+        // PREVENCIÓN DOBLE CLICK
+        const btn = document.getElementById('btnSolicitarRetiro');
+        btn.disabled = true;
+        btn.textContent = "Procesando...";
+
+        // 1. DESCONTAR PUNTOS EN FIREBASE
+        db.ref(`users/${idAuditor}`).update({
+            earnings: firebase.database.ServerValue.increment(-retiroCostoPuntos)
+        }).then(() => {
+            
+            // 2. CREAR SOLICITUD EN BASE DE DATOS (Para que tú la veas como Admin)
+            db.ref('solicitudes_retiro').push({
+                uid: idAuditor,
+                usuario: myCurrentKey,
+                correo_paypal: correo,
+                monto_usd: retiroMontoSeleccionado,
+                costo_pts: retiroCostoPuntos,
+                fecha: firebase.database.ServerValue.TIMESTAMP,
+                estado: "pendiente" 
+            });
+
+            // 3. GUARDAR EN HISTORIAL DEL USUARIO
+            registrarHistorial(`Retiro PayPal $${retiroMontoSeleccionado}`, -retiroCostoPuntos);
+
+            // 4. ÉXITO
+            notify("✅ Solicitud enviada correctamente");
+            document.getElementById('modalRetiro').style.display = 'none';
+            
+            // Sonido de caja registradora
+            try { new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_8ce5e82719.mp3').play(); } catch(e){}
+        }).catch(error => {
+            notify("Error: " + error.message);
+            btn.disabled = false;
+        });
+    };
     </script>
 </body>
 </html>
