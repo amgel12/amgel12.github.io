@@ -770,8 +770,23 @@
 <div id="replyBar" class="reply-bar">
     <div class="reply-info"><span style="color:#0070ba; font-weight:bold;">Respondiendo:</span> <span id="replyTextPreview">...</span></div>
     <button onclick="cancelReply()" style="background:none; border:none; font-size:1.2rem;">✕</button>
-</div>
-
+    </div>
+<div id="mentionList" style="
+    display: none;
+    position: fixed;
+    bottom: 65px;
+    left: 50%; /* Centrado horizontal parte 1 */
+    transform: translateX(-50%); /* Centrado horizontal parte 2 */
+    width: 90%; /* Ancho en móviles */
+    max-width: 300px; /* ¡EL FRENO! No más ancho que esto */
+    background: #1e293b;
+    border-radius: 12px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+    max-height: 160px;
+    overflow-y: auto;
+    z-index: 25000;
+    border: 2px solid #fbbf24;
+"></div>
 <div style="background: White; width: 100%; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 1px; flex-shrink: 0; padding: 1px; padding-bottom: -70px; margin-bottom: -60px; z-index: 200;">
      
      <input type="text" id="inputChatMsg" placeholder="Escribe..." autocomplete="off" 
@@ -891,10 +906,11 @@
             <span>Muro</span>
         </button>
 
-        <button class="nav-item" id="nav2" onclick="goToScreen(2, true)">
-            <span class="nav-icon"><i class="fas fa-comments"></i></span>
-            <span>Grupo</span>
-        </button>
+<button class="nav-item" id="nav2" onclick="goToScreen(2, true)" style="position: relative;">
+    <span class="nav-icon"><i class="fas fa-comments"></i></span>
+    <span>Grupo</span>
+    <div id="msgBadge" style="position: absolute; top: 4px; right: 20px; background: #ef4444; color: white; font-size: 0.65rem; font-weight: 800; min-width: 18px; height: 18px; border-radius: 50%; display: none; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">0</div>
+</button>
 
         <button class="nav-item" id="nav3" onclick="goToScreen(3, true)">
             <span class="nav-icon"><i class="fas fa-gamepad"></i></span>
@@ -936,7 +952,7 @@
     document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('button').forEach(btn => { btn.addEventListener('click', () => playSound('click')); }); });
     
     let idAuditor = null; let myCurrentKey = ""; let currentEarnings = 0; let canSpin = false; let currentVideoId = null; let scrollTimeout = null; let audioActivadoGlobal = false; let isCommenting = false; let lastGameAd = 0;
-    
+    let mensajesNoLeidos = 0;
 // --- DATOS ACADEMIA INGLÉS (10 PREGUNTAS POR NIVEL) ---
     // Base de datos de palabras para generar opciones incorrectas
     const wordBank = ["Blue", "Red", "Cat", "Dog", "One", "Two", "Yes", "No", "Bye", "Hello", "Thanks", "Please", "Water", "Milk", "Car", "Bus", "House", "City", "Friend", "Family", "Apple", "Bread", "Coffee", "Night", "Day", "Mother", "Father", "Sister", "School", "Teacher", "Book", "Pen", "Computer", "Phone", "Shoes", "Shirt", "Pants", "Run", "Walk", "Eat", "Sleep", "Sun", "Moon", "Rain", "Snow", "Happy", "Sad", "Big", "Small"];
@@ -1442,16 +1458,29 @@
     // --- NAVEGACION ---
     const wrapper = document.getElementById('appWrapper'); let currentScreen = 1;
     window.goToScreen = (index, userAction = false) => {
-        if (userAction && index !== 1) {
-            window.history.pushState({screen: index}, "");
-        }
-        currentScreen = index;
-        const wrapper = document.getElementById('appWrapper');
-        wrapper.style.transform = `translateX(-${index * 100}vw)`;
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        document.getElementById(`nav${index}`).classList.add('active');
-    };
-    window.switchTab = (tab) => { if (tab === 'muro') { document.getElementById('viewMuro').style.display = 'block'; document.getElementById('tabBtnMuro').classList.add('tab-active'); } };
+    if (userAction && index !== 1) {
+        window.history.pushState({screen: index}, "");
+    }
+    
+    // 🔥 CORRECCIÓN: Ocultar SIEMPRE el menú de menciones al cambiar de pantalla
+    const mentionBox = document.getElementById('mentionList');
+    if (mentionBox) mentionBox.style.display = 'none';
+
+    // 🔥 LÓGICA DE CHAT (Reseteo de contador)
+    if (index === 2) { 
+        mensajesNoLeidos = 0;
+        const badge = document.getElementById('msgBadge');
+        if(badge) badge.style.display = 'none';
+        setTimeout(scrollToBottom, 200);
+    }
+
+    currentScreen = index;
+    const wrapper = document.getElementById('appWrapper');
+    wrapper.style.transform = `translateX(-${index * 100}vw)`;
+    
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.getElementById(`nav${index}`).classList.add('active');
+};
     
     // --- LOGICA VIDEOS ---
     function checkScrollVideos() {
@@ -2015,7 +2044,11 @@ window.abrirMision = () => {
     auth.onAuthStateChanged(user => {
         if (user) {
             idAuditor = user.uid;
+            
             document.getElementById('loadingOverlay').style.display = 'none';
+            setTimeout(() => {
+    if(typeof cachearUsuarios === "function") cachearUsuarios();
+}, 1000);
             setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 20000);
             
             db.ref(`users/${idAuditor}`).on('value', snap => {
@@ -2309,7 +2342,24 @@ window.abrirMision = () => {
         const w = document.getElementById('chatWindow');
         if (!isChatOpen) { w.classList.add('open'); isChatOpen = true; document.getElementById('chatBadge').style.display = 'none'; scrollToBottom(); window.history.pushState({chat: true}, ""); } else { w.classList.remove('open'); isChatOpen = false; document.getElementById('inputChatMsg').blur(); }
     };
-    window.enviarTexto = () => { const i = document.getElementById('inputChatMsg'); const t = i.value.trim(); if(!t) return; i.value=""; db.ref('chat_global').push({ uid: idAuditor, autor: myCurrentKey, texto: t, fecha: firebase.database.ServerValue.TIMESTAMP }); detectarYEnvarMenciones(t, "chat"); };
+    window.enviarTexto = () => { 
+    const i = document.getElementById('inputChatMsg'); 
+    const t = i.value.trim(); 
+    if(!t) return; 
+    
+    i.value=""; 
+    
+    // Guardar mensaje en Chat
+    db.ref('chat_global').push({ 
+        uid: idAuditor, 
+        autor: myCurrentKey, 
+        texto: t, 
+        fecha: firebase.database.ServerValue.TIMESTAMP 
+    }); 
+    
+    // 🔥 ESTA LÍNEA ES LA QUE ACTIVA LA NOTIFICACIÓN:
+    detectarYEnvarMenciones(t, "chat"); 
+};
     function iniciarChat() { const l = document.getElementById('chatList'); db.ref('chat_global').limitToLast(50).on('child_added', s => { const m = s.val(); const div = document.createElement('div'); div.className = `msg-bubble ${m.uid===idAuditor?'msg-mine':'msg-other'}`; div.innerHTML = `<div><span class="msg-user">${escapeHtml(m.autor)}</span></div><div>${escapeHtml(m.texto)}</div>`; l.appendChild(div); scrollToBottom(); if(m.uid!==idAuditor && !isChatOpen) document.getElementById('chatBadge').style.display='block'; }); }
     // --- VARIABLES PARA EL MENÚ DE CHAT ---
     let chatPressTimer;
@@ -2342,7 +2392,15 @@ window.abrirMision = () => {
             div.innerHTML = `<div><span class="msg-user">${escapeHtml(m.autor)}</span></div><div>${escapeHtml(m.texto)}</div>`; 
             l.appendChild(div); 
             scrollToBottom(); 
-            
+            if (m.uid !== idAuditor && currentScreen !== 2) {
+    mensajesNoLeidos++;
+    const badge = document.getElementById('msgBadge');
+    if (badge) {
+        badge.style.display = 'flex';
+        badge.textContent = mensajesNoLeidos > 9 ? '9+' : mensajesNoLeidos;
+        try { new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_73d0a92d42.mp3').play(); } catch(e){}
+    }
+}
             if(m.uid !== idAuditor && !isChatOpen) document.getElementById('chatBadge').style.display='block'; 
         }); 
 
@@ -2422,22 +2480,48 @@ window.abrirMision = () => {
     function scrollToBottom() { const d = document.getElementById('chatList'); setTimeout(() => d.scrollTop = d.scrollHeight, 100); }
     
     // MENCIONES
-    function detectarYEnvarMenciones(txt, type) {
-        const regex = /inv-[a-z0-9]{5}/gi; const menciones = txt.match(regex);
-        if (menciones) {
-            const unicos = [...new Set(menciones)];
-            unicos.forEach(codigo => {
-                if (codigo.toUpperCase() !== myCurrentKey) {
-                    db.ref('users').orderByChild('myInviteKey').equalTo(codigo.toUpperCase()).once('value', snap => {
-                        snap.forEach(userSnap => {
-                            const targetUid = userSnap.key; let tituloNoti = "Te mencionó"; if (txt.trim().startsWith(`@${codigo}`)) { tituloNoti = "💬 Respondió a tu comentario"; }
-                            db.ref(`users/${targetUid}/notifications`).push({ from: myCurrentKey, type: type, text: tituloNoti, extra: currentPostId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false });
+    // --- FUNCIÓN PARA DETECTAR Y NOTIFICAR MENCIONES (@) ---
+function detectarYEnvarMenciones(txt, type) {
+    // 1. Buscamos cualquier cosa que parezca @INV-XXXXX
+    const regex = /@INV-[a-z0-9]+/gi; 
+    const menciones = txt.match(regex);
+
+    if (menciones) {
+        // Quitamos duplicados (si mencionas al mismo 2 veces)
+        const unicos = [...new Set(menciones)];
+        
+        unicos.forEach(tag => {
+            // Quitamos la "@" para buscarlo en la base de datos
+            const codigoBuscado = tag.substring(1).toUpperCase(); // Queda "INV-XXXXX"
+
+            // Evitamos notificarnos a nosotros mismos
+            if (codigoBuscado !== myCurrentKey) {
+                
+                // Buscamos el ID (UID) de ese usuario
+                db.ref('users').orderByChild('myInviteKey').equalTo(codigoBuscado).once('value', snap => {
+                    snap.forEach(userSnap => {
+                        const targetUid = userSnap.key;
+                        
+                        // 2. Preparamos el mensaje de alerta
+                        let tituloNoti = "🔴 ¡Te han mencionado!";
+                        // Recortamos el mensaje si es muy largo
+                        let resumenMensaje = txt.length > 30 ? txt.substring(0, 30) + "..." : txt;
+
+                        // 3. Enviamos la notificación a SU buzón
+                        db.ref(`users/${targetUid}/notifications`).push({ 
+                            from: myCurrentKey, 
+                            type: 'chat', // Tipo chat para que al tocarlo abra el grupo
+                            text: `${tituloNoti}\n"${resumenMensaje}"`, 
+                            extra: "chat_global", 
+                            timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                            read: false 
                         });
                     });
-                }
-            });
-        }
+                });
+            }
+        });
     }
+}
     
     window.irANotificacion = (type, extra, key) => {
         let nombreEmisor = "Alguien";
@@ -3138,6 +3222,138 @@ fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&vide
             btn.disabled = false;
         });
     };
+// --- VARIABLE GLOBAL PARA USUARIOS (ESTO TE FALTABA) ---
+let listaUsuariosCache = [];
+
+function cachearUsuarios() {
+    console.log("🔄 Cargando lista de usuarios para menciones...");
+    db.ref('users').limitToLast(100).once('value').then(snap => {
+        listaUsuariosCache = [];
+        snap.forEach(child => {
+            const u = child.val();
+            listaUsuariosCache.push({
+                uid: child.key,
+                nombre: u.myInviteKey || "Usuario",
+                avatar: getAvatarUrl(child.key)
+            });
+        });
+        console.log("✅ Usuarios cargados:", listaUsuariosCache.length);
+    });
+}
+document.addEventListener('keyup', (e) => {
+    // Solo actuamos si se escribe en el chat
+    if (e.target && e.target.id === 'inputChatMsg') {
+        manejarMencion(e.target);
+    }
+});
+
+function manejarMencion(input) {
+    const mentionBox = document.getElementById('mentionList');
+    const texto = input.value;
+    const cursor = input.selectionStart;
+    
+    // Detectar palabra actual
+    const textoHastaCursor = texto.slice(0, cursor);
+    const palabras = textoHastaCursor.split(' ');
+    const ultimaPalabra = palabras[palabras.length - 1];
+
+    if (ultimaPalabra.startsWith('@')) {
+        const busqueda = ultimaPalabra.substring(1).toUpperCase();
+        
+        // Si la lista está vacía, intentamos cargarla de emergencia
+        if (!listaUsuariosCache || listaUsuariosCache.length === 0) {
+            console.log("⚠️ Lista vacía, intentando recargar...");
+            if(typeof cachearUsuarios === 'function') cachearUsuarios();
+        }
+
+        mostrarSugerencias(busqueda, input);
+    } else {
+        if(mentionBox) mentionBox.style.display = 'none';
+    }
+}
+
+function mostrarSugerencias(filtro, input) {
+    const mentionBox = document.getElementById('mentionList');
+    
+    // Candados de seguridad
+    if (!filtro || filtro.trim() === "" || (typeof currentScreen !== 'undefined' && currentScreen !== 2)) {
+        if(mentionBox) mentionBox.style.display = 'none';
+        return;
+    }
+
+    if (!listaUsuariosCache || listaUsuariosCache.length === 0) {
+        if(typeof cachearUsuarios === 'function') cachearUsuarios();
+        return;
+    }
+
+    const coincidencias = listaUsuariosCache.filter(u => 
+        (u.nombre && u.nombre.toUpperCase().includes(filtro)) && u.uid !== idAuditor
+    );
+
+    if (coincidencias.length === 0) {
+        mentionBox.style.display = 'none';
+        return;
+    }
+
+    // Estilos de la caja
+    mentionBox.style.background = "#1e293b"; 
+    mentionBox.style.border = "2px solid #fbbf24"; 
+    mentionBox.style.display = 'block'; 
+
+    let html = "";
+    coincidencias.slice(0, 5).forEach(u => { 
+        html += `
+        <div onclick="insertarMencion('${u.nombre}')" style="
+            display: flex; 
+            align-items: center; 
+            padding: 8px 12px; /* <--- MENOS RELLENO (Más delgado) */
+            border-bottom: 1px solid #334155; 
+            cursor: pointer; 
+            background: #1e293b;
+        ">
+            <div style="
+                width: 30px; height: 30px; 
+                border-radius: 50%; 
+                background-image: url('${u.avatar}'); 
+                background-size: cover; 
+                background-color: #333; 
+                margin-right: 10px;
+                border: 1px solid #fbbf24;
+            "></div>
+            
+            <div style="flex: 1; line-height: 1.1;">
+                <div style="
+                    font-weight: 700; 
+                    color: #fbbf24 !important; 
+                    font-size: 0.85rem; /* Letra un poco más chica */
+                ">${u.nombre}</div>
+                <div style="
+                    font-size: 0.65rem; 
+                    color: #94a3b8 !important; 
+                ">Toca para mencionar</div>
+            </div>
+        </div>`;
+    });
+
+    mentionBox.innerHTML = html;
+}
+
+function insertarMencion(nombre) {
+    const input = document.getElementById('inputChatMsg');
+    const mentionBox = document.getElementById('mentionList');
+    
+    const texto = input.value;
+    const cursor = input.selectionStart;
+    const textoHastaCursor = texto.slice(0, cursor);
+    
+    const palabras = textoHastaCursor.split(' ');
+    palabras.pop(); 
+    const nuevoInicio = palabras.join(' ') + (palabras.length > 0 ? ' ' : '') + "@" + nombre + " ";
+    
+    input.value = nuevoInicio + texto.slice(cursor);
+    mentionBox.style.display = 'none';
+    input.focus();
+}
     </script>
 </body>
 </html>
