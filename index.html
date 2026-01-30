@@ -934,6 +934,27 @@
     const db = firebase.database();
     const auth = firebase.auth();
     
+    
+    // --- SISTEMA DE SONIDO GLOBAL (MASTER CLICK) ---
+// Enlace directo a tu sonido en GitHub:
+const SONIDO_CLICK_URL = "https://raw.githubusercontent.com/amgel12/amgel12.github.io/main/select-button-ui-395763.mp3"; 
+const globalAudio = new Audio(SONIDO_CLICK_URL);
+globalAudio.volume = 0.5; // Volumen medio
+
+document.addEventListener('click', (e) => {
+    // 1. Buscamos si lo que se tocó es un botón
+    const target = e.target.closest('button, .nav-item, .chip-btn, .btn-blue, .action-icon');
+
+    if (target) {
+        // 2. EXCEPCIÓN: Ignorar la Ruleta para que use su propio sonido
+        if (target.id === 'btnSpin') return;
+
+        // 3. Reproducir sonido (Clonamos para rapidez)
+        const clone = globalAudio.cloneNode();
+        clone.volume = 0.5; 
+        clone.play().catch(() => { /* Ignorar errores de autoplay */ });
+    }
+});
     // 🔊 NUEVA LIBRERÍA DE SONIDOS (PACK ARCADE MODERNO)
     const audioLibrary = { 
         click: new Audio('https://cdn.pixabay.com/audio/2023/04/27/audio_6599723522.mp3'), 
@@ -1349,11 +1370,17 @@
     
     let selectedOptionText = null;
     window.selectOption = (el, text) => {
-        document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-        el.classList.add('selected');
-        selectedOptionText = text;
-        window.playSound('click');
-    };
+    // 1. Limpiar estilos anteriores (Código que ya tenías)
+    document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedOptionText = text;
+    
+    // 2. Sonido de clic (que ya tenías)
+    try { window.playSound('click'); } catch(e){}
+
+    // 3. 🔥 ¡AQUÍ ESTÁ LA MAGIA! (Hablar la palabra)
+    hablarTexto(text); 
+};
     
     window.checkAnswer = () => {
         if (!selectedOptionText) return notify("Selecciona una respuesta");
@@ -3353,6 +3380,21 @@ function insertarMencion(nombre) {
     input.value = nuevoInicio + texto.slice(cursor);
     mentionBox.style.display = 'none';
     input.focus();
+}
+// --- FUNCIÓN DE VOZ (TEXT-TO-SPEECH) ---
+function hablarTexto(texto) {
+    // Verificamos si el navegador soporta voz
+    if ('speechSynthesis' in window) {
+        // Cancelamos si ya estaba hablando (para que no se amontonen)
+        window.speechSynthesis.cancel();
+
+        const lectura = new SpeechSynthesisUtterance(texto);
+        lectura.lang = 'en-US'; // 🇺🇸 Configurado en Inglés
+        lectura.rate = 0.9;     // Velocidad un poquito más lenta para aprender mejor
+        lectura.pitch = 1;      // Tono normal
+
+        window.speechSynthesis.speak(lectura);
+    }
 }
     </script>
 </body>
