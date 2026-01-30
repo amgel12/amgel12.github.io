@@ -834,7 +834,10 @@
                         <p style="font-size:0.75rem; color:#64748b; margin-bottom:10px; font-weight:700;">ARCADE</p>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                           <button class="btn-blue" style="background: #10b981; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #059669;" onclick="irASnakeSeguro()">🐍 Snake</button>
-                          <button onclick="prepararJuego('race')" class="btn-blue" style="background: #ef4444; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b91c1c;">🏎️ Carrera</button>
+                          
+<button onclick="prepararJuego('race')" class="btn-blue" style="background: #ef4444; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b91c1c;">
+    💥 Guerra Vial
+</button>
                           <button onclick="abrirLichessConAd()" class="btn-blue" style="background: #3b82f6; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #1d4ed8;">♟️ Lichess</button>
                           <button onclick="window.location.href='go:Damas'" class="btn-blue" style="background: #f59e0b; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b45309;">⚪ Damas</button>
                         </div>
@@ -955,13 +958,22 @@ document.addEventListener('click', (e) => {
         clone.play().catch(() => { /* Ignorar errores de autoplay */ });
     }
 });
-    // 🔊 NUEVA LIBRERÍA DE SONIDOS (PACK ARCADE MODERNO)
-    const audioLibrary = { 
-        click: new Audio('https://cdn.pixabay.com/audio/2023/04/27/audio_6599723522.mp3'), 
-        coin: new Audio('https://cdn.pixabay.com/audio/2024/08/06/audio_4739269156.mp3'), 
-        win: new Audio('https://cdn.pixabay.com/audio/2021/08/09/audio_276632dc04.mp3'), 
-        gameover: new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_8ce5e82719.mp3') 
-    };
+    // 🔊 NUEVA LIBRERÍA DE SONIDOS (ACTUALIZADA FINAL)
+const audioLibrary = {
+     click: new Audio('https://cdn.pixabay.com/audio/2023/04/27/audio_6599723522.mp3'),
+     coin: new Audio('https://cdn.pixabay.com/audio/2024/08/06/audio_4739269156.mp3'),
+     win: new Audio('https://cdn.pixabay.com/audio/2021/08/09/audio_276632dc04.mp3'),
+     gameover: new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_8ce5e82719.mp3'),
+     
+     // 🐍 SERPIENTE (Cascabel)
+     snake: new Audio('https://raw.githubusercontent.com/amgel12/amgel12.github.io/main/snake-rattle-sound-hq-240150.mp3'),
+     
+     // 🔫 DISPARO (Gun Fire)
+     shoot: new Audio('https://raw.githubusercontent.com/amgel12/amgel12.github.io/main/gun-fire-475286.mp3'),
+
+     // 💥 EXPLOSIÓN (Vine Boom)
+     boom: new Audio('https://raw.githubusercontent.com/amgel12/amgel12.github.io/main/vine-boom-392646.mp3')   
+ };
     window.playSound = (name) => { 
         if (audioLibrary[name]) { 
             const sound = audioLibrary[name];
@@ -2819,16 +2831,18 @@ fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&vide
     // 🏎️ LÓGICA CARRERA (CON DISPAROS)
     // ==========================================
     function dispararCarrera() {
-        bullets.push({ x: playerCar.x, y: 240 }); 
-        try { window.playSound('click'); } catch(e){} 
-    }
+    bullets.push({ x: playerCar.x, y: 240 });
+    
+    // 🔥 SONIDO DE DISPARO (Antes tenías 'click', cámbialo por 'shoot')
+    try { window.playSound('shoot'); } catch(e){} 
+}
     
     function resetRace() {
         playerCar = { x: 1 };
         obstacles = [];
         bullets = [];
         score = 0;
-        raceSpeed = 5;
+        raceSpeed = 12;
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(updateRace, 50);
     }
@@ -2867,7 +2881,7 @@ fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&vide
                     bullets.splice(j, 1); 
                     enemigoMuerto = true;
                     score += 5; 
-                    try { window.playSound('coin'); } catch(e){} 
+                    try { window.playSound('boom'); } catch(e){} 
                     break;
                 }
             }
