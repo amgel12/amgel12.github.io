@@ -3382,19 +3382,40 @@ function insertarMencion(nombre) {
     input.focus();
 }
 // --- FUNCIÓN DE VOZ (TEXT-TO-SPEECH) ---
+// --- VARIABLE GLOBAL FUERA DE LA FUNCIÓN (ESTO ES CLAVE) ---
+let currentUtterance = null; 
+
 function hablarTexto(texto) {
-    // Verificamos si el navegador soporta voz
-    if ('speechSynthesis' in window) {
-        // Cancelamos si ya estaba hablando (para que no se amontonen)
-        window.speechSynthesis.cancel();
+    // 1. Verificamos soporte
+    if (!('speechSynthesis' in window)) return;
 
-        const lectura = new SpeechSynthesisUtterance(texto);
-        lectura.lang = 'en-US'; // 🇺🇸 Configurado en Inglés
-        lectura.rate = 0.9;     // Velocidad un poquito más lenta para aprender mejor
-        lectura.pitch = 1;      // Tono normal
+    // 2. Cancelamos cualquier sonido anterior (Voz o Efectos)
+    window.speechSynthesis.cancel();
 
-        window.speechSynthesis.speak(lectura);
+    // 3. Creamos el objeto y lo guardamos en la variable GLOBAL
+    currentUtterance = new SpeechSynthesisUtterance(texto);
+    
+    // 4. Configuración
+    currentUtterance.lang = 'en-US'; 
+    currentUtterance.rate = 0.9;
+    currentUtterance.volume = 1.0; // Volumen al máximo
+
+    // 5. INTENTO DE MEJORA: Buscar voz de Google (suena más natural en Android)
+    const voces = window.speechSynthesis.getVoices();
+    const vozGoogle = voces.find(v => v.lang === 'en-US' && v.name.includes('Google'));
+    if (vozGoogle) {
+        currentUtterance.voice = vozGoogle;
     }
+
+    // 6. Hablar (con pequeño retraso para asegurar que el motor esté listo)
+    setTimeout(() => {
+        window.speechSynthesis.speak(currentUtterance);
+    }, 10);
+}
+
+// Truco para cargar las voces en Android al iniciar
+if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = () => { console.log("Voces cargadas"); };
 }
     </script>
 </body>
