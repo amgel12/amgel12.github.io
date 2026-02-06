@@ -4333,7 +4333,9 @@ function cargarListaUsuariosHorizontal() {
     });
 }
 
-// 3. RENDERIZAR
+// ==========================================
+// 3. RENDERIZAR USUARIOS (CON HORA DE CONEXIÓN)
+// ==========================================
 function renderizarUsuariosHorizontal() {
     const contenedor = document.getElementById('listaUsuariosHorizontal');
     if (!contenedor) return;
@@ -4344,12 +4346,33 @@ function renderizarUsuariosHorizontal() {
     }
 
     let html = "";
+    const ahora = Date.now(); // Hora actual para calcular
+
     listaUsuariosCacheReal.forEach(user => {
         const numMensajes = mapaMensajesSinLeer[user.key] || 0;
+
+        // --- CÁLCULO DE TIEMPO (Hace cuánto) ---
+        let tiempoTexto = "";
+        let colorTiempo = "#94a3b8"; // Gris por defecto
         
+        const msDiff = ahora - user.rawTime;
+        const minDiff = Math.floor(msDiff / 60000);
+
+        if (minDiff < 10) {
+            tiempoTexto = "Online";
+            colorTiempo = "#10b981"; // Verde
+        } else if (minDiff < 60) {
+            tiempoTexto = minDiff + " min";
+        } else if (minDiff < 1440) { // Menos de 24 horas
+            tiempoTexto = Math.floor(minDiff / 60) + " h";
+        } else {
+            tiempoTexto = Math.floor(minDiff / 1440) + " d";
+        }
+        // ---------------------------------------
+
         const badgeHtml = numMensajes > 0 
-            ? `<div style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; display:flex; align-items:center; justify-content:center; border:2px solid white; font-weight:800; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index:10; animation: popIn 0.3s;">${numMensajes}</div>` 
-            : '';
+             ? `<div style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; display:flex; align-items:center; justify-content:center; border:2px solid white; font-weight:800; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index:10; animation: popIn 0.3s;">${numMensajes}</div>` 
+             : '';
 
         let bordeColor = '#e2e8f0'; 
         if (user.online) bordeColor = '#10b981';
@@ -4358,14 +4381,19 @@ function renderizarUsuariosHorizontal() {
         const dotClass = user.online ? "dot-online" : "dot-offline";
 
         html += `
-        <div class="story-item" onclick="abrirChatPrivado('${user.key}', '${user.nombre}')">
+        <div class="story-item" onclick="abrirChatPrivado('${user.key}', '${user.nombre}')" style="min-width: 65px;">
             <div class="story-avatar-box" style="border-color: ${bordeColor}; position:relative; transition:0.3s;">
                 <div class="story-img" style="background-image:url('${user.avatar}')"></div>
                 <div class="story-dot ${dotClass}"></div>
                 ${badgeHtml}
             </div>
-            <div class="story-name" style="font-weight:${numMensajes>0?'800':'normal'}; color:${numMensajes>0?'#1e293b':'#64748b'};">
+            
+            <div class="story-name" style="font-weight:${numMensajes>0?'800':'normal'}; color:${numMensajes>0?'#1e293b':'#334155'}; margin-bottom: 0;">
                 ${user.nombre}
+            </div>
+            
+            <div style="font-size: 0.6rem; color: ${colorTiempo}; font-weight: 600; margin-top: -2px;">
+                ${tiempoTexto}
             </div>
         </div>`;
     });
