@@ -1687,43 +1687,61 @@ setTimeout(() => {
     function registrarHistorial(motivo, puntos) { if (!idAuditor) return; var ruta = 'users/' + idAuditor + '/historial'; db.ref(ruta).push({ motivo: motivo, puntos: parseFloat(puntos), fecha: firebase.database.ServerValue.TIMESTAMP }); }
   // ==========================================
 // ==========================================
-// 🧭 NAVEGACIÓN (CON CONTROL DE VIDEO)
+// ==========================================
+// 🧭 NAVEGACIÓN (CON DOBLE TAP PARA RECARGAR)
 // ==========================================
 let currentScreen = 2; 
 
 window.goToScreen = (index, userAction = false) => {
-    // 1. Historial
+    // 1. DETECTOR DE RECARGA (DOBLE TAP)
+    // Si el usuario toca el botón 'Pensar' (2) y YA está en 'Pensar' (2)
+    if (userAction && index === 2 && currentScreen === 2) {
+        
+        // A) Vibración de confirmación
+        if (navigator.vibrate) navigator.vibrate(50);
+        
+        // B) Detener video actual
+        detenerVideoMuro();
+        
+        // C) Ejecutar recarga
+        notify("🔄 Recargando Feed...");
+        cargarMuroReportes();
+        
+        return; // Salimos para no hacer la animación de cambio de pantalla
+    }
+
+    // 2. Historial
     if (userAction && index !== 2) { 
         window.history.pushState({screen: index}, "");
     }
     
-    // 2. Cerrar teclado
+    // 3. Cerrar teclado
     if (document.activeElement) document.activeElement.blur();
     
-    // 🔥 LO NUEVO: SI SALIMOS DEL MURO (1), DETENER VIDEO
-    // Si la pantalla actual ERA la 1 y vamos a otra distinta...
-    if (currentScreen === 1 && index !== 1) {
+    // 4. CONTROL DE VIDEO (Salir del Muro)
+    // Nota: El muro de videos es la pantalla 2. Si salimos de la 2, paramos video.
+    if (currentScreen === 2 && index !== 2) {
         detenerVideoMuro(); 
     }
     
-    // 3. CAMBIO DE PANTALLA
+    // 5. CAMBIO DE PANTALLA FÍSICO
     currentScreen = index;
     const wrapper = document.getElementById('appWrapper');
     wrapper.style.transform = `translateX(-${index * 100}vw)`;
     
-    // 4. BOTONES DEL MENÚ
+    // 6. ACTUALIZAR BOTONES NAV
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     const btnActivo = document.getElementById(`nav${index}`);
     if (btnActivo) btnActivo.classList.add('active');
 
-    // 5. LÓGICA ESPECÍFICA
+    // 7. LÓGICA ESPECÍFICA POR PANTALLA
     
-    // Si ENTRAMOS al Muro (1), reactivar el chequeo de videos
-    if (index === 1) {
+    // Si entramos a PENSAR (2), activamos autoplay
+    if (index === 2) {
         setTimeout(checkScrollVideos, 500); 
     }
     
-    // Resetear notificaciones al entrar a chat
+    // Si entramos a MENSAJES (3)
     if (index === 3) {
         mensajesNoLeidos = 0;
         const badge = document.getElementById('msgBadge');
@@ -1731,7 +1749,7 @@ window.goToScreen = (index, userAction = false) => {
         setTimeout(scrollToBottom, 200);
     }
     
-    // Cerrar menú menciones si salimos del chat
+    // Si NO es mensajes, cerrar menú de menciones
     if (index !== 3) {
         const mentionList = document.getElementById('mentionList');
         if(mentionList) mentionList.style.display = 'none';
@@ -1852,62 +1870,87 @@ window.activarSonido = (divId, ytId) => {
         window.openTransfer(uid, nombre);
     };
     
+// ==========================================
+// 📺 CARGAR FEED DE VIDEOS (PENSAR) - RECARGABLE
+// ==========================================
+let feedRef = null; // Variable global para controlar la conexión
+
 function cargarMuroReportes() {
-        const container = document.getElementById('muroReportes');
-        
-        // Limpiamos el mensaje de "Cargando..." si existe
-        if(container.innerHTML.includes("Cargando")) container.innerHTML = "";
+    const container = document.getElementById('muroReportes');
+    if (!container) return;
 
-        const ref = db.ref('reportes').limitToLast(50);
+    // 1. LIMPIEZA: Si ya había una conexión abierta, la cerramos
+    if (feedRef) feedRef.off();
+    
+    // 2. Limpiar pantalla y mostrar Spinner
+    container.innerHTML = `
+        <div style='text-align:center; padding:50px; color:#64748b; margin-top:50px;'>
+            <i class="fas fa-spinner fa-spin fa-3x"></i><br><br>
+            <span style="font-weight:bold; animation:pulse 1s infinite;">Cargando feed...</span>
+        </div>`;
+
+    // 3. NUEVA CONEXIÓN
+    feedRef = db.ref('reportes').limitToLast(50);
+    
+    // Bandera para saber si es la carga inicial o un post nuevo en tiempo real
+    let isInitialLoad = true;
+
+    feedRef.on('child_added', snap => {
+        // Borramos el spinner si es el primer video que llega
+        if (container.querySelector('.fa-spinner')) container.innerHTML = "";
+
+        const post = { k: snap.key, ...snap.val() };
+        const html = construirPostHTML(post);
         
-        ref.on('child_added', snap => {
-            const post = { k: snap.key, ...snap.val() };
-            const html = construirPostHTML(post);
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        const nuevoElemento = div.firstElementChild;
+        
+        // INSERTAR SIEMPRE ARRIBA (LIFO)
+        if (container.firstChild) {
+            container.insertBefore(nuevoElemento, container.firstChild);
+        } else {
+            container.appendChild(nuevoElemento);
+        }
+
+        // AUTO-SCROLL SUAVE (Solo si es TU post y es reciente)
+        if (post.uid === idAuditor && isInitialLoad === false) {
+            const ahora = Date.now();
+            if (Math.abs(ahora - post.fecha) < 60000) {
+                 window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+        
+        // Chequeo de autoplay
+        setTimeout(checkScrollVideos, 500);
+    });
+
+    // Marcamos que ya terminó la carga inicial después de un segundo
+    setTimeout(() => { isInitialLoad = false; }, 2000);
+
+    // ESCUCHAR CAMBIOS (LIKES/COMENTARIOS)
+    feedRef.on('child_changed', snap => {
+        const post = { k: snap.key, ...snap.val() };
+        const card = document.getElementById('post-' + post.k);
+        if (card) {
+            const likeSpan = card.querySelector('.fa-heart').parentElement.querySelector('span');
+            const commentSpan = card.querySelector('.fa-comment-dots').parentElement.querySelector('span');
             
-            const div = document.createElement('div');
-            div.innerHTML = html;
-            const nuevoElemento = div.firstElementChild;
+            if(likeSpan) likeSpan.textContent = post.vCount || 0;
+            if(commentSpan) commentSpan.textContent = post.comentarios ? Object.keys(post.comentarios).length : 0;
             
-            // 🔥 SOLUCIÓN DEFINITIVA: 
-            // Esto obliga a que CUALQUIER post nuevo (tuyo o de otros)
-            // empuje a los viejos hacia abajo y se ponga PRIMERO.
-            if (container.firstChild) {
-                container.insertBefore(nuevoElemento, container.firstChild);
+            // Actualizar corazón rojo/blanco en tiempo real
+            const icon = card.querySelector('.fa-heart');
+            if(post.likes && post.likes[idAuditor]) {
+                icon.className = 'fas fa-heart liked';
+                icon.style.color = '#e11d48';
             } else {
-                container.appendChild(nuevoElemento);
+                icon.className = 'fas fa-heart'; // Mantenemos solid para visibilidad
+                icon.style.color = 'white';
             }
-
-            // TRUCO: Si el post es tuyo y acabas de publicarlo, subimos la pantalla suavemente
-            if (post.uid === idAuditor) {
-                const ahora = Date.now();
-                // Si se publicó hace menos de 1 minuto
-                if (Math.abs(ahora - post.fecha) < 60000) { 
-                     // Hacemos scroll arriba para que veas tu obra maestra
-                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            }
-            
-            // Revisar si hay videos para ponerles autoplay si aplica
-            setTimeout(checkScrollVideos, 500);
-        });
-
-        // Actualizar likes en tiempo real
-        ref.on('child_changed', snap => {
-            const post = { k: snap.key, ...snap.val() };
-            const card = document.getElementById('post-' + post.k);
-            if (card) {
-                const likeSpan = card.querySelector('.fa-heart').parentElement.querySelector('span');
-                const commentSpan = card.querySelector('.fa-comment').parentElement.querySelector('span');
-                if(likeSpan) likeSpan.textContent = post.vCount || 0;
-                if(commentSpan) commentSpan.textContent = post.comentarios ? Object.keys(post.comentarios).length : 0;
-                if(post.likes && post.likes[idAuditor]) {
-                    const icon = card.querySelector('.fa-heart');
-                    icon.classList.remove('far');
-                    icon.classList.add('fas', 'liked');
-                }
-            }
-        });
-    }
+        }
+    });
+}
   function construirPostHTML(post) {
     const avatarUrl = getAvatarUrl(post.uid);
     const nombre = post.autorClave || "Anónimo";
