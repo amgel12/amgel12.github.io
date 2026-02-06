@@ -28,16 +28,21 @@
 .costo-pts { font-size: 0.75rem; color: #f59e0b; font-weight: 700; margin-top: 5px; }
   /* Esto hace que cada video en el muro sea casi del tamaño de la pantalla */
 .social-card {
-    min-height: 85vh; /* Ocupa el 85% de la altura de la pantalla */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    background: #000; /* Fondo negro elegante */
-    border: none;
-    border-bottom: 1px solid #333;
+    /* Altura EXACTA igual al contenedor padre */
+    height: 100% !important; 
+    width: 100% !important;
+    
+    /* Estilos */
+    background: black;
+    border: none !important;
+    border-radius: 0 !important; /* Cuadrado perfecto */
+    margin: 0 !important;
+    position: relative;
+    
+    /* EL IMÁN: Esto hace que se quede quieto en un solo video */
+    scroll-snap-align: start !important;
+    scroll-snap-stop: always !important; 
 }
-
-/* Hacemos el video más grande */
 .card-media {
     flex: 1; /* Que el video ocupe todo el espacio posible */
     background: black;
@@ -152,18 +157,108 @@
     .story-name { margin-top: 5px; font-size: 0.7rem; color: #334155; text-align: center; max-width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
     .social-card { background: white; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; position: relative; overflow: hidden; }
-    .card-header { padding: 12px 15px; display: flex; align-items: center; justify-content: space-between; }
+   .card-header {
+    position: absolute;
+    top: 0; left: 0; width: 100%;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    z-index: 10;
+    padding: 15px;
+    border: none;
+}
+}
     .user-row { display: flex; align-items: center; gap: 10px; }
     .card-avatar { width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0; background-size: cover; border: 1px solid #f1f5f9; }
-    .card-username { font-weight: 700; color: #1e293b; font-size: 14px; }
-    .card-time { font-size: 11px; color: #94a3b8; display: block; margin-top: -2px; }
+   .card-username { color: white !important; text-shadow: 0 1px 2px black; font-size: 1rem; }
+.card-time { color: #ddd !important; font-size: 0.7rem; }
     .top-creator-glow { border: 2px solid #fbbf24; box-shadow: 0 0 15px rgba(251, 191, 36, 0.2); }
     .top-badge { background: #fbbf24; color: #78350f; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; font-weight: 800; vertical-align: middle; text-transform: uppercase;}
-    .card-text-content { padding: 0 15px 12px; font-size: 14px; color: #334155; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
-    .card-media { width: 100%; background: #000; position: relative; overflow: hidden; margin-bottom: 5px; }
-    .card-actions { padding: 8px 15px; display: flex; gap: 20px; border-top: 1px solid #f8fafc; }
-    .action-icon { font-size: 20px; color: #64748b; cursor: pointer; transition: 0.2s; background:none; border:none; display: flex; align-items: center; gap: 5px; }
-    .action-icon:active { transform: scale(0.9); }
+  
+   .card-media, .card-media iframe {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important; /* Llena toda la pantalla sin bordes negros */
+}
+/* --- BOTONES A LA DERECHA TIPO TIKTOK --- */
+
+/* 1. Contenedor de botones (Columna derecha) */
+.card-actions {
+    position: absolute;
+    bottom: 80px; /* Un poco arriba del borde inferior */
+    right: 10px;  /* Pegado a la derecha */
+    width: 50px;  /* Ancho fijo para la columna */
+    height: auto;
+    background: transparent; /* Sin fondo negro */
+    border: none;
+    z-index: 30;
+    
+    /* Flexbox vertical */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px; /* Espacio entre cada botón */
+    padding: 0;
+}
+
+/* 2. Estilo de los Iconos */
+.action-icon {
+    color: white !important;
+    font-size: 1.8rem; /* Iconos grandes */
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5); /* Sombra para que se vean en fondos claros */
+    transition: transform 0.2s;
+}
+
+.action-icon:active { transform: scale(0.8); }
+
+.action-icon span {
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: 3px;
+    color: white !important;
+    text-shadow: 0 1px 2px black;
+}
+
+/* 3. Ajuste del Texto (Para que no choque con los botones) */
+.card-text-content {
+    position: absolute;
+    bottom: 0; 
+    left: 0; 
+    width: 100%;
+    /* Relleno a la derecha para no tapar los botones */
+    padding: 20px 70px 20px 15px; 
+    
+    color: white !important;
+    text-shadow: 0 1px 3px black;
+    
+    /* Degradado sutil para leer mejor */
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+    z-index: 10;
+    pointer-events: none;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+  #muroReportes {
+    /* Altura TOTAL menos Header(70px) y Nav(60px) = Espacio exacto libre */
+    height: calc(100vh - 130px) !important;
+    
+    /* Configuración de Scroll */
+    overflow-y: scroll !important;
+    scroll-snap-type: y mandatory !important; /* Obligatorio detenerse */
+    scroll-behavior: smooth;
+    
+    /* Sin márgenes ni rellenos */
+    padding: 0 !important;
+    margin: 0 !important;
+    background: black;
+    
+    /* Ocultar barra de desplazamiento */
+    scrollbar-width: none; 
+}
+#muroReportes::-webkit-scrollbar { display: none; }
     .liked { color: #e11d48 !important; }
     .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid #f1f5f9; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
     .btn-blue { background: #0070ba; color: white; padding: 15px; width: 100%; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
@@ -288,6 +383,168 @@
     #inputChatMsg { flex: 1; text-align: left; margin: 0; border-radius: 20px; background: #f0f2f5; border: none; padding: 12px 15px; }
     
     @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+    @keyframes popIn {
+    0% { transform: scale(0); }
+    80% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+    /* --- ESTILOS PERFIL TIPO GRID (NUEVO) --- */
+.profile-header {
+    padding: 30px 20px;
+    background: transparent;
+    text-align: center;
+}
+.profile-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid #0070ba;
+    margin: 0 auto 15px;
+    background-size: cover;
+    background-color: #e2e8f0;
+    box-shadow: 0 4px 20px rgba(0, 112, 186, 0.2);
+}
+.profile-menu-grid {
+    grid-template-columns: 1fr !important; 
+    gap: 10px !important;
+}
+
+/* 2. Botón horizontal (Fila) */
+.menu-card-btn {
+    flex-direction: row !important; /* Pone los elementos lado a lado */
+    justify-content: flex-start !important; /* Alinea a la izquierda */
+    padding: 20px 35px !important; /* Más espacio a los lados */
+    text-align: left !important;
+}
+.menu-card-btn::after {
+    content: 'ᐳ';
+    margin-left: auto; /* Empuja la flecha al final derecho */
+    color: #cbd5e1;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+.menu-card-btn:active {
+    transform: scale(0.96);
+    background: #f8fafc;
+}
+.menu-icon {
+    margin-bottom: 0 !important; /* Quita el margen de abajo */
+    margin-right: 20px !important; /* Agrega espacio a la derecha del ícono */
+    font-size: 1.5rem !important;
+    width: 30px; /* Ancho fijo para alinear textos */
+    text-align: center;
+}
+
+/* Colores de iconos */
+.ic-yellow { color: #f59e0b; }
+.ic-green { color: #10b981; }
+.ic-blue { color: #3b82f6; }
+.ic-red { color: #ef4444; }
+.ic-purple { color: #8b5cf6; }
+.ic-gray { color: #64748b; }
+
+/* Ajuste para la pantalla de Pensamientos */
+.pensamientos-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 80%;
+    text-align: center;
+    padding: 30px;
+}
+/* --- ESTILOS PARA EL NUEVO MURO DE FOTOS (GRID) --- */
+/* --- ARREGLO PARA GALERÍA EN 2 COLUMNAS --- */
+
+.photo-grid-container {
+    display: grid;              /* Activa el modo rejilla */
+    grid-template-columns: 1fr 1fr; /* Crea 2 columnas iguales (50% y 50%) */
+    gap: 10px;                  /* Espacio entre fotos */
+    padding: 10px;
+    align-items: start;         /* Alinea todo arriba */
+}
+
+.photo-card {
+    width: 100% !important;     /* Fuerza a que respete el ancho de la columna */
+    display: flex;
+    flex-direction: column;
+    margin: 0 !important;       /* El gap ya da el espacio */
+    break-inside: avoid;        /* Evita que se rompa si usaras columnas */
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.photo-img-content {
+    width: 100%;
+    height: auto;               /* Altura automática según la foto */
+    display: block;
+    object-fit: cover;
+}
+.photo-user-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    backdrop-filter: blur(2px);
+}
+/* Ajuste para que el Feed se vea bien en la pantalla 2 */
+.feed-header-wrapper {
+    background: #f1f5f9;
+    padding-bottom: 10px;
+}
+/* --- ESTILOS CHAT CON AVATAR --- */
+.chat-row {
+    display: flex;
+    align-items: flex-end; /* Alinea abajo (junto al último texto) */
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+/* Si es MÍO: A la derecha */
+.chat-row.mine {
+    justify-content: flex-end;
+}
+.chat-row.mine .chat-avatar-img {
+    margin-left: 8px; /* Separación foto-burbuja */
+    order: 2; /* La foto va después del texto */
+}
+.chat-row.mine .msg-bubble {
+    order: 1;
+    border-bottom-right-radius: 0; /* Efecto visual */
+}
+
+/* Si es OTRO: A la izquierda */
+.chat-row.other {
+    justify-content: flex-start;
+}
+.chat-row.other .chat-avatar-img {
+    margin-right: 8px; /* Separación foto-burbuja */
+    order: 1; /* La foto va antes */
+}
+.chat-row.other .msg-bubble {
+    order: 2;
+    border-bottom-left-radius: 0;
+}
+
+/* La Imagen Redonda */
+.chat-avatar-img {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: #e2e8f0;
+    border: 1px solid #cbd5e1;
+    object-fit: cover;
+    flex-shrink: 0; /* Que no se aplaste */
+}
   </style>
 </head>
 <body>
@@ -342,7 +599,47 @@
             <button onclick="document.getElementById('modalRanking').style.display='none'" class="btn-blue" style="margin-top: 20px; background: #334155; border: 1px solid #475569; color: #cbd5e1;">Cerrar Ranking</button>
         </div>
     </div>
+<div id="modalInvitar" class="modal-overlay" style="z-index: 26000;">
+    <div class="modal-content" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #bae6fd;">
+        
+        <div style="text-align: center; margin-bottom: 15px;">
+            <div style="font-size: 3rem; margin-bottom: 5px; animation: bounce 2s infinite;">🚀</div>
+            <h3 style="color: #0284c7; font-weight: 800; font-size: 1.3rem; margin: 0;">Centro de Invitación</h3>
+        </div>
 
+        <div style="background: white; border: 2px dashed #0284c7; border-radius: 15px; padding: 15px; margin-bottom: 20px; position: relative;">
+            <p style="font-size: 0.65rem; color: #94a3b8; margin-bottom: 5px; text-transform: uppercase; font-weight: bold;">Tu Clave Única:</p>
+            <h2 id="displayInviteKey" style="font-size: 1.6rem; color: #334155; letter-spacing: 2px; margin: 0; font-weight: 900;">---</h2>
+            
+            <button onclick="copiarClave()" style="margin-top: 10px; background: #0284c7; color: white; border: none; padding: 8px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; font-size: 0.8rem;">
+                <i class="fas fa-copy"></i> COPIAR
+            </button>
+            <div style="font-size:0.65rem; color:#0284c7; margin-top:5px; font-weight:bold;">Ganas 0.25 PTS por amigo</div>
+        </div>
+
+        <div style="border-top: 2px solid #bae6fd; margin: 15px 0; position:relative;">
+            <span style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:#e0f2fe; padding:0 10px; color:#64748b; font-size:0.7rem; font-weight:bold;">O CANJEA AQUÍ</span>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 15px;">
+            <p style="font-size: 0.8rem; color: #334155; margin-bottom: 5px;">Ingresa código de amigo:</p>
+            <p style="font-size: 0.7rem; color: #64748b; margin-bottom: 10px;">
+                Llevas: <span id="contadorAmigos" style="font-weight:bold; color:#ef4444;">(0/3)</span>
+            </p>
+
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="inputFolio" placeholder="EJ: INV-X9Y2" style="flex: 1; padding: 10px; border: 2px solid #cbd5e1; border-radius: 10px; text-align: center; text-transform: uppercase; outline: none; font-weight:bold; color:#334155;">
+                <button onclick="validarCodigoAmigo()" class="btn-blue" style="width: auto; padding: 0 15px; background: #10b981; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
+                    VALIDAR
+                </button>
+            </div>
+        </div>
+
+        <button onclick="document.getElementById('modalInvitar').style.display='none'" style="background: none; border: none; color: #94a3b8; font-size: 0.85rem; margin-top: 10px; cursor: pointer; text-decoration: underline;">
+            Cerrar
+        </button>
+    </div>
+</div>
     <div id="modalLesson" class="modal-overlay">
         <div class="modal-content" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; border-radius: 0; display: flex; flex-direction: column;">
             <div class="lesson-header">
@@ -372,7 +669,7 @@
     <div id="modalReferidos" class="modal-overlay">
         <div class="modal-content">
             <h3>👥 Mis Referidos</h3>
-            <div id="listaReferidos" style="max-height: 300px; overflow-y: auto; text-align: left;"><div style="text-align:center; padding:20px; color:#94a3b8;">Cargando...</div></div>
+            <div id="listaReferidos" style="max-height: 300px; overflow-y: auto; text-align: left;"></div>
             <button onclick="document.getElementById('modalReferidos').style.display='none'" class="btn-blue" style="background:#94a3b8; margin-top:10px;">Cerrar</button>
         </div>
     </div>
@@ -390,34 +687,25 @@
             <div class="d-btn" onclick="inputGame(1, 0)">➡️</div>
         </div>
     </div>
-
-    <div id="modalSoporte" class="modal-overlay">
-        <div class="modal-content">
-            <h3>Soporte Técnico</h3>
-            <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 20px;">
-                ¿Tienes algún problema? Envíanos un correo directo con tu caso.
-            </p>
-            
-            <button onclick="enviarCorreoSoporte()" class="btn-blue" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
-                📧 Redactar Correo
-            </button>
-
-            <div style="margin-top: 25px; text-align: left; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span style="font-weight:700; font-size:0.75rem; color:#334155;">NIVEL DE LEALTAD</span>
-                    <span id="labelLoyalty" style="color:#0070ba; font-weight:800; font-size:0.8rem;">0%</span>
-                </div>
-                <div style="background:#cbd5e1; border-radius:10px; height:10px; overflow:hidden;">
-                    <div id="barLoyalty" style="background: linear-gradient(90deg, #10b981, #34d399); width:0%; height:100%; transition:width 0.5s; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);"></div>
-                </div>
-                <p style="font-size:0.65rem; color:#94a3b8; margin-top:8px;">
-                    📅 Completa 5 misión diaria para subir <b>1%</b> cada día.
-                </p>
-            </div>
-
-            <button onclick="document.getElementById('modalSoporte').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cerrar</button>
-        </div>
+<div id="modalSoporte" class="modal-overlay">
+    <div class="modal-content">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🎧</div>
+        
+        <h3 style="margin-bottom: 10px; color: #334155;">Soporte Técnico</h3>
+        
+        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 25px; line-height: 1.5;">
+            ¿Encontraste un error o tienes dudas con tu cuenta? Envíanos un correo directo.
+        </p>
+        
+        <button onclick="enviarCorreoSoporte()" class="btn-blue" style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);">
+            📧 Redactar Correo
+        </button>
+        
+        <button onclick="document.getElementById('modalSoporte').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.85rem; margin-top:20px; cursor:pointer; text-decoration: underline;">
+            Cerrar
+        </button>
     </div>
+</div>
 
     <div id="modalComments" class="modal-overlay" style="z-index: 22000;">
         <div class="modal-content">
@@ -435,7 +723,22 @@
             </div>
         </div>
     </div>
+<div id="modalCompartir" class="modal-overlay" style="z-index: 31000;">
+    <div class="modal-content" style="height: 70vh; display: flex; flex-direction: column; padding: 0; background: #f8fafc;">
+        
+        <div style="padding: 15px; border-bottom: 1px solid #e2e8f0; background: white; border-radius: 20px 20px 0 0;">
+            <h3 style="margin: 0; color: #334155; font-size: 1.1rem;">↪️ Compartir con...</h3>
+        </div>
 
+        <div id="listaCompartir" style="flex: 1; overflow-y: auto; padding: 10px;">
+            <div style="text-align: center; color: #94a3b8; padding: 20px;">Cargando usuarios...</div>
+        </div>
+
+        <button onclick="document.getElementById('modalCompartir').style.display='none'" style="margin: 10px; padding: 15px; border: none; background: white; color: #64748b; font-weight: bold; cursor: pointer; border-top: 1px solid #e2e8f0;">
+            Cancelar
+        </button>
+    </div>
+</div>
     <div id="modalRifa" class="modal-overlay">
         <div class="modal-content" style="border: 4px solid #f59e0b; background: radial-gradient(circle, #fff, #fffbeb);">
             <div style="font-size: 3.5rem; animation: bounce 2s infinite;">💸</div>
@@ -448,7 +751,128 @@
             <button onclick="comprarTicketRifa()" class="btn-blue" style="background: linear-gradient(135deg, #f59e0b, #d97706);">🎟️ COMPRAR TICKET</button>
             <button onclick="document.getElementById('modalRifa').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cerrar</button>
         </div>
-    </div><div id="modalRetiro" class="modal-overlay">
+    </div>
+    <div id="modalChatPrivado" class="modal-overlay" style="z-index: 29000;">
+    <div class="modal-content" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; padding:0; display:flex; flex-direction:column; background:#e5e5f7;">
+        
+        <div style="background:white; padding:15px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button onclick="cerrarChatPrivado()" style="border:none; background:none; font-size:1.2rem; color:#334155;">⬅</button>
+                <div>
+                    <h3 id="privChatTitle" style="margin:0; font-size:1rem; color:#1e293b;">Usuario</h3>
+                    <span id="privDailyCount" style="font-size:0.65rem; color:#ef4444; font-weight:bold;">Cargando límite...</span>
+                </div>
+            </div>
+            <div id="privAvatar" style="width:35px; height:35px; border-radius:50%; background-color:#ccc; background-size:cover;"></div>
+        </div>
+
+        <div id="privChatList" style="flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:8px;">
+            <div style="text-align:center; padding:20px; color:#94a3b8;">Inicia la conversación...</div>
+        </div>
+
+        <div style="background:white; padding:10px; border-top:1px solid #e2e8f0; display:flex; gap:10px; align-items:center; flex-shrink:0;">
+            <input type="text" id="inputPrivMsg" placeholder="Mensaje privado..." style="flex:1; background:#f0f2f5; border:none; padding:12px 15px; border-radius:20px; outline:none;">
+            <button onclick="enviarMensajePrivado()" class="btn-blue" style="width:45px; height:45px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">➤</button>
+        </div>
+    </div>
+</div>
+    <div id="modalSubirFoto" class="modal-overlay" style="z-index: 26000;">
+    <div class="modal-content">
+        <h3 style="color:#db2777;">📸 Nueva Foto</h3>
+        
+        <div style="background:#fce7f3; border:2px dashed #db2777; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
+            <img id="imgPreview" style="width:100%; height:100%; object-fit:contain; display:none;">
+            <div id="placeholderUpload" style="text-align:center; color:#db2777;">
+                <i class="fas fa-cloud-upload-alt" style="font-size:2rem;"></i>
+                <p style="font-size:0.8rem; margin-top:5px;">Toca para elegir</p>
+            </div>
+            <input type="file" id="inputFotoArchivo" accept="image/*" onchange="procesarFotoSeleccionada()" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+        </div>
+
+        <div style="font-size:0.7rem; color:#64748b; margin-bottom:10px;">
+            ⚠️ Solo fotos decentes. Contenido inapropiado será baneado.
+        </div>
+        
+        <button id="btnPublicarFoto" class="btn-blue" style="background:#db2777;" disabled onclick="subirFotoReal()">
+            Publicar Ahora
+        </button>
+        <button onclick="cerrarModalFoto()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
+    </div>
+</div>
+<div id="modalFotoDetalle" class="modal-overlay" style="z-index: 29000; background: black; align-items: center; justify-content: center;">
+    <div class="modal-content" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; background: black; padding: 0; display: flex; flex-direction: column;">
+        
+        <div style="position: absolute; top: 15px; left: 15px; z-index: 10;">
+            <button onclick="cerrarFotoDetalle()" style="background: rgba(0,0,0,0.5); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                ✕
+            </button>
+        </div>
+
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+            <img id="detalleFotoImg" src="" style="width: 100%; height: auto; max-height: 100%; object-fit: contain;">
+        </div>
+
+        <div style="background: rgba(0,0,0,0.9); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.1);">
+            
+            <div class="action-icon" id="btnLikeFoto" style="flex-direction: row; gap: 8px;">
+                <i class="far fa-heart" style="font-size: 1.8rem;"></i>
+                <span style="font-size: 1.2rem;">0</span>
+            </div>
+
+            <div class="action-icon" id="btnShareFoto" style="cursor: pointer; display: flex; flex-direction: column; align-items: center;">
+                <i class="fas fa-share" style="font-size: 1.5rem; color: white;"></i>
+                <span style="font-size: 0.7rem; margin-top: 4px; color: white;">Share</span>
+            </div>
+
+            <button id="btnSaludarFoto" class="btn-blue" style="width: auto; padding: 10px 20px; background: linear-gradient(135deg, #a855f7, #8b5cf6); border-radius: 50px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);">
+                <i class="fas fa-comment"></i> Hola
+            </button>
+        </div>
+    </div>
+</div>
+<div id="modalFotoOptions" class="modal-overlay" style="z-index: 28000; align-items: flex-end;">
+    <div class="modal-content" style="width:100%; max-width: 100%; border-radius: 20px 20px 0 0; padding: 0; margin: 0; background: #f8fafc; animation: slideUp 0.2s;">
+        
+        <h3 style="padding:15px; margin:0; font-size:1rem; border-bottom:1px solid #e2e8f0; color:#334155;">Opciones de Foto</h3>
+
+        <button id="btnFijarFoto" onclick="accionFoto('fijar')" class="btn-blue" style="margin: 15px 15px 5px; background: white; color: #d97706; border: 1px solid #fbbf24; display:flex; align-items:center; justify-content:center; gap:10px;">
+            📌 Fijar / Desfijar (Top)
+        </button>
+
+        <button onclick="accionFoto('guardar')" class="btn-blue" style="margin: 5px 15px 5px; background: white; color: #0070ba; border: 1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; gap:10px;">
+            ⬇️ Guardar en Galería
+        </button>
+
+        <button id="btnEliminarFoto" onclick="accionFoto('eliminar')" class="btn-blue" style="display:none; margin: 5px 15px 15px; background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; align-items:center; justify-content:center; gap:10px;">
+            🗑️ Eliminar Foto
+        </button>
+
+        <div style="height:10px; background:#f1f5f9; border-top:1px solid #e2e8f0;"></div>
+        <button onclick="document.getElementById('modalFotoOptions').style.display='none'" style="width:100%; padding:15px; border:none; background:white; font-weight:bold; color:#64748b; cursor:pointer;">
+            Cancelar
+        </button>
+    </div>
+</div>
+
+<div id="modalConfirmDelete" class="modal-overlay" style="z-index: 30000;">
+    <div class="modal-content" style="border: 2px solid #ef4444; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🗑️</div>
+        <h3 style="color:#b91c1c; margin-bottom: 10px;">¿Estás seguro?</h3>
+        <p style="font-size: 0.9rem; color:#64748b; margin-bottom: 20px;">
+            Esta foto se eliminará permanentemente para todos.
+        </p>
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="document.getElementById('modalConfirmDelete').style.display='none'" class="btn-blue" style="background: #e2e8f0; color: #475569; flex: 1;">
+                Cancelar
+            </button>
+            <button onclick="ejecutarBorradoFoto()" class="btn-blue" style="background: #ef4444; color: white; flex: 1; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);">
+                Sí, Borrar
+            </button>
+        </div>
+    </div>
+</div>
+    <div id="modalRetiro" class="modal-overlay">
         <div class="modal-content" style="background: #f8fafc; text-align: left;">
             
             <div style="text-align:center; margin-bottom:15px;">
@@ -657,31 +1081,80 @@
     </div>
 
     <div id="modalTareas" class="modal-overlay" style="z-index: 20500;">
-        <div class="modal-content">
-            <h3 style="font-size: 1.2rem; margin-bottom: 5px;">🎯 Zona de Misiones</h3>
-            <div class="task-row" onclick="goToScreen(2); document.getElementById('modalTareas').style.display='none'"><div class="task-icon">🎰</div><div class="task-info"><span class="task-title">Jugar a la Ruleta</span><span class="task-reward">Premios varios</span></div><div class="task-status">○</div></div>
-            <div class="task-row"><div class="task-icon">📺</div><div class="task-info"><span class="task-title">Ver Anuncio</span><span class="task-reward">+0.25 PTS</span></div><div class="task-status"><button id="btnVerAnuncioModal" onclick="document.getElementById('btnVerAnuncio').click()" style="padding:5px 10px; border-radius:5px; border:none; background:#0070ba; color:white; font-size:0.7rem;">VER</button></div></div>
-            <div class="task-row" onclick="abrirCine(); document.getElementById('modalTareas').style.display='none'"><div class="task-icon">🍿</div><div class="task-info"><span class="task-title">Novedades YouTube</span><span class="task-reward">+0.50 PTS</span></div><div class="task-status">○</div></div>
-            <div class="task-row" onclick="prepararJuego('snake'); document.getElementById('modalTareas').style.display='none'"><div class="task-icon">🐍</div><div class="task-info"><span class="task-title">Arcade Snake</span><span class="task-reward">Bonos extras</span></div><div class="task-status">○</div></div>
-            <div class="task-row" onclick="abrirLichessConAd()">
-                <div class="task-icon">♟️</div>
-                <div class="task-info">
-                    <span class="task-title">Jugar Lichess</span>
-                    <span class="task-reward">Ad + Online</span>
-                </div>
-                <div class="task-status">ᐳ</div>
+    <div class="modal-content">
+        <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: #334155;">🎯 Centro de Misiones</h3>
+        
+        <div class="task-row" onclick="document.getElementById('modalRuletaGame').style.display='flex'; document.getElementById('modalTareas').style.display='none'">
+            <div class="task-icon">🎰</div>
+            <div class="task-info">
+                <span class="task-title">Ruleta Diaria</span>
+                <span class="task-reward">Probar Suerte</span>
             </div>
-            
-            <div class="task-row" onclick="window.location.href='go:Damas'; document.getElementById('modalTareas').style.display='none';">
-                <div class="task-icon">⚪</div>
-                <div class="task-info"><span class="task-title">Jugar Damas (VS CPU)</span><span class="task-reward">Nuevo</span></div>
-                <div class="task-status">ᐳ</div>
-            </div>
-            
-            <button onclick="document.getElementById('modalTareas').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; margin-top:20px; cursor:pointer;">Cerrar</button>
+            <div class="task-status">ᐳ</div>
         </div>
-    </div>
 
+        <div class="task-row">
+            <div class="task-icon">📺</div>
+            <div class="task-info">
+                <span class="task-title">Ver Anuncio</span>
+                <span class="task-reward">+0.25 PTS & Giro</span>
+            </div>
+            <div class="task-status">
+                <button onclick="document.getElementById('btnVerAnuncio').click()" class="btn-blue" style="padding:5px 10px; border-radius:5px; font-size:0.7rem; width:auto;">VER</button>
+            </div>
+        </div>
+
+        <div class="task-row" onclick="abrirCine(); document.getElementById('modalTareas').style.display='none'">
+            <div class="task-icon">🍿</div>
+            <div class="task-info">
+                <span class="task-title">Novedades YouTube</span>
+                <span class="task-reward">+0.25 PTS</span>
+            </div>
+            <div class="task-status">ᐳ</div>
+        </div>
+
+        <div style="border-top: 1px solid #f1f5f9; margin: 10px 0;"></div>
+        <p style="font-size:0.7rem; color:#94a3b8; text-align:left; margin-bottom:5px;">🎮 ZONA DE JUEGOS</p>
+
+        <div class="task-row" onclick="prepararJuego('snake'); document.getElementById('modalTareas').style.display='none'">
+            <div class="task-icon">🐍</div>
+            <div class="task-info">
+                <span class="task-title">Jugar Snake</span>
+                <span class="task-reward">15 minutos</span>
+            </div>
+            <div class="task-status">ᐳ</div>
+        </div>
+
+        <div class="task-row" onclick="prepararJuego('race'); document.getElementById('modalTareas').style.display='none'">
+            <div class="task-icon">🏎️</div>
+            <div class="task-info">
+                <span class="task-title">Guerra Vial</span>
+                <span class="task-reward">15 minutos</span>
+            </div>
+            <div class="task-status">ᐳ</div>
+        </div>
+
+        <div class="task-row" onclick="abrirLichessConAd()">
+            <div class="task-icon">♟️</div>
+            <div class="task-info">
+                <span class="task-title">Ajedrez (Lichess)</span>
+                <span class="task-reward">15 minutos</span>
+            </div>
+            <div class="task-status">ᐳ</div>
+        </div>
+
+        <div class="task-row" onclick="window.location.href='go:Damas'; document.getElementById('modalTareas').style.display='none';">
+            <div class="task-icon">⚪</div>
+            <div class="task-info">
+                <span class="task-title">Damas VS CPU</span>
+                <span class="task-reward">15 minutos</span>
+            </div>
+            <div class="task-status">ᐳ</div>
+        </div>
+
+        <button onclick="document.getElementById('modalTareas').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; margin-top:20px; cursor:pointer;">Cerrar</button>
+    </div>
+</div>
     <div id="modalGameOver" class="modal-overlay">
         <div class="modal-content" style="border: 4px solid #ef4444;">
             <h3 style="color:#b91c1c; font-size:1.5rem; margin-bottom: 5px;">🏁 FIN DEL JUEGO</h3>
@@ -709,12 +1182,12 @@
             <button onclick="document.getElementById('modalGiftReceived').style.display='none'" style="background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cerrar</button>
         </div>
    </div>
-  <div class="app-wrapper" id="appWrapper" style="transform: translateX(-100vw);">
-
+<div class="app-wrapper" id="appWrapper" style="transform: translateX(-200vw);">
+    
     <div class="screen">
         <div style="height: 80px;"></div>
         <div style="padding: 0 20px; text-align: center;">
-             <h2 style="color:#58cc02; margin-bottom: 5px;">Academia de Inglés</h2>
+             <h2 style="color:#58cc02; margin-bottom: 5px;">Academia</h2>
              <p style="color:#64748b; font-size: 0.8rem; margin-bottom: 20px;">Completa lecciones y gana puntos.</p>
              <div id="englishPath" class="duo-path-container">
                  <div style="color:#cbd5e1;">Cargando niveles...</div>
@@ -723,167 +1196,158 @@
     </div>
 
     <div class="screen">
-        <div style="height: 20px;"></div>
-        <div class="sticky-leaderboard" style="top: 0;">
-            <div class="leader-info">
-                <div class="leader-avatar" id="barraMiAvatar"></div>
-                <div class="leader-text">
-                    <h4 id="barraMiNombre" style="color: #0070ba;">Cargando...</h4>
-                    <span id="barraMisPuntos" style="color: #1e293b;">--- PTS</span>
+        <div style="height: 80px;"></div>
+        <div style="padding: 0 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div>
+                    <h2 style="color:#1e293b; margin:0;">📸 Galería</h2>
+                    <p style="font-size:0.75rem; color:#64748b;">Rostros de la comunidad</p>
+                </div>
+                <button onclick="document.getElementById('modalSubirFoto').style.display='flex'" class="btn-blue" style="width:auto; padding: 10px 20px; border-radius: 50px; background: linear-gradient(135deg, #ec4899, #db2777); box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);">
+                    + Subir Foto
+                </button>
+            </div>
+            <div id="muroFotosGrid" class="photo-grid-container">
+                <div style='text-align:center; padding:40px; color:#64748b; grid-column: span 2;'>
+                    <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Cargando fotos...
                 </div>
             </div>
-            <button class="leader-btn" onclick="abrirRanking()" style="background: linear-gradient(90deg, #f59e0b, #d97706); box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4);">
-                🏆 Ver Ranking
-            </button>
+            <div style="height: 100px;"></div>
         </div>
-        
-        <div id="viewMuro" style="padding: 0 15px;">
-            <div class="stories-container">
-                <div class="stories-title">Usuarios Activos</div>
-                <div id="listaUsuariosHorizontal" class="stories-scroll">
-                    <div style="padding:10px; font-size:0.8rem; color:#94a3b8;">Cargando...</div>
+    </div>
+
+    <div class="screen" style="position: relative; background: black;"> <div id="viewFeed" style="padding: 0; height: 100%; position: relative;">
+            
+            <div style="position: absolute; top: 15px; left: 0; width: 100%; z-index: 50; display: flex; justify-content: center; pointer-events: none;">
+                <button onclick="abrirMision()" style="pointer-events: auto; padding: 8px 20px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 50px; color: white; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                    <i class="fas fa-pen"></i> ¿Qué estás pensando?
+                </button>
+            </div>
+<div id="muroReportes" onscroll="checkScrollVideos()">
+                <div style='text-align:center; padding:40px; color:#64748b;'>
+                    <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Cargando feed...
                 </div>
             </div>
-            <div class="tab-container"><button class="tab-btn tab-active" id="tabBtnMuro" onclick="switchTab('muro')">📝 Feed Social</button><button class="tab-btn" onclick="document.getElementById('modalTareas').style.display='flex'">🎯 Misiones</button></div>
-            <div class="cta-container">
-                <div id="btnMisionDestacado" class="btn-cta-muro" onclick="abrirMision()">
-                    <div style="display:flex; align-items:center;"><div class="cta-icon-box">✍️</div><div class="cta-texts"><div class="cta-title">Publicar Pensamiento</div><div id="misionStatusText" class="cta-subtitle">Comparte música o videos</div></div></div><div class="cta-badge">+0.50</div>
-                </div>
-            </div>
-            <div style="font-size:0.75rem; color:#94a3b8; margin:0 0 10px; font-weight:800; letter-spacing:1px;">LO QUE ESTÁ PASANDO</div>
-            <div id="muroReportes" style="min-height: 200px;"><div style='text-align:center; padding:40px; color:#64748b;'><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Cargando Feed Social...</div></div>
-            <div style="height: 20px;"></div>
         </div>
     </div>
 
     <div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #e5e5f7;">
         <div style="height: 25px; flex-shrink: 0; background:white;"></div>
         <div style="padding: 10px 15px; background: white; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; display:flex; justify-content:space-between; align-items:center;">
-             <h3 style="margin:0; font-size:1rem; color:#1e293b;">💬 Grupo Social</h3>
-             <span style="font-size:0.7rem; color:#10b981; background:#ecfdf5; padding:4px 8px; border-radius:10px; font-weight:bold;">● En línea</span>
+             
         </div>
-<div id="chatList" class="chat-messages-area" style="flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 20px;">
-     <div style="text-align:center; padding:20px; color:#94a3b8;">Cargando comunidad...</div>
-</div>
-
-<div id="typingIndicator" class="typing-indicator" style="background:transparent;"><span id="typingText"></span>...</div>
-<div id="replyBar" class="reply-bar">
-    <div class="reply-info"><span style="color:#0070ba; font-weight:bold;">Respondiendo:</span> <span id="replyTextPreview">...</span></div>
-    <button onclick="cancelReply()" style="background:none; border:none; font-size:1.2rem;">✕</button>
+        <div class="stories-container" style="background: white; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; flex-shrink: 0;">
+    <div class="stories-title" style="padding: 10px 15px 5px; color: #64748b; font-size: 0.75rem;">Conectados reciente</div>
+    <div id="listaUsuariosHorizontal" class="stories-scroll" style="padding-bottom: 10px;">
+        <div style="padding:10px; font-size:0.8rem; color:#94a3b8;">Cargando...</div>
     </div>
-<div id="mentionList" style="
-    display: none;
-    position: fixed;
-    bottom: 65px;
-    left: 50%; /* Centrado horizontal parte 1 */
-    transform: translateX(-50%); /* Centrado horizontal parte 2 */
-    width: 90%; /* Ancho en móviles */
-    max-width: 300px; /* ¡EL FRENO! No más ancho que esto */
-    background: #1e293b;
-    border-radius: 12px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
-    max-height: 160px;
-    overflow-y: auto;
-    z-index: 25000;
-    border: 2px solid #fbbf24;
-"></div>
-<div style="background: White; width: 100%; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 1px; flex-shrink: 0; padding: 1px; padding-bottom: -70px; margin-bottom: -60px; z-index: 200;">
-     
-     <input type="text" id="inputChatMsg" placeholder="Escribe..." autocomplete="off" 
-            style="background:#f0f2f5; border:none; border-radius:20px; flex:1; min-width: 0; margin:0; padding: 0 15px; height: 40px; font-size: 0.95rem; color: #333;">
-     
-     <button onclick="enviarTexto()" class="btn-blue" 
-             style="width: 40px; height: 40px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: #0070ba; color: white; border: none; box-shadow: none; flex-shrink: 0;">
-         ➤
-     </button>
-
 </div>
-</div>
-
-    <div class="screen">
-        <div style="height: 80px;"></div>
-        <div style="padding: 20px; 20px; text-align: center;">
-            <h2 style="color:#f59e0b; margin-bottom: 5px;">Zona de Misiones</h2>
-            <p style="color:#64748b; font-size: 0.8rem; margin-bottom: 20px;">Juega y gana puntos diarios.</p>
-            <div class="card" style="text-align:center;">
-                 <div class="ruleta-container">
-                    <div class="pointer"></div>
-                    <div id="wheel">
-                        <div class="numero" style="transform: rotate(22.5deg);">0.25</div>
-                        <div class="numero" style="transform: rotate(67.5deg);">VACÍO</div>
-                        <div class="numero" style="transform: rotate(112.5deg);">0.50</div>
-                        <div class="numero" style="transform: rotate(157.5deg);">VACÍO</div>
-                        <div class="numero" style="transform: rotate(202.5deg);">0.75</div>
-                        <div class="numero" style="transform: rotate(247.5deg);">VACÍO</div>
-                        <div class="numero" style="transform: rotate(292.5deg);">0.25</div>
-                        <div class="numero" style="transform: rotate(337.5deg);">0.50</div>
-                    </div>
-                </div>
-                <button id="btnSpin" onclick="triggerSpin()" class="btn-blue" style="background:#f59e0b; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">🎰 Girar Ruleta</button>
-                <p id="spinInfo" style="text-align:center; font-size:0.7rem; margin-top:10px; color:#64748b;"></p>
-                <div style="margin-top: 20px;">
-                    <div style="margin-bottom:15px; border: 2px dashed #0070ba; border-radius: 15px; padding: 5px; background: #f0f9ff;">
-                        <button id="btnVerAnuncio" style="width:100%; border:none; background:none; padding:10px; font-weight:800; color:#0070ba; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
-                            📺 Video (+0.25) & 🎰
-                        </button>
-                    </div>
-                    <button onclick="abrirCine()" style="width:100%; padding:15px; background:#1e293b; color:#fbbf24; border-radius:15px; font-weight:800; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
-                        🍿 Tutorial/Novedades <span style="background:#fbbf24; color:#78350f; padding:2px 8px; border-radius:6px; font-size:0.8rem;">+0.50</span>
-                    </button>
-                    <div style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                        <p style="font-size:0.75rem; color:#64748b; margin-bottom:10px; font-weight:700;">ARCADE</p>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                          <button class="btn-blue" style="background: #10b981; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #059669;" onclick="irASnakeSeguro()">🐍 Snake</button>
-                          
-<button onclick="prepararJuego('race')" class="btn-blue" style="background: #ef4444; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b91c1c;">
-    💥 Guerra Vial
-</button>
-                          <button onclick="abrirLichessConAd()" class="btn-blue" style="background: #3b82f6; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #1d4ed8;">♟️ Lichess</button>
-                          <button onclick="window.location.href='go:Damas'" class="btn-blue" style="background: #f59e0b; font-size: 0.8rem; padding: 12px; box-shadow: 0 4px 0 #b45309;">⚪ Damas</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div id="chatList" class="chat-messages-area" style="flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 20px;">
+             <div style="text-align:center; padding:20px; color:#94a3b8;">Cargando chat...</div>
+        </div>
+        <div id="mentionList" style="display: none; position: fixed; bottom: 65px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 300px; background: #1e293b; border-radius: 12px; z-index: 25000; border: 2px solid #fbbf24;"></div>
+        <div style="background: White; width: 100%; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 1px; flex-shrink: 0; padding: 1px; padding-bottom: -70px; margin-bottom: -60px; z-index: 200;">
+              <input type="text" id="inputChatMsg" placeholder="Escribe..." autocomplete="off" style="background:#f0f2f5; border:none; border-radius:20px; flex:1; margin:0; padding: 0 15px; height: 40px; color: #333;">
+              <button onclick="enviarTexto()" class="btn-blue" style="width: 40px; height: 40px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: #0070ba; color: white; border: none;">➤</button>
         </div>
     </div>
 
-    <div class="screen">
-        <div style="height: 80px;"></div>
-        <div style="padding: 0 20px 20px;">
-            <div style="text-align:center; margin-bottom:20px;">
-                <div style="font-size:3.5rem; margin-bottom:5px;">👤</div>
-                <h2 id="profKey" style="color:#1e293b;">---</h2>
-                <p id="profRank" style="font-size:0.8rem; font-weight:700; color:#0070ba; margin-top:5px;">AUDITOR NIVEL 1</p>
+   <div class="screen">
+    <div style="height: 60px;"></div>
+    
+   <div class="profile-header">
+    <div style="position: relative; width: 100px; height: 100px; margin: 0 auto 15px;">
+        <div class="profile-avatar-large" id="avatarPerfilGrande" style="width: 100%; height: 100%; background-image: url(''); background-size: cover; background-position: center; border: 4px solid #0070ba; box-shadow: 0 4px 20px rgba(0, 112, 186, 0.2); border-radius: 50%;"></div>
+        
+        <div onclick="document.getElementById('inputAvatarPerfil').click()" style="position: absolute; bottom: 0; right: 0; background: #0070ba; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+            <i class="fas fa-camera" style="font-size: 0.8rem;"></i>
+        </div>
+    </div>
+
+    <input type="file" id="inputAvatarPerfil" accept="image/*" style="display: none;" onchange="subirMiFotoPerfil(this)">
+
+    <h2 id="profKey" style="color:#1e293b; letter-spacing: 1px; margin-bottom: 5px; font-weight: 800;">Cargando...</h2>
+    <p id="profRank" style="font-size:0.75rem; font-weight:600; color:#64748b;">MIEMBRO OFICIAL</p>
+    <div id="myKeyDisplay" style="display:none;">---</div>
+</div>
+
+<div class="menu-card-btn" onclick="abrirModalInvitar()">
+    <i class="fas fa-key menu-icon ic-yellow"></i>
+    <span style="font-weight:700; color:#475569; font-size:0.9rem;">Invitar</span>
+</div>
+        <div class="menu-card-btn" onclick="verReferidos()"><i class="fas fa-users menu-icon ic-green"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Referidos</span></div>
+        <div class="menu-card-btn" onclick="document.getElementById('modalHistorial').style.display='flex'"><i class="fas fa-list-ul menu-icon ic-blue"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Historial</span></div>
+       <div class="menu-card-btn" onclick="document.getElementById('modalTareas').style.display='flex'">
+    <i class="fas fa-gamepad menu-icon ic-red"></i>
+    <span style="font-weight:700; color:#475569; font-size:0.9rem;">Misiones</span>
+</div>
+        <div class="menu-card-btn" onclick="abrirSoporte()"><i class="fas fa-headset menu-icon ic-purple"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Soporte</span></div>
+        <div class="menu-card-btn" onclick="notify('⚙️ Versión v31.0')"><i class="fas fa-cog menu-icon ic-gray"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Ajustes</span></div>
+    </div>
+    <div style="height: 30px;"></div>
+</div> </div>
+<div id="modalRuletaGame" class="modal-overlay">
+    <div class="modal-content" style="text-align:center;">
+        <h3 style="color:#f59e0b; margin-bottom: 10px;">🎰 Ruleta Diaria</h3>
+        <div class="ruleta-container">
+            <div class="pointer"></div>
+            <div id="wheel">
+                <div class="numero" style="transform: rotate(22.5deg);">0.25</div>
+                <div class="numero" style="transform: rotate(67.5deg);">VACÍO</div>
+                <div class="numero" style="transform: rotate(112.5deg);">0.50</div>
+                <div class="numero" style="transform: rotate(157.5deg);">VACÍO</div>
+                <div class="numero" style="transform: rotate(202.5deg);">0.75</div>
+                <div class="numero" style="transform: rotate(247.5deg);">VACÍO</div>
+                <div class="numero" style="transform: rotate(292.5deg);">0.25</div>
+                <div class="numero" style="transform: rotate(337.5deg);">0.50</div>
             </div>
-            <div class="card">
-                <h3 style="font-size:0.9rem;">Tu Clave Única</h3>
-                <div id="myKeyDisplay" style="background:#f8fafc; padding:12px; border-radius:10px; text-align:center; font-size:1.2rem; font-weight:800; margin:10px 0; color:#0070ba; border:1px dashed #cbd5e1;">---</div>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="copiarClave()" class="btn-blue" style="font-size:0.8rem; padding:10px; background:white; color:#0070ba; border:1px solid #0070ba; flex:1;">📋 Copiar</button>
-                    <button onclick="verReferidos()" class="btn-blue" style="font-size:0.8rem; padding:10px; flex:1;">👥 Ver Referidos</button>
-                </div>
-                <div style="margin-top:15px; border-top:1px solid #f1f5f9; padding-top:10px;">
-                    <p style="font-size:0.7rem; color:#64748b; margin-bottom:5px;">
-                        Canjear código de amigo <b id="contadorAmigos" style="color:#0070ba;">(0/3)</b>:
-                    </p>
-                    <div style="display:flex; gap:5px;">
-                        <input type="text" id="inputFolio" placeholder="INV-XXXXX" style="margin:0; text-transform:uppercase;">
-                        <button id="btnValidar" class="btn-blue" style="width:auto; margin:0;">OK</button>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <h3 style="font-size:0.9rem; margin-bottom:10px;">Historial de Movimientos</h3>
-                <div id="historialList"></div>
-            </div>
-            <button onclick="abrirSoporte()" class="btn-blue" style="background:#cbd5e1; color:#475569; margin-top:20px;">
-                🛠️ Soporte Técnico
+        </div>
+        <button id="btnSpin" onclick="triggerSpin()" class="btn-blue" style="background:#f59e0b; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); margin-top:15px;">🎰 Girar Ruleta</button>
+        <p id="spinInfo" style="font-size:0.7rem; margin-top:10px; color:#64748b;"></p>
+        
+        <div style="margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+             <button id="btnVerAnuncio" style="width:100%; border:none; background:#f0f9ff; padding:10px; border-radius:10px; font-weight:800; color:#0070ba; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                📺 Ver Video (+0.25 & Giro)
             </button>
-            <div style="height: 30px;"></div>
+        </div>
+
+        <button onclick="document.getElementById('modalRuletaGame').style.display='none'" class="btn-blue" style="background:#cbd5e1; color:#475569; margin-top:15px;">Cerrar</button>
+    </div>
+</div>
+<div id="modalHistorial" class="modal-overlay" style="z-index: 26000;">
+    <div class="modal-content" style="background: #f8fafc; padding: 0; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh;">
+        
+        <div style="background: white; padding: 15px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: #1e293b; font-size: 1.1rem;">📊 Mi Trayectoria</h3>
+            <button onclick="document.getElementById('modalHistorial').style.display='none'" style="border: none; background: none; font-size: 1.2rem; color: #64748b;">✕</button>
+        </div>
+
+        <div style="padding: 20px; overflow-y: auto; flex: 1;">
+            
+            <div style="background: linear-gradient(135deg, #4f46e5, #4338ca); border-radius: 15px; padding: 20px; color: white; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3); text-align: left;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="font-weight: 700; font-size: 0.9rem;">💎 NIVEL DE LEALTAD</div>
+                    <div id="historialLoyaltyPercent" style="font-weight: 800; font-size: 1.2rem; background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 10px;">0%</div>
+                </div>
+                
+                <div style="background: rgba(0,0,0,0.3); height: 12px; border-radius: 10px; overflow: hidden; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div id="historialLoyaltyBar" style="width: 0%; height: 100%; background: #22d3ee; box-shadow: 0 0 10px #22d3ee; transition: width 1s ease;"></div>
+                </div>
+                
+                <p style="font-size: 0.7rem; opacity: 0.9; line-height: 1.4; margin: 0;">
+                    Completa 5 misiones diarias para subir <b>1%</b>. ¡Llega al 100% para ser VIP!
+                </p>
+            </div>
+
+            <h4 style="color: #64748b; margin-bottom: 15px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; text-align: left;">Últimos Movimientos</h4>
+            
+            <div id="historialList" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="text-align: center; padding: 20px; color: #94a3b8;">Cargando historial...</div>
+            </div>
+
         </div>
     </div>
 </div>
-
 <div id="modalChatOptions" class="modal-overlay" style="z-index: 24000; align-items: flex-end;">
     <div class="modal-content" style="width:100%; max-width: 100%; border-radius: 20px 20px 0 0; padding: 0; margin: 0; background: #f8fafc; animation: slideUp 0.2s;">
         <button onclick="copiarTextoSeleccionado()" class="btn-blue" style="margin: 15px 15px 5px; background: white; color: #334155; border: 1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; gap:10px;">
@@ -898,33 +1362,33 @@
         </button>
     </div>
 </div>
-   <nav class="bottom-nav">
-        <button class="nav-item" id="nav0" onclick="goToScreen(0, true)">
-            <span class="nav-icon"><i class="fas fa-graduation-cap"></i></span>
-            <span>Aprender</span>
-        </button>
+<nav class="bottom-nav">
+    <button class="nav-item" id="nav0" onclick="goToScreen(0, true)">
+        <span class="nav-icon"><i class="fas fa-graduation-cap"></i></span>
+        <span>Aprender</span>
+    </button>
+    
+    <button class="nav-item" id="nav1" onclick="goToScreen(1, true)">
+        <span class="nav-icon"><i class="fas fa-image"></i></span>
+        <span>Muro</span>
+    </button>
+    
+    <button class="nav-item active" id="nav2" onclick="goToScreen(2, true)">
+        <span class="nav-icon"><i class="fas fa-feather-alt"></i></span>
+        <span>Pensar</span>
+    </button>
 
-        <button class="nav-item active" id="nav1" onclick="goToScreen(1, true)">
-            <span class="nav-icon"><i class="fas fa-home"></i></span>
-            <span>Muro</span>
-        </button>
-
-<button class="nav-item" id="nav2" onclick="goToScreen(2, true)" style="position: relative;">
-    <span class="nav-icon"><i class="fas fa-comments"></i></span>
-    <span>Grupo</span>
-    <div id="msgBadge" style="position: absolute; top: 4px; right: 20px; background: #ef4444; color: white; font-size: 0.65rem; font-weight: 800; min-width: 18px; height: 18px; border-radius: 50%; display: none; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">0</div>
-</button>
-
-        <button class="nav-item" id="nav3" onclick="goToScreen(3, true)">
-            <span class="nav-icon"><i class="fas fa-gamepad"></i></span>
-            <span>Misiones</span>
-        </button>
-
-        <button class="nav-item" id="nav4" onclick="goToScreen(4, true)">
-            <span class="nav-icon"><i class="fas fa-user-circle"></i></span>
-            <span>Perfil</span>
-        </button>
-    </nav>
+    <button class="nav-item" id="nav3" onclick="goToScreen(3, true)" style="position: relative;">
+        <span class="nav-icon"><i class="fas fa-comment-dots"></i></span>
+        <span>Mensajes</span>
+        <div id="msgBadge" style="display:none; ...">0</div>
+    </button>
+    
+    <button class="nav-item" id="nav4" onclick="goToScreen(4, true)">
+        <span class="nav-icon"><i class="fas fa-user-circle"></i></span>
+        <span>Perfil</span>
+    </button>
+</nav>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -987,356 +1451,81 @@ const audioLibrary = {
     let idAuditor = null; let myCurrentKey = ""; let currentEarnings = 0; let canSpin = false; let currentVideoId = null; let scrollTimeout = null; let audioActivadoGlobal = false; let isCommenting = false; let lastGameAd = 0;
     let mensajesNoLeidos = 0;
 // --- DATOS ACADEMIA INGLÉS (10 PREGUNTAS POR NIVEL) ---
-    // Base de datos de palabras para generar opciones incorrectas
-    const wordBank = ["Blue", "Red", "Cat", "Dog", "One", "Two", "Yes", "No", "Bye", "Hello", "Thanks", "Please", "Water", "Milk", "Car", "Bus", "House", "City", "Friend", "Family", "Apple", "Bread", "Coffee", "Night", "Day", "Mother", "Father", "Sister", "School", "Teacher", "Book", "Pen", "Computer", "Phone", "Shoes", "Shirt", "Pants", "Run", "Walk", "Eat", "Sleep", "Sun", "Moon", "Rain", "Snow", "Happy", "Sad", "Big", "Small"];
+   // ==========================================
+// 🎓 RESTAURACIÓN DE ACADEMIA DE INGLÉS
+// ==========================================
 
-    // Función auxiliar para generar opciones al azar
-    function getOptions(correctWord) {
-        const opts = [correctWord];
-        while (opts.length < 4) {
-            const randomW = wordBank[Math.floor(Math.random() * wordBank.length)];
-            if (!opts.includes(randomW)) opts.push(randomW);
-        }
-        return opts.sort(() => Math.random() - 0.5);
+// 1. BASE DE DATOS DE PREGUNTAS (Si ya existía, esto la asegura)
+var wordBank = ["Blue", "Red", "Cat", "Dog", "One", "Two", "Yes", "No", "Bye", "Hello", "Thanks", "Please", "Water", "Milk", "Car", "Bus", "House", "City", "Friend", "Family", "Apple", "Bread", "Coffee", "Night", "Day", "Mother", "Father", "Sister", "School", "Teacher", "Book", "Pen", "Computer", "Phone", "Shoes", "Shirt", "Pants", "Run", "Walk", "Eat", "Sleep", "Sun", "Moon", "Rain", "Snow", "Happy", "Sad", "Big", "Small"];
+
+function getOptions(correctWord) {
+    const opts = [correctWord];
+    while (opts.length < 4) {
+        const randomW = wordBank[Math.floor(Math.random() * wordBank.length)];
+        if (!opts.includes(randomW)) opts.push(randomW);
     }
+    return opts.sort(() => Math.random() - 0.5);
+}
 
-    const englishLessons = [
-        { 
-            id: 1, title: "Intro", icon: "⭐", 
-            questions: [
-                { w: "Hola", a: "Hello", opts: getOptions("Hello") },
-                { w: "Adiós", a: "Bye", opts: getOptions("Bye") },
-                { w: "Por favor", a: "Please", opts: getOptions("Please") },
-                { w: "Gracias", a: "Thanks", opts: getOptions("Thanks") },
-                { w: "Sí", a: "Yes", opts: getOptions("Yes") },
-                { w: "No", a: "No", opts: getOptions("No") },
-                { w: "Hombre", a: "Man", opts: ["Man", "Woman", "Boy", "Girl"] },
-                { w: "Mujer", a: "Woman", opts: ["Woman", "Man", "Boy", "Girl"] },
-                { w: "Gato", a: "Cat", opts: ["Cat", "Dog", "Bird", "Fish"] },
-                { w: "Perro", a: "Dog", opts: ["Dog", "Cat", "Mouse", "Cow"] }
-            ]
-        },
-        { 
-            id: 2, title: "Saludos", icon: "👋", 
-            questions: [
-                { w: "Buenos días", a: "Good morning", opts: ["Good morning", "Good night", "Hello", "Bye"] },
-                { w: "Buenas noches", a: "Good night", opts: ["Good night", "Good morning", "Hi", "Thanks"] },
-                { w: "Hola (informal)", a: "Hi", opts: ["Hi", "Hello", "Bye", "Yo"] },
-                { w: "¿Cómo estás?", a: "How are you?", opts: ["How are you?", "Who are you?", "I am fine", "Thanks"] },
-                { w: "Bien", a: "Fine", opts: ["Fine", "Bad", "Sad", "Mad"] },
-                { w: "Mal", a: "Bad", opts: ["Bad", "Good", "Fine", "Happy"] },
-                { w: "Bienvenido", a: "Welcome", opts: ["Welcome", "Go away", "Hello", "Thanks"] },
-                { w: "Lo siento", a: "Sorry", opts: ["Sorry", "Please", "Thanks", "Yes"] },
-                { w: "Disculpa", a: "Excuse me", opts: ["Excuse me", "Sorry", "Please", "No"] },
-                { w: "Nos vemos", a: "See you", opts: ["See you", "Hello", "Welcome", "Please"] }
-            ]
-        },
-        { 
-            id: 3, title: "Comida", icon: "🍎", 
-            questions: [
-                { w: "Agua", a: "Water", opts: ["Water", "Milk", "Juice", "Soda"] },
-                { w: "Pan", a: "Bread", opts: ["Bread", "Apple", "Meat", "Rice"] },
-                { w: "Manzana", a: "Apple", opts: ["Apple", "Orange", "Banana", "Grape"] },
-                { w: "Leche", a: "Milk", opts: ["Milk", "Water", "Coffee", "Tea"] },
-                { w: "Café", a: "Coffee", opts: ["Coffee", "Tea", "Water", "Milk"] },
-                { w: "Carne", a: "Meat", opts: ["Meat", "Fish", "Chicken", "Bread"] },
-                { w: "Pescado", a: "Fish", opts: ["Fish", "Meat", "Egg", "Rice"] },
-                { w: "Huevo", a: "Egg", opts: ["Egg", "Bread", "Cheese", "Ham"] },
-                { w: "Arroz", a: "Rice", opts: ["Rice", "Pasta", "Bread", "Soup"] },
-                { w: "Queso", a: "Cheese", opts: ["Cheese", "Milk", "Yogurt", "Butter"] }
-            ]
-        },
-        { 
-            id: 4, title: "Animales", icon: "🐶", 
-            questions: [
-                { w: "Pájaro", a: "Bird", opts: ["Bird", "Cat", "Dog", "Fish"] },
-                { w: "Pez", a: "Fish", opts: ["Fish", "Bird", "Cat", "Dog"] },
-                { w: "Caballo", a: "Horse", opts: ["Horse", "Cow", "Pig", "Sheep"] },
-                { w: "Vaca", a: "Cow", opts: ["Cow", "Horse", "Pig", "Chicken"] },
-                { w: "Cerdo", a: "Pig", opts: ["Pig", "Cow", "Horse", "Sheep"] },
-                { w: "Ratón", a: "Mouse", opts: ["Mouse", "Cat", "Dog", "Bird"] },
-                { w: "León", a: "Lion", opts: ["Lion", "Tiger", "Bear", "Wolf"] },
-                { w: "Tigre", a: "Tiger", opts: ["Tiger", "Lion", "Cat", "Dog"] },
-                { w: "Oso", a: "Bear", opts: ["Bear", "Lion", "Tiger", "Wolf"] },
-                { w: "Mono", a: "Monkey", opts: ["Monkey", "Dog", "Cat", "Bird"] }
-            ]
-        },
-        { 
-            id: 5, title: "Casa", icon: "🏠", 
-            questions: [
-                { w: "Casa", a: "House", opts: ["House", "Apartment", "Room", "Door"] },
-                { w: "Mesa", a: "Table", opts: ["Table", "Chair", "Bed", "Sofa"] },
-                { w: "Silla", a: "Chair", opts: ["Chair", "Table", "Bed", "Desk"] },
-                { w: "Cama", a: "Bed", opts: ["Bed", "Sofa", "Chair", "Table"] },
-                { w: "Puerta", a: "Door", opts: ["Door", "Window", "Wall", "Floor"] },
-                { w: "Ventana", a: "Window", opts: ["Window", "Door", "Wall", "Roof"] },
-                { w: "Baño", a: "Bathroom", opts: ["Bathroom", "Kitchen", "Bedroom", "Living room"] },
-                { w: "Cocina", a: "Kitchen", opts: ["Kitchen", "Bathroom", "Room", "Hall"] },
-                { w: "Jardín", a: "Garden", opts: ["Garden", "Garage", "Street", "Park"] },
-                { w: "Llave", a: "Key", opts: ["Key", "Door", "Lock", "Open"] }
-                
-            ]
-        },
-        { 
-            id: 6, title: "Familia", icon: "👨‍👩‍👧", 
-            questions: [
-                { w: "Madre", a: "Mother", opts: getOptions("Mother") },
-                { w: "Padre", a: "Father", opts: getOptions("Father") },
-                { w: "Hermano", a: "Brother", opts: getOptions("Brother") },
-                { w: "Hermana", a: "Sister", opts: getOptions("Sister") },
-                { w: "Abuelo", a: "Grandfather", opts: ["Grandfather", "Father", "Uncle", "Brother"] },
-                { w: "Abuela", a: "Grandmother", opts: ["Grandmother", "Mother", "Aunt", "Sister"] },
-                { w: "Hijo", a: "Son", opts: ["Son", "Daughter", "Father", "Boy"] },
-                { w: "Hija", a: "Daughter", opts: ["Daughter", "Son", "Mother", "Girl"] },
-                { w: "Familia", a: "Family", opts: getOptions("Family") },
-                { w: "Amigo", a: "Friend", opts: getOptions("Friend") }
-            ]
-        },
-        { 
-            id: 7, title: "Colores", icon: "🎨", 
-            questions: [
-                { w: "Rojo", a: "Red", opts: ["Red", "Blue", "Green", "Yellow"] },
-                { w: "Azul", a: "Blue", opts: ["Blue", "Red", "Black", "White"] },
-                { w: "Verde", a: "Green", opts: ["Green", "Yellow", "Red", "Purple"] },
-                { w: "Amarillo", a: "Yellow", opts: ["Yellow", "Green", "Orange", "Pink"] },
-                { w: "Negro", a: "Black", opts: ["Black", "White", "Gray", "Brown"] },
-                { w: "Blanco", a: "White", opts: ["White", "Black", "Red", "Blue"] },
-                { w: "Naranja", a: "Orange", opts: ["Orange", "Purple", "Pink", "Red"] },
-                { w: "Rosa", a: "Pink", opts: ["Pink", "Red", "White", "Blue"] },
-                { w: "Gris", a: "Gray", opts: ["Gray", "Black", "White", "Brown"] },
-                { w: "Marrón", a: "Brown", opts: ["Brown", "Black", "Red", "Green"] }
-            ]
-        },
-        { 
-            id: 8, title: "Ropa", icon: "👕", 
-            questions: [
-                { w: "Zapatos", a: "Shoes", opts: getOptions("Shoes") },
-                { w: "Camisa", a: "Shirt", opts: getOptions("Shirt") },
-                { w: "Pantalones", a: "Pants", opts: getOptions("Pants") },
-                { w: "Vestido", a: "Dress", opts: getOptions("Dress") },
-                { w: "Sombrero", a: "Hat", opts: ["Hat", "Cap", "Shirt", "Shoes"] },
-                { w: "Abrigo", a: "Coat", opts: ["Coat", "Shirt", "Pants", "Dress"] },
-                { w: "Calcetines", a: "Socks", opts: ["Socks", "Shoes", "Feet", "Hands"] },
-                { w: "Falda", a: "Skirt", opts: ["Skirt", "Dress", "Shirt", "Pants"] },
-                { w: "Reloj", a: "Watch", opts: ["Watch", "Clock", "Time", "Hand"] },
-                { w: "Gafas", a: "Glasses", opts: ["Glasses", "Eyes", "Hat", "Watch"] }
-            ]
-        },
-        { 
-            id: 9, title: "Cuerpo", icon: "👀", 
-            questions: [
-                { w: "Cabeza", a: "Head", opts: ["Head", "Hand", "Foot", "Leg"] },
-                { w: "Mano", a: "Hand", opts: ["Hand", "Arm", "Leg", "Foot"] },
-                { w: "Pie", a: "Foot", opts: ["Foot", "Hand", "Head", "Eye"] },
-                { w: "Ojo", a: "Eye", opts: ["Eye", "Ear", "Nose", "Mouth"] },
-                { w: "Nariz", a: "Nose", opts: ["Nose", "Mouth", "Eye", "Ear"] },
-                { w: "Boca", a: "Mouth", opts: ["Mouth", "Nose", "Ear", "Eye"] },
-                { w: "Oreja", a: "Ear", opts: ["Ear", "Eye", "Nose", "Hand"] },
-                { w: "Brazo", a: "Arm", opts: ["Arm", "Leg", "Hand", "Foot"] },
-                { w: "Pierna", a: "Leg", opts: ["Leg", "Arm", "Foot", "Hand"] },
-                { w: "Pelo", a: "Hair", opts: ["Hair", "Head", "Face", "Eye"] }
-            ]
-        },
-        { 
-            id: 10, title: "Escuela", icon: "🎒", 
-            questions: [
-                { w: "Escuela", a: "School", opts: getOptions("School") },
-                { w: "Profesor", a: "Teacher", opts: getOptions("Teacher") },
-                { w: "Estudiante", a: "Student", opts: getOptions("Student") },
-                { w: "Libro", a: "Book", opts: getOptions("Book") },
-                { w: "Lápiz", a: "Pencil", opts: ["Pencil", "Pen", "Book", "Desk"] },
-                { w: "Bolígrafo", a: "Pen", opts: ["Pen", "Pencil", "Paper", "Book"] },
-                { w: "Papel", a: "Paper", opts: ["Paper", "Book", "Pen", "Desk"] },
-                { w: "Escritorio", a: "Desk", opts: ["Desk", "Chair", "Table", "Room"] },
-                { w: "Tarea", a: "Homework", opts: ["Homework", "Work", "School", "Book"] },
-                { w: "Clase", a: "Class", opts: ["Class", "School", "Room", "Teacher"] }
-            ]
-        },
-        { 
-            id: 11, title: "Trabajo", icon: "💼", 
-            questions: [
-                { w: "Trabajo", a: "Job", opts: getOptions("Job") },
-                { w: "Doctor", a: "Doctor", opts: ["Doctor", "Nurse", "Teacher", "Driver"] },
-                { w: "Enfermera", a: "Nurse", opts: ["Nurse", "Doctor", "Woman", "Teacher"] },
-                { w: "Policía", a: "Police", opts: ["Police", "Doctor", "Fireman", "Man"] },
-                { w: "Jefe", a: "Boss", opts: ["Boss", "Worker", "Job", "Office"] },
-                { w: "Oficina", a: "Office", opts: ["Office", "House", "Room", "School"] },
-                { w: "Dinero", a: "Money", opts: ["Money", "Cash", "Bank", "Card"] },
-                { w: "Conductor", a: "Driver", opts: ["Driver", "Car", "Bus", "Police"] },
-                { w: "Cocinero", a: "Chef", opts: ["Chef", "Cook", "Food", "Doctor"] },
-                { w: "Cantante", a: "Singer", opts: ["Singer", "Music", "Song", "Artist"] }
-            ]
-        },
-        { 
-            id: 12, title: "Ciudad", icon: "🏙️", 
-            questions: [
-                { w: "Ciudad", a: "City", opts: getOptions("City") },
-                { w: "Calle", a: "Street", opts: ["Street", "Road", "Way", "City"] },
-                { w: "Parque", a: "Park", opts: ["Park", "Garden", "City", "Street"] },
-                { w: "Hospital", a: "Hospital", opts: ["Hospital", "School", "House", "Bank"] },
-                { w: "Banco", a: "Bank", opts: ["Bank", "Store", "Shop", "Money"] },
-                { w: "Tienda", a: "Store", opts: ["Store", "Shop", "Bank", "House"] },
-                { w: "Restaurante", a: "Restaurant", opts: ["Restaurant", "Food", "Cafe", "Store"] },
-                { w: "Cine", a: "Cinema", opts: ["Cinema", "Movie", "Theater", "Park"] },
-                { w: "Hotel", a: "Hotel", opts: ["Hotel", "House", "Room", "Bed"] },
-                { w: "Aeropuerto", a: "Airport", opts: ["Airport", "Plane", "Station", "Bus"] }
-            ]
-        },
-        { 
-            id: 13, title: "Verbos", icon: "🏃", 
-            questions: [
-                { w: "Correr", a: "Run", opts: ["Run", "Walk", "Jump", "Sit"] },
-                { w: "Caminar", a: "Walk", opts: ["Walk", "Run", "Stand", "Sleep"] },
-                { w: "Comer", a: "Eat", opts: ["Eat", "Drink", "Cook", "Food"] },
-                { w: "Beber", a: "Drink", opts: ["Drink", "Eat", "Water", "Milk"] },
-                { w: "Dormir", a: "Sleep", opts: ["Sleep", "Wake", "Bed", "Night"] },
-                { w: "Hablar", a: "Speak", opts: ["Speak", "Listen", "Hear", "Say"] },
-                { w: "Escuchar", a: "Listen", opts: ["Listen", "Speak", "Hear", "Ear"] },
-                { w: "Mirar", a: "Look", opts: ["Look", "See", "Watch", "Eye"] },
-                { w: "Jugar", a: "Play", opts: ["Play", "Run", "Game", "Fun"] },
-                { w: "Trabajar", a: "Work", opts: ["Work", "Job", "Play", "Sleep"] }
-            ]
-        },
-        { 
-            id: 14, title: "Adjetivos", icon: "📏", 
-            questions: [
-                { w: "Grande", a: "Big", opts: ["Big", "Small", "Tall", "Short"] },
-                { w: "Pequeño", a: "Small", opts: ["Small", "Big", "Little", "Large"] },
-                { w: "Feliz", a: "Happy", opts: ["Happy", "Sad", "Good", "Bad"] },
-                { w: "Triste", a: "Sad", opts: ["Sad", "Happy", "Angry", "Bad"] },
-                { w: "Bueno", a: "Good", opts: ["Good", "Bad", "Fine", "Nice"] },
-                { w: "Malo", a: "Bad", opts: ["Bad", "Good", "Wrong", "Right"] },
-                { w: "Caliente", a: "Hot", opts: ["Hot", "Cold", "Warm", "Sun"] },
-                { w: "Frío", a: "Cold", opts: ["Cold", "Hot", "Cool", "Ice"] },
-                { w: "Nuevo", a: "New", opts: ["New", "Old", "Young", "Good"] },
-                { w: "Viejo", a: "Old", opts: ["Old", "New", "Age", "Time"] }
-            ]
-        },
-        { 
-            id: 15, title: "Tiempo", icon: "☀️", 
-            questions: [
-                { w: "Sol", a: "Sun", opts: getOptions("Sun") },
-                { w: "Luna", a: "Moon", opts: getOptions("Moon") },
-                { w: "Lluvia", a: "Rain", opts: getOptions("Rain") },
-                { w: "Nieve", a: "Snow", opts: getOptions("Snow") },
-                { w: "Viento", a: "Wind", opts: ["Wind", "Air", "Rain", "Cold"] },
-                { w: "Cielo", a: "Sky", opts: ["Sky", "Blue", "Sun", "Cloud"] },
-                { w: "Nube", a: "Cloud", opts: ["Cloud", "Sky", "Rain", "White"] },
-                { w: "Día", a: "Day", opts: ["Day", "Night", "Morning", "Sun"] },
-                { w: "Noche", a: "Night", opts: ["Night", "Day", "Moon", "Dark"] },
-                { w: "Hoy", a: "Today", opts: ["Today", "Tomorrow", "Yesterday", "Now"] }
-            ]
-        },
-        { 
-            id: 16, title: "Deportes", icon: "⚽", 
-            questions: [
-                { w: "Fútbol", a: "Soccer", opts: ["Soccer", "Football", "Ball", "Sport"] },
-                { w: "Pelota", a: "Ball", opts: ["Ball", "Game", "Play", "Sport"] },
-                { w: "Juego", a: "Game", opts: ["Game", "Play", "Sport", "Fun"] },
-                { w: "Equipo", a: "Team", opts: ["Team", "Group", "Friends", "Play"] },
-                { w: "Ganar", a: "Win", opts: ["Win", "Lose", "Game", "Play"] },
-                { w: "Perder", a: "Lose", opts: ["Lose", "Win", "Lost", "Game"] },
-                { w: "Correr", a: "Run", opts: ["Run", "Walk", "Play", "Fast"] },
-                { w: "Nadar", a: "Swim", opts: ["Swim", "Water", "Pool", "Run"] },
-                { w: "Tenis", a: "Tennis", opts: ["Tennis", "Ball", "Sport", "Game"] },
-                { w: "Gol", a: "Goal", opts: ["Goal", "Win", "Point", "Score"] }
-            ]
-        },
-        { 
-            id: 17, title: "Viajes", icon: "✈️", 
-            questions: [
-                { w: "Avión", a: "Plane", opts: ["Plane", "Car", "Bus", "Train"] },
-                { w: "Tren", a: "Train", opts: ["Train", "Bus", "Car", "Plane"] },
-                { w: "Autobús", a: "Bus", opts: ["Bus", "Car", "Train", "Stop"] },
-                { w: "Coche", a: "Car", opts: ["Car", "Bus", "Taxi", "Bike"] },
-                { w: "Bicicleta", a: "Bike", opts: ["Bike", "Car", "Walk", "Ride"] },
-                { w: "Barco", a: "Boat", opts: ["Boat", "Ship", "Water", "Sea"] },
-                { w: "Mapa", a: "Map", opts: ["Map", "Paper", "World", "City"] },
-                { w: "Mundo", a: "World", opts: ["World", "Map", "Earth", "Land"] },
-                { w: "Viaje", a: "Trip", opts: ["Trip", "Travel", "Go", "Way"] },
-                { w: "Pasaporte", a: "Passport", opts: ["Passport", "Book", "ID", "Card"] }
-            ]
-        },
-        { 
-            id: 18, title: "Naturaleza", icon: "🌳", 
-            questions: [
-                { w: "Árbol", a: "Tree", opts: ["Tree", "Plant", "Flower", "Green"] },
-                { w: "Flor", a: "Flower", opts: ["Flower", "Tree", "Plant", "Rose"] },
-                { w: "Río", a: "River", opts: ["River", "Water", "Sea", "Lake"] },
-                { w: "Mar", a: "Sea", opts: ["Sea", "Ocean", "Water", "Blue"] },
-                { w: "Montaña", a: "Mountain", opts: ["Mountain", "Hill", "High", "Rock"] },
-                { w: "Bosque", a: "Forest", opts: ["Forest", "Tree", "Park", "Wood"] },
-                { w: "Fuego", a: "Fire", opts: ["Fire", "Hot", "Burn", "Red"] },
-                { w: "Tierra", a: "Earth", opts: ["Earth", "World", "Ground", "Land"] },
-                { w: "Piedra", a: "Stone", opts: ["Stone", "Rock", "Hard", "Ground"] },
-                { w: "Playa", a: "Beach", opts: ["Beach", "Sea", "Sand", "Sun"] }
-            ]
-        },
-        { 
-            id: 19, title: "Tecnología", icon: "📱", 
-            questions: [
-                { w: "Teléfono", a: "Phone", opts: ["Phone", "Call", "Mobile", "Computer"] },
-                { w: "Ordenador", a: "Computer", opts: ["Computer", "Laptop", "Screen", "Phone"] },
-                { w: "Internet", a: "Internet", opts: ["Internet", "Web", "Net", "Wifi"] },
-                { w: "Juego", a: "Game", opts: ["Game", "Play", "App", "Phone"] },
-                { w: "Música", a: "Music", opts: ["Music", "Song", "Sound", "Listen"] },
-                { w: "Video", a: "Video", opts: ["Video", "Movie", "Watch", "Screen"] },
-                { w: "Cámara", a: "Camera", opts: ["Camera", "Photo", "Picture", "Phone"] },
-                { w: "Foto", a: "Photo", opts: ["Photo", "Picture", "Camera", "Image"] },
-                { w: "Mensaje", a: "Message", opts: ["Message", "Text", "Email", "Chat"] },
-                { w: "Wifi", a: "Wifi", opts: ["Wifi", "Internet", "Connect", "Net"] }
-            ]
-        },
-        { 
-            id: 20, title: "Examen", icon: "🎓", 
-            questions: [
-                { w: "Todo", a: "Everything", opts: ["Everything", "All", "Nothing", "Something"] },
-                { w: "Nada", a: "Nothing", opts: ["Nothing", "Zero", "Empty", "All"] },
-                { w: "Siempre", a: "Always", opts: ["Always", "Never", "Sometimes", "Forever"] },
-                { w: "Nunca", a: "Never", opts: ["Never", "No", "Stop", "Always"] },
-                { w: "Pregunta", a: "Question", opts: ["Question", "Ask", "Answer", "What"] },
-                { w: "Respuesta", a: "Answer", opts: ["Answer", "Question", "Reply", "Talk"] },
-                { w: "Correcto", a: "Correct", opts: ["Correct", "Right", "Good", "Yes"] },
-                { w: "Error", a: "Error", opts: ["Error", "Wrong", "Mistake", "Bad"] },
-                { w: "Fácil", a: "Easy", opts: ["Easy", "Simple", "Hard", "Good"] },
-                { w: "Difícil", a: "Hard", opts: ["Hard", "Difficult", "Easy", "Bad"] }
-            ]
-        } ];
-        
-   
-    let currentLesson = null;
-    let currentQIndex = 0;
-    let userEnglishLevel = 1; 
+// Usamos 'var' para evitar errores si ya estaba declarada
+var englishLessons = [
+    { id: 1, title: "Intro", icon: "⭐", questions: [{ w: "Hola", a: "Hello", opts: getOptions("Hello") }, { w: "Adiós", a: "Bye", opts: getOptions("Bye") }, { w: "Gracias", a: "Thanks", opts: getOptions("Thanks") }, { w: "Por favor", a: "Please", opts: getOptions("Please") }, { w: "Sí", a: "Yes", opts: getOptions("Yes") }] },
+    { id: 2, title: "Saludos", icon: "👋", questions: [{ w: "Buenos días", a: "Good morning", opts: ["Good morning", "Hi", "Bye", "Thanks"] }, { w: "Buenas noches", a: "Good night", opts: ["Good night", "Hello", "Yes", "No"] }, { w: "¿Cómo estás?", a: "How are you?", opts: ["How are you?", "Thanks", "Please", "Bye"] }] },
+    { id: 3, title: "Comida", icon: "🍎", questions: [{ w: "Agua", a: "Water", opts: getOptions("Water") }, { w: "Pan", a: "Bread", opts: getOptions("Bread") }, { w: "Manzana", a: "Apple", opts: getOptions("Apple") }] },
+    { id: 4, title: "Animales", icon: "🐶", questions: [{ w: "Perro", a: "Dog", opts: getOptions("Dog") }, { w: "Gato", a: "Cat", opts: getOptions("Cat") }, { w: "Pájaro", a: "Bird", opts: getOptions("Bird") }] },
+    { id: 5, title: "Casa", icon: "🏠", questions: [{ w: "Casa", a: "House", opts: getOptions("House") }, { w: "Mesa", a: "Table", opts: getOptions("Table") }, { w: "Puerta", a: "Door", opts: getOptions("Door") }] },
+    { id: 6, title: "Familia", icon: "👨‍👩‍👧", questions: [{ w: "Madre", a: "Mother", opts: getOptions("Mother") }, { w: "Padre", a: "Father", opts: getOptions("Father") }, { w: "Hermano", a: "Brother", opts: getOptions("Brother") }] },
+    { id: 7, title: "Colores", icon: "🎨", questions: [{ w: "Rojo", a: "Red", opts: ["Red", "Blue", "Green", "Yellow"] }, { w: "Azul", a: "Blue", opts: ["Blue", "Red", "Black", "White"] }, { w: "Verde", a: "Green", opts: ["Green", "Yellow", "Red", "Purple"] }] },
+    { id: 8, title: "Ropa", icon: "👕", questions: [{ w: "Zapatos", a: "Shoes", opts: getOptions("Shoes") }, { w: "Camisa", a: "Shirt", opts: getOptions("Shirt") }, { w: "Pantalones", a: "Pants", opts: getOptions("Pants") }] },
+    { id: 9, title: "Cuerpo", icon: "👀", questions: [{ w: "Cabeza", a: "Head", opts: ["Head", "Hand", "Foot", "Leg"] }, { w: "Mano", a: "Hand", opts: ["Hand", "Arm", "Leg", "Foot"] }, { w: "Ojo", a: "Eye", opts: ["Eye", "Ear", "Nose", "Mouth"] }] },
+    { id: 10, title: "Escuela", icon: "🎒", questions: [{ w: "Escuela", a: "School", opts: getOptions("School") }, { w: "Profesor", a: "Teacher", opts: getOptions("Teacher") }, { w: "Libro", a: "Book", opts: getOptions("Book") }] },
+    { id: 11, title: "Trabajo", icon: "💼", questions: [{ w: "Trabajo", a: "Job", opts: getOptions("Job") }, { w: "Dinero", a: "Money", opts: getOptions("Money") }, { w: "Jefe", a: "Boss", opts: getOptions("Boss") }] },
+    { id: 12, title: "Ciudad", icon: "🏙️", questions: [{ w: "Ciudad", a: "City", opts: getOptions("City") }, { w: "Calle", a: "Street", opts: getOptions("Street") }, { w: "Coche", a: "Car", opts: getOptions("Car") }] }
+];
+
+// 2. FUNCIÓN PARA DIBUJAR EL CAMINO (Esta es la que faltaba o fallaba)
+window.renderEnglishPath = () => {
+    const container = document.getElementById('englishPath');
+    if(!container) return; // Si no existe el div, salir
     
-    // --- FUNCIONES ACADEMIA ---
-    function renderEnglishPath() {
-        const container = document.getElementById('englishPath');
-        if(!container) return;
-        let html = "";
+    let html = "";
+    
+    // Aseguramos que userEnglishLevel tenga un valor
+    const nivelUsuario = (typeof userEnglishLevel !== 'undefined') ? userEnglishLevel : 1;
+
+    englishLessons.forEach((lesson, index) => {
+        const levelNum = index + 1;
+        let statusClass = "level-locked";
+        let statusIcon = "🔒";
         
-        englishLessons.forEach((lesson, index) => {
-            const levelNum = index + 1;
-            let statusClass = "level-locked";
-            let statusIcon = "🔒";
-            
-            if (levelNum < userEnglishLevel) {
-                statusClass = "level-completed completed";
-                statusIcon = lesson.icon;
-            } else if (levelNum === userEnglishLevel) {
-                statusClass = "level-unlocked";
-                statusIcon = lesson.icon;
-            }
-            const margin = (index % 2 === 0) ? '0' : '50px';
-            
-            html += `
-            <div class="duo-level-btn ${statusClass}" style="margin-left:${margin}" onclick="startLesson(${levelNum})">
-                ${statusIcon}
-                <div class="star-crown">👑</div>
-                <div class="level-label">${lesson.title}</div>
-            </div>`;
-        });
-        container.innerHTML = html;
+        if (levelNum < nivelUsuario) {
+            statusClass = "level-completed completed";
+            statusIcon = lesson.icon;
+        } else if (levelNum === nivelUsuario) {
+            statusClass = "level-unlocked";
+            statusIcon = lesson.icon;
+        }
+        
+        // Estilo zig-zag
+        const margin = (index % 2 === 0) ? '0' : '50px';
+        
+        html += `
+        <div class="duo-level-btn ${statusClass}" style="margin-left:${margin}" onclick="startLesson(${levelNum})">
+            ${statusIcon}
+            <div class="star-crown">👑</div>
+            <div class="level-label">${lesson.title}</div>
+        </div>`;
+    });
+    
+    container.innerHTML = html;
+};
+
+// 3. FORZAR LA CARGA INMEDIATA (Por si el Auth ya pasó)
+setTimeout(() => {
+    if(typeof renderEnglishPath === "function") {
+        renderEnglishPath();
     }
+}, 1000);
     
     window.startLesson = (level) => {
         if (level > userEnglishLevel) return notify("🔒 Nivel bloqueado");
@@ -1489,137 +1678,176 @@ const audioLibrary = {
         if (!text) return text;
         return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
-    function getAvatarUrl(seed) { if (!seed) seed = "anon"; return `https://api.dicebear.com/7.x/micah/svg?seed=${seed}&radius=50&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc`; }
+    function getAvatarUrl(seed) { 
+    if (!seed) seed = "anon"; 
+    return 'https://api.dicebear.com/7.x/micah/svg?seed=' + seed + '&radius=50&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc'; 
+}
     function getYouTubeID(url) { if (!url) return null; const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
     
     function registrarHistorial(motivo, puntos) { if (!idAuditor) return; var ruta = 'users/' + idAuditor + '/historial'; db.ref(ruta).push({ motivo: motivo, puntos: parseFloat(puntos), fecha: firebase.database.ServerValue.TIMESTAMP }); }
-    
-    // --- NAVEGACION ---
-    const wrapper = document.getElementById('appWrapper'); let currentScreen = 1;
-    window.goToScreen = (index, userAction = false) => {
-    if (userAction && index !== 1) {
+  // ==========================================
+// ==========================================
+// 🧭 NAVEGACIÓN (CON CONTROL DE VIDEO)
+// ==========================================
+let currentScreen = 2; 
+
+window.goToScreen = (index, userAction = false) => {
+    // 1. Historial
+    if (userAction && index !== 2) { 
         window.history.pushState({screen: index}, "");
     }
     
-    // 🔥 CORRECCIÓN: Ocultar SIEMPRE el menú de menciones al cambiar de pantalla
-    const mentionBox = document.getElementById('mentionList');
-    if (mentionBox) mentionBox.style.display = 'none';
+    // 2. Cerrar teclado
+    if (document.activeElement) document.activeElement.blur();
+    
+    // 🔥 LO NUEVO: SI SALIMOS DEL MURO (1), DETENER VIDEO
+    // Si la pantalla actual ERA la 1 y vamos a otra distinta...
+    if (currentScreen === 1 && index !== 1) {
+        detenerVideoMuro(); 
+    }
+    
+    // 3. CAMBIO DE PANTALLA
+    currentScreen = index;
+    const wrapper = document.getElementById('appWrapper');
+    wrapper.style.transform = `translateX(-${index * 100}vw)`;
+    
+    // 4. BOTONES DEL MENÚ
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const btnActivo = document.getElementById(`nav${index}`);
+    if (btnActivo) btnActivo.classList.add('active');
 
-    // 🔥 LÓGICA DE CHAT (Reseteo de contador)
-    if (index === 2) { 
+    // 5. LÓGICA ESPECÍFICA
+    
+    // Si ENTRAMOS al Muro (1), reactivar el chequeo de videos
+    if (index === 1) {
+        setTimeout(checkScrollVideos, 500); 
+    }
+    
+    // Resetear notificaciones al entrar a chat
+    if (index === 3) {
         mensajesNoLeidos = 0;
         const badge = document.getElementById('msgBadge');
         if(badge) badge.style.display = 'none';
         setTimeout(scrollToBottom, 200);
     }
-
-    currentScreen = index;
-    const wrapper = document.getElementById('appWrapper');
-    wrapper.style.transform = `translateX(-${index * 100}vw)`;
     
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    document.getElementById(`nav${index}`).classList.add('active');
+    // Cerrar menú menciones si salimos del chat
+    if (index !== 3) {
+        const mentionList = document.getElementById('mentionList');
+        if(mentionList) mentionList.style.display = 'none';
+    }
 };
-    
     // --- LOGICA VIDEOS ---
-    function checkScrollVideos() {
-        const modal = document.getElementById('modalComments'); if (modal && modal.style.display === 'flex') return;
-        if (currentScreen !== 1) return;
-        const videos = document.querySelectorAll('.smart-video-container'); const centerLine = window.innerHeight / 2; let closestVideo = null; let minDistance = 9999;
-        videos.forEach(div => { const rect = div.getBoundingClientRect(); const videoCenter = rect.top + (rect.height / 2); const distance = Math.abs(centerLine - videoCenter); if (distance < minDistance && distance < 250) { minDistance = distance; closestVideo = div; } });
-        
-        if (closestVideo) {
-            const newId = closestVideo.id;
-            if (newId !== currentVideoId) {
-                if (currentVideoId) { const oldDiv = document.getElementById(currentVideoId); if (oldDiv) { oldDiv.querySelector('.vid-frame').innerHTML = ""; oldDiv.querySelector('.vid-poster').style.display = 'block'; const oldBtn = oldDiv.querySelector('.unmute-btn'); if (oldBtn) oldBtn.remove(); } }
-                const ytId = closestVideo.getAttribute('data-yt'); closestVideo.querySelector('.vid-poster').style.display = 'none'; const muteState = audioActivadoGlobal ? 0 : 1;
-                closestVideo.querySelector('.vid-frame').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&mute=${muteState}&rel=0&playsinline=1" style="${audioActivadoGlobal ? '' : 'pointer-events:none;'}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-                if (!audioActivadoGlobal) { if (!closestVideo.querySelector('.unmute-btn')) { const btnDiv = document.createElement('div'); btnDiv.className = 'unmute-btn'; btnDiv.style.cssText = "position:absolute; inset:0; z-index:10; display:flex; align-items:center; justify-content:center; cursor:pointer;"; btnDiv.innerHTML = `<div style="background:rgba(0,0,0,0.6); padding:10px 20px; border-radius:50px; color:white; font-weight:bold; border:2px solid white; display:flex; align-items:center; gap:10px; box-shadow:0 4px 15px rgba(0,0,0,0.3);"><i class="fas fa-volume-up"></i> ACTIVAR SONIDO</div>`; btnDiv.onclick = () => window.activarSonido(newId, ytId); closestVideo.appendChild(btnDiv); } }
-                currentVideoId = newId;
+    // --- LÓGICA DE AUTO-PLAY TIKTOK (OPTIMIZADA) ---
+
+let videoActualJugando = null;
+let debounceScroll = null;
+
+function checkScrollVideos() {
+    // 1. Obtenemos el contenedor del feed
+    const container = document.getElementById('muroReportes');
+    if (!container) return;
+
+    // Evitamos cálculos excesivos (rendimiento)
+    if (debounceScroll) clearTimeout(debounceScroll);
+    
+    // Esperamos 50ms a que termines de deslizar para calcular
+    debounceScroll = setTimeout(() => {
+        // 2. Calculamos el centro exacto de la vista
+        const rectContenedor = container.getBoundingClientRect();
+        const centroPantalla = rectContenedor.top + (rectContenedor.height / 2);
+
+        const videos = document.querySelectorAll('.smart-video-container');
+        let videoMasCercano = null;
+        let distanciaMinima = 9999;
+
+        // 3. Buscamos cuál video está más cerca del centro
+        videos.forEach(div => {
+            const rect = div.getBoundingClientRect();
+            const centroVideo = rect.top + (rect.height / 2);
+            const distancia = Math.abs(centroPantalla - centroVideo);
+
+            // Si está a menos de 200px del centro, es el elegido
+            if (distancia < 200 && distancia < distanciaMinima) {
+                distanciaMinima = distancia;
+                videoMasCercano = div;
             }
-        } else { if (currentVideoId) { const oldDiv = document.getElementById(currentVideoId); if (oldDiv) { oldDiv.querySelector('.vid-frame').innerHTML = ""; oldDiv.querySelector('.vid-poster').style.display = 'block'; const oldBtn = oldDiv.querySelector('.unmute-btn'); if (oldBtn) oldBtn.remove(); } currentVideoId = null; } }
-    }
-    
-    window.activarSonido = (id, ytId) => { audioActivadoGlobal = true; const container = document.getElementById(id); if (container) { container.querySelector('.vid-frame').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=1&mute=0&rel=0&playsinline=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`; const btn = container.querySelector('.unmute-btn'); if (btn) btn.style.display = 'none'; } };
-    
-    const pantallaMuro = document.querySelectorAll('.screen')[1]; if (pantallaMuro) { pantallaMuro.addEventListener('scroll', function() { if (scrollTimeout) clearTimeout(scrollTimeout); scrollTimeout = setTimeout(() => { checkScrollVideos(); }, 100); }); }
-    
-    // --- CARGAR USUARIOS HORIZONTALES ---
-    // --- BARRA DE USUARIOS CON TIEMPO REAL ---
-    function cargarBarraUsuarios() {
-        // Traemos los últimos 30 usuarios activos
-        db.ref('users').orderByChild('lastSeen').limitToLast(30).on('value', snapshot => {
-            const contenedor = document.getElementById('listaUsuariosHorizontal');
-            if (!contenedor) return;
-            
-            let html = "";
-            const ahora = Date.now();
-            const lista = [];
-
-            snapshot.forEach(child => {
-                const u = child.val();
-                // No mostrarse a uno mismo
-                if (child.key === idAuditor) return;
-
-                const tiempo = u.lastSeen || 0;
-                const diff = ahora - tiempo;
-                const minutos = Math.floor(diff / 60000);
-                
-                // Consideramos Online si estuvo hace menos de 10 min
-                const esOnline = minutos < 10; 
-
-                // Generar texto de tiempo (Ej: "5 min", "2 h")
-                let textoTiempo = "";
-                if (minutos < 1) textoTiempo = "🟢 Ahora";
-                else if (minutos < 60) textoTiempo = `${minutos} min`;
-                else if (minutos < 1440) textoTiempo = `${Math.floor(minutos/60)} h`;
-                else textoTiempo = `${Math.floor(minutos/1440)} d`;
-
-                // Nombre corto
-                let nombreMostrar = "User";
-                if (u.myInviteKey) nombreMostrar = u.myInviteKey.split('-')[1] || "User";
-
-                lista.push({ 
-                    key: child.key, 
-                    nombre: nombreMostrar, 
-                    online: esOnline, 
-                    textoTiempo: textoTiempo,
-                    rawTime: tiempo 
-                });
-            });
-
-            // ORDENAR: Primero Online, luego por fecha más reciente
-            lista.sort((a, b) => {
-                if (a.online && !b.online) return -1;
-                if (!a.online && b.online) return 1;
-                return b.rawTime - a.rawTime; // El más reciente primero
-            });
-
-            // GENERAR HTML
-            lista.forEach(user => {
-                const claseBorde = user.online ? "online" : "";
-                const clasePunto = user.online ? "dot-online" : "dot-offline";
-                const avatar = getAvatarUrl(user.key);
-
-                html += `
-                <div class="story-item" onclick="mostrarPerfilUsuario('${user.key}', '${user.nombre}')">
-                    <div class="story-avatar-box ${claseBorde}">
-                        <div class="story-img" style="background-image:url('${avatar}')"></div>
-                        <div class="story-dot ${clasePunto}"></div>
-                    </div>
-                    <div class="story-name">
-                        ${user.nombre}
-                        <div style="font-size:0.6rem; color:${user.online ? '#10b981' : '#94a3b8'}; font-weight:${user.online ? 'bold' : 'normal'}; margin-top:-2px;">
-                            ${user.textoTiempo}
-                        </div>
-                    </div>
-                </div>`;
-            });
-
-            contenedor.innerHTML = html || '<div style="padding:10px; color:#999; font-size:0.8rem;">Esperando usuarios...</div>';
         });
-    }
+
+        // 4. Lógica de Reproducción / Pausa
+        if (videoMasCercano) {
+            const nuevoId = videoMasCercano.id;
+
+            // Si cambiamos de video (o no hay ninguno sonando)
+            if (videoActualJugando !== nuevoId) {
+                
+                // A) Detener el video anterior
+                if (videoActualJugando) {
+                    const anterior = document.getElementById(videoActualJugando);
+                    if (anterior) {
+                        anterior.querySelector('.vid-frame').innerHTML = ""; // Eliminar iframe para parar consumo
+                        anterior.querySelector('.vid-poster').style.display = "block"; // Mostrar portada
+                        
+                        // Quitar botón de sonido antiguo si quedó
+                        const btnViejo = anterior.querySelector('.btn-sonido-flotante');
+                        if(btnViejo) btnViejo.remove();
+                    }
+                }
+
+                // B) Reproducir el nuevo
+                const ytId = videoMasCercano.getAttribute('data-yt');
+                
+                // TRUCO: Si ya activaste el sonido antes, suena. Si no, empieza en Mute.
+                const estadoMute = audioActivadoGlobal ? 0 : 1;
+                
+                videoMasCercano.querySelector('.vid-poster').style.display = "none";
+                videoMasCercano.querySelector('.vid-frame').innerHTML = `
+                    <iframe width="100%" height="100%" 
+                    src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&modestbranding=1&playsinline=1&rel=0&fs=0&iv_load_policy=3&mute=${estadoMute}" 
+                    frameborder="0" allow="autoplay; encrypted-media" allowfullscreen 
+                    style="width:100%; height:100%; object-fit:cover; pointer-events:none;"></iframe>
+                `;
+
+                // C) Si está en silencio, mostrar botón para activar sonido
+                if (!audioActivadoGlobal) {
+                    const btnUnmute = document.createElement('div');
+                    btnUnmute.className = 'btn-sonido-flotante';
+                    btnUnmute.style.cssText = "position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:50; cursor:pointer; text-align:center;";
+                    btnUnmute.innerHTML = `
+                        <div style="background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); padding:15px 25px; border-radius:50px; border:1px solid rgba(255,255,255,0.3); color:white; font-weight:bold; display:flex; flex-direction:column; align-items:center; gap:5px; box-shadow:0 4px 15px rgba(0,0,0,0.5);">
+                            <i class="fas fa-volume-mute" style="font-size:2rem;"></i>
+                            <span style="font-size:0.8rem;">Toca para sonido</span>
+                        </div>
+                    `;
+                    btnUnmute.onclick = () => window.activarSonido(nuevoId, ytId);
+                    videoMasCercano.appendChild(btnUnmute);
+                }
+
+                videoActualJugando = nuevoId;
+            }
+        }
+    }, 50); // Revisar cada 50ms al hacer scroll
+}
+
+// 5. Función para activar sonido globalmente
+window.activarSonido = (divId, ytId) => {
+    audioActivadoGlobal = true; // ¡Ahora todos los siguientes tendrán sonido!
     
+    const container = document.getElementById(divId);
+    if (container) {
+        // Quitamos el botón flotante
+        const btn = container.querySelector('.btn-sonido-flotante');
+        if (btn) btn.remove();
+
+        // Recargamos el iframe SIN mute (mute=0)
+        container.querySelector('.vid-frame').innerHTML = `
+            <iframe width="100%" height="100%" 
+            src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&modestbranding=1&playsinline=1&rel=0&fs=0&iv_load_policy=3&mute=0" 
+            frameborder="0" allow="autoplay; encrypted-media" allowfullscreen 
+            style="width:100%; height:100%; object-fit:cover;"></iframe>
+        `;
+    }
+};  
     window.mostrarPerfilUsuario = (uid, nombre) => {
         window.openTransfer(uid, nombre);
     };
@@ -1680,85 +1908,154 @@ function cargarMuroReportes() {
             }
         });
     }
-    function construirPostHTML(post) {
-        const avatarUrl = getAvatarUrl(post.uid);
-        const nombre = post.autorClave || "Anónimo";
-        let numComentarios = post.comentarios ? Object.keys(post.comentarios).length : 0;
-        
-        let tiempo = "Reciente";
-        if (post.fecha) {
-            const min = Math.floor((Date.now() - post.fecha) / 60000);
-            if (min > 60) tiempo = `Hace ${Math.floor(min/60)}h`;
-            else if (min > 0) tiempo = `Hace ${min}m`;
-        }
-        
-        let mediaBlock = "";
-        const ytId = getYouTubeID(post.musica);
-        if (ytId) {
-            mediaBlock = `<div class="card-media smart-video-container" id="feed-vid-${post.k}" data-yt="${ytId}" style="position:relative;width:100%;padding-bottom:56.25%;background:#000;"><div class="vid-poster" style="position:absolute;inset:0;width:100%;height:100%;"><img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;opacity:0.8;"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-play" style="color:white;font-size:2rem;"></i></div></div><div class="vid-frame" style="position:absolute;inset:0;width:100%;height:100%;"></div></div>`;
-        }
-        
-        const isTop = (document.getElementById('leaderName') && nombre === document.getElementById('leaderName').textContent);
-        const iLikedIt = (post.likes && idAuditor && post.likes[idAuditor]) ? true : false;
-        const heartClass = iLikedIt ? 'fas fa-heart liked' : 'far fa-heart';
-        
-        return `
-        <article id="post-${post.k}" class="social-card ${isTop?'top-creator-glow':''}">
-            <div class="card-header">
-                <div class="user-row">
-                    <div class="card-avatar" style="background-image:url('${avatarUrl}');border-color:${isTop?'#fbbf24':'#f1f5f9'}"></div>
-                    <div>
-                        <span class="card-username" style="color:${isTop?'#b45309':'#1e293b'}">${escapeHtml(nombre)} ${isTop?'<span class="top-badge">TOP 1</span>':''}</span>
-                        <span class="card-time">${tiempo}</span>
-                    </div>
-                </div>
-                <button onclick="window.abrirModalComentarios('${post.k}')" style="border:none;background:none;color:#94a3b8;"><i class="fas fa-ellipsis-h"></i></button>
-            </div>
-            ${mediaBlock}
-            <div class="card-text-content">${escapeHtml(post.texto)}</div>
-            <div class="card-actions">
-                <button class="action-icon" onclick="likePost('${post.k}', '${post.uid}', this)">
-                    <i class="${heartClass}"></i>
-                    <span>${post.vCount||0}</span>
-                </button>
-                <button class="action-icon" onclick="window.abrirModalComentarios('${post.k}')">
-                    <i class="far fa-comment"></i>
-                    <span>${numComentarios}</span>
-                </button>
-            </div>
-        </article>`;
+  function construirPostHTML(post) {
+    const avatarUrl = getAvatarUrl(post.uid);
+    const nombre = post.autorClave || "Anónimo";
+    let numComentarios = post.comentarios ? Object.keys(post.comentarios).length : 0;
+            
+    let tiempo = "Reciente";
+    if (post.fecha) {
+        const min = Math.floor((Date.now() - post.fecha) / 60000);
+        if (min > 60) tiempo = `Hace ${Math.floor(min/60)}h`;
+        else if (min > 0) tiempo = `Hace ${min}m`;
     }
-    
-    window.likePost = function(key, ownerUid, btn) {
-        if (typeof btn === 'undefined' && typeof ownerUid === 'object') {
-            btn = ownerUid; ownerUid = null;
-        }
-        if (!idAuditor) return notify("Inicia sesión para dar like");
-        const icon = btn.querySelector('i');
-        const span = btn.querySelector('span');
+            
+    let mediaBlock = "";
+    const ytId = getYouTubeID(post.musica);
+    if (ytId) {
+        mediaBlock = `
+        <div class="card-media smart-video-container" id="feed-vid-${post.k}" data-yt="${ytId}">
+            <div class="vid-poster" style="position:absolute;inset:0;width:100%;height:100%;">
+                <img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;opacity:0.6;">
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-play" style="color:white;font-size:3rem; opacity:0.8; filter:drop-shadow(0 0 10px black);"></i>
+                </div>
+            </div>
+            <div class="vid-frame" style="position:absolute;inset:0;width:100%;height:100%;"></div>
+        </div>`;
+    } else {
+        mediaBlock = `
+        <div class="card-media" style="background: linear-gradient(45deg, #1e1e2f, #2a2a40); display:flex; align-items:center; justify-content:center;">
+            <i class="fas fa-music" style="font-size:5rem; color:rgba(255,255,255,0.1); animation:pulse 2s infinite;"></i>
+        </div>`;
+    }
+            
+    const iLikedIt = (post.likes && idAuditor && post.likes[idAuditor]) ? true : false;
+    const heartClass = iLikedIt ? 'fas fa-heart liked' : 'fas fa-heart'; // Usamos solid (fas) siempre para mejor visibilidad, color cambia
+    const heartColor = iLikedIt ? '#e11d48' : 'white';
+            
+    return `
+    <article id="post-${post.k}" class="social-card">
         
-        if (icon.classList.contains('far')) {
-            icon.classList.remove('far');
-            icon.classList.add('fas', 'liked');
-            let val = parseInt(span.innerText) || 0;
-            span.innerText = val + 1;
+        <div class="card-header">
+            <div class="user-row">
+                <div class="card-avatar" style="background-image:url('${avatarUrl}'); border: 2px solid white;"></div>
+                <div>
+                    <span class="card-username" style="font-size:1rem; font-weight:bold;">${escapeHtml(nombre)}</span>
+                    <span class="card-time" style="display:block; font-size:0.7rem;">${tiempo}</span>
+                </div>
+            </div>
+        </div>
+
+        ${mediaBlock}
+
+        <div class="card-text-content">
+            <div style="margin-bottom:5px; font-weight:bold;">${escapeHtml(post.texto)}</div>
+            <div style="font-size:0.8rem; opacity:0.8;">🎵 Sonido original - PAGOCODE</div>
+        </div>
+
+        <div class="card-actions">
             
-            db.ref(`reportes/${key}/vCount`).set(firebase.database.ServerValue.increment(1));
-            db.ref(`reportes/${key}/likes/${idAuditor}`).set(true);
-            notify("❤️ Like enviado");
-            
-            if (ownerUid && ownerUid !== 'undefined' && ownerUid !== idAuditor) {
-                db.ref(`users/${ownerUid}/notifications`).push({
-                    from: myCurrentKey,
-                    type: 'like',
-                    text: "❤️ Le gustó tu publicación",
-                    extra: key,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    read: false
-                });
-            }
+            <div style="width:45px; height:45px; border-radius:50%; background-image:url('${avatarUrl}'); background-size:cover; border:2px solid white; margin-bottom:10px;"></div>
+
+            <button class="action-icon" onclick="likePost('${post.k}', '${post.uid}', this)">
+                <i class="${heartClass}" style="color:${heartColor};"></i>
+                <span>${post.vCount||0}</span>
+            </button>
+
+            <button class="action-icon" onclick="window.abrirModalComentarios('${post.k}')">
+                <i class="fas fa-comment-dots"></i>
+                <span>${numComentarios}</span>
+            </button>
+
+            <button class="action-icon" onclick="abrirModalCompartir('${ytId}', '${escapeHtml(post.texto.substring(0,30))}...')">
+                <i class="fas fa-share"></i>
+                <span>Share</span>
+            </button>
+
+            <button class="action-icon" onclick="window.abrirModalComentarios('${post.k}')" style="margin-top:10px;">
+                <i class="fas fa-ellipsis-h" style="font-size:1.2rem;"></i>
+            </button>
+        </div>
+    </article>`;
+}
+    window.likePost = function(postKey, postOwnerUid, btnElement) {
+    // 1. Validar sesión
+    if (!idAuditor) return notify("❌ Inicia sesión para dar like");
+    if (!postKey) return console.error("Error: Post ID no encontrado");
+
+    const likesRef = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
+    const countRef = db.ref(`reportes/${postKey}/vCount`);
+
+    // 2. Revisar si ya di like para saber si sumar o restar
+    likesRef.once('value').then(snapshot => {
+        const yaDioLike = snapshot.exists();
+
+        if (yaDioLike) {
+            // --- QUITAR LIKE ---
+            likesRef.remove()
+                .then(() => {
+                    // Restar 1 al contador
+                    countRef.transaction(current => (current || 0) - 1);
+                    
+                    // Actualizar UI visualmente (Toggle gris)
+                    const icon = btnElement.querySelector('i');
+                    const span = btnElement.querySelector('span');
+                    if(icon) {
+                        icon.classList.remove('fas', 'liked');
+                        icon.classList.add('far'); // Corazón vacío
+                        icon.style.color = "white"; // O el color original
+                    }
+                    if(span) span.textContent = parseInt(span.textContent) - 1;
+                })
+                .catch(err => notify("Error al quitar like: " + err.message));
+
+        } else {
+            // --- DAR LIKE ---
+            likesRef.set(true)
+                .then(() => {
+                    // Sumar 1 al contador
+                    countRef.transaction(current => (current || 0) + 1);
+                    
+                    // Notificar al dueño (si no soy yo mismo)
+                    if (postOwnerUid && postOwnerUid !== idAuditor) {
+                        db.ref(`users/${postOwnerUid}/notifications`).push({
+                            from: myCurrentKey, // Tu código INV-...
+                            type: 'like',
+                            text: "❤️ Le gustó tu publicación",
+                            extra: postKey,
+                            timestamp: firebase.database.ServerValue.TIMESTAMP,
+                            read: false
+                        });
+                    }
+
+                    // Actualizar UI visualmente (Toggle rojo)
+                    const icon = btnElement.querySelector('i');
+                    const span = btnElement.querySelector('span');
+                    if(icon) {
+                        icon.classList.remove('far');
+                        icon.classList.add('fas', 'liked'); // Corazón lleno
+                        icon.style.color = "#e11d48";
+                    }
+                    if(span) span.textContent = parseInt(span.textContent) + 1;
+                    
+                    try { window.playSound('coin'); } catch(e){}
+                    notify("❤️ Like enviado");
+                })
+                .catch(err => notify("Error al dar like: " + err.message));
         }
-    };
+    });
+};
     
     function cargarLeaderboard() { db.ref('users').orderByChild('earnings').limitToLast(1).on('value', snap => { if (!snap.exists()) return; snap.forEach(child => { const u = child.val(); /* Ya no actualizamos el leaderboard viejo */ }); }); }
     
@@ -1831,53 +2128,45 @@ function cargarMuroReportes() {
             });
         };
     }
-    
-    // --- MISION & POSTS ---
+ // --- ABRIR MODAL PUBLICAR (DETENIENDO FONDO) ---
 window.abrirMision = () => {
-         // Detener video del muro si está sonando
-         if (currentVideoId) { 
-             const vidFrame = document.getElementById(currentVideoId).querySelector('.vid-frame');
-             if(vidFrame) vidFrame.innerHTML=""; 
-             currentVideoId=null; 
+     // 🛑 DETENER VIDEO DE FONDO (Para que no moleste)
+     detenerVideoMuro();
+     
+     db.ref(`users/${idAuditor}`).once('value').then(snap => {
+         const u = snap.val();
+         const ahora = Date.now();
+         const ultimoTime = u.lastMissionTime || 0; 
+         const horasDiff = (ahora - ultimoTime) / (1000 * 60 * 60); 
+         
+         let conteo = u.missionCount || 0;
+         if (horasDiff >= 8) conteo = 0;
+         
+         if (conteo >= 2) {
+             const falta = 8 - horasDiff;
+             const hRestante = Math.floor(falta);
+             const mRestante = Math.floor((falta - hRestante) * 60);
+             return notify(`⏳ Espera ${hRestante}h ${mRestante}m para publicar más`);
          }
          
-         db.ref(`users/${idAuditor}`).once('value').then(snap => {
-             const u = snap.val();
-             const ahora = Date.now();
-             const ultimoTime = u.lastMissionTime || 0; // Usamos Hora exacta
-             const horasDiff = (ahora - ultimoTime) / (1000 * 60 * 60); // Calculamos diferencia en horas
-             
-             // LÓGICA 8 HORAS:
-             // Si pasaron más de 8 horas, reiniciamos el contador a 0 virtualmente.
-             let conteo = u.missionCount || 0;
-             if (horasDiff >= 8) conteo = 0;
-
-             // Si ya llevas 2 (y no han pasado las 8h), te bloquea
-             if (conteo >= 2) {
-                 const falta = 8 - horasDiff;
-                 const hRestante = Math.floor(falta);
-                 const mRestante = Math.floor((falta - hRestante) * 60);
-                 // Mensaje bonito con el tiempo exacto que falta
-                 return notify(`⏳ Espera ${hRestante}h ${mRestante}m para publicar más`);
-             }
-             
-             // Si pasa, abre el modal
-             document.getElementById('modalMision').style.display = 'flex';
-             document.getElementById('step1Mision').style.display = 'block';
-             document.getElementById('step2Mision').style.display = 'none';
-             document.getElementById('invisiblePlayer').innerHTML = ""; 
-             if(window.resetAudioControls) window.resetAudioControls();
-             document.getElementById('mMusic').value = "";
-             document.getElementById('mText').value = "";
-             document.getElementById('musicDisplayLabel').textContent = "🔍 Toca para buscar canción...";
-             document.getElementById('songNamePreview').textContent = "---";
-             const btnNext = document.getElementById('btnMisionNext');
-             if(btnNext) {
-                 btnNext.style.opacity = "0.5";
-                 btnNext.disabled = true;
-             }
-         });
-     };
+         document.getElementById('modalMision').style.display = 'flex';
+         document.getElementById('step1Mision').style.display = 'block';
+         document.getElementById('step2Mision').style.display = 'none';
+         document.getElementById('invisiblePlayer').innerHTML = "";
+         if(window.resetAudioControls) window.resetAudioControls();
+         
+         document.getElementById('mMusic').value = "";
+         document.getElementById('mText').value = "";
+         document.getElementById('musicDisplayLabel').textContent = "🔍 Toca para buscar canción...";
+         document.getElementById('songNamePreview').textContent = "---";
+         
+         const btnNext = document.getElementById('btnMisionNext');
+         if(btnNext) {
+             btnNext.style.opacity = "0.5";
+             btnNext.disabled = true;
+         }
+     });
+ };
     
     document.getElementById('btnEnviarMision').onclick = () => { 
         const txt = document.getElementById('mText').value; 
@@ -2080,115 +2369,145 @@ window.abrirMision = () => {
     function cargarChips() { return; }
     
     // --- AUTH ---
+    // --- AUTH (CORREGIDO: PUNTOS + AVATAR + MISIONES) ---
     auth.onAuthStateChanged(user => {
         if (user) {
             idAuditor = user.uid;
             
+            // 1. Quitar pantalla de carga
             document.getElementById('loadingOverlay').style.display = 'none';
-            setTimeout(() => {
-    if(typeof cachearUsuarios === "function") cachearUsuarios();
-}, 1000);
+            
+            // 2. Inicializar cachés y estados
+            setTimeout(() => { if(typeof cachearUsuarios === "function") cachearUsuarios(); }, 1000);
             setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 20000);
             
+            // 3. ESCUCHAR CAMBIOS EN TIEMPO REAL (Dinero, Avatar, etc)
             db.ref(`users/${idAuditor}`).on('value', snap => {
-                const d = snap.val(); 
-                if (!d) { db.ref(`users/${idAuditor}`).set({ earnings: 0, myInviteKey: "INV-" + idAuditor.substring(0, 5).toUpperCase() }); return; }
+                const d = snap.val();
                 
+                // Si es usuario nuevo, crearlo
+                if (!d) { 
+                    db.ref(`users/${idAuditor}`).set({ earnings: 0, myInviteKey: "INV-" + idAuditor.substring(0, 5).toUpperCase() }); 
+                    return; 
+                }
+                
+                // --- A) LÓGICA DE PUNTOS (ARREGLADA) ---
                 const newEarnings = parseFloat(d.earnings || 0);
+                
+                // Animación si ganaste puntos
                 if (newEarnings > currentEarnings && currentEarnings > 0) {
                     const badge = document.getElementById('ptsDisplay');
-                    badge.classList.remove('puntos-ganados-anim');
-                    void badge.offsetWidth; 
-                    badge.classList.add('puntos-ganados-anim'); 
+                    if(badge) {
+                        badge.classList.remove('puntos-ganados-anim');
+                        void badge.offsetWidth; // Forzar reinicio de animación
+                        badge.classList.add('puntos-ganados-anim'); 
+                    }
+                }
+                currentEarnings = newEarnings;
+                
+                // 🔥 ESTA ES LA LÍNEA QUE DESCONGELA TUS PUNTOS:
+                const labelPuntos = document.getElementById('mainPts');
+                if (labelPuntos) {
+                    labelPuntos.textContent = `${currentEarnings.toFixed(2)} PTS`;
+                }
+                
+                // Snake Wallet
+                const labelSnake = document.getElementById('snakeWalletDisplay');
+                if(labelSnake) {
+                    labelSnake.textContent = `👾 ${parseFloat(d.snakeTotal || 0).toFixed(2)}`;
                 }
 
-                currentEarnings = newEarnings; 
+                // --- B) DATOS BÁSICOS ---
                 myCurrentKey = d.myInviteKey || "---";
-                
-                lastGameAd = d.lastGameAd || 0; 
-                
+                lastGameAd = d.lastGameAd || 0;
                 userEnglishLevel = d.englishLevel || 1;
                 
-                document.getElementById('barraMiNombre').textContent = myCurrentKey;
-                document.getElementById('barraMisPuntos').textContent = `⚡ ${currentEarnings.toFixed(2)} PTS`;
-                document.getElementById('barraMiAvatar').style.backgroundImage = `url('${getAvatarUrl(idAuditor)}')`;
+                if(document.getElementById('profKey')) document.getElementById('profKey').textContent = myCurrentKey;
+                if(document.getElementById('myKeyDisplay')) document.getElementById('myKeyDisplay').textContent = myCurrentKey;
+
+                // --- C) LÓGICA DE AVATAR (PERSONALIZADO VS DEFAULT) ---
+                const imagenMostrar = d.fotoPerfil || getAvatarUrl(idAuditor);
                 
+                // 1. Círculo Grande (Perfil)
+                const perfilGrande = document.getElementById('avatarPerfilGrande');
+                if (perfilGrande) perfilGrande.style.backgroundImage = "url('" + imagenMostrar + "')";
+                
+                // 2. Círculo Pequeño (Barra Arriba)
+                // Nota: Tu HTML usa 'barraMiAvatar' O a veces está dentro del header. 
+                // Si no tienes ese ID específico, no pasa nada, pero el perfil grande sí se verá.
+                const barraAvatar = document.getElementById('barraMiAvatar');
+                if (barraAvatar) barraAvatar.style.backgroundImage = "url('" + imagenMostrar + "')";
+                
+                // --- D) OTROS ESTADOS (Vidas, Ruleta, Notis) ---
                 let userHearts = (typeof d.hearts !== 'undefined') ? d.hearts : 5;
                 actualizarVisualVidas(userHearts);
-                
                 renderEnglishPath();
                 
-                document.getElementById('mainPts').textContent = `${currentEarnings.toFixed(2)} PTS`; 
-                document.getElementById('snakeWalletDisplay').textContent = `👾 ${parseFloat(d.snakeTotal || 0).toFixed(2)}`;
-                document.getElementById('profKey').textContent = myCurrentKey; 
-                document.getElementById('myKeyDisplay').textContent = myCurrentKey;
-                const codesObj = d.redeemedCodes || {};
-                const countAmigos = Object.keys(codesObj).length;
-                document.getElementById('contadorAmigos').textContent = `(${countAmigos}/3)`;
-                
-                canSpin = ((d.lastSpinDate === new Date().toISOString().split('T')[0]) ? (d.spinsUsed || 0) : 0) < 3; 
-                document.getElementById('spinInfo').textContent = canSpin ? "Giros disponibles" : "Vuelve mañana";
-                
+                // Ruleta
+                canSpin = ((d.lastSpinDate === new Date().toISOString().split('T')[0]) ? (d.spinsUsed || 0) : 0) < 3;
+                if(document.getElementById('spinInfo')) document.getElementById('spinInfo').textContent = canSpin ? "Giros disponibles" : "Vuelve mañana";
+
+                // Notificaciones (Globo Rojo en campana)
                 if (d.notifications) {
                     const count = Object.keys(d.notifications).length;
-                    document.getElementById('badgeNotis').style.display = count > 0 ? 'flex' : 'none';
-                    document.getElementById('badgeNotis').textContent = count;
+                    const badgeN = document.getElementById('badgeNotis');
+                    if(badgeN) {
+                        badgeN.style.display = count > 0 ? 'flex' : 'none';
+                        badgeN.textContent = count;
+                    }
+                    
+                    // Llenar lista
                     let h = "";
                     Object.entries(d.notifications).reverse().slice(0, 20).forEach(([k, n]) => {
-                        const idVideo = n.extra || ""; 
+                        const idVideo = n.extra || "";
                         h += `<div id="noti-${k}" class="noti-item" onclick="irANotificacion('${n.type}', '${idVideo}', '${k}')"><strong>${n.from}</strong><div class="noti-text">${n.text}</div></div>`;
                     });
-                    document.getElementById('listaNotificaciones').innerHTML = h || "<div style='padding:20px; color:#cbd5e1;'>Sin notificaciones.</div>";
+                    if(document.getElementById('listaNotificaciones')) document.getElementById('listaNotificaciones').innerHTML = h || "<div style='padding:20px; color:#cbd5e1;'>Sin notificaciones.</div>";
                 }
-                // --- HISTORIAL MEJORADO CON FECHA ---
-                if (d.historial) {
+
+                // Historial
+                if (d.historial && document.getElementById('historialList')) {
                      let h = "";
-                     // Tomamos los últimos 10 movimientos
-                     Object.values(d.historial).reverse().slice(0,10).forEach(x => {
-                         
-                         // 1. Calcular Fecha y Hora
+                     Object.values(d.historial).reverse().slice(0,15).forEach(x => {
+                         // Formatear fecha
                          const fechaObj = new Date(x.fecha || Date.now());
                          const dia = fechaObj.getDate().toString().padStart(2, '0');
                          const mes = (fechaObj.getMonth() + 1).toString().padStart(2, '0');
                          const hora = fechaObj.getHours().toString().padStart(2, '0');
                          const min = fechaObj.getMinutes().toString().padStart(2, '0');
-                         const fechaTexto = `${dia}/${mes} ${hora}:${min}`;
-
-                         // 2. Definir Color (Verde para ganar, Rojo para gastar)
+                         
                          const colorPuntos = x.puntos > 0 ? '#10b981' : '#ef4444';
                          const signo = x.puntos > 0 ? '+' : '';
-
-                         // 3. Crear el HTML
+                         
                          h += `
-                         <div class="historial-item">
+                         <div class="historial-item" style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f1f5f9;">
                              <div style="text-align:left;">
                                  <div style="font-weight:600; font-size:0.85rem; color:#334155;">${x.motivo}</div>
-                                 <div style="font-size:0.65rem; color:#94a3b8;">📅 ${fechaTexto}</div>
+                                 <div style="font-size:0.65rem; color:#94a3b8;">📅 ${dia}/${mes} ${hora}:${min}</div>
                              </div>
-                             <span style="color:${colorPuntos}; font-weight:800; font-size:0.9rem;">
-                                 ${signo}${parseFloat(x.puntos)}
-                             </span>
+                             <span style="color:${colorPuntos}; font-weight:800; font-size:0.9rem;">${signo}${parseFloat(x.puntos).toFixed(2)}</span>
                          </div>`;
                      });
                      document.getElementById('historialList').innerHTML = h;
-                 } else {
-                     document.getElementById('historialList').innerHTML = "<div style='text-align:center; padding:20px; color:#cbd5e1;'>Sin movimientos aún.</div>";
                  }
             });
             
+            // Cargas iniciales
             cargarLeaderboard();
             cargarMuroReportes();
-            cargarBarraUsuarios();
             iniciarChat();
             procesarPublicacionPendiente();
+            cargarGaleriaComunidad();
+            
+            // Lógica Maestra (Usuarios Activos)
+            iniciarMonitorDeBadges();
+            cargarListaUsuariosHorizontal();
+
         } else {
+            // Si no hay usuario, entrar anónimo
             auth.signInAnonymously().catch(e => alert("Error Auth: " + e.message));
         }
     });
-    
-    // --- EXTRAS ---
-    // --- RULETA SINCRONIZADA ---
-    // --- RULETA CON MENSAJES EXACTOS ---
     window.triggerSpin = () => {
         if (!canSpin) return notify("🚫 Vuelve mañana para más giros");
         // 🔊 SONIDO RULETA
@@ -2399,62 +2718,81 @@ window.abrirMision = () => {
     // 🔥 ESTA LÍNEA ES LA QUE ACTIVA LA NOTIFICACIÓN:
     detectarYEnvarMenciones(t, "chat"); 
 };
-    function iniciarChat() { const l = document.getElementById('chatList'); db.ref('chat_global').limitToLast(50).on('child_added', s => { const m = s.val(); const div = document.createElement('div'); div.className = `msg-bubble ${m.uid===idAuditor?'msg-mine':'msg-other'}`; div.innerHTML = `<div><span class="msg-user">${escapeHtml(m.autor)}</span></div><div>${escapeHtml(m.texto)}</div>`; l.appendChild(div); scrollToBottom(); if(m.uid!==idAuditor && !isChatOpen) document.getElementById('chatBadge').style.display='block'; }); }
-    // --- VARIABLES PARA EL MENÚ DE CHAT ---
-    let chatPressTimer;
-    let selectedMsgId = null;
-    let selectedMsgText = "";
-    
-    // --- FUNCIÓN CHAT MEJORADA (DETECTA MANTENER PRESIONADO) ---
-    function iniciarChat() { 
-        const l = document.getElementById('chatList'); 
-        
-        // 1. Cargar mensajes
-        db.ref('chat_global').limitToLast(50).on('child_added', s => { 
-            const m = s.val(); 
-            const msgKey = s.key; // ID único del mensaje
-            
-            const div = document.createElement('div');
-            // Agregamos ID al elemento HTML para poder borrarlo después
-            div.id = `msg-${msgKey}`;
-            div.className = `msg-bubble ${m.uid === idAuditor ? 'msg-mine' : 'msg-other'}`;
-            
-            // Eventos para detectar "Mantener Presionado" (Móvil y PC)
-            div.onmousedown = () => startPress(msgKey, m.texto, m.uid);
-            div.ontouchstart = () => startPress(msgKey, m.texto, m.uid);
-            
-            div.onmouseup = cancelPress;
-            div.onmouseleave = cancelPress;
-            div.ontouchend = cancelPress;
-            div.ontouchmove = cancelPress;
+    // --- FUNCIÓN CHAT MEJORADA (CON FOTOS REALES) ---
+    function iniciarChat() {
+         const list = document.getElementById('chatList');
+         
+         // 1. Escuchar mensajes nuevos
+         db.ref('chat_global').limitToLast(50).on('child_added', s => {
+             const m = s.val();
+             const msgKey = s.key;
+             const esMio = m.uid === idAuditor;
+             
+             // URL por defecto (Robot)
+             const avatarDefault = getAvatarUrl(m.uid);
+             
+             // Crear contenedor de fila (Flexbox)
+             const row = document.createElement('div');
+             row.className = `chat-row ${esMio ? 'mine' : 'other'}`;
+             row.id = `msg-row-${msgKey}`;
+             
+             // HTML INTERNO: Foto + Burbuja
+             // Nota: Usamos un ID único en la imagen (img-uid-key) para actualizarla luego
+             row.innerHTML = `
+                <img id="img-chat-${msgKey}" src="${avatarDefault}" class="chat-avatar-img" onclick="mostrarPerfilUsuario('${m.uid}', '${m.autor}')">
+                
+                <div id="msg-${msgKey}" class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}">
+                    <div><span class="msg-user">${escapeHtml(m.autor)}</span></div>
+                    <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
+                    <div class="msg-time">${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                </div>
+             `;
 
-            div.innerHTML = `<div><span class="msg-user">${escapeHtml(m.autor)}</span></div><div>${escapeHtml(m.texto)}</div>`; 
-            l.appendChild(div); 
-            scrollToBottom(); 
-            if (m.uid !== idAuditor && currentScreen !== 2) {
-    mensajesNoLeidos++;
-    const badge = document.getElementById('msgBadge');
-    if (badge) {
-        badge.style.display = 'flex';
-        badge.textContent = mensajesNoLeidos > 9 ? '9+' : mensajesNoLeidos;
-        try { new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_73d0a92d42.mp3').play(); } catch(e){}
-    }
-}
-            if(m.uid !== idAuditor && !isChatOpen) document.getElementById('chatBadge').style.display='block'; 
-        }); 
+             // Eventos de "Mantener presionado" en la burbuja
+             const burbuja = row.querySelector(`#msg-${msgKey}`);
+             burbuja.onmousedown = () => startPress(msgKey, m.texto, m.uid);
+             burbuja.ontouchstart = () => startPress(msgKey, m.texto, m.uid);
+             burbuja.onmouseup = cancelPress;
+             burbuja.onmouseleave = cancelPress;
+             burbuja.ontouchend = cancelPress;
+             burbuja.ontouchmove = cancelPress;
 
-        // 2. ESCUCHAR BORRADOS EN TIEMPO REAL
+             list.appendChild(row);
+             scrollToBottom();
+
+             // Notificación de sonido si no es mío
+             if (m.uid !== idAuditor && typeof currentScreen !== 'undefined' && currentScreen !== 3) { // 3 es índice de msjs si aplica
+                const badge = document.getElementById('msgBadge');
+                if (badge) {
+                    badge.style.display = 'flex';
+                    let num = parseInt(badge.textContent) || 0;
+                    badge.textContent = num + 1;
+                }
+             }
+
+             // 🔥 TRUCO MAGISTRAL: BUSCAR FOTO REAL EN SEGUNDO PLANO
+             // Consultamos solo la foto de este usuario para no saturar
+             db.ref(`users/${m.uid}/fotoPerfil`).once('value').then(snap => {
+                 if (snap.exists()) {
+                     const fotoReal = snap.val();
+                     const imgTag = document.getElementById(`img-chat-${msgKey}`);
+                     if (imgTag) {
+                         imgTag.src = fotoReal; // ¡Reemplazo instantáneo!
+                     }
+                 }
+             });
+         });
+
+         // 2. Escuchar borrados
         db.ref('chat_global').on('child_removed', s => {
-            const el = document.getElementById(`msg-${s.key}`);
-            if (el) {
-                el.style.transition = "0.3s";
-                el.style.opacity = "0";
-                el.style.transform = "scale(0.8)";
-                setTimeout(() => el.remove(), 300); // Animación de salida
+            const row = document.getElementById(`msg-row-${s.key}`);
+            if (row) {
+                row.style.transition = "0.3s";
+                row.style.opacity = "0";
+                setTimeout(() => row.remove(), 300);
             }
         });
     }
-
     // --- LÓGICA DE PRESIONAR ---
     function startPress(key, text, uid) {
         selectedMsgId = key;
@@ -2562,18 +2900,38 @@ function detectarYEnvarMenciones(txt, type) {
     }
 }
     
+    // --- FUNCIÓN IR A NOTIFICACIÓN (CORREGIDA) ---
     window.irANotificacion = (type, extra, key) => {
         let nombreEmisor = "Alguien";
+        
+        // 1. Obtener el nombre de quien te escribió desde la propia notificación
         const notiElement = document.getElementById(`noti-${key}`);
-        if (notiElement) { nombreEmisor = notiElement.querySelector('strong').innerText; notiElement.style.display = 'none'; }
-        db.ref(`users/${idAuditor}/notifications/${key}`).remove();
+        if (notiElement) { 
+            const strongTag = notiElement.querySelector('strong');
+            if(strongTag) nombreEmisor = strongTag.innerText;
+            notiElement.style.display = 'none'; 
+        }
+        
+        // 2. Borrar la notificación de la base de datos (ya la viste)
+        if(idAuditor && key) db.ref(`users/${idAuditor}/notifications/${key}`).remove();
+        
+        // 3. Cerrar el modal de notificaciones
         document.getElementById('modalNotificaciones').style.display = 'none';
         
-        if (type === 'chat') {
+        // --- AQUÍ ESTÁ LA MAGIA DE REDIRECCIÓN ---
+        
+        if (type === 'chat_privado') {
+            // ✅ ESTO ES LO NUEVO: Abre el chat privado con esa persona
+            // 'extra' contiene el UID del usuario, 'nombreEmisor' su nombre
+            abrirChatPrivado(extra, nombreEmisor);
+        }
+        else if (type === 'chat') {
+            // Chat Global
             if (!isChatOpen) toggleChat();
         } 
         else if (type === 'comentario' || type === 'like') {
-            goToScreen(1); 
+            // Ir al Muro
+            goToScreen(1); // Cambiamos a pantalla Muro
             setTimeout(() => {
                 const vid = document.getElementById('post-' + extra);
                 if (vid) {
@@ -2588,79 +2946,84 @@ function detectarYEnvarMenciones(txt, type) {
             }, 600);
         }
         else if (type === 'gift') {
-            const partes = extra.split('|'); const cantidad = partes[0]; const uidEmisor = partes[1];
+            // Regalos
+            const partes = extra.split('|'); 
+            const cantidad = partes[0]; 
+            const uidEmisor = partes[1];
+            
             document.getElementById('giftSender').textContent = nombreEmisor;
             document.getElementById('giftAmount').textContent = cantidad;
             document.getElementById('modalGiftReceived').style.display = 'flex';
             try { window.playSound('win'); } catch(e) {}
-            document.getElementById('btnThanks').onclick = () => { darLasGracias(uidEmisor); };
+            
+            // Configurar botón de gracias
+            const btnThanks = document.getElementById('btnThanks');
+            if(btnThanks) btnThanks.onclick = () => { darLasGracias(uidEmisor); };
         }
     };
-    
     window.solicitarPermisoNotificaciones = () => { if(Notification.permission !== "granted") Notification.requestPermission(); else notify("Activas"); };
     
     // YOUTUBE SEARCH
     // --- NUEVA BÚSQUEDA DE YOUTUBE CON PREVIEW ---
     const YOUTUBE_API_KEY = "AIzaSyAqswfC8HsBown7vyWtOfrWc-lbf4HFsbM"; // Tu API Key actual
 
-    // --- BÚSQUEDA YOUTUBE (CON BOTÓN VOLVER) ---
-    window.buscarEnYouTubeAPI = () => { 
-        const q = document.getElementById('inputSearchMusic').value.trim(); 
-        if(!q) return; 
-        
-        stopPreview();
-        document.getElementById('ytLoader').style.display='block'; 
-        document.getElementById('musicResultsList').innerHTML = "";
+   // --- BÚSQUEDA YOUTUBE (MODO CINE / HORIZONTAL) ---
+    window.buscarEnYouTubeAPI = () => {
+         const q = document.getElementById('inputSearchMusic').value.trim();
+         if(!q) return;
+         
+         stopPreview();
+         document.getElementById('ytLoader').style.display='block';
+         document.getElementById('musicResultsList').innerHTML = "";
+         
+         // 1. CAMBIO: Usamos el texto exacto (sin agregar "shorts")
+         let queryFinal = q; 
 
-        // TRUCO: Le sumamos la palabra "shorts" a lo que el usuario escribió
-let queryFinal = q + " shorts"; 
-fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoDuration=short&maxResults=10&q=${encodeURIComponent(queryFinal)}&key=${YOUTUBE_API_KEY}`)
-        .then(r => r.json())
-        .then(d => { 
-            document.getElementById('ytLoader').style.display='none'; 
-            
-            // 1. AGREGAMOS EL BOTÓN "VOLVER" AL PRINCIPIO
-            let h = `<div style="padding:10px; text-align:center; border-bottom:1px solid #f1f5f9;">
-                        <button onclick="volverATendencias()" style="background:none; border:none; color:#0070ba; font-weight:bold; cursor:pointer; font-size:0.9rem;">
-                            ⬅ Volver a Tendencias
-                        </button>
-                     </div>`;
-            
-            if(!d.items || d.items.length === 0) {
-                document.getElementById('musicResultsList').innerHTML = h + "<div style='text-align:center;padding:20px;'>No se encontraron resultados.</div>";
-                return;
-            }
+         // 2. CAMBIO: Quitamos '&videoDuration=short' de la URL para permitir videos normales
+         fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(queryFinal)}&key=${YOUTUBE_API_KEY}`)
+            .then(r => r.json())
+            .then(d => {
+                 document.getElementById('ytLoader').style.display='none';
+                 
+                 let h = `<div style="padding:10px; text-align:center; border-bottom:1px solid #f1f5f9;">
+                            <button onclick="volverATendencias()" style="background:none; border:none; color:#0070ba; font-weight:bold; cursor:pointer; font-size:0.9rem;">
+                                ⬅ Volver a Tendencias
+                            </button>
+                         </div>`;
+                
+                if(!d.items || d.items.length === 0) {
+                    document.getElementById('musicResultsList').innerHTML = h + "<div style='text-align:center;padding:20px;'>No se encontraron resultados.</div>";
+                    return;
+                }
 
-            // 2. LUEGO LOS RESULTADOS
-            d.items.forEach(i => { 
-                const title = escapeHtml(i.snippet.title);
-                const thumb = i.snippet.thumbnails.default.url;
-                const vidId = i.id.videoId;
-
-                h += `
-                <div class="music-item" style="display:flex; align-items:center; padding:10px; border-bottom:1px solid #f1f5f9;">
-                    <div onclick="previewMusic('${vidId}')" style="position:relative; width:80px; height:60px; margin-right:15px; cursor:pointer; flex-shrink:0;">
-                        <img src="${thumb}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
-                        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); border-radius:8px;">
-                             <i class="fas fa-play" style="color:white; font-size:1.2rem;"></i>
+                d.items.forEach(i => {
+                     const title = escapeHtml(i.snippet.title);
+                     const thumb = i.snippet.thumbnails.medium ? i.snippet.thumbnails.medium.url : i.snippet.thumbnails.default.url; // Usamos medium para mejor calidad
+                     const vidId = i.id.videoId;
+                     
+                     h += `
+                    <div class="music-item" style="display:flex; align-items:center; padding:10px; border-bottom:1px solid #f1f5f9;">
+                        <div onclick="previewMusic('${vidId}')" style="position:relative; width:100px; height:56px; margin-right:15px; cursor:pointer; flex-shrink:0;">
+                            <img src="${thumb}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); border-radius:8px;">
+                                 <i class="fas fa-play" style="color:white; font-size:1.2rem;"></i>
+                            </div>
                         </div>
-                    </div>
-                    <div style="flex:1; overflow:hidden;">
-                        <div style="font-size:0.8rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; color:#334155;">${title}</div>
-                        <button class="btn-blue" style="width:auto; padding:6px 15px; font-size:0.75rem; height:auto; background:#10b981;" onclick="seleccionarVideo('${vidId}', '${title}')">
-                            ✅ Elegir
-                        </button>
-                    </div>
-                </div>`; 
-            }); 
-            
-            document.getElementById('musicResultsList').innerHTML = h; 
-        })
-        .catch(e => {
-            document.getElementById('ytLoader').style.display='none';
-            // También mostramos el botón volver si hay error
-            document.getElementById('musicResultsList').innerHTML = `<div style="padding:10px;"><button onclick="volverATendencias()">⬅ Volver</button></div><div style='text-align:center;padding:20px;'>Error de conexión.</div>`;
-        });
+                        <div style="flex:1; overflow:hidden;">
+                            <div style="font-size:0.8rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; color:#334155;">${title}</div>
+                            <button class="btn-blue" style="width:auto; padding:6px 15px; font-size:0.75rem; height:auto; background:#10b981;" onclick="seleccionarVideo('${vidId}', '${title}')">
+                                ✅ Elegir
+                            </button>
+                        </div>
+                    </div>`;
+                 });
+                 
+                 document.getElementById('musicResultsList').innerHTML = h;
+             })
+            .catch(e => {
+                document.getElementById('ytLoader').style.display='none';
+                document.getElementById('musicResultsList').innerHTML = `<div style="padding:10px;"><button onclick="volverATendencias()">⬅ Volver</button></div><div style='text-align:center;padding:20px;'>Error de conexión.</div>`;
+            });
     };
     // --- FUNCIÓN PARA VER PREVIEW EN EL MISMO MODAL ---
     window.previewMusic = (id) => {
@@ -2977,29 +3340,71 @@ fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&vide
             lista.innerHTML = html;
         });
     };
+// ==========================================
+// ==========================================
+// 🔙 LÓGICA BOTÓN ATRÁS (CERRAR MODALES) - FINAL V2
+// ==========================================
+window.addEventListener('load', () => { window.history.pushState({init: true}, ""); });
 
-    // BOTON ATRAS
-    window.addEventListener('load', () => { window.history.pushState({init: true}, ""); });
-    window.addEventListener('popstate', (e) => {
-        let seCerroAlgo = false;
-        const modales = ['modalNotificaciones', 'modalReferidos', 'modalSoporte', 'modalRifa', 'modalUnlockVIP', 'modalTransfer', 'modalMision', 'modalTareas', 'modalGiftReceived', 'modalCine', 'modalMusicSelector', 'modalComments', 'modalGameOver', 'modalLesson', 'modalNoVidas', 'modalRanking',
-        'modalChatOptions',
-        ];
-        modales.forEach(id => {
-            const el = document.getElementById(id);
-            if (el && el.style.display === 'flex') {
-                el.style.display = 'none';
-                if (id === 'modalComments' && window.cerrarModalComentarios) window.cerrarModalComentarios();
-                if (id === 'modalMision' && window.backToStep1) window.backToStep1(); 
-                seCerroAlgo = true;
-            }
-        });
-        if (document.getElementById('chatWindow').classList.contains('open')) { window.toggleChat(); seCerroAlgo = true; }
-        if (document.getElementById('gameContainer').style.display === 'flex') { window.cerrarJuego(); seCerroAlgo = true; }
-        if (seCerroAlgo) { window.history.pushState({stopper: true}, ""); return; }
-        if (currentScreen !== 1) { goToScreen(1); } else { window.history.pushState({stopper: true}, ""); notify("🏠 Estás en el Inicio"); }
+window.addEventListener('popstate', (e) => {
+    let seCerroAlgo = false;
+
+    // LISTA MAESTRA DE MODALES A CERRAR
+    const modales = [
+        'modalNotificaciones', 'modalReferidos', 'modalSoporte', 'modalRifa', 
+        'modalUnlockVIP', 'modalTransfer', 'modalMision', 'modalTareas', 
+        'modalGiftReceived', 'modalCine', 'modalMusicSelector', 'modalComments', 
+        'modalGameOver', 'modalLesson', 'modalNoVidas', 'modalRanking',
+        'modalChatOptions', 'modalInvitar', 'modalSubirFoto', 'modalFotoOptions', 
+        'modalConfirmDelete', 'modalChatPrivado', 
+        'modalRetiro',      // Billetera
+        'modalFotoDetalle', // Foto Pantalla Completa
+        'modalCompartir',   // Compartir
+        'modalHistorial'    // <--- ¡AGREGADO! (Mi Trayectoria)
+    ];
+
+    modales.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.style.display === 'flex') {
+            el.style.display = 'none';
+            
+            // Limpiezas especiales
+            if (id === 'modalComments' && window.cerrarModalComentarios) window.cerrarModalComentarios();
+            if (id === 'modalMision' && window.backToStep1) window.backToStep1();
+            if (id === 'modalFotoDetalle') document.getElementById('detalleFotoImg').src = "";
+            
+            seCerroAlgo = true;
+        }
     });
-    
+
+    // Cerrar Chat Flotante
+    if (document.getElementById('chatWindow') && document.getElementById('chatWindow').classList.contains('open')) { 
+        window.toggleChat(); 
+        seCerroAlgo = true; 
+    }
+
+    // Cerrar Juegos
+    if (document.getElementById('gameContainer') && document.getElementById('gameContainer').style.display === 'flex') { 
+        window.cerrarJuego(); 
+        seCerroAlgo = true; 
+    }
+
+    // SI SE CERRÓ ALGO, DETENEMOS AQUÍ (Para no salir de la app)
+    if (seCerroAlgo) { 
+        window.history.pushState({stopper: true}, ""); 
+        return; 
+    }
+
+    // SI NO HABÍA NADA ABIERTO:
+    // Si no estamos en la pantalla principal (Pensar), volvemos a ella
+    if (currentScreen !== 2) { 
+        goToScreen(2); 
+    } else { 
+        // Si ya estamos en el inicio, mantenemos al usuario ahí
+        window.history.pushState({stopper: true}, ""); 
+        notify("🏠 Estás en el Inicio"); 
+    }
+});
     window.abrirNotificaciones = () => { document.getElementById('modalNotificaciones').style.display = 'flex'; document.getElementById('badgeNotis').style.display = 'none'; };
    // --- FUNCIÓN SNAKE CON ANUNCIO (CORREGIDA) ---
    window.jugarSnakeConAnuncio = () => {
@@ -3187,12 +3592,20 @@ fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&vide
     let retiroMontoSeleccionado = 0;
     let retiroCostoPuntos = 0;
 
-    // ABRIR MODAL
-    window.abrirRetiro = () => {
-        document.getElementById('modalRetiro').style.display = 'flex';
-        // Actualizamos el saldo visual
-        document.getElementById('retiroSaldoDisplay').textContent = currentEarnings.toFixed(2);
-    };
+    // --- ABRIR MODAL RETIRO (BILLETERA) ---
+window.abrirRetiro = () => {
+    const modal = document.getElementById('modalRetiro');
+    modal.style.display = 'flex';
+    
+    // Actualizamos saldo visual
+    const saldo = (typeof currentEarnings !== 'undefined') ? currentEarnings : 0;
+    document.getElementById('retiroSaldoDisplay').textContent = saldo.toFixed(2);
+    
+    // 🔥 TRUCO MAGISTRAL: 
+    // Agregamos un estado al historial. Así, cuando presiones "Atrás",
+    // el navegador detecta que hay algo que cerrar antes de salir de la app.
+    window.history.pushState({modal: 'retiro'}, "");
+};
 
     // SELECCIONAR OPCIÓN
     window.seleccionarMonto = (elemento, dolares, puntos) => {
@@ -3431,6 +3844,1043 @@ function hablarTexto(texto) {
 if ('speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = () => { console.log("Voces cargadas"); };
 }
+// --- LÓGICA DE GALERÍA DE FOTOS (NUEVO) ---
+
+let fotoBase64Actual = "";
+
+// 1. Procesar la imagen cuando el usuario la selecciona
+window.procesarFotoSeleccionada = () => {
+    const file = document.getElementById('inputFotoArchivo').files[0];
+    if (!file) return;
+
+    // Mostrar "Cargando preview..."
+    document.getElementById('placeholderUpload').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+            // COMPRESIÓN (Crucial para que no se trabe la app)
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 600; // Máximo ancho 600px
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // Convertir a texto comprimido (JPEG 60%)
+            fotoBase64Actual = canvas.toDataURL('image/jpeg', 0.6);
+
+            // Mostrar Preview
+            document.getElementById('imgPreview').src = fotoBase64Actual;
+            document.getElementById('imgPreview').style.display = 'block';
+            document.getElementById('placeholderUpload').style.display = 'none';
+            
+            // Activar botón
+            const btn = document.getElementById('btnPublicarFoto');
+            btn.disabled = false;
+            btn.innerHTML = "Publicar Ahora";
+            btn.style.opacity = "1";
+        };
+    };
+    reader.readAsDataURL(file);
+};
+
+// 2. Subir la foto a Firebase
+window.subirFotoReal = () => {
+    if (!fotoBase64Actual) return notify("Elige una foto primero");
+    
+    const btn = document.getElementById('btnPublicarFoto');
+    btn.disabled = true;
+    btn.innerHTML = "Subiendo...";
+
+    db.ref('galeria_comunidad').push({
+        uid: idAuditor,
+        autor: myCurrentKey,
+        foto: fotoBase64Actual, // Aquí va la imagen codificada
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        notify("✅ Foto subida con éxito");
+        cerrarModalFoto();
+        // Recompensa sorpresa por subir foto
+        db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.10) });
+    }).catch(e => {
+        notify("Error al subir: " + e.message);
+        btn.disabled = false;
+    });
+};
+
+window.cerrarModalFoto = () => {
+    document.getElementById('modalSubirFoto').style.display = 'none';
+    document.getElementById('imgPreview').style.display = 'none';
+    document.getElementById('placeholderUpload').style.display = 'block';
+    document.getElementById('placeholderUpload').innerHTML = '<i class="fas fa-cloud-upload-alt" style="font-size:2rem;"></i><p style="font-size:0.8rem; margin-top:5px;">Toca para elegir</p>';
+    document.getElementById('inputFotoArchivo').value = "";
+    fotoBase64Actual = "";
+};
+
+// 3. Descargar y Mostrar Fotos en el Muro (Pantalla 1)
+// --- VARIABLES GLOBALES PARA FOTOS ---
+let fotoSeleccionadaKey = null;
+let fotoSeleccionadaData = null;
+let pressTimerFoto;
+
+// ==========================================
+// 🖼️ CARGAR GALERÍA (ORDEN: FIJADOS -> NUEVOS)
+// ==========================================
+function cargarGaleriaComunidad() {
+    const contenedor = document.getElementById('muroFotosGrid');
+    if (!contenedor) return;
+
+    // Usamos .on('value') para que se actualice en tiempo real
+    db.ref('galeria_comunidad').on('value', snap => {
+        
+        // 1. Si no hay fotos, mostrar mensaje
+        if (!snap.exists()) {
+            contenedor.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1; grid-column:span 2; width:100%;">Sé el primero en subir una foto.</div>';
+            return;
+        }
+
+        // 2. Convertir los datos a una lista
+        let fotos = [];
+        snap.forEach(child => {
+            fotos.push({ k: child.key, ...child.val() });
+        });
+
+        // 3. ORDENAMIENTO MAESTRO
+        // Prioridad 1: Pinned (Fijados)
+        // Prioridad 2: Fecha (Más reciente arriba)
+        fotos.sort((a, b) => {
+            // Si a está fijado y b no, a va primero (-1)
+            if (a.pinned && !b.pinned) return -1;
+            // Si b está fijado y a no, b va primero (1)
+            if (!a.pinned && b.pinned) return 1;
+            
+            // Si ambos son iguales en fijado, gana el más nuevo
+            const fechaA = a.fecha || 0;
+            const fechaB = b.fecha || 0;
+            return fechaB - fechaA; // Descendente
+        });
+
+        // 4. GENERAR HTML
+        let html = "";
+        fotos.forEach(f => {
+            const imagenSrc = f.foto || "";
+            const nombre = f.autor || "Anónimo";
+            const esFijado = f.pinned ? '<div style="position:absolute; top:8px; right:8px; background:rgba(251, 191, 36, 0.9); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); font-size:0.8rem;">📌</div>' : '';
+            
+            // ID único para encontrar el elemento
+            const divId = `photo-${f.k}`;
+            
+            // HTML de la tarjeta
+            html += `
+            <div id="${divId}" class="photo-card" 
+                 style="display:inline-block; width:100%; margin-bottom:10px; break-inside: avoid;"
+                 onmousedown="iniciarPresionFoto('${f.k}', '${f.uid}', '${f.pinned}')"
+                 ontouchstart="iniciarPresionFoto('${f.k}', '${f.uid}', '${f.pinned}')"
+                 onmouseup="cancelarPresionFoto()"
+                 ontouchend="cancelarPresionFoto()"
+                 onclick="abrirFotoDetalle('${f.k}', '${f.uid}', '${nombre}', '${imagenSrc}')">
+                
+                <div style="position:relative;">
+                    ${esFijado}
+                    <img src="${imagenSrc}" class="photo-img-content" loading="lazy" style="width:100%; display:block; border-radius:12px;">
+                    
+                    <div class="photo-user-badge">
+                        <div style="width:20px; height:20px; border-radius:50%; background-image:url('${getAvatarUrl(f.uid)}'); background-size:cover; margin-right:5px; border:1px solid white;"></div>
+                        <span style="font-weight:600;">${nombre}</span>
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        contenedor.innerHTML = html;
+    });
+}
+
+// 2. DETECTAR "MANTENER PRESIONADO"
+window.iniciarPresionFoto = (key, ownerUid, isPinned) => {
+    // Esperamos 800ms (casi 1 segundo) para considerar que mantuvo presionado
+    pressTimerFoto = setTimeout(() => {
+        abrirMenuFoto(key, ownerUid, isPinned);
+    }, 800);
+};
+
+window.cancelarPresionFoto = () => {
+    clearTimeout(pressTimerFoto); // Si suelta antes, cancela
+};
+
+// 3. ABRIR EL MENÚ CON LAS OPCIONES CORRECTAS
+window.abrirMenuFoto = (key, ownerUid, isPinned) => {
+    // Vibrar para dar feedback táctil
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    fotoSeleccionadaKey = key;
+    
+    // Buscar la foto en memoria local (o desde el DOM) para tener el base64 listo para guardar
+    // Lo sacamos directo de Firebase cuando se ejecute la acción para asegurar datos frescos
+    
+    const btnEliminar = document.getElementById('btnEliminarFoto');
+    const btnFijar = document.getElementById('btnFijarFoto');
+
+    // CONFIGURAR BOTÓN ELIMINAR: Solo si soy el dueño
+    if (ownerUid === idAuditor) {
+        btnEliminar.style.display = 'flex';
+    } else {
+        btnEliminar.style.display = 'none';
+    }
+
+    // CONFIGURAR BOTÓN FIJAR: Texto dinámico
+    // (Aquí puedes agregar: if (idAuditor === "ADMIN_ID") para que solo tú puedas fijar)
+    // Por ahora lo dejaré libre o para el dueño también.
+    const estaFijado = (isPinned === 'true' || isPinned === true);
+    btnFijar.innerHTML = estaFijado ? "🚫 Desfijar Foto" : "📌 Fijar Arriba";
+    
+    // Mostrar Modal
+    document.getElementById('modalFotoOptions').style.display = 'flex';
+};
+
+// 4. EJECUTAR ACCIONES
+// 4. EJECUTAR ACCIONES (ACTUALIZADO SIN ALERTAS NATIVAS)
+window.accionFoto = (tipo) => {
+    // Cerramos el menú de opciones primero
+    document.getElementById('modalFotoOptions').style.display = 'none';
+    
+    if (!fotoSeleccionadaKey) return;
+
+    if (tipo === 'eliminar') {
+        // EN LUGAR DE "CONFIRM(...)", ABRIMOS EL MODAL BONITO
+        document.getElementById('modalConfirmDelete').style.display = 'flex';
+    } 
+    else if (tipo === 'fijar') {
+        // Lógica de fijar (igual que antes)
+        db.ref(`galeria_comunidad/${fotoSeleccionadaKey}/pinned`).once('value', s => {
+            const estadoActual = s.val() || false;
+            db.ref(`galeria_comunidad/${fotoSeleccionadaKey}`).update({ pinned: !estadoActual })
+                .then(() => {
+                    notify(estadoActual ? "Foto desfijada" : "📌 Foto fijada al inicio");
+                    window.playSound('coin');
+                });
+        });
+    }
+    else if (tipo === 'guardar') {
+        // Lógica de guardar (igual que antes)
+        notify("⬇️ Preparando descarga...");
+        db.ref(`galeria_comunidad/${fotoSeleccionadaKey}/foto`).once('value', s => {
+            const base64 = s.val();
+            if (base64) {
+                const a = document.createElement("a");
+                a.href = base64;
+                a.download = `PAGOCODE_${Date.now()}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                notify("✅ Foto guardada");
+            } else {
+                notify("❌ Error al descargar imagen");
+            }
+        });
+    }
+};
+
+// NUEVA FUNCIÓN: REALIZA EL BORRADO CUANDO LE DAS A "SÍ"
+window.ejecutarBorradoFoto = () => {
+    document.getElementById('modalConfirmDelete').style.display = 'none';
+    
+    if (fotoSeleccionadaKey) {
+        db.ref(`galeria_comunidad/${fotoSeleccionadaKey}`).remove()
+            .then(() => {
+                notify("🗑️ Foto eliminada correctamente");
+                try { window.playSound('gameover'); } catch(e){} // Sonido opcional
+            })
+            .catch(e => notify("Error: " + e.message));
+    }
+};
+// ==========================================
+// 🔒 LÓGICA DE CHAT PRIVADO (1 vs 1)
+// ==========================================
+
+let currentChatId = null; 
+let targetUserUid = null;
+let privChatRef = null;
+const LIMITE_DIARIO_MSGS = 10;
+
+// 1. ABRIR EL MODAL Y PREPARAR
+window.abrirChatPrivado = (targetUid, targetName) => {
+    if(!idAuditor) return notify("Inicia sesión primero");
+    if(targetUid === idAuditor) return notify("No puedes hablarte a ti mismo");
+
+    targetUserUid = targetUid;
+    
+    // Generar ID único del chat (Orden alfabético)
+    currentChatId = [idAuditor, targetUid].sort().join('_');
+
+    // MARCAR COMO LEÍDO AL ABRIR
+    db.ref(`users/${idAuditor}/notifications`).once('value', snap => {
+        if (snap.exists()) {
+            snap.forEach(s => {
+                const notif = s.val();
+                if (notif.type === 'chat_privado' && notif.extra === targetUid) {
+                    db.ref(`users/${idAuditor}/notifications/${s.key}`).remove();
+                }
+            });
+        }
+    });
+
+    // Configurar UI
+    document.getElementById('privChatTitle').innerText = targetName;
+    document.getElementById('privAvatar').style.backgroundImage = "url('" + getAvatarUrl(targetUid) + "')";
+    document.getElementById('modalChatPrivado').style.display = 'flex';
+    document.getElementById('privChatList').innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando chat...</div>';
+    
+    cargarMensajesPrivados();
+    checkLimiteDiario();
+};
+
+// 2. CARGAR MENSAJES
+// ==========================================
+// 🔒 CARGAR MENSAJES PRIVADOS (CON LINKS)
+// ==========================================
+function cargarMensajesPrivados() {
+    if(privChatRef) privChatRef.off();
+    
+    const list = document.getElementById('privChatList');
+    privChatRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(30);
+    
+    let firstLoad = true;
+    
+    privChatRef.on('value', snap => {
+        if(!snap.exists()) { 
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:#cbd5e1; font-size:0.8rem;">🔒 Chat Privado y Seguro.<br>Empieza a escribir.</div>'; 
+            return; 
+        }
+        
+        if(firstLoad) { list.innerHTML = ""; firstLoad = false; }
+        
+        let html = "";
+        snap.forEach(s => {
+            const m = s.val();
+            const esMio = m.uid === idAuditor;
+            
+            // 1. Primero limpiamos el texto por seguridad (escapeHtml)
+            let textoSeguro = escapeHtml(m.texto);
+            
+            // 2. Luego convertimos los links en cliqueables
+            let textoFinal = hacerEnlacesClickeables(textoSeguro);
+            
+            html += `
+            <div class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}" style="max-width:75%;">
+                <div>${textoFinal}</div>
+                
+                <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
+                    ${new Date(m.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </div>
+            </div>`;
+        });
+        
+        list.innerHTML = html;
+        list.scrollTop = list.scrollHeight;
+    });
+}
+
+// 3. ENVIAR MENSAJE
+window.enviarMensajePrivado = () => {
+    const input = document.getElementById('inputPrivMsg');
+    const txt = input.value.trim();
+    if(!txt) return;
+
+    db.ref(`users/${idAuditor}/privados_diarios`).once('value', s => {
+        const data = s.val() || {};
+        const hoy = new Date().toISOString().split('T')[0];
+        let conteo = (data.fecha === hoy) ? (data.count || 0) : 0;
+
+        if (conteo >= LIMITE_DIARIO_MSGS) {
+            return notify("🚫 Límite diario alcanzado (10/10)");
+        }
+
+        db.ref(`chats_privados/${currentChatId}`).push({
+            uid: idAuditor,
+            texto: txt,
+            fecha: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        db.ref(`users/${idAuditor}/privados_diarios`).set({
+            fecha: hoy,
+            count: conteo + 1
+        });
+
+        db.ref(`users/${targetUserUid}/notifications`).push({
+            from: myCurrentKey,
+            type: 'chat_privado',
+            text: "🔒 Nuevo mensaje privado",
+            extra: idAuditor,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            read: false
+        });
+
+        input.value = "";
+        checkLimiteDiario();
+        try { window.playSound('click'); } catch(e){}
+    });
+};
+
+function checkLimiteDiario() {
+    db.ref(`users/${idAuditor}/privados_diarios`).once('value', s => {
+        const data = s.val() || {};
+        const hoy = new Date().toISOString().split('T')[0];
+        let conteo = (data.fecha === hoy) ? (data.count || 0) : 0;
+        
+        const label = document.getElementById('privDailyCount');
+        if(label) label.textContent = `Mensajes hoy: ${conteo}/${LIMITE_DIARIO_MSGS}`;
+    });
+}
+
+window.cerrarChatPrivado = () => {
+    document.getElementById('modalChatPrivado').style.display = 'none';
+    if(privChatRef) privChatRef.off();
+    currentChatId = null;
+};
+// --- FUNCIÓN ABRIR HISTORIAL CON LEALTAD ---
+window.abrirHistorial = () => {
+    // 1. Mostrar el modal
+    document.getElementById('modalHistorial').style.display = 'flex';
+    
+    // 2. Obtener y animar el porcentaje de lealtad
+    if(idAuditor) {
+        db.ref(`users/${idAuditor}/loyaltyPercent`).once('value').then(snap => {
+            const porcentaje = snap.val() || 0;
+            
+            // Texto
+            document.getElementById('historialLoyaltyPercent').textContent = porcentaje + "%";
+            
+            // Barra (con animación desde 0)
+            const barra = document.getElementById('historialLoyaltyBar');
+            barra.style.width = "0%";
+            setTimeout(() => {
+                barra.style.width = porcentaje + "%";
+            }, 100);
+        });
+    }
+    
+    // Sonido
+    try { window.playSound('click'); } catch(e){}
+};
+// ==========================================
+// 🔴 LÓGICA MAESTRA: USUARIOS + ONLINE + BADGES
+// ==========================================
+
+let mapaMensajesSinLeer = {}; 
+let listaUsuariosCacheReal = []; 
+
+// 1. INICIAR MONITOR
+function iniciarMonitorDeBadges() {
+    if(!idAuditor) return;
+    db.ref(`users/${idAuditor}/notifications`).on('value', snap => {
+        mapaMensajesSinLeer = {}; 
+        if (snap.exists()) {
+            snap.forEach(s => {
+                const notif = s.val();
+                if (notif.type === 'chat_privado' && !notif.read) {
+                    const senderUid = notif.extra;
+                    mapaMensajesSinLeer[senderUid] = (mapaMensajesSinLeer[senderUid] || 0) + 1;
+                }
+            });
+        }
+        renderizarUsuariosHorizontal(); 
+    });
+}
+
+// 2. CARGAR USUARIOS
+function cargarListaUsuariosHorizontal() {
+    const contenedor = document.getElementById('listaUsuariosHorizontal');
+    if (!contenedor) return;
+
+    db.ref('users').orderByChild('lastSeen').limitToLast(30).on('value', snap => {
+        listaUsuariosCacheReal = [];
+        const ahora = Date.now();
+        
+        snap.forEach(child => {
+            const u = child.val();
+            if (child.key !== idAuditor) {
+                const tiempo = u.lastSeen || 0;
+                const minutos = Math.floor((ahora - tiempo) / 60000);
+                const esOnline = minutos < 10;
+                
+                listaUsuariosCacheReal.push({
+                    key: child.key,
+                    nombre: u.myInviteKey ? (u.myInviteKey.split('-')[1] || "User") : "User", 
+                    avatar: getAvatarUrl(child.key),
+                    online: esOnline,
+                    rawTime: tiempo
+                });
+            }
+        });
+
+        listaUsuariosCacheReal.sort((a, b) => {
+             const msgA = mapaMensajesSinLeer[a.key] || 0;
+             const msgB = mapaMensajesSinLeer[b.key] || 0;
+             if (msgA > 0 && msgB === 0) return -1;
+             if (msgB > 0 && msgA === 0) return 1;
+             if (a.online && !b.online) return -1;
+             if (!a.online && b.online) return 1;
+             return b.rawTime - a.rawTime;
+        });
+
+        renderizarUsuariosHorizontal();
+    });
+}
+
+// 3. RENDERIZAR
+function renderizarUsuariosHorizontal() {
+    const contenedor = document.getElementById('listaUsuariosHorizontal');
+    if (!contenedor) return;
+
+    if (listaUsuariosCacheReal.length === 0) {
+        contenedor.innerHTML = '<div style="padding:10px; font-size:0.8rem; color:#94a3b8;">Esperando usuarios...</div>';
+        return;
+    }
+
+    let html = "";
+    listaUsuariosCacheReal.forEach(user => {
+        const numMensajes = mapaMensajesSinLeer[user.key] || 0;
+        
+        const badgeHtml = numMensajes > 0 
+            ? `<div style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; display:flex; align-items:center; justify-content:center; border:2px solid white; font-weight:800; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index:10; animation: popIn 0.3s;">${numMensajes}</div>` 
+            : '';
+
+        let bordeColor = '#e2e8f0'; 
+        if (user.online) bordeColor = '#10b981';
+        if (numMensajes > 0) bordeColor = '#ef4444';
+
+        const dotClass = user.online ? "dot-online" : "dot-offline";
+
+        html += `
+        <div class="story-item" onclick="abrirChatPrivado('${user.key}', '${user.nombre}')">
+            <div class="story-avatar-box" style="border-color: ${bordeColor}; position:relative; transition:0.3s;">
+                <div class="story-img" style="background-image:url('${user.avatar}')"></div>
+                <div class="story-dot ${dotClass}"></div>
+                ${badgeHtml}
+            </div>
+            <div class="story-name" style="font-weight:${numMensajes>0?'800':'normal'}; color:${numMensajes>0?'#1e293b':'#64748b'};">
+                ${user.nombre}
+            </div>
+        </div>`;
+    });
+    contenedor.innerHTML = html;
+}
+// --- FUNCIÓN ABRIR MODAL INVITAR ---
+window.abrirModalInvitar = () => {
+    if(!myCurrentKey || myCurrentKey === "---") return notify("⏳ Espera a que cargue tu perfil");
+    
+    // Poner la clave en el texto grande
+    document.getElementById('displayInviteKey').textContent = myCurrentKey;
+    
+    // Mostrar el modal
+    document.getElementById('modalInvitar').style.display = 'flex';
+    
+    // Efecto de sonido
+    try { window.playSound('click'); } catch(e){}
+};
+// --- FUNCIÓN: CAMBIAR SOLO MI FOTO DE PERFIL ---
+window.subirMiFotoPerfil = (input) => {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        // Avisar que está procesando
+        const avatarDiv = document.getElementById('avatarPerfilGrande');
+        avatarDiv.style.opacity = "0.5";
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                // 1. Redimensionar (Importante para no saturar la app)
+                const canvas = document.createElement('canvas');
+                const MAX_SIZE = 250; // Tamaño ligero
+                let w = img.width;
+                let h = img.height;
+                
+                if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } }
+                else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
+                
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                
+                // 2. Obtener imagen ligera
+                const fotoBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // 3. Guardar en tu usuario
+                db.ref(`users/${idAuditor}`).update({ fotoPerfil: fotoBase64 }).then(() => {
+                    notify("✅ Foto de perfil actualizada");
+                    // Actualizar visualmente al instante
+                    avatarDiv.style.backgroundImage = "url('" + fotoBase64 + "')";
+                    avatarDiv.style.opacity = "1";
+                    try { window.playSound('coin'); } catch(e){}
+                });
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+};
+// ==========================================
+// 📸 LÓGICA DE FOTO DE PERFIL PERSONAL (CORREGIDA)
+// ==========================================
+window.procesarAvatarPersonal = (input) => {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        if(file.size > 5 * 1024 * 1024) return notify("⚠️ La imagen es muy pesada (Máx 5MB)");
+
+        notify("🔄 Procesando foto...");
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_SIZE = 300; 
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+                } else {
+                    if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const base64 = canvas.toDataURL('image/jpeg', 0.7);
+                
+                // 👇 AQUÍ ESTABA EL ERROR: AHORA GUARDAMOS EN 'fotoPerfil'
+                db.ref(`users/${idAuditor}`).update({ fotoPerfil: base64 })
+                    .then(() => {
+                        notify("✅ Foto guardada permanentemente");
+                        try{ window.playSound('coin'); }catch(e){}
+                        
+                        // Actualizar visualmente ya mismo
+                        const perfilGrande = document.getElementById('avatarPerfilGrande');
+                        if(perfilGrande) perfilGrande.style.backgroundImage = "url('" + base64 + "')";
+                        
+                        const barraAvatar = document.getElementById('barraMiAvatar');
+                        if(barraAvatar) barraAvatar.style.backgroundImage = "url('" + base64 + "')";
+                    })
+                    .catch(e => notify("Error al guardar: " + e.message));
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+};
+// ==========================================
+// 🤝 LÓGICA PARA VALIDAR CÓDIGO DE AMIGO
+// ==========================================
+window.validarCodigoAmigo = () => {
+    const input = document.getElementById('inputFolio');
+    const codigo = input.value.trim().toUpperCase();
+
+    if (!idAuditor) return notify("❌ Inicia sesión primero");
+    if (!codigo) return notify("❌ Escribe un código");
+    if (codigo === myCurrentKey) return notify("🚫 No puedes usar tu propio código");
+
+    // 1. Verificar historial de canjes
+    db.ref(`users/${idAuditor}/redeemedCodes`).once('value', snap => {
+        const usados = snap.val() || {};
+        const cantidad = Object.keys(usados).length;
+
+        // Regla: Máximo 3
+        if (cantidad >= 3) {
+            return notify("🚫 Ya usaste el máximo de 3 códigos");
+        }
+
+        // Regla: No repetir el mismo
+        if (usados[codigo]) {
+            return notify("⚠️ Ya canjeaste este código antes");
+        }
+
+        // 2. Buscar al dueño del código
+        notify("🔍 Verificando...");
+        
+        db.ref('users').orderByChild('myInviteKey').equalTo(codigo).once('value', userSnap => {
+            if (!userSnap.exists()) return notify("❌ Código no encontrado");
+
+            // Obtener ID del dueño
+            const ownerId = Object.keys(userSnap.val())[0];
+            const updates = {};
+            const fecha = firebase.database.ServerValue.TIMESTAMP;
+
+            // PREMIOS:
+            // Dueño recibe 0.50
+            updates[`users/${ownerId}/earnings`] = firebase.database.ServerValue.increment(0.50);
+            // Yo recibo 0.25 (Bono bienvenida)
+            updates[`users/${idAuditor}/earnings`] = firebase.database.ServerValue.increment(0.25);
+
+            // Registrar referidos
+            const refKey = db.ref(`users/${ownerId}/referidos`).push().key;
+            updates[`users/${ownerId}/referidos/${refKey}`] = { uid: idAuditor, clave: myCurrentKey, fecha: fecha };
+
+            // Marcar código como usado para mí
+            updates[`users/${idAuditor}/redeemedCodes/${codigo}`] = true;
+
+            // Notificar al dueño
+            const notiKey = db.ref(`users/${ownerId}/notifications`).push().key;
+            updates[`users/${ownerId}/notifications/${notiKey}`] = {
+                from: myCurrentKey,
+                type: 'referido',
+                text: "🎉 ¡Alguien usó tu código! (+0.50 PTS)",
+                timestamp: fecha,
+                read: false
+            };
+
+            // EJECUTAR TODO
+            db.ref().update(updates).then(() => {
+                notify(`✅ ¡Código Válido! Ganaste +0.25 PTS`);
+                registrarHistorial("Bono Amigo", 0.25);
+                input.value = "";
+                window.playSound('win');
+                
+                // Actualizar contador visualmente
+                document.getElementById('contadorAmigos').textContent = `(${cantidad + 1}/3)`;
+            });
+        });
+    });
+};
+// ==========================================
+// 🖼️ LÓGICA PARA EL NUEVO MODAL DE FOTO
+// ==========================================
+
+let currentPhotoKey = null;
+let currentPhotoOwner = null;
+
+// ==========================================
+// 🖼️ ABRIR DETALLE FOTO (VERSIÓN FINAL)
+// ==========================================
+window.abrirFotoDetalle = (key, ownerUid, ownerName, url) => {
+    currentPhotoKey = key;
+    currentPhotoOwner = ownerUid;
+    
+    const modal = document.getElementById('modalFotoDetalle');
+    const img = document.getElementById('detalleFotoImg');
+    const btnLike = document.getElementById('btnLikeFoto');
+    const btnSaludar = document.getElementById('btnSaludarFoto');
+    const btnShare = document.getElementById('btnShareFoto'); // <--- IMPORTANTE
+    
+    // 1. Cargar imagen
+    img.src = url;
+    
+    // 2. Botón Hola
+    if (ownerUid === idAuditor) {
+        btnSaludar.style.display = 'none'; 
+    } else {
+        btnSaludar.style.display = 'flex';
+        btnSaludar.onclick = () => {
+            cerrarFotoDetalle();
+            abrirChatPrivado(ownerUid, ownerName);
+        };
+    }
+
+    // 3. Botón SHARE (Conexión)
+    if(btnShare) {
+        btnShare.onclick = () => {
+            // Llama al modal de compartir
+            abrirModalCompartir(key, "📸 Foto de " + ownerName, 'foto');
+        };
+    } else {
+        console.error("No encuentro el botón Share en el HTML");
+    }
+    
+    // 4. Like
+    btnLike.onclick = () => likePhoto(key, ownerUid, btnLike);
+    
+    // 5. Cargar estado Like
+    db.ref(`galeria_comunidad/${key}`).once('value', snap => {
+        const data = snap.val() || {};
+        const likes = data.likes || {};
+        const count = data.vCount || 0;
+        
+        btnLike.querySelector('span').textContent = count;
+        const icon = btnLike.querySelector('i');
+        
+        if (likes[idAuditor]) {
+            icon.className = 'fas fa-heart liked';
+            icon.style.color = '#e11d48';
+        } else {
+            icon.className = 'far fa-heart';
+            icon.style.color = 'white';
+        }
+    });
+
+    modal.style.display = 'flex';
+};
+// 2. FUNCIÓN PARA CERRAR
+window.cerrarFotoDetalle = () => {
+    document.getElementById('modalFotoDetalle').style.display = 'none';
+    document.getElementById('detalleFotoImg').src = "";
+};
+
+// 3. FUNCIÓN PARA DAR LIKE A FOTOS
+// (Es una copia de likePost, pero apunta a 'galeria_comunidad')
+window.likePhoto = (key, ownerUid, btn) => {
+    if (!idAuditor) return notify("❌ Inicia sesión");
+    
+    const likesRef = db.ref(`galeria_comunidad/${key}/likes/${idAuditor}`);
+    const countRef = db.ref(`galeria_comunidad/${key}/vCount`);
+    
+    likesRef.once('value').then(snap => {
+        if (snap.exists()) {
+            // Quitar Like
+            likesRef.remove();
+            countRef.transaction(c => (c || 0) - 1);
+            btn.querySelector('i').className = 'far fa-heart';
+            btn.querySelector('i').style.color = 'white';
+            btn.querySelector('span').textContent = parseInt(btn.querySelector('span').textContent) - 1;
+        } else {
+            // Dar Like
+            likesRef.set(true);
+            countRef.transaction(c => (c || 0) + 1);
+            btn.querySelector('i').className = 'fas fa-heart liked';
+            btn.querySelector('i').style.color = '#e11d48';
+            btn.querySelector('span').textContent = parseInt(btn.querySelector('span').textContent) + 1;
+            
+            // Notificar al dueño
+            if (ownerUid !== idAuditor) {
+                db.ref(`users/${ownerUid}/notifications`).push({
+                    from: myCurrentKey,
+                    type: 'simple', // Usamos 'simple' porque no hay pantalla de "ver foto"
+                    text: "❤️ Le gustó tu foto en la galería",
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    read: false
+                });
+            }
+            try { window.playSound('coin'); } catch(e){}
+        }
+    });
+};
+// ==========================================
+// ↪️ SISTEMA DE COMPARTIR HÍBRIDO (VIDEO Y FOTO) - COMPLETO
+// ==========================================
+
+let contenidoParaCompartir = null; // { id, titulo, tipo }
+
+// 1. ABRIR EL MODAL (Acepta tipo: 'video' o 'foto')
+window.abrirModalCompartir = (id, titulo, tipo = 'video') => {
+    contenidoParaCompartir = { id: id, titulo: titulo, tipo: tipo };
+    document.getElementById('modalCompartir').style.display = 'flex';
+    
+    // Llamamos a la función que dibuja la lista
+    renderizarListaCompartir();
+};
+
+// 2. MOSTRAR LISTA DE AMIGOS/USUARIOS (ESTA FALTABA)
+function renderizarListaCompartir() {
+    const contenedor = document.getElementById('listaCompartir');
+    
+    // Usamos 'listaUsuariosCacheReal' (cache de usuarios online/recientes)
+    if (!listaUsuariosCacheReal || listaUsuariosCacheReal.length === 0) {
+        contenedor.innerHTML = '<div style="padding:20px; text-align:center; color:#94a3b8;">No hay usuarios recientes.</div>';
+        return;
+    }
+
+    let html = "";
+    listaUsuariosCacheReal.forEach(u => {
+        // No mostrarme a mí mismo
+        if (u.key === idAuditor) return;
+
+        html += `
+        <div onclick="enviarVideoA('${u.key}', '${u.nombre}')" style="display: flex; align-items: center; padding: 10px; background: white; margin-bottom: 8px; border-radius: 12px; border: 1px solid #e2e8f0; cursor: pointer; transition: 0.2s;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background-image: url('${u.avatar}'); background-size: cover; margin-right: 15px; border: 1px solid #cbd5e1;"></div>
+            <div style="flex: 1; text-align: left;">
+                <div style="font-weight: 700; color: #334155; font-size: 0.9rem;">${u.nombre}</div>
+                <div style="font-size: 0.7rem; color: #10b981;">Enviar ➤</div>
+            </div>
+        </div>`;
+    });
+    contenedor.innerHTML = html;
+}
+
+// 3. ENVIAR EL CONTENIDO (MENSAJE PRIVADO)
+window.enviarVideoA = (targetUid, targetName) => {
+    if (!contenidoParaCompartir) return;
+
+    // A) Generar ID del chat
+    const chatId = [idAuditor, targetUid].sort().join('_');
+
+    // B) Generar el enlace según el tipo
+    let link = "";
+    if (contenidoParaCompartir.tipo === 'video') {
+        link = `https://youtu.be/${contenidoParaCompartir.id}`;
+    } else {
+        // Creamos un "Enlace Mágico" para fotos
+        link = `https://pagocode.app/pic/${contenidoParaCompartir.id}`;
+    }
+
+    const mensajeFinal = `${contenidoParaCompartir.titulo}\n${link}`;
+
+    // C) Guardar en Firebase
+    db.ref(`chats_privados/${chatId}`).push({
+        uid: idAuditor,
+        texto: mensajeFinal,
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    // D) Notificar
+    db.ref(`users/${targetUid}/notifications`).push({
+        from: myCurrentKey,
+        type: 'chat_privado',
+        text: `Te compartió ${contenidoParaCompartir.tipo === 'video' ? 'un video' : 'una foto'}`,
+        extra: idAuditor,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        read: false
+    });
+
+    // E) Cerrar
+    document.getElementById('modalCompartir').style.display = 'none';
+    notify(`✅ Enviado a ${targetName}`);
+    try { window.playSound('coin'); } catch(e){}
+};
+// --- FUNCIÓN PARA DETECTAR ENLACES (MEJORADA - YOUTUBE INTERNO) ---
+function hacerEnlacesClickeables(texto) {
+    // Regex para URLs generales
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    
+    return texto.replace(urlRegex, function(url) {
+        
+        // 1. ¿Es un link de YouTube? (Detectamos ID)
+        // Soporta: youtu.be/ID y youtube.com/watch?v=ID
+        const ytMatch = url.match(/(?:v=|be\/)([\w-]{11})/);
+        
+        if (ytMatch && ytMatch[1]) {
+            const videoId = ytMatch[1];
+            // 🔥 RETORNO MÁGICO: En lugar de un link 'href', usamos 'onclick'
+            return `<span onclick="verVideoInternal('${videoId}')" style="color: #0070ba; font-weight: 800; cursor: pointer; text-decoration: underline;">
+                        📺 Ver Video en el Muro
+                    </span>`;
+        }
+        
+        // 2. Si no es YouTube, es un link normal (azul)
+        return `<a href="${url}" target="_blank" style="color: #0284c7; text-decoration: underline;">${url}</a>`;
+    });
+}
+// ==========================================
+// 📺 IR AL VIDEO EN EL MURO (CORREGIDO: PANTALLA 2)
+// ==========================================
+window.verVideoInternal = (ytId) => {
+    // 1. Limpieza de Pantalla
+    const chatPrivado = document.getElementById('modalChatPrivado');
+    const chatGlobal = document.getElementById('chatWindow');
+    if(chatPrivado) chatPrivado.style.display = 'none';
+    if(chatGlobal) chatGlobal.classList.remove('open');
+
+    // 2. IR A LA PANTALLA 2 (EL MURO REAL)
+    // Antes decía goToScreen(1), por eso se trababa.
+    goToScreen(2); 
+    
+    // Función auxiliar para buscar y scrollear
+    const intentarScroll = (intento) => {
+        const videoElement = document.querySelector(`.smart-video-container[data-yt="${ytId}"]`);
+        
+        if (videoElement) {
+            // ¡ENCONTRADO!
+            const card = videoElement.closest('.social-card');
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Efecto visual
+                card.style.transition = "0.3s";
+                card.style.border = "4px solid #0070ba"; 
+                card.style.transform = "scale(1.02)";
+                setTimeout(() => { 
+                    card.style.border = "none"; 
+                    card.style.transform = "scale(1)";
+                }, 2000);
+            }
+        } else {
+            // Reintentar si no ha cargado aún
+            if (intento < 3) {
+                setTimeout(() => intentarScroll(intento + 1), 800);
+            } else {
+                notify("⚠️ Video antiguo o no cargado en el feed");
+            }
+        }
+    };
+
+    // 3. Iniciar la búsqueda
+    setTimeout(() => intentarScroll(1), 30);
+};
+// 1. FUNCIÓN PARA ABRIR FOTO DESDE EL LINK DEL CHAT
+window.verFotoInternal = (key) => {
+    notify("🔄 Cargando foto...");
+    // Buscamos los datos de la foto en la base de datos
+    db.ref(`galeria_comunidad/${key}`).once('value').then(snap => {
+        if(snap.exists()) {
+            const f = snap.val();
+            // Cerramos chat
+            document.getElementById('modalChatPrivado').style.display = 'none';
+            // Abrimos el visor
+            abrirFotoDetalle(key, f.uid, f.autor || "Anónimo", f.foto);
+        } else {
+            notify("❌ Esta foto ya no existe");
+        }
+    });
+};
+
+// 2. FUNCIÓN DE ENLACES CLICKEABLES (ACTUALIZADA PARA FOTOS)
+function hacerEnlacesClickeables(texto) {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    
+    return texto.replace(urlRegex, function(url) {
+        
+        // CASO A: YouTube
+        const ytMatch = url.match(/(?:v=|be\/)([\w-]{11})/);
+        if (ytMatch && ytMatch[1]) {
+            return `<span onclick="verVideoInternal('${ytMatch[1]}')" style="color: #0070ba; font-weight: 800; cursor: pointer; text-decoration: underline;">
+                        📺 Ver Video en el Muro
+                    </span>`;
+        }
+        
+        // CASO B: Foto (Link Mágico)
+        const picMatch = url.match(/pagocode\.app\/pic\/([\w-]+)/);
+        if (picMatch && picMatch[1]) {
+             return `<span onclick="verFotoInternal('${picMatch[1]}')" style="color: #a855f7; font-weight: 800; cursor: pointer; text-decoration: underline;">
+                        📸 Ver Foto
+                    </span>`;
+        }
+        
+        // CASO C: Normal
+        return `<a href="${url}" target="_blank" style="color: #0284c7; text-decoration: underline;">${url}</a>`;
+    });
+}
+// ==========================================
+// 🛑 DETENER VIDEO DEL MURO (LIMPIEZA)
+// ==========================================
+window.detenerVideoMuro = () => {
+    if (videoActualJugando) {
+        const container = document.getElementById(videoActualJugando);
+        if (container) {
+            // 1. Borramos el iframe (esto corta el audio/video de raíz)
+            const frame = container.querySelector('.vid-frame');
+            if (frame) frame.innerHTML = "";
+            
+            // 2. Volvemos a mostrar la portada (Poster)
+            const poster = container.querySelector('.vid-poster');
+            if (poster) poster.style.display = "block";
+            
+            // 3. Quitamos botones flotantes viejos
+            const btn = container.querySelector('.btn-sonido-flotante');
+            if (btn) btn.remove();
+        }
+        // Reseteamos la variable para que el sistema sepa que no hay nada sonando
+        videoActualJugando = null;
+    }
+};
     </script>
 </body>
 </html>
