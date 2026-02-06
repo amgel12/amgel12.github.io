@@ -4442,14 +4442,26 @@ function renderizarUsuariosHorizontal() {
     });
     contenedor.innerHTML = html;
 }
-// --- FUNCIÓN ABRIR MODAL INVITAR ---
+// ==========================================
+// 🚀 ABRIR MODAL INVITAR (CON CONTADOR REAL)
+// ==========================================
 window.abrirModalInvitar = () => {
     if(!myCurrentKey || myCurrentKey === "---") return notify("⏳ Espera a que cargue tu perfil");
-    
-    // Poner la clave en el texto grande
+
+    // 1. Poner la clave en el texto grande
     document.getElementById('displayInviteKey').textContent = myCurrentKey;
-    
-    // Mostrar el modal
+
+    // 2. BUSCAR CUÁNTOS LLEVO CANJEADOS (Esta es la parte nueva)
+    db.ref(`users/${idAuditor}/redeemedCodes`).once('value', snap => {
+        const usados = snap.val() || {};
+        const total = Object.keys(usados).length; // Contamos las claves
+        
+        // Actualizamos el texto rojo (X/3)
+        const label = document.getElementById('contadorAmigos');
+        if(label) label.textContent = `(${total}/3)`;
+    });
+
+    // 3. Mostrar el modal
     document.getElementById('modalInvitar').style.display = 'flex';
     
     // Efecto de sonido
@@ -4552,12 +4564,12 @@ window.procesarAvatarPersonal = (input) => {
     }
 };
 // ==========================================
-// 🤝 LÓGICA PARA VALIDAR CÓDIGO DE AMIGO
+// 🤝 VALIDAR CÓDIGO DE AMIGO (FIX UI)
 // ==========================================
 window.validarCodigoAmigo = () => {
     const input = document.getElementById('inputFolio');
     const codigo = input.value.trim().toUpperCase();
-
+    
     if (!idAuditor) return notify("❌ Inicia sesión primero");
     if (!codigo) return notify("❌ Escribe un código");
     if (codigo === myCurrentKey) return notify("🚫 No puedes usar tu propio código");
@@ -4616,10 +4628,12 @@ window.validarCodigoAmigo = () => {
                 notify(`✅ ¡Código Válido! Ganaste +0.25 PTS`);
                 registrarHistorial("Bono Amigo", 0.25);
                 input.value = "";
-                window.playSound('win');
+                try { window.playSound('win'); } catch(e){}
                 
-                // Actualizar contador visualmente
-                document.getElementById('contadorAmigos').textContent = `(${cantidad + 1}/3)`;
+                // 🔥 ACTUALIZACIÓN VISUAL INMEDIATA
+                // Sumamos 1 al total anterior y actualizamos el texto rojo
+                const nuevoTotal = cantidad + 1;
+                document.getElementById('contadorAmigos').textContent = `(${nuevoTotal}/3)`;
             });
         });
     });
