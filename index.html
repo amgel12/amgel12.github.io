@@ -545,6 +545,36 @@
     object-fit: cover;
     flex-shrink: 0; /* Que no se aplaste */
 }
+/* --- ANIMACIÓN BOTÓN MENSAJES (BRINCO) --- */
+@keyframes jumpNav {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); } /* Brinca 6px hacia arriba */
+}
+
+.nav-jumping {
+    animation: jumpNav 1s infinite; /* Brinca infinitamente cada segundo */
+    color: #ef4444 !important;      /* Se pone ROJO intenso */
+}
+
+/* Ajuste del globito rojo (Badge) para que se vea bien */
+#msgBadge {
+    position: absolute;
+    top: 5px;
+    right: 20px; /* Ajustado para centrarlo mejor sobre el icono */
+    background: #ef4444;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
   </style>
 </head>
 <body>
@@ -776,25 +806,29 @@
         </div>
     </div>
 </div>
-    <div id="modalSubirFoto" class="modal-overlay" style="z-index: 26000;">
+   <div id="modalSubirFoto" class="modal-overlay" style="z-index: 26000;">
     <div class="modal-content">
-        <h3 style="color:#db2777;">📸 Nueva Foto</h3>
+        <h3 style="color:#10b981;">📸 Monetiza tu Foto</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
+            Gana <b style="color:#10b981;">+0.10 PTS</b> al instante.
+        </p>
         
-        <div style="background:#fce7f3; border:2px dashed #db2777; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
+        <div style="background:#f0fdf4; border:2px dashed #10b981; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
             <img id="imgPreview" style="width:100%; height:100%; object-fit:contain; display:none;">
-            <div id="placeholderUpload" style="text-align:center; color:#db2777;">
-                <i class="fas fa-cloud-upload-alt" style="font-size:2rem;"></i>
-                <p style="font-size:0.8rem; margin-top:5px;">Toca para elegir</p>
+            <div id="placeholderUpload" style="text-align:center; color:#10b981;">
+                <i class="fas fa-camera" style="font-size:2.5rem; margin-bottom: 10px;"></i>
+                <p style="font-size:0.8rem; font-weight:bold;">Toca para subir</p>
+                <p style="font-size:0.65rem; opacity:0.8;">Selfie • Paisaje • Meme</p>
             </div>
             <input type="file" id="inputFotoArchivo" accept="image/*" onchange="procesarFotoSeleccionada()" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
         </div>
 
-        <div style="font-size:0.7rem; color:#64748b; margin-bottom:10px;">
-            ⚠️ Solo fotos decentes. Contenido inapropiado será baneado.
+        <div style="font-size:0.65rem; color:#ef4444; margin-bottom:15px; background: #fef2f2; padding: 8px; border-radius: 8px;">
+            ⚠️ Prohibido contenido +18 o violento. Serás baneado.
         </div>
         
-        <button id="btnPublicarFoto" class="btn-blue" style="background:#db2777;" disabled onclick="subirFotoReal()">
-            Publicar Ahora
+        <button id="btnPublicarFoto" class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" disabled onclick="subirFotoReal()">
+            💰 Publicar y Ganar
         </button>
         <button onclick="cerrarModalFoto()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
     </div>
@@ -1046,7 +1080,14 @@
                 <input type="text" id="inputSearchMusic" placeholder="Escribe artista o canción..." style="margin:0; flex:1; text-align:left; border:2px solid #0070ba;">
                 <button onclick="buscarEnYouTubeAPI()" class="btn-blue" style="width:auto; padding:0 15px; border-radius:10px;">🔍</button>
             </div>
-
+<div id="trackSeleccionadoInfo" style="background:#f0f9ff; padding:10px; border:1px dashed #0070ba; border-radius:10px; margin-bottom:15px; display:none; align-items:center; gap:10px; animation: slideIn 0.3s;">
+                 <i class="fas fa-music" style="color:#0070ba; font-size: 1.2rem;"></i>
+                 <div style="flex:1;">
+                     <div style="font-size:0.65rem; color:#64748b; font-weight:bold; text-transform:uppercase;">Seleccionada:</div>
+                     <div id="trackTitleDisplay" style="font-weight:800; color:#1e293b; font-size:0.85rem; line-height:1.2;">---</div>
+                 </div>
+                 <i class="fas fa-check-circle" style="color:#10b981; font-size: 1.2rem;"></i>
+            </div>
             <div id="previewContainer" style="display:none; width:100%; aspect-ratio: 16/9; background:#000; margin-bottom:10px; border-radius:12px; overflow:hidden; position:relative; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
                  <div id="previewFrame" style="width:100%; height:100%;"></div>
                  <button onclick="stopPreview()" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.7); color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold;">✕</button>
@@ -1198,13 +1239,13 @@
     <div class="screen">
         <div style="height: 80px;"></div>
         <div style="padding: 0 15px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+           <div style="background: linear-gradient(135deg, #fffbeb, #fff7ed); border: 2px dashed #f59e0b; border-radius: 15px; padding: 15px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.1);">
                 <div>
-                    <h2 style="color:#1e293b; margin:0;">📸 Galería</h2>
-                    <p style="font-size:0.75rem; color:#64748b;">Rostros de la comunidad</p>
+                    <h2 style="color:#b45309; margin:0; font-size: 1.1rem; font-weight: 800;">📸 Gana Puntos</h2>
+                    <p style="font-size:0.7rem; color:#d97706; font-weight: 600;">Sube fotos y recibe recompensas</p>
                 </div>
-                <button onclick="document.getElementById('modalSubirFoto').style.display='flex'" class="btn-blue" style="width:auto; padding: 10px 20px; border-radius: 50px; background: linear-gradient(135deg, #ec4899, #db2777); box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);">
-                    + Subir Foto
+                <button onclick="document.getElementById('modalSubirFoto').style.display='flex'" class="btn-blue" style="width:auto; padding: 8px 15px; border-radius: 50px; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); animation: pulse 2s infinite; font-size: 0.8rem; border: 2px solid white;">
+                    💸 Subir (+0.10)
                 </button>
             </div>
             <div id="muroFotosGrid" class="photo-grid-container">
@@ -1218,9 +1259,33 @@
 
     <div class="screen" style="position: relative; background: black;"> <div id="viewFeed" style="padding: 0; height: 100%; position: relative;">
             
-            <div style="position: absolute; top: 15px; left: 0; width: 100%; z-index: 50; display: flex; justify-content: center; pointer-events: none;">
-                <button onclick="abrirMision()" style="pointer-events: auto; padding: 8px 20px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 50px; color: white; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                    <i class="fas fa-pen"></i> ¿Qué estás pensando?
+<div style="position: absolute; top: 15px; left: 0; width: 100%; z-index: 50; display: flex; justify-content: center; pointer-events: none;">
+                <button onclick="abrirMision()" style="
+                    pointer-events: auto;
+                    padding: 10px 25px;
+                    background: rgba(20, 20, 30, 0.6);
+                    backdrop-filter: blur(12px);
+                    border: 1px solid rgba(255, 255, 255, 0.4);
+                    border-radius: 50px;
+                    color: white;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+                    transition: transform 0.2s;
+                ">
+                    <div style="
+                        width: 8px; 
+                        height: 8px; 
+                        background: #22c55e; 
+                        border-radius: 50%; 
+                        box-shadow: 0 0 10px #22c55e; 
+                        animation: pulse 1.5s infinite;
+                    "></div>
+                    <span>¿Qué estás pensando?</span>
+                    <i class="fas fa-pen" style="font-size:0.8rem; color:#cbd5e1;"></i>
                 </button>
             </div>
 <div id="muroReportes" onscroll="checkScrollVideos()">
@@ -1678,9 +1743,13 @@ setTimeout(() => {
         if (!text) return text;
         return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
-    function getAvatarUrl(seed) { 
-    if (!seed) seed = "anon"; 
-    return 'https://api.dicebear.com/7.x/micah/svg?seed=' + seed + '&radius=50&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc'; 
+    // ==========================================
+// 👤 GENERADOR DE CARAS REALES (PRAVATAR)
+// ==========================================
+function getAvatarUrl(seed) {
+    if (!seed) seed = "anon";
+    // Usamos Pravatar con el ID del usuario para que siempre tenga la misma "cara real"
+    return 'https://i.pravatar.cc/300?u=' + seed; 
 }
     function getYouTubeID(url) { if (!url) return null; const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
     
@@ -2268,18 +2337,66 @@ window.abrirMision = () => {
             });
         }
     }
-    window.seleccionarVideo = (id, title) => {
-        document.getElementById('mMusic').value = `https://www.youtube.com/watch?v=${id}`;
-        const titleShort = title.substring(0, 25) + "...";
-        document.getElementById('musicDisplayLabel').innerHTML = `🎵 ${titleShort}`;
-        document.getElementById('songNamePreview').textContent = titleShort;
-        document.getElementById('modalMusicSelector').style.display = 'none';
-        const btnNext = document.getElementById('btnMisionNext');
+    // ==========================================
+// ==========================================
+// 🎵 SELECCIONAR VIDEO (CORREGIDO)
+// ==========================================
+// ==========================================
+// 🎵 SELECCIONAR VIDEO (FINAL)
+// ==========================================
+window.seleccionarVideo = (id, title, btnElement) => {
+    // 1. Detener preview
+    stopPreview(); 
+    
+    // 2. Guardar valores
+    document.getElementById('mMusic').value = `https://www.youtube.com/watch?v=${id}`;
+    
+    // 3. Actualizar textos
+    const titleShort = title.substring(0, 25) + "...";
+    document.getElementById('musicDisplayLabel').innerHTML = `🎵 ${titleShort}`;
+    document.getElementById('songNamePreview').textContent = title.substring(0,35) + "...";
+
+    // 4. 🔥 CAMBIO DE COLOR
+    if (btnElement) {
+        // Resetear otros botones
+        const previos = document.querySelectorAll('.btn-seleccionado');
+        for (let b of previos) {
+            b.innerHTML = "✅ Elegir";
+            b.style.background = "#10b981"; 
+            b.classList.remove('btn-seleccionado');
+        }
+
+        // Pintar el actual
+        btnElement.innerHTML = "🌟 LISTO";
+        btnElement.style.background = "#0070ba"; 
+        btnElement.classList.add('btn-seleccionado');
+    } else {
+        console.log("⚠️ Advertencia: No se detectó el botón para cambiar el color.");
+    }
+
+    // 5. Barra superior
+    const infoBar = document.getElementById('trackSeleccionadoInfo');
+    const titleDisplay = document.getElementById('trackTitleDisplay');
+    if (infoBar && titleDisplay) {
+        infoBar.style.display = 'flex';
+        titleDisplay.textContent = title;
+    }
+
+    // 6. Activar botón Continuar
+    const btnNext = document.getElementById('btnMisionNext');
+    if(btnNext) {
         btnNext.style.opacity = "1";
         btnNext.disabled = false;
-        notify("🎵 Canción elegida");
-    };
+    }
     
+    notify("🎵 Canción elegida");
+    try { window.playSound('coin'); } catch(e){}
+
+    // 7. Cerrar (Espera 0.5s para ver el efecto)
+    setTimeout(() => {
+        document.getElementById('modalMusicSelector').style.display = 'none';
+    }, 500); 
+};
     let audioPlayer = null;
     let isPlaying = false;
     const tag = document.createElement('script');
@@ -2480,7 +2597,53 @@ window.abrirMision = () => {
                 // Si no tienes ese ID específico, no pasa nada, pero el perfil grande sí se verá.
                 const barraAvatar = document.getElementById('barraMiAvatar');
                 if (barraAvatar) barraAvatar.style.backgroundImage = "url('" + imagenMostrar + "')";
-                
+                // 🔥 NUEVO: ALERTA DE FOTO FALTANTE (Solo 1 vez por sesión)
+            // 🔥 ALERTA REPETITIVA (Bucle hasta que suba foto)
+                if (!d.fotoPerfil) {
+                    // A) Poner punto rojo visual en el botón de Perfil
+                    const btnPerfil = document.getElementById('nav4');
+                    if(btnPerfil) btnPerfil.style.borderTop = "4px solid #ef4444";
+
+                    // B) Iniciar el bucle (Solo si no está corriendo ya)
+                    if (!window.avisoFotoInterval) {
+                        // Se ejecuta cada 5 segundos (Para dar tiempo a ir al perfil)
+                        window.avisoFotoInterval = setInterval(() => {
+                            notify("⚠️ ¡Atención! Sube tu foto real");
+                            // Vibración para llamar más la atención (si el móvil lo permite)
+                            try { if(navigator.vibrate) navigator.vibrate(200); } catch(e){}
+                        }, 5000);
+                    }
+                    
+                } 
+                // --- 🔔 NUEVO: ALERTA DE MISIONES (SOLO 2 VECES) ---
+                // Leemos el contador guardado en el teléfono
+                let misionesVistas = localStorage.getItem('infoMisionesCount');
+                misionesVistas = misionesVistas ? parseInt(misionesVistas) : 0;
+
+                // Si se ha mostrado menos de 2 veces...
+                if (misionesVistas < 2) {
+                    setTimeout(() => {
+                        // Mostramos el mensaje detallado
+                        notify("🚀 Atención: Haz 5 misiones para subir de nivel: Ruleta, Video+Giro, Foto, Pensar y Snake");
+                        
+                        // Sumamos 1 al contador y guardamos
+                        localStorage.setItem('infoMisionesCount', misionesVistas + 1);
+                        
+                        // Sonido de moneda para llamar la atención
+                        try { window.playSound('coin'); } catch(e){}
+                    }, 8000); // Sale a los 8 segundos (entre las alertas de foto)
+                }
+                else {
+                    // C) Si YA tiene foto: Detener todo y limpiar
+                    const btnPerfil = document.getElementById('nav4');
+                    if(btnPerfil) btnPerfil.style.borderTop = "none";
+
+                    // Matar el bucle de notificaciones
+                    if (window.avisoFotoInterval) {
+                        clearInterval(window.avisoFotoInterval);
+                        window.avisoFotoInterval = null;
+                    }
+                }
                 // --- D) OTROS ESTADOS (Vidas, Ruleta, Notis) ---
                 let userHearts = (typeof d.hearts !== 'undefined') ? d.hearts : 5;
                 actualizarVisualVidas(userHearts);
@@ -3010,64 +3173,69 @@ function detectarYEnvarMenciones(txt, type) {
     // --- NUEVA BÚSQUEDA DE YOUTUBE CON PREVIEW ---
     const YOUTUBE_API_KEY = "AIzaSyAqswfC8HsBown7vyWtOfrWc-lbf4HFsbM"; // Tu API Key actual
 
-   // --- BÚSQUEDA YOUTUBE (MODO CINE / HORIZONTAL) ---
-    window.buscarEnYouTubeAPI = () => {
-         const q = document.getElementById('inputSearchMusic').value.trim();
-         if(!q) return;
-         
-         stopPreview();
-         document.getElementById('ytLoader').style.display='block';
-         document.getElementById('musicResultsList').innerHTML = "";
-         
-         // 1. CAMBIO: Usamos el texto exacto (sin agregar "shorts")
-         let queryFinal = q; 
-
-         // 2. CAMBIO: Quitamos '&videoDuration=short' de la URL para permitir videos normales
-         fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(queryFinal)}&key=${YOUTUBE_API_KEY}`)
-            .then(r => r.json())
-            .then(d => {
-                 document.getElementById('ytLoader').style.display='none';
+// ==========================================
+// 🔍 BUSCAR YOUTUBE (VERSIÓN SEGURA)
+// ==========================================
+// ==========================================
+// 🔍 BUSCAR YOUTUBE (VERSIÓN CORREGIDA FINAL)
+// ==========================================
+window.buscarEnYouTubeAPI = () => {
+     const q = document.getElementById('inputSearchMusic').value.trim();
+     if(!q) return;
+     
+     stopPreview();
+     document.getElementById('ytLoader').style.display='block';
+     document.getElementById('musicResultsList').innerHTML = "";
+     
+     // Usamos tu API Key
+     fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q)}&key=${YOUTUBE_API_KEY}`)
+        .then(r => r.json())
+        .then(d => {
+             document.getElementById('ytLoader').style.display='none';
+             
+             let h = `<div style="padding:10px; text-align:center; border-bottom:1px solid #f1f5f9;">
+                        <button onclick="volverATendencias()" style="background:none; border:none; color:#0070ba; font-weight:bold; cursor:pointer; font-size:0.9rem;">
+                            ⬅ Volver a Tendencias
+                        </button>
+                     </div>`;
+            
+            if(!d.items || d.items.length === 0) {
+                document.getElementById('musicResultsList').innerHTML = h + "<div style='text-align:center;padding:20px;'>No se encontraron resultados.</div>";
+                return;
+            }
+            d.items.forEach(i => {
+                 const rawTitle = i.snippet.title;
+                 const thumb = i.snippet.thumbnails.medium ? i.snippet.thumbnails.medium.url : i.snippet.thumbnails.default.url;
+                 const vidId = i.id.videoId;
                  
-                 let h = `<div style="padding:10px; text-align:center; border-bottom:1px solid #f1f5f9;">
-                            <button onclick="volverATendencias()" style="background:none; border:none; color:#0070ba; font-weight:bold; cursor:pointer; font-size:0.9rem;">
-                                ⬅ Volver a Tendencias
-                            </button>
-                         </div>`;
-                
-                if(!d.items || d.items.length === 0) {
-                    document.getElementById('musicResultsList').innerHTML = h + "<div style='text-align:center;padding:20px;'>No se encontraron resultados.</div>";
-                    return;
-                }
-
-                d.items.forEach(i => {
-                     const title = escapeHtml(i.snippet.title);
-                     const thumb = i.snippet.thumbnails.medium ? i.snippet.thumbnails.medium.url : i.snippet.thumbnails.default.url; // Usamos medium para mejor calidad
-                     const vidId = i.id.videoId;
-                     
-                     h += `
-                    <div class="music-item" style="display:flex; align-items:center; padding:10px; border-bottom:1px solid #f1f5f9;">
-                        <div onclick="previewMusic('${vidId}')" style="position:relative; width:100px; height:56px; margin-right:15px; cursor:pointer; flex-shrink:0;">
-                            <img src="${thumb}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
-                            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); border-radius:8px;">
-                                 <i class="fas fa-play" style="color:white; font-size:1.2rem;"></i>
-                            </div>
-                        </div>
-                        <div style="flex:1; overflow:hidden;">
-                            <div style="font-size:0.8rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; color:#334155;">${title}</div>
-                            <button class="btn-blue" style="width:auto; padding:6px 15px; font-size:0.75rem; height:auto; background:#10b981;" onclick="seleccionarVideo('${vidId}', '${title}')">
-                                ✅ Elegir
-                            </button>
-                        </div>
-                    </div>`;
-                 });
+                 // 🛡️ LIMPIEZA: Quitamos comillas para evitar errores
+                 const titleSafe = rawTitle.replace(/'/g, "").replace(/"/g, "");
                  
-                 document.getElementById('musicResultsList').innerHTML = h;
-             })
-            .catch(e => {
-                document.getElementById('ytLoader').style.display='none';
-                document.getElementById('musicResultsList').innerHTML = `<div style="padding:10px;"><button onclick="volverATendencias()">⬅ Volver</button></div><div style='text-align:center;padding:20px;'>Error de conexión.</div>`;
-            });
-    };
+                 h += `
+                <div class="music-item" style="display:flex; align-items:center; padding:10px; border-bottom:1px solid #f1f5f9;">
+                    <div onclick="previewMusic('${vidId}')" style="position:relative; width:100px; height:56px; margin-right:15px; cursor:pointer; flex-shrink:0;">
+                        <img src="${thumb}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); border-radius:8px;">
+                             <i class="fas fa-play" style="color:white; font-size:1.2rem;"></i>
+                        </div>
+                    </div>
+                    <div style="flex:1; overflow:hidden;">
+                        <div style="font-size:0.8rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; color:#334155;">${titleSafe}</div>
+                        
+                        <button class="btn-blue" style="width:auto; padding:6px 15px; font-size:0.75rem; height:auto; background:#10b981;" onclick="seleccionarVideo('${vidId}', '${titleSafe}', this)">
+                            ✅ Elegir
+                        </button>
+                    </div>
+                </div>`;
+             });
+             
+             document.getElementById('musicResultsList').innerHTML = h;
+         })
+        .catch(e => {
+            document.getElementById('ytLoader').style.display='none';
+            document.getElementById('musicResultsList').innerHTML = `<div style='text-align:center;padding:20px;'>Error: ${e.message}</div>`;
+        });
+};
     // --- FUNCIÓN PARA VER PREVIEW EN EL MISMO MODAL ---
     window.previewMusic = (id) => {
         const container = document.getElementById('previewContainer');
@@ -3933,6 +4101,9 @@ window.procesarFotoSeleccionada = () => {
 };
 
 // 2. Subir la foto a Firebase
+// ==========================================
+// 2. SUBIR FOTO REAL (CONECTADO A MISIONES)
+// ==========================================
 window.subirFotoReal = () => {
     if (!fotoBase64Actual) return notify("Elige una foto primero");
     
@@ -3943,16 +4114,23 @@ window.subirFotoReal = () => {
     db.ref('galeria_comunidad').push({
         uid: idAuditor,
         autor: myCurrentKey,
-        foto: fotoBase64Actual, // Aquí va la imagen codificada
+        foto: fotoBase64Actual,
         fecha: firebase.database.ServerValue.TIMESTAMP
     }).then(() => {
         notify("✅ Foto subida con éxito");
         cerrarModalFoto();
-        // Recompensa sorpresa por subir foto
+        
+        // Recompensa en dinero (+0.10)
         db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.10) });
+
+        // 🔥 ¡AQUÍ ESTÁ LA MAGIA! 🔥
+        // Ahora sí cuenta como una de las 5 misiones diarias
+        if(window.checarProgresoDiario) window.checarProgresoDiario();
+
     }).catch(e => {
         notify("Error al subir: " + e.message);
         btn.disabled = false;
+        btn.innerHTML = "💰 Publicar y Ganar";
     });
 };
 
@@ -4319,20 +4497,51 @@ let mapaMensajesSinLeer = {};
 let listaUsuariosCacheReal = []; 
 
 // 1. INICIAR MONITOR
+// ==========================================
+// 🔴 MONITOR DE BADGES (LISTA + NAV BAR)
+// ==========================================
 function iniciarMonitorDeBadges() {
     if(!idAuditor) return;
+
     db.ref(`users/${idAuditor}/notifications`).on('value', snap => {
         mapaMensajesSinLeer = {}; 
+        let totalGlobalSinLeer = 0; // Contador total para el botón de abajo
+
         if (snap.exists()) {
             snap.forEach(s => {
                 const notif = s.val();
+                // Solo contamos chats privados no leídos
                 if (notif.type === 'chat_privado' && !notif.read) {
                     const senderUid = notif.extra;
+                    // Sumar al mapa individual (para las bolitas de arriba)
                     mapaMensajesSinLeer[senderUid] = (mapaMensajesSinLeer[senderUid] || 0) + 1;
+                    
+                    // Sumar al total global
+                    totalGlobalSinLeer++;
                 }
             });
         }
+
+        // 1. Actualizar lista horizontal (Usuarios)
         renderizarUsuariosHorizontal(); 
+
+        // 2. ACTUALIZAR BOTÓN DE NAVEGACIÓN (ABAJO)
+        const navBtn = document.getElementById('nav3'); // El botón de Mensajes
+        const navIcon = navBtn.querySelector('.nav-icon'); // El icono dentro
+        const badge = document.getElementById('msgBadge'); // El globito rojo
+
+        if (totalGlobalSinLeer > 0) {
+            // A) Si hay mensajes: Activar modo ALERTA
+            badge.style.display = 'flex';
+            badge.textContent = totalGlobalSinLeer > 99 ? '99+' : totalGlobalSinLeer;
+            
+            // Hacemos que el icono brinque y se ponga rojo
+            navIcon.classList.add('nav-jumping');
+        } else {
+            // B) Si no hay mensajes: Modo normal
+            badge.style.display = 'none';
+            navIcon.classList.remove('nav-jumping');
+        }
     });
 }
 
