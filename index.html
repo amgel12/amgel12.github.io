@@ -575,6 +575,47 @@
     z-index: 10;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
+/* --- ESTILOS BARRAS DE MISIONES --- */
+.task-progress-box {
+    width: 100%;
+    margin-top: 5px;
+}
+.task-progress-bg {
+    background: #e2e8f0;
+    height: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+.task-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+    width: 0%;
+    transition: width 0.5s ease;
+    border-radius: 10px;
+}
+.task-counter-text {
+    font-size: 0.65rem;
+    color: #64748b;
+    font-weight: 700;
+    text-align: right;
+    margin-top: 2px;
+}
+/* Efecto Tachado (Completado) */
+.task-completed .task-title {
+    text-decoration: line-through;
+    color: #cbd5e1 !important;
+}
+.task-completed .task-reward {
+    display: none; /* Ocultar recompensa si ya acabó */
+}
+.task-completed .task-icon {
+    filter: grayscale(100%);
+    opacity: 0.5;
+}
+.task-completed .task-progress-fill {
+    background: #10b981; /* Verde cuando completa */
+}
   </style>
 </head>
 <body>
@@ -1122,78 +1163,118 @@
     </div>
 
     <div id="modalTareas" class="modal-overlay" style="z-index: 20500;">
-    <div class="modal-content">
-        <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: #334155;">🎯 Centro de Misiones</h3>
+    <div class="modal-content" style="text-align:left;">
+        <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: #334155; text-align:center;">🎯 Progreso Diario</h3>
         
-        <div class="task-row" onclick="document.getElementById('modalRuletaGame').style.display='flex'; document.getElementById('modalTareas').style.display='none'">
+        <div id="taskRuleta" class="task-row" onclick="irMision('ruleta')">
             <div class="task-icon">🎰</div>
             <div class="task-info">
-                <span class="task-title">Ruleta Diaria</span>
-                <span class="task-reward">Probar Suerte</span>
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="task-title">Girar Ruleta</span>
+                    <span class="task-reward" style="color:#f59e0b;">+Premios</span>
+                </div>
+                <div class="task-progress-box">
+                    <div class="task-progress-bg"><div id="barRuleta" class="task-progress-fill"></div></div>
+                    <div id="txtRuleta" class="task-counter-text">0/3 Giros</div>
+                </div>
             </div>
             <div class="task-status">ᐳ</div>
         </div>
 
-        <div class="task-row">
+        <div id="taskAnuncio" class="task-row" onclick="irMision('anuncio')">
             <div class="task-icon">📺</div>
             <div class="task-info">
-                <span class="task-title">Ver Anuncio</span>
-                <span class="task-reward">+0.25 PTS & Giro</span>
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="task-title">Ver Anuncio</span>
+                    <span class="task-reward">+0.25 PTS</span>
+                </div>
+                <div class="task-progress-box">
+                    <div class="task-progress-bg"><div id="barAnuncio" class="task-progress-fill"></div></div>
+                    <div id="txtAnuncio" class="task-counter-text">0/5 Vistos</div>
+                </div>
             </div>
-            <div class="task-status">
-                <button onclick="document.getElementById('btnVerAnuncio').click()" class="btn-blue" style="padding:5px 10px; border-radius:5px; font-size:0.7rem; width:auto;">VER</button>
-            </div>
+            <div class="task-status">ᐳ</div>
         </div>
 
-        <div class="task-row" onclick="abrirCine(); document.getElementById('modalTareas').style.display='none'">
+        <div id="taskCine" class="task-row" onclick="irMision('cine')">
             <div class="task-icon">🍿</div>
             <div class="task-info">
-                <span class="task-title">Novedades YouTube</span>
-                <span class="task-reward">+0.25 PTS</span>
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="task-title">Novedades YouTube</span>
+                    <span class="task-reward">+0.50 PTS</span>
+                </div>
+                <div class="task-progress-box">
+                    <div class="task-progress-bg"><div id="barCine" class="task-progress-fill"></div></div>
+                    <div id="txtCine" class="task-counter-text">0/2 Videos</div>
+                </div>
             </div>
             <div class="task-status">ᐳ</div>
         </div>
 
-        <div style="border-top: 1px solid #f1f5f9; margin: 10px 0;"></div>
-        <p style="font-size:0.7rem; color:#94a3b8; text-align:left; margin-bottom:5px;">🎮 ZONA DE JUEGOS</p>
+        <div style="border-top: 1px solid #f1f5f9; margin: 15px 0;"></div>
+        <p style="font-size:0.7rem; color:#94a3b8; margin-bottom:5px;">🎮 ZONA GAMER (Meta: 15 min)</p>
 
-        <div class="task-row" onclick="prepararJuego('snake'); document.getElementById('modalTareas').style.display='none'">
+        <div id="taskGameSnake" class="task-row" onclick="irMision('snake')">
             <div class="task-icon">🐍</div>
             <div class="task-info">
-                <span class="task-title">Jugar Snake</span>
-                <span class="task-reward">15 minutos</span>
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="task-title">Jugar Snake</span>
+                    <span class="task-reward">Diviértete</span>
+                </div>
+                <div class="task-progress-box">
+                    <div class="task-progress-bg"><div id="barGameSnake" class="task-progress-fill"></div></div>
+                    <div id="txtGameSnake" class="task-counter-text">0/15 Min</div>
+                </div>
             </div>
             <div class="task-status">ᐳ</div>
         </div>
 
-        <div class="task-row" onclick="prepararJuego('race'); document.getElementById('modalTareas').style.display='none'">
+        <div id="taskGameRace" class="task-row" onclick="irMision('race')">
             <div class="task-icon">🏎️</div>
             <div class="task-info">
-                <span class="task-title">Guerra Vial</span>
-                <span class="task-reward">15 minutos</span>
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="task-title">Guerra Vial</span>
+                    <span class="task-reward">Acción</span>
+                </div>
+                <div class="task-progress-box">
+                    <div class="task-progress-bg"><div id="barGameRace" class="task-progress-fill"></div></div>
+                    <div id="txtGameRace" class="task-counter-text">0/15 Min</div>
+                </div>
             </div>
             <div class="task-status">ᐳ</div>
         </div>
 
-        <div class="task-row" onclick="abrirLichessConAd()">
+        <div id="taskGameChess" class="task-row" onclick="irMision('chess')">
             <div class="task-icon">♟️</div>
             <div class="task-info">
-                <span class="task-title">Ajedrez (Lichess)</span>
-                <span class="task-reward">15 minutos</span>
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="task-title">Ajedrez (Lichess)</span>
+                    <span class="task-reward">Estrategia</span>
+                </div>
+                <div class="task-progress-box">
+                    <div class="task-progress-bg"><div id="barGameChess" class="task-progress-fill"></div></div>
+                    <div id="txtGameChess" class="task-counter-text">Jugar ahora</div>
+                </div>
             </div>
             <div class="task-status">ᐳ</div>
         </div>
 
-        <div class="task-row" onclick="window.location.href='go:Damas'; document.getElementById('modalTareas').style.display='none';">
+        <div id="taskGameDamas" class="task-row" onclick="irMision('damas')">
             <div class="task-icon">⚪</div>
             <div class="task-info">
-                <span class="task-title">Damas VS CPU</span>
-                <span class="task-reward">15 minutos</span>
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="task-title">Damas VS CPU</span>
+                    <span class="task-reward">Clásico</span>
+                </div>
+                <div class="task-progress-box">
+                    <div class="task-progress-bg"><div id="barGameDamas" class="task-progress-fill"></div></div>
+                    <div id="txtGameDamas" class="task-counter-text">Jugar ahora</div>
+                </div>
             </div>
             <div class="task-status">ᐳ</div>
         </div>
 
-        <button onclick="document.getElementById('modalTareas').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; margin-top:20px; cursor:pointer;">Cerrar</button>
+        <button onclick="document.getElementById('modalTareas').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; margin-top:20px; cursor:pointer; width:100%;">Cerrar Panel</button>
     </div>
 </div>
     <div id="modalGameOver" class="modal-overlay">
@@ -1342,7 +1423,7 @@
 </div>
         <div class="menu-card-btn" onclick="verReferidos()"><i class="fas fa-users menu-icon ic-green"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Referidos</span></div>
         <div class="menu-card-btn" onclick="document.getElementById('modalHistorial').style.display='flex'"><i class="fas fa-list-ul menu-icon ic-blue"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Historial</span></div>
-       <div class="menu-card-btn" onclick="document.getElementById('modalTareas').style.display='flex'">
+       <div class="menu-card-btn" onclick="abrirModalTareas()">
     <i class="fas fa-gamepad menu-icon ic-red"></i>
     <span style="font-weight:700; color:#475569; font-size:0.9rem;">Misiones</span>
 </div>
@@ -2571,11 +2652,20 @@ window.seleccionarVideo = (id, title, btnElement) => {
                     labelPuntos.textContent = `${currentEarnings.toFixed(2)} PTS`;
                 }
                 
-                // Snake Wallet
+// Snake Wallet
                 const labelSnake = document.getElementById('snakeWalletDisplay');
                 if(labelSnake) {
                     labelSnake.textContent = `👾 ${parseFloat(d.snakeTotal || 0).toFixed(2)}`;
                 }
+
+                // 🔥 NUEVO: CONEXIÓN EN VIVO - NIVEL DE LEALTAD
+                // Esto hace que el 0% cambie a 1% automáticamente
+                const nivelLealtad = d.loyaltyPercent || 0;
+                const labelLealtad = document.getElementById('historialLoyaltyPercent');
+                const barraLealtad = document.getElementById('historialLoyaltyBar');
+
+                if (labelLealtad) labelLealtad.textContent = nivelLealtad + "%";
+                if (barraLealtad) barraLealtad.style.width = nivelLealtad + "%";
 
                 // --- B) DATOS BÁSICOS ---
                 myCurrentKey = d.myInviteKey || "---";
@@ -3361,7 +3451,11 @@ window.buscarEnYouTubeAPI = () => {
              // 🔥 AGREGA ESTA LÍNEA AQUÍ PARA QUE CUENTE COMO MISIÓN
              if(window.checarProgresoDiario) window.checarProgresoDiario();
          }
-         
+         const hoy = new Date().toISOString().split('T')[0];
+        db.ref(`users/${idAuditor}`).update({
+            gameMinutesToday: firebase.database.ServerValue.increment(5), // +5 min simulados por partida
+            lastGameDate: hoy
+        });
          document.getElementById('scoreWonDisplay').textContent = "+"+gain.toFixed(2);
          document.getElementById('modalGameOver').style.display='flex';
          window.playSound('gameover');
@@ -5174,6 +5268,86 @@ window.detenerVideoMuro = () => {
         // Reseteamos la variable para que el sistema sepa que no hay nada sonando
         videoActualJugando = null;
     }
+};
+// ==========================================
+// 📊 SISTEMA DE BARRAS DE MISIONES (FINAL)
+// ==========================================
+
+// 1. Función para abrir y calcular
+window.abrirModalTareas = () => {
+    document.getElementById('modalTareas').style.display = 'flex';
+    if(!idAuditor) return;
+
+    db.ref(`users/${idAuditor}`).once('value', snap => {
+        const u = snap.val() || {};
+        const hoy = new Date().toISOString().split('T')[0];
+
+        // --- A. RULETA (Meta: 3) ---
+        let ruletaCount = (u.lastSpinDate === hoy) ? (u.spinsUsed || 0) : 0;
+        // Corrección visual: limitar entre 0 y 3
+        if (ruletaCount < 0) ruletaCount = 0; 
+        if (ruletaCount > 3) ruletaCount = 3;
+        actualizarBarra('Ruleta', ruletaCount, 3, 'Giros');
+
+        // --- B. ANUNCIOS (Meta: 5) ---
+        let adCount = (u.lastAdDate === hoy) ? (u.adCount || 0) : 0;
+        actualizarBarra('Anuncio', adCount, 5, 'Vistos');
+
+        // --- C. CINE (Meta: 2) ---
+        let cineCount = (u.lastCineDate === hoy) ? (u.cineCount || 0) : 0;
+        actualizarBarra('Cine', cineCount, 2, 'Videos');
+
+        // --- D. JUEGOS (Meta: 15 min - Compartida) ---
+        // Snake y Guerra Vial comparten la misma barra de tiempo
+        let gameMin = (u.lastGameDate === hoy) ? (u.gameMinutesToday || 0) : 0;
+        actualizarBarra('GameSnake', gameMin, 15, 'Min');
+        actualizarBarra('GameRace', gameMin, 15, 'Min'); 
+        
+        // Ajedrez y Damas (Visualmente siempre listos)
+        actualizarBarra('GameChess', 0, 15, 'Jugar');
+        actualizarBarra('GameDamas', 0, 15, 'Jugar');
+    });
+};
+
+// 2. Función auxiliar para pintar las barras
+function actualizarBarra(idBase, actual, max, label) {
+    // Si el elemento no existe (ej: chess), evitamos error
+    const row = document.getElementById(`task${idBase}`);
+    if (!row) return; 
+
+    const porcentaje = Math.min((actual / max) * 100, 100);
+    const bar = document.getElementById(`bar${idBase}`);
+    const txt = document.getElementById(`txt${idBase}`);
+
+    // Ancho
+    bar.style.width = `${porcentaje}%`;
+    // Texto
+    txt.textContent = `${actual}/${max} ${label}`;
+
+    // Estado Completado
+    if (actual >= max) {
+        row.classList.add('task-completed');
+        txt.textContent = "¡COMPLETADO!";
+        txt.style.color = "#10b981";
+    } else {
+        row.classList.remove('task-completed');
+        txt.style.color = "#64748b";
+    }
+}
+
+// 3. Redireccionador (Aquí están TODOS los juegos)
+window.irMision = (tipo) => {
+    document.getElementById('modalTareas').style.display = 'none';
+    
+    if (tipo === 'ruleta') document.getElementById('modalRuletaGame').style.display = 'flex';
+    if (tipo === 'anuncio') document.getElementById('btnVerAnuncio').click(); 
+    if (tipo === 'cine') abrirCine();
+    
+    // Juegos
+    if (tipo === 'snake') prepararJuego('snake');
+    if (tipo === 'race') prepararJuego('race');
+    if (tipo === 'chess') abrirLichessConAd();
+    if (tipo === 'damas') window.location.href = 'go:Damas'; 
 };
     </script>
 </body>
