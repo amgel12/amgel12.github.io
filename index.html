@@ -3226,20 +3226,42 @@ function detectarYEnvarMenciones(txt, type) {
             if (!isChatOpen) toggleChat();
         } 
         else if (type === 'comentario' || type === 'like') {
-            // Ir al Muro
-            goToScreen(1); // Cambiamos a pantalla Muro
+            // 1. CORRECCIÓN: Ir a la pantalla 2 (PENSAR/VIDEOS)
+            // Antes decía goToScreen(1), por eso se iba a las fotos.
+            goToScreen(2); 
+
+            // 2. Buscar y enfocar el video suavemente
             setTimeout(() => {
                 const vid = document.getElementById('post-' + extra);
-                if (vid) {
+                const container = document.getElementById('muroReportes');
+                
+                if (vid && container) {
+                    // TRUCO PRO: Desactivar el imán un momento para que el scroll sea exacto
+                    container.style.scrollSnapType = "none";
+                    
+                    // Llevar el video al centro
                     vid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Resaltarlo visualmente
                     vid.style.transition = "0.3s";
-                    vid.style.border = "3px solid #0070ba";
-                    setTimeout(() => { vid.style.border = "1px solid #f1f5f9"; }, 1500);
+                    vid.style.border = "4px solid #0070ba"; // Borde azul
+                    vid.style.transform = "scale(1.02)";    // Pequeño zoom
+
+                    // Restaurar todo después de 1 segundo
+                    setTimeout(() => { 
+                        container.style.scrollSnapType = "y mandatory"; // Vuelve el imán
+                        vid.style.border = "none"; 
+                        vid.style.transform = "scale(1)";
+                    }, 1000);
+                } else {
+                    notify("⚠️ Video no cargado o muy antiguo");
                 }
+
+                // Si es comentario, abrir la caja de comentarios automáticamente
                 if (type === 'comentario') {
                     if (window.abrirModalComentarios) window.abrirModalComentarios(extra);
                 }
-            }, 600);
+            }, 800); // Esperamos 0.8s para asegurar que cargó la pantalla
         }
         else if (type === 'gift') {
             // Regalos
