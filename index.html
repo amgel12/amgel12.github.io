@@ -619,7 +619,28 @@
   </style>
 </head>
 <body>
+<div id="authScreen" style="position: fixed; inset: 0; background: #0f172a; z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+    <div style="margin-bottom: 30px;">
+        <h1 style="color: white; font-size: 2.5rem; font-weight: 800; letter-spacing: 2px;">PAGOCODE</h1>
+        <p style="color: #94a3b8; font-size: 0.9rem;">Registra tu correo para guardar tus puntos y recibir recordatorios.</p>
+    </div>
 
+    <div style="width: 100%; max-width: 320px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+        <h3 id="authTitle" style="margin-bottom: 20px; color: #1e293b;">Crear Cuenta</h3>
+        
+        <input type="email" id="emailInput" placeholder="Correo Electrónico" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 15px;">
+        <input type="password" id="passInput" placeholder="Contraseña (6+ caracteres)" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 20px;">
+        
+        <button id="btnAuthAction" onclick="manejarAuth()" class="btn-blue" style="background: #0070ba; margin-bottom: 15px;">REGISTRARME</button>
+        
+        <p style="font-size: 0.8rem; color: #64748b;">
+            <span id="toggleText">¿Ya tienes cuenta?</span> 
+            <button onclick="toggleAuthMode()" style="background: none; border: none; color: #0070ba; font-weight: 700; cursor: pointer; text-decoration: underline;">Toca aquí</button>
+        </p>
+    </div>
+    
+    <p style="margin-top: 20px; color: #475569; font-size: 0.7rem;">Al registrarte aceptas recibir notificaciones por correo.</p>
+</div>
     <div id="loadingOverlay"><div class="spinner"></div><div style="margin-top:20px; font-weight:bold; color:#64748b;">Cargando...</div></div>
     
     <div id="debugLog"><h3 style="color:white">⚠️ Diagnóstico</h3><button onclick="document.getElementById('debugLog').style.display='none'" style="margin-bottom:10px; padding:5px;">Cerrar</button><div id="logContent"></div></div>
@@ -2611,10 +2632,47 @@ window.seleccionarVideo = (id, title, btnElement) => {
     
     // --- AUTH ---
     // --- AUTH (CORREGIDO: PUNTOS + AVATAR + MISIONES) ---
+    // --- NUEVAS FUNCIONES DE LOGIN ---
+let isLoginMode = false;
+window.toggleAuthMode = () => {
+    isLoginMode = !isLoginMode;
+    document.getElementById('authTitle').textContent = isLoginMode ? "Iniciar Sesión" : "Crear Cuenta";
+    document.getElementById('btnAuthAction').textContent = isLoginMode ? "ENTRAR" : "REGISTRARME";
+    document.getElementById('toggleText').textContent = isLoginMode ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?";
+};
+
+window.manejarAuth = () => {
+    const email = document.getElementById('emailInput').value.trim();
+    const pass = document.getElementById('passInput').value.trim();
+    if (!email || pass.length < 6) return alert("⚠️ Email válido y clave de 6 caracteres"); // Usamos alert o tu notify
+
+    const btn = document.getElementById('btnAuthAction');
+    btn.disabled = true; btn.textContent = "Procesando...";
+
+    if (isLoginMode) {
+        auth.signInWithEmailAndPassword(email, pass).catch(err => {
+            alert("❌ Error: " + err.message);
+            btn.disabled = false; btn.textContent = "ENTRAR";
+        });
+    } else {
+        auth.createUserWithEmailAndPassword(email, pass).then((u) => {
+            db.ref(`users/${u.user.uid}`).update({
+                email: email,
+                fechaRegistro: firebase.database.ServerValue.TIMESTAMP,
+                myInviteKey: "INV-" + u.user.uid.substring(0, 5).toUpperCase(),
+                earnings: 0.25
+            });
+            alert("📧 ¡Bienvenido!");
+        }).catch(err => {
+            alert("❌ Error: " + err.message);
+            btn.disabled = false; btn.textContent = "REGISTRARME";
+        });
+    }
+};
     auth.onAuthStateChanged(user => {
         if (user) {
             idAuditor = user.uid;
-            
+            document.getElementById('authScreen').style.display = 'none';
             // 1. Quitar pantalla de carga
             document.getElementById('loadingOverlay').style.display = 'none';
             
@@ -2799,9 +2857,10 @@ window.seleccionarVideo = (id, title, btnElement) => {
             iniciarMonitorDeBadges();
             cargarListaUsuariosHorizontal();
 
-        } else {
-            // Si no hay usuario, entrar anónimo
-            auth.signInAnonymously().catch(e => alert("Error Auth: " + e.message));
+} else {
+            // MOSTRAR PANTALLA DE LOGIN
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('loadingOverlay').style.display = 'none';
         }
     });
     window.triggerSpin = () => {
