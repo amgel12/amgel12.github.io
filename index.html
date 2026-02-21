@@ -617,6 +617,12 @@
     background: #10b981; /* Verde cuando completa */
 }
   </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+       (function(){
+          emailjs.init("VDnlwq_AnzDP-lCEO");
+       })();
+    </script>
 </head>
 <body>
 <div id="authScreen" style="position: fixed; inset: 0; background: #0f172a; z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
@@ -2644,27 +2650,46 @@ window.toggleAuthMode = () => {
 window.manejarAuth = () => {
     const email = document.getElementById('emailInput').value.trim();
     const pass = document.getElementById('passInput').value.trim();
-    if (!email || pass.length < 6) return alert("⚠️ Email válido y clave de 6 caracteres"); // Usamos alert o tu notify
+    
+    if (!email || pass.length < 6) return notify("⚠️ Email válido y clave de 6 caracteres");
 
     const btn = document.getElementById('btnAuthAction');
     btn.disabled = true; btn.textContent = "Procesando...";
 
     if (isLoginMode) {
         auth.signInWithEmailAndPassword(email, pass).catch(err => {
-            alert("❌ Error: " + err.message);
+            notify("❌ Error: " + err.message);
             btn.disabled = false; btn.textContent = "ENTRAR";
         });
     } else {
         auth.createUserWithEmailAndPassword(email, pass).then((u) => {
+            const nuevoCodigo = "INV-" + u.user.uid.substring(0, 5).toUpperCase();
+            
             db.ref(`users/${u.user.uid}`).update({
                 email: email,
                 fechaRegistro: firebase.database.ServerValue.TIMESTAMP,
-                myInviteKey: "INV-" + u.user.uid.substring(0, 5).toUpperCase(),
+                myInviteKey: nuevoCodigo,
                 earnings: 0.25
             });
-            alert("📧 ¡Bienvenido!");
+
+            // 🔥 ENVIAR CORREO AUTOMÁTICO (Con tus IDs de EmailJS)
+            const templateParams = {
+                to_name: email,          
+                invite_code: nuevoCodigo 
+            };
+
+            emailjs.send('service_g3c2umf', 'template_r8oxlta', templateParams)
+                .then(() => {
+                    console.log("Correo enviado con éxito!");
+                }, (error) => {
+                    console.log("Fallo al enviar correo:", error);
+                });
+
+            notify("📧 ¡Bienvenido! Revisa tu bandeja de entrada.");
+            try { window.playSound('win'); } catch(e){} 
+
         }).catch(err => {
-            alert("❌ Error: " + err.message);
+            notify("❌ Error: " + err.message);
             btn.disabled = false; btn.textContent = "REGISTRARME";
         });
     }
