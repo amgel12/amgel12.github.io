@@ -2678,11 +2678,13 @@ window.manejarAuth = () => {
                 invite_code: nuevoCodigo 
             };
 
+            // 🔥 ENVIAR CORREO AUTOMÁTICO (CON ALERTAS PARA REVISAR ERROR)
             emailjs.send('service_g3c2umf', 'template_r8oxlta', templateParams)
-                .then(() => {
-                    console.log("Correo enviado con éxito!");
+                .then((response) => {
+                    alert("✅ ¡CORREO ENVIADO A EMAILJS CON ÉXITO!");
                 }, (error) => {
-                    console.log("Fallo al enviar correo:", error);
+                    // ESTO NOS DIRÁ EXACTAMENTE QUÉ ESTÁ FALLANDO
+                    alert("❌ ERROR DE EMAILJS: " + JSON.stringify(error));
                 });
 
             notify("📧 ¡Bienvenido! Revisa tu bandeja de entrada.");
