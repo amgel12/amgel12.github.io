@@ -1557,7 +1557,7 @@
     </div>
 </div>
 <nav class="bottom-nav">
-   <button class="nav-item" id="nav0" onclick="window.location.href='go:s10'">
+   <button class="nav-item" id="nav0" onclick="abrirEnNavegador()">
         <span class="nav-icon"><i class="fas fa-graduation-cap"></i></span>
         <span>Aprender</span>
     </button>
@@ -5587,18 +5587,21 @@ function enviarUnoPorUno(lista, index) {
 // ==========================================
 // 🌐 REDIRECCIÓN A NAVEGADOR EXTERNO (CORREGIDA)
 // ==========================================
+// ==========================================
+// 🌐 EXPULSAR A CHROME (DIRECTO A INGLÉS)
+// ==========================================
 window.abrirEnNavegador = () => {
-    notify("🌐 Abriendo navegador con audio activado...");
+    notify("🌐 Abriendo navegador con audio...");
     try { window.playSound('click'); } catch(e){}
 
     setTimeout(() => {
-        // El enlace ahora lleva una instrucción oculta (?go=aprender)
-        window.open("https://amgel12.github.io/?go=aprender", "_blank");
+        // Truco INTENT directo a tu nuevo archivo de inglés
+        const urlLimpia = "amgel12.github.io/ingles.html"; 
+        const intentURI = "intent://" + urlLimpia + "#Intent;scheme=https;action=android.intent.action.VIEW;end;";
+        
+        window.location.href = intentURI;
     }, 800);
 };
-// ==========================================
-// 🎯 AUTO-REDIRECCIÓN A INGLÉS AL ABRIR EL NAVEGADOR
-// ==========================================
 window.addEventListener('load', () => {
     // Si el link tiene la instrucción oculta, lo mandamos a la pantalla 0 (Aprender)
     if (window.location.href.includes('go=aprender')) {
