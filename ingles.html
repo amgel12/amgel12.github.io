@@ -1,1 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Academia de Inglés</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin:0; padding:0; user-select: none; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent;}
+        body { background: #f4f7f9; color: #334155; padding-bottom: 20px; }
+        
+        .header { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .btn-back { color: #64748b; font-size: 1.5rem; background: none; border: none; cursor: pointer; }
+        
+        .duo-path-container { display: flex; flex-direction: column; align-items: center; padding: 30px 0; gap: 40px; }
+        .duo-level-btn { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white; position: relative; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.2); transition: 0.1s; z-index: 2; }
+        .duo-level-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+        .level-locked { background: #cbd5e1; color: #94a3b8; pointer-events: none; box-shadow: 0 6px 0 #94a3b8; }
+        .level-unlocked { background: #58cc02; box-shadow: 0 6px 0 #46a302; }
+        .level-completed { background: #fbbf24; box-shadow: 0 6px 0 #d97706; }
+        .level-label { position: absolute; bottom: -25px; font-size: 0.8rem; font-weight: 800; color: #475569; width: 120px; text-align: center; }
+        .star-crown { position: absolute; top: -15px; right: -5px; font-size: 1.5rem; color: #fbbf24; display: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
+        .completed .star-crown { display: block; animation: bounce 1s infinite; }
 
+        /* Modal Lesson */
+        .modal-overlay { position: fixed; inset: 0; background: white; z-index: 20000; display: none; flex-direction: column; }
+        .lesson-header { display: flex; align-items: center; padding: 20px; }
+        .progress-bar-bg { flex: 1; height: 12px; background: #e5e7eb; border-radius: 10px; margin: 0 15px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #58cc02; width: 0%; transition: width 0.3s; }
+        
+        .q-word { font-size: 2rem; font-weight: 800; color: #1f2937; padding: 20px; border: 2px dashed #e5e7eb; border-radius: 15px; display: inline-block; margin-bottom: 30px; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 20px; width: 100%; max-width: 400px; margin: 0 auto; }
+        .option-card { background: white; border: 2px solid #e5e7eb; border-radius: 15px; padding: 20px 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 1.1rem; color: #4b5563; box-shadow: 0 4px 0 #e5e7eb; }
+        .option-card.selected { background: #ddf4ff; border-color: #84d8ff; color: #1cb0f6; }
+        .option-card.correct { background: #d7ffb8; border-color: #58cc02; color: #58cc02; }
+        .option-card.wrong { background: #ffdfe0; border-color: #ff4b4b; color: #ff4b4b; }
+        
+        .check-btn-area { padding: 20px; border-top: 1px solid #e5e7eb; background: white; position: absolute; bottom: 0; width: 100%; }
+        .btn-blue { background: #58cc02; color: white; padding: 15px; width: 100%; border-radius: 12px; border: none; font-weight: 700; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 0 #46a302; }
+        
+        .toast { visibility: hidden; background: #1e293b; color: white; padding: 12px 25px; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); border-radius: 50px; z-index: 99999; transition: 0.3s; opacity: 0; }
+        .toast.show { visibility: visible; opacity: 1; bottom: 100px; }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button class="btn-back" onclick="volverApp()">⬅</button>
+        <h2 style="color:#58cc02; font-weight: 800; margin:0;">Academia</h2>
+        <div style="font-weight:bold; color:#ef4444; font-size:1.1rem;">❤️ <span id="vidasDisplay">--</span></div>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px; padding: 0 20px;">
+        <p style="color:#64748b; font-size: 0.9rem;">Completa niveles, gana puntos reales y mejora tu pronunciación.</p>
+    </div>
+
+    <div id="englishPath" class="duo-path-container">
+        <div style="color:#cbd5e1; padding: 40px;"><i class="fas fa-spinner fa-spin fa-2x"></i><br>Cargando...</div>
+    </div>
+
+    <div id="modalLesson" class="modal-overlay">
+        <div class="lesson-header">
+            <button onclick="document.getElementById('modalLesson').style.display='none'" style="background:none; border:none; color:#cbd5e1; font-size:1.5rem;">✕</button>
+            <div class="progress-bar-bg"><div class="progress-fill" id="lessonProgress"></div></div>
+            <div style="font-weight:800; color:#ef4444;">❤️ <span id="vidasLeccion">5</span></div>
+        </div>
+        
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <div style="font-size: 1.2rem; color: #4b5563; margin-bottom: 10px;">Traduce y escucha:</div>
+            <div class="q-word" id="qWord">---</div>
+            <div class="options-grid" id="lessonOptions"></div>
+        </div>
+
+        <div class="check-btn-area">
+            <div id="lessonFeedback" style="display:none; margin-bottom:15px; font-weight:bold; font-size:1.2rem; text-align:center;"></div>
+            <button id="btnCheckLesson" class="btn-blue" onclick="checkAnswer()">COMPROBAR</button>
+            <button id="btnNextLesson" class="btn-blue" style="display:none;" onclick="nextQuestion()">CONTINUAR</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A", authDomain: "ingresos-minimos.firebaseapp.com", databaseURL: "https://ingresos-minimos-default-rtdb.firebaseio.com", projectId: "ingresos-minimos", storageBucket: "ingresos-minimos.firebasestorage.app", messagingSenderId: "104886265441", appId: "1:104886265441:web:2272d88ad1129919ea6c20" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        let idAuditor = null;
+        let userEnglishLevel = 1;
+        let currentHearts = 5;
+
+        // Sonidos
+        const s_click = new Audio('https://cdn.pixabay.com/audio/2023/04/27/audio_6599723522.mp3');
+        const s_win = new Audio('https://cdn.pixabay.com/audio/2021/08/09/audio_276632dc04.mp3');
+        const s_lose = new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_8ce5e82719.mp3');
+
+        function notify(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+        function volverApp() { window.location.href = "go:inicio"; } // Esto le dice a AppCreator24 que vuelva a la sección anterior
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                idAuditor = user.uid;
+                db.ref(`users/${idAuditor}`).on('value', snap => {
+                    const data = snap.val();
+                    if(data) {
+                        userEnglishLevel = data.englishLevel || 1;
+                        currentHearts = (typeof data.hearts !== 'undefined') ? data.hearts : 5;
+                        document.getElementById('vidasDisplay').textContent = currentHearts;
+                        document.getElementById('vidasLeccion').textContent = currentHearts;
+                        renderPath();
+                    }
+                });
+            } else {
+                document.body.innerHTML = '<div style="text-align:center; padding:50px;"><h2>⚠️ Acceso denegado</h2><p>Inicia sesión en la pantalla principal primero.</p><button onclick="volverApp()" class="btn-blue" style="margin-top:20px;">Volver</button></div>';
+            }
+        });
+
+        // DATOS DE LECCIONES
+        const wordBank = ["Blue", "Red", "Cat", "Dog", "One", "Two", "Yes", "No", "Bye", "Hello", "Thanks", "Please", "Water", "Milk", "Car", "Bus", "House", "City", "Friend", "Family", "Apple", "Bread", "Coffee"];
+        function getOptions(correct) { const opts = [correct]; while (opts.length < 4) { const r = wordBank[Math.floor(Math.random() * wordBank.length)]; if (!opts.includes(r)) opts.push(r); } return opts.sort(() => Math.random() - 0.5); }
+        
+        const englishLessons = [
+            { id: 1, title: "Intro", icon: "⭐", questions: [{ w: "Hola", a: "Hello", opts: getOptions("Hello") }, { w: "Adiós", a: "Bye", opts: getOptions("Bye") }, { w: "Gracias", a: "Thanks", opts: getOptions("Thanks") }] },
+            { id: 2, title: "Saludos", icon: "👋", questions: [{ w: "Por favor", a: "Please", opts: getOptions("Please") }, { w: "Sí", a: "Yes", opts: getOptions("Yes") }, { w: "No", a: "No", opts: getOptions("No") }] },
+            { id: 3, title: "Comida", icon: "🍎", questions: [{ w: "Agua", a: "Water", opts: getOptions("Water") }, { w: "Pan", a: "Bread", opts: getOptions("Bread") }, { w: "Manzana", a: "Apple", opts: getOptions("Apple") }] },
+            { id: 4, title: "Animales", icon: "🐶", questions: [{ w: "Perro", a: "Dog", opts: getOptions("Dog") }, { w: "Gato", a: "Cat", opts: getOptions("Cat") }, { w: "Pájaro", a: "Bird", opts: getOptions("Bird") }] }
+        ];
+
+        function renderPath() {
+            const container = document.getElementById('englishPath');
+            let html = "";
+            englishLessons.forEach((lesson, index) => {
+                const num = index + 1;
+                let status = num < userEnglishLevel ? "level-completed completed" : (num === userEnglishLevel ? "level-unlocked" : "level-locked");
+                let icon = num < userEnglishLevel ? lesson.icon : (num === userEnglishLevel ? lesson.icon : "🔒");
+                const margin = (index % 2 === 0) ? '0' : '50px';
+                html += `<div class="duo-level-btn ${status}" style="margin-left:${margin}" onclick="startLesson(${num})">${icon}<div class="star-crown">👑</div><div class="level-label">${lesson.title}</div></div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        let currentLesson, currentQIndex, selectedOpt;
+
+        window.startLesson = (lvl) => {
+            if (lvl > userEnglishLevel) return notify("🔒 Nivel bloqueado");
+            if (currentHearts <= 0) return notify("💔 No tienes vidas. Vuelve mañana o recarga en la app principal.");
+            
+            currentLesson = englishLessons.find(l => l.id === lvl);
+            currentQIndex = 0;
+            document.getElementById('modalLesson').style.display = 'flex';
+            showQuestion();
+        };
+
+        function showQuestion() {
+            const q = currentLesson.questions[currentQIndex];
+            document.getElementById('qWord').textContent = q.w;
+            document.getElementById('lessonProgress').style.width = ((currentQIndex / currentLesson.questions.length) * 100) + "%";
+            let html = "";
+            q.opts.forEach(opt => html += `<div class="option-card" onclick="selectOption(this, '${opt}')">${opt}</div>`);
+            document.getElementById('lessonOptions').innerHTML = html;
+            document.getElementById('lessonFeedback').style.display = 'none';
+            document.getElementById('btnCheckLesson').style.display = 'block';
+            document.getElementById('btnNextLesson').style.display = 'none';
+            selectedOpt = null;
+        }
+
+        // TEXT TO SPEECH (Hablar en Inglés)
+        let tts = null;
+        function hablarTexto(texto) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            tts = new SpeechSynthesisUtterance(texto);
+            tts.lang = 'en-US'; tts.rate = 0.9;
+            window.speechSynthesis.speak(tts);
+        }
+
+        window.selectOption = (el, text) => {
+            document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedOpt = text;
+            s_click.play();
+            hablarTexto(text); // Habla la palabra al tocarla
+        };
+
+        window.checkAnswer = () => {
+            if (!selectedOpt) return notify("Selecciona una opción");
+            const correct = currentLesson.questions[currentQIndex].a;
+            const feedback = document.getElementById('lessonFeedback');
+            const cards = document.querySelectorAll('.option-card');
+            
+            if (selectedOpt === correct) {
+                feedback.textContent = "¡EXCELENTE! 🎉"; feedback.style.color = "#58cc02";
+                s_win.play();
+                cards.forEach(c => { if(c.innerText === correct) c.classList.add('correct'); });
+            } else {
+                feedback.textContent = `Incorrecto. Era: ${correct}`; feedback.style.color = "#ff4b4b";
+                s_lose.play();
+                cards.forEach(c => { if(c.innerText === selectedOpt) c.classList.add('wrong'); if(c.innerText === correct) c.classList.add('correct'); });
+                db.ref(`users/${idAuditor}/hearts`).set(currentHearts - 1);
+            }
+            document.getElementById('btnCheckLesson').style.display = 'none';
+            document.getElementById('btnNextLesson').style.display = 'block';
+            feedback.style.display = 'block';
+        };
+
+        window.nextQuestion = () => {
+            currentQIndex++;
+            if (currentQIndex >= currentLesson.questions.length) {
+                document.getElementById('modalLesson').style.display = 'none';
+                const bonus = 0.50;
+                db.ref(`users/${idAuditor}`).update({
+                    englishLevel: userEnglishLevel + 1,
+                    earnings: firebase.database.ServerValue.increment(bonus)
+                });
+                s_win.play();
+                notify(`🎉 ¡NIVEL COMPLETADO! +${bonus} PTS`);
+            } else { showQuestion(); }
+        };
+    </script>
+</body>
+</html>
