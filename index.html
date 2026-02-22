@@ -5581,23 +5581,21 @@ function enviarUnoPorUno(lista, index) {
 // ==========================================
 // 🌐 REDIRECCIÓN A NAVEGADOR EXTERNO (ACADEMIA)
 // ==========================================
+// ==========================================
+// 🌐 REDIRECCIÓN A NAVEGADOR EXTERNO (FORZADO ANDROID)
+// ==========================================
 window.abrirEnNavegador = () => {
-    // 1. Avisamos al usuario y ponemos sonido
-    notify("🌐 Abriendo navegador para usar el audio...");
+    notify("🌐 Abriendo Chrome / Navegador...");
     try { window.playSound('click'); } catch(e){}
 
-    // 2. Esperamos medio segundo para que lea el mensaje y luego lo sacamos
     setTimeout(() => {
-        // Tu enlace de GitHub
-        const urlApp = "https://amgel12.github.io/"; 
+        // TRUCO INTENT: Esto obliga a Android a abrir la app externa de Chrome
+        // Nota: Solo se pone "amgel12.github.io" sin el "https://" al principio, eso va en el scheme.
+        const urlLimpia = "amgel12.github.io/"; 
         
-        // Truco seguro para forzar al celular a abrir el navegador nativo
-        const enlaceInvisible = document.createElement('a');
-        enlaceInvisible.href = urlApp;
-        enlaceInvisible.target = '_blank'; // Abre fuera de la app
-        document.body.appendChild(enlaceInvisible);
-        enlaceInvisible.click();
-        document.body.removeChild(enlaceInvisible);
+        const intentURI = "intent://" + urlLimpia + "#Intent;scheme=https;action=android.intent.action.VIEW;end;";
+        
+        window.location.href = intentURI;
     }, 800);
 };
     </script>
