@@ -102,7 +102,7 @@
         const s_lose = new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_8ce5e82719.mp3');
 
         function notify(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
-        function volverApp() { window.location.href = "go:inicio"; } // Esto le dice a AppCreator24 que vuelva a la sección anterior
+        function volverApp() { window.location.href = "go:s2"; } // Esto le dice a AppCreator24 que vuelva a la sección anterior
 
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -250,15 +250,10 @@
             }
         };
 
-        // Función inteligente para regresar a la app principal
+     // Función inteligente para regresar a la app principal
         window.volverA_Principal = () => {
-            // Intenta volver si es navegador externo
-            window.location.href = "intent://amgel12.github.io/#Intent;scheme=https;action=android.intent.action.VIEW;end;";
-            
-            // Si está dentro de AppCreator24, usa el comando nativo
-            setTimeout(() => { 
-                window.location.href = "go:s2"; 
-            }, 500); 
+            // Comando directo y nativo de AppCreator24
+            window.location.href = "go:s2"; 
         };
     </script>
 </body>
