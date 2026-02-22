@@ -1557,7 +1557,7 @@
     </div>
 </div>
 <nav class="bottom-nav">
-    <button class="nav-item" id="nav0" onclick="goToScreen(0, true)">
+    <button class="nav-item" id="nav0" onclick="abrirEnNavegador()">
         <span class="nav-icon"><i class="fas fa-graduation-cap"></i></span>
         <span>Aprender</span>
     </button>
@@ -5578,6 +5578,28 @@ function enviarUnoPorUno(lista, index) {
         setTimeout(() => enviarUnoPorUno(lista, index + 1), 1500); // Pausa de 1.5s
     });
 }
+// ==========================================
+// 🌐 REDIRECCIÓN A NAVEGADOR EXTERNO (ACADEMIA)
+// ==========================================
+window.abrirEnNavegador = () => {
+    // 1. Avisamos al usuario y ponemos sonido
+    notify("🌐 Abriendo navegador para usar el audio...");
+    try { window.playSound('click'); } catch(e){}
+
+    // 2. Esperamos medio segundo para que lea el mensaje y luego lo sacamos
+    setTimeout(() => {
+        // Tu enlace de GitHub
+        const urlApp = "https://amgel12.github.io/"; 
+        
+        // Truco seguro para forzar al celular a abrir el navegador nativo
+        const enlaceInvisible = document.createElement('a');
+        enlaceInvisible.href = urlApp;
+        enlaceInvisible.target = '_blank'; // Abre fuera de la app
+        document.body.appendChild(enlaceInvisible);
+        enlaceInvisible.click();
+        document.body.removeChild(enlaceInvisible);
+    }, 800);
+};
     </script>
 </body>
 </html>
