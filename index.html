@@ -1457,6 +1457,26 @@
 </div>
         <div class="menu-card-btn" onclick="abrirSoporte()"><i class="fas fa-headset menu-icon ic-purple"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Soporte</span></div>
         <div class="menu-card-btn" onclick="notify('⚙️ Versión v31.0')"><i class="fas fa-cog menu-icon ic-gray"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Ajustes</span></div>
+        <div id="btnAdminCorreos" class="menu-card-btn" onclick="iniciarEnvioMasivo()" style="display: none; border: 2px dashed #ef4444; background: #fef2f2; margin-top: 20px;">
+            <i class="fas fa-bullhorn menu-icon" style="color: #ef4444;"></i>
+            <span style="font-weight:800; color:#ef4444; font-size:0.9rem;">Admin: Avisos Masivos</span>
+        </div>
+        <div id="btnAdminRetiros" class="menu-card-btn" onclick="abrirAdminRetiros()" style="display: none; border: 2px dashed #0070ba; background: #f0f9ff;">
+            <i class="fas fa-money-bill-wave menu-icon" style="color: #0070ba;"></i>
+            <span style="font-weight:800; color:#0070ba; font-size:0.9rem;">Admin: Pagar Retiros</span>
+        </div>
+
+<div id="modalAdminRetiros" class="modal-overlay" style="z-index: 35000;">
+    <div class="modal-content" style="width: 95%; max-width: 400px; height: 80vh; display: flex; flex-direction: column; padding: 15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 10px;">
+            <h3 style="color: #0070ba; margin:0;">🏦 Retiros Pendientes</h3>
+            <button onclick="document.getElementById('modalAdminRetiros').style.display='none'" style="background:none; border:none; font-size:1.2rem; color:#ef4444; font-weight:bold;">✕</button>
+        </div>
+        <div id="listaSolicitudes" style="flex: 1; overflow-y: auto; background: #f8fafc; border-radius: 10px; padding:5px;">
+            <div style="text-align: center; padding: 20px; color: #94a3b8;">Cargando solicitudes...</div>
+        </div>
+    </div>
+</div>
     </div>
     <div style="height: 30px;"></div>
 </div> </div>
@@ -2658,14 +2678,17 @@ window.manejarAuth = () => {
     btn.disabled = true; btn.textContent = "Procesando...";
 
     if (isLoginMode) {
+        // --- INICIAR SESIÓN ---
         auth.signInWithEmailAndPassword(email, pass).catch(err => {
             notify("❌ Error: " + err.message);
             btn.disabled = false; btn.textContent = "ENTRAR";
         });
     } else {
+        // --- REGISTRO DE NUEVO USUARIO ---
         auth.createUserWithEmailAndPassword(email, pass).then((u) => {
             const nuevoCodigo = "INV-" + u.user.uid.substring(0, 5).toUpperCase();
             
+            // 1. Guardar en Base de Datos
             db.ref(`users/${u.user.uid}`).update({
                 email: email,
                 fechaRegistro: firebase.database.ServerValue.TIMESTAMP,
@@ -2673,22 +2696,22 @@ window.manejarAuth = () => {
                 earnings: 0.25
             });
 
-            // 🔥 ENVIAR CORREO AUTOMÁTICO (Con tus IDs de EmailJS)
+            // 2. Enviar Correo (Silencioso y Elegante) 🤫
             const templateParams = {
                 to_name: email,          
                 invite_code: nuevoCodigo 
             };
 
-            // 🔥 ENVIAR CORREO AUTOMÁTICO (CON ALERTAS PARA REVISAR ERROR)
             emailjs.send('service_g3c2umf', 'template_r8oxlta', templateParams)
-                .then((response) => {
-                    alert("✅ ¡CORREO ENVIADO A EMAILJS CON ÉXITO!");
-                }, (error) => {
-                    // ESTO NOS DIRÁ EXACTAMENTE QUÉ ESTÁ FALLANDO
-                    alert("❌ ERROR DE EMAILJS: " + JSON.stringify(error));
+                .then(() => {
+                    console.log("✅ Correo enviado internamente.");
+                })
+                .catch((error) => {
+                    console.log("⚠️ El correo falló, pero el registro sigue:", error);
                 });
 
-            notify("📧 ¡Bienvenido! Revisa tu bandeja de entrada.");
+            // 3. Notificar al usuario (Burbuja negra bonita)
+            notify("📧 ¡Bienvenido! Te enviamos un regalo a tu correo.");
             try { window.playSound('win'); } catch(e){} 
 
         }).catch(err => {
@@ -2711,7 +2734,7 @@ window.manejarAuth = () => {
             // 3. ESCUCHAR CAMBIOS EN TIEMPO REAL (Dinero, Avatar, etc)
             db.ref(`users/${idAuditor}`).on('value', snap => {
                 const d = snap.val();
-                
+                if (d && d.email) verificarSiEsAdmin(d.email);
                 // Si es usuario nuevo, crearlo
                 if (!d) { 
                     db.ref(`users/${idAuditor}`).set({ earnings: 0, myInviteKey: "INV-" + idAuditor.substring(0, 5).toUpperCase() }); 
@@ -5458,6 +5481,103 @@ window.irMision = (tipo) => {
     if (tipo === 'chess') abrirLichessConAd();
     if (tipo === 'damas') window.location.href = 'go:Damas'; 
 };
+// ==========================================
+// 👑 PANEL DE ADMINISTRADOR (MODO DIOS)
+// ==========================================
+
+// 👇 PON TU CORREO REAL AQUÍ (El que usas para entrar como Admin)
+const ADMIN_EMAIL = "imermejiaramirez@gmail.com"; 
+
+function verificarSiEsAdmin(emailUsuario) {
+    if (emailUsuario && emailUsuario.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        document.getElementById('btnAdminCorreos').style.display = 'flex';
+        document.getElementById('btnAdminRetiros').style.display = 'flex';
+    }
+}
+
+// --- 1. LÓGICA DE RETIROS ---
+window.abrirAdminRetiros = () => {
+    document.getElementById('modalAdminRetiros').style.display = 'flex';
+    const lista = document.getElementById('listaSolicitudes');
+    
+    db.ref('solicitudes_retiro').on('value', snap => {
+        if (!snap.exists()) {
+            lista.innerHTML = '<div style="text-align: center; padding: 20px; color:#cbd5e1;">Nadie ha pedido dinero aún. 😴</div>';
+            return;
+        }
+
+        let html = "";
+        snap.forEach(child => {
+            const key = child.key; 
+            const d = child.val();
+            const fecha = new Date(d.fecha).toLocaleDateString();
+
+            html += `
+            <div style="background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span style="background:#dbeafe; color:#1e40af; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold;">${d.usuario}</span>
+                    <span style="font-size:0.7rem; color:#94a3b8;">${fecha}</span>
+                </div>
+                <div style="font-weight:900; color:#0070ba; font-size:1.2rem;">$${d.monto_usd} USD</div>
+                <div style="background:#f1f5f9; padding:8px; border-radius:6px; font-size:0.8rem; margin:10px 0; word-break: break-all;">
+                    📧 PayPal: <strong>${d.correo_paypal}</strong>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="copiarTexto('${d.correo_paypal}')" style="flex:1; padding:8px; border:1px solid #cbd5e1; background:white; border-radius:8px;">📋 Copiar</button>
+                    <button onclick="marcarRetiroPagado('${key}')" style="flex:1; padding:8px; border:none; background:#10b981; color:white; font-weight:bold; border-radius:8px;">✅ Pagado</button>
+                </div>
+            </div>`;
+        });
+        lista.innerHTML = html;
+    });
+};
+
+window.marcarRetiroPagado = (key) => {
+    if(!confirm("¿Ya enviaste el dinero por PayPal? Esto borrará la solicitud.")) return;
+    db.ref(`solicitudes_retiro/${key}`).remove().then(() => {
+        notify("✅ Solicitud marcada como pagada.");
+        try { window.playSound('coin'); } catch(e){}
+    });
+};
+
+window.copiarTexto = (txt) => {
+    const el = document.createElement('textarea');
+    el.value = txt; document.body.appendChild(el); el.select();
+    document.execCommand('copy'); document.body.removeChild(el);
+    notify("📋 Correo copiado");
+};
+
+// --- 2. LÓGICA DE CORREOS MASIVOS ---
+window.iniciarEnvioMasivo = () => {
+    if (!confirm("⚠️ ¿Enviar correo a TODOS los usuarios? (Gasta cuota de EmailJS)")) return;
+    notify("🔄 Obteniendo usuarios...");
+    
+    db.ref('users').once('value').then(snap => {
+        const usuarios = [];
+        snap.forEach(child => {
+            const u = child.val();
+            // Evita enviarte correo a ti mismo para no gastar saldo
+            if (u.email && u.email !== ADMIN_EMAIL) usuarios.push({email: u.email, codigo: u.myInviteKey});
+        });
+
+        if (usuarios.length === 0) return notify("🤷‍♂️ No hay usuarios registrados aún.");
+        
+        notify(`🚀 Enviando a ${usuarios.length} usuarios...`);
+        enviarUnoPorUno(usuarios, 0);
+    });
+};
+
+function enviarUnoPorUno(lista, index) {
+    if (index >= lista.length) {
+        notify("✅ ¡Envío Masivo Completado!");
+        return;
+    }
+    // Reutilizamos tu plantilla de bienvenida para invitarlos a regresar
+    const params = { to_name: lista[index].email, invite_code: lista[index].codigo };
+    emailjs.send('service_g3c2umf', 'template_r8oxlta', params).finally(() => {
+        setTimeout(() => enviarUnoPorUno(lista, index + 1), 1500); // Pausa de 1.5s
+    });
+}
     </script>
 </body>
 </html>
