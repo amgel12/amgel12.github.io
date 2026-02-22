@@ -956,7 +956,23 @@
         </button>
     </div>
 </div>
-
+<div id="modalConfirmarNavegador" class="modal-overlay" style="z-index: 30000;">
+    <div class="modal-content" style="text-align: center; border: 2px solid #0070ba;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🌐</div>
+        <h3 style="color:#0070ba; margin-bottom: 10px;">¿Abrir en Chrome?</h3>
+        <p style="font-size: 0.9rem; color:#64748b; margin-bottom: 20px;">
+            Para que la voz en inglés funcione perfecto, abriremos la academia en tu navegador externo.<br><br>¿Seguro que deseas salir de la app?
+        </p>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="document.getElementById('modalConfirmarNavegador').style.display='none'" class="btn-blue" style="background: #e2e8f0; color: #475569; flex: 1;">
+                Cancelar
+            </button>
+            <button onclick="ejecutarSalidaNavegador()" class="btn-blue" style="background: #0070ba; color: white; flex: 1; box-shadow: 0 4px 10px rgba(0, 112, 186, 0.3);">
+                Sí, Continuar
+            </button>
+        </div>
+    </div>
+</div>
 <div id="modalConfirmDelete" class="modal-overlay" style="z-index: 30000;">
     <div class="modal-content" style="border: 2px solid #ef4444; text-align: center;">
         <div style="font-size: 3rem; margin-bottom: 10px;">🗑️</div>
@@ -5579,23 +5595,37 @@ function enviarUnoPorUno(lista, index) {
     });
 }
 // ==========================================
-// 🌐 REDIRECCIÓN A NAVEGADOR EXTERNO (ACADEMIA)
+// 🌐 EXPULSAR A CHROME (CON CONFIRMACIÓN Y ANUNCIO)
 // ==========================================
-// ==========================================
-// 🌐 REDIRECCIÓN A NAVEGADOR EXTERNO (FORZADO ANDROID)
-// ==========================================
-// ==========================================
-// 🌐 REDIRECCIÓN A NAVEGADOR EXTERNO (CORREGIDA)
-// ==========================================
-// ==========================================
-// 🌐 EXPULSAR A CHROME (DIRECTO A INGLÉS)
-// ==========================================
-window.abrirEnNavegador = () => {
-    notify("🌐 Abriendo navegador con audio...");
-    try { window.playSound('click'); } catch(e){}
 
+// 1. Esta función solo abre la ventana de pregunta
+window.abrirEnNavegador = () => {
+    try { window.playSound('click'); } catch(e){}
+    document.getElementById('modalConfirmarNavegador').style.display = 'flex';
+};
+
+// 2. Esta función se ejecuta cuando el usuario dice "Sí, Continuar"
+window.ejecutarSalidaNavegador = () => {
+    // Escondemos la ventana
+    document.getElementById('modalConfirmarNavegador').style.display = 'none';
+    
+    notify("📺 Cargando anuncio y abriendo navegador...");
+    try { window.playSound('coin'); } catch(e){}
+
+    // A) DISPARAR ANUNCIO INVISIBLE DE APPCREATOR24 (Usamos s7)
+    try {
+        const adTrigger = document.createElement('iframe');
+        adTrigger.style.display = 'none';
+        adTrigger.src = 'go:s7'; // Esto lanza el anuncio intersticial de AdMob
+        document.body.appendChild(adTrigger);
+        setTimeout(() => { try { document.body.removeChild(adTrigger); } catch(e){} }, 3000);
+    } catch(err) {
+        console.log("Error al cargar anuncio");
+    }
+
+    // B) EXPULSAR AL NAVEGADOR
+    // Esperamos 800ms para que le dé tiempo al anuncio de saltar a la pantalla
     setTimeout(() => {
-        // Truco INTENT directo a tu nuevo archivo de inglés
         const urlLimpia = "amgel12.github.io/ingles.html"; 
         const intentURI = "intent://" + urlLimpia + "#Intent;scheme=https;action=android.intent.action.VIEW;end;";
         
