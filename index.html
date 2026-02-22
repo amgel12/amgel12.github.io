@@ -5584,20 +5584,29 @@ function enviarUnoPorUno(lista, index) {
 // ==========================================
 // 🌐 REDIRECCIÓN A NAVEGADOR EXTERNO (FORZADO ANDROID)
 // ==========================================
+// ==========================================
+// 🌐 REDIRECCIÓN A NAVEGADOR EXTERNO (CORREGIDA)
+// ==========================================
 window.abrirEnNavegador = () => {
-    notify("🌐 Abriendo Chrome / Navegador...");
+    notify("🌐 Abriendo navegador con audio activado...");
     try { window.playSound('click'); } catch(e){}
 
     setTimeout(() => {
-        // TRUCO INTENT: Esto obliga a Android a abrir la app externa de Chrome
-        // Nota: Solo se pone "amgel12.github.io" sin el "https://" al principio, eso va en el scheme.
-        const urlLimpia = "amgel12.github.io/"; 
-        
-        const intentURI = "intent://" + urlLimpia + "#Intent;scheme=https;action=android.intent.action.VIEW;end;";
-        
-        window.location.href = intentURI;
+        // El enlace ahora lleva una instrucción oculta (?go=aprender)
+        window.open("https://amgel12.github.io/?go=aprender", "_blank");
     }, 800);
 };
+// ==========================================
+// 🎯 AUTO-REDIRECCIÓN A INGLÉS AL ABRIR EL NAVEGADOR
+// ==========================================
+window.addEventListener('load', () => {
+    // Si el link tiene la instrucción oculta, lo mandamos a la pantalla 0 (Aprender)
+    if (window.location.href.includes('go=aprender')) {
+        setTimeout(() => {
+            goToScreen(0); 
+        }, 1500); // Le damos 1.5 segundos para que cargue la app y haga el cambio
+    }
+});
     </script>
 </body>
 </html>
