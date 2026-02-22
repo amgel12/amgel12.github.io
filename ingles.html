@@ -213,15 +213,52 @@
         window.nextQuestion = () => {
             currentQIndex++;
             if (currentQIndex >= currentLesson.questions.length) {
+                // 1. Ocultar el modal de la lección
                 document.getElementById('modalLesson').style.display = 'none';
+                
                 const bonus = 0.50;
+                
+                // 2. Guardar progreso y dar los puntos REALES en Firebase
                 db.ref(`users/${idAuditor}`).update({
                     englishLevel: userEnglishLevel + 1,
                     earnings: firebase.database.ServerValue.increment(bonus)
+                }).then(() => {
+                    // Sonido de victoria
+                    s_win.play();
+                    
+                    // 3. PANTALLA DE VICTORIA ÉPICA
+                    // Esto borra el menú y muestra un trofeo gigante para que sepan que ganaron
+                    document.body.innerHTML = `
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#f4f7f9; text-align:center; padding:20px;">
+                            <div style="font-size:6rem; animation: bounce 1s infinite;">🏆</div>
+                            <h1 style="color:#58cc02; margin-top:20px; font-weight:900; font-size:2rem;">¡NIVEL SUPERADO!</h1>
+                            
+                            <div style="background:white; border:2px dashed #f59e0b; border-radius:15px; padding:20px; margin:20px 0; width:100%; max-width:300px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                                <p style="color:#64748b; font-size:0.8rem; font-weight:bold; margin-bottom:5px;">Recompensa enviada a tu billetera:</p>
+                                <h2 style="color:#f59e0b; font-size:3rem; margin:0;">+${bonus} PTS</h2>
+                            </div>
+                            
+                            <button onclick="volverA_Principal()" style="background:#0070ba; color:white; padding:15px 30px; border-radius:50px; font-size:1.1rem; font-weight:bold; border:none; box-shadow:0 6px 15px rgba(0,112,186,0.3); cursor:pointer; margin-top:20px;">
+                                🏠 Volver a PAGOCODE
+                            </button>
+                        </div>
+                    `;
                 });
-                s_win.play();
-                notify(`🎉 ¡NIVEL COMPLETADO! +${bonus} PTS`);
-            } else { showQuestion(); }
+            } else { 
+                // Si aún faltan preguntas, mostrar la siguiente
+                showQuestion(); 
+            }
+        };
+
+        // Función inteligente para regresar a la app principal
+        window.volverA_Principal = () => {
+            // Intenta volver si es navegador externo
+            window.location.href = "intent://amgel12.github.io/#Intent;scheme=https;action=android.intent.action.VIEW;end;";
+            
+            // Si está dentro de AppCreator24, usa el comando nativo
+            setTimeout(() => { 
+                window.location.href = "go:s2"; 
+            }, 500); 
         };
     </script>
 </body>
