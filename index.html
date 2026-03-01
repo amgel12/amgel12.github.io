@@ -8,6 +8,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+  #modalRetiro .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
   /* ESTILOS PARA EL MODAL DE RETIRO */
 .card-retiro {
     background: white;
@@ -616,6 +621,22 @@
 .task-completed .task-progress-fill {
     background: #10b981; /* Verde cuando completa */
 }
+/* 🎊 CONFETTI ANIMATION */
+.confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -10px;
+    z-index: 99999;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+    pointer-events: none;
+}
+
+@keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
   </style>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
@@ -626,6 +647,39 @@
     </script>
 </head>
 <body>
+  <div id="modalRegaloPrivado" class="modal-overlay" style="z-index:32000;">
+    <div class="modal-content" style="border:2px solid #a855f7; text-align:center;">
+        <div style="font-size:3rem; animation:bounce 1s infinite;">🎁</div>
+        <h3 style="color:#7c3aed; margin:10px 0;">Enviar Regalo</h3>
+        <p id="labelDestinoRegalo" style="font-size:0.85rem; color:#64748b; margin-bottom:15px;">Para: ---</p>
+        
+        <div style="background:#f5f3ff; border:1px dashed #a855f7; border-radius:12px; padding:15px; margin-bottom:15px;">
+            <div style="font-size:0.75rem; color:#64748b; margin-bottom:8px;">Tu saldo disponible:</div>
+            <div id="saldoRegaloDisplay" style="font-size:2rem; font-weight:800; color:#0070ba;">0.00 PTS</div>
+        </div>
+        
+        <!-- OPCIONES RÁPIDAS -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:15px;">
+            <button onclick="seleccionarMontoRegalo(1)" class="btn-blue" style="background:#f5f3ff; color:#7c3aed; border:2px solid #a855f7; font-weight:800;">1 PTS</button>
+            <button onclick="seleccionarMontoRegalo(5)" class="btn-blue" style="background:#f5f3ff; color:#7c3aed; border:2px solid #a855f7; font-weight:800;">5 PTS</button>
+            <button onclick="seleccionarMontoRegalo(10)" class="btn-blue" style="background:#f5f3ff; color:#7c3aed; border:2px solid #a855f7; font-weight:800;">10 PTS</button>
+        </div>
+        
+        <input type="number" id="inputMontoRegalo" placeholder="O escribe cantidad..." 
+               style="border:2px solid #a855f7; border-radius:12px; margin-bottom:15px;"
+               oninput="actualizarBtnRegalo()">
+        
+        <button id="btnConfirmarRegalo" onclick="confirmarRegaloPrivado()" 
+                class="btn-blue" style="background:linear-gradient(135deg,#a855f7,#8b5cf6); box-shadow:0 4px 15px rgba(168,85,247,0.4);">
+            🎁 Enviar Regalo
+        </button>
+        
+        <button onclick="document.getElementById('modalRegaloPrivado').style.display='none'" 
+                style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">
+            Cancelar
+        </button>
+    </div>
+</div>
 <div id="authScreen" style="position: fixed; inset: 0; background: #0f172a; z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
     <div style="margin-bottom: 30px;">
         <h1 style="color: white; font-size: 2.5rem; font-weight: 800; letter-spacing: 2px;">PAGOCODE</h1>
@@ -869,10 +923,17 @@
             <div style="text-align:center; padding:20px; color:#94a3b8;">Inicia la conversación...</div>
         </div>
 
-        <div style="background:white; padding:10px; border-top:1px solid #e2e8f0; display:flex; gap:10px; align-items:center; flex-shrink:0;">
-            <input type="text" id="inputPrivMsg" placeholder="Mensaje privado..." style="flex:1; background:#f0f2f5; border:none; padding:12px 15px; border-radius:20px; outline:none;">
-            <button onclick="enviarMensajePrivado()" class="btn-blue" style="width:45px; height:45px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">➤</button>
-        </div>
+      <div style="background:white; padding:10px; border-top:1px solid #e2e8f0; display:flex; gap:8px; align-items:center; flex-shrink:0;">
+    
+    <!-- BOTÓN REGALO -->
+    <button onclick="abrirRegaloPrivado()" style="width:45px; height:45px; border-radius:50%; background:linear-gradient(135deg,#a855f7,#8b5cf6); border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(168,85,247,0.4); flex-shrink:0;">
+        🎁
+    </button>
+    
+    <input type="text" id="inputPrivMsg" placeholder="Mensaje privado..." style="flex:1; background:#f0f2f5; border:none; padding:12px 15px; border-radius:20px; outline:none;">
+    
+    <button onclick="enviarMensajePrivado()" class="btn-blue" style="width:45px; height:45px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">➤</button>
+</div>
     </div>
 </div>
    <div id="modalSubirFoto" class="modal-overlay" style="z-index: 26000;">
@@ -992,75 +1053,123 @@
     </div>
 </div>
     <div id="modalRetiro" class="modal-overlay">
-        <div class="modal-content" style="background: #f8fafc; text-align: left;">
-            
-            <div style="text-align:center; margin-bottom:15px;">
-                <h3 style="color:#334155; margin:0;">Mi Billetera</h3>
+     <div class="modal-content" style="max-height: 85vh; overflow-y: scroll; background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); padding: 0; border-radius: 25px; border: 1px solid #334155;">
+
+    <!-- HEADER -->
+    <div style="padding: 25px 25px 15px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div style="font-size: 2rem; margin-bottom: 5px;">💎</div>
+        <h3 style="color: white; margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: 1px;">MI BILLETERA</h3>
+        <p style="color: #64748b; font-size: 0.7rem; margin: 3px 0 0;">PAGOCODE • Sistema de Pagos</p>
+    </div>
+
+    <!-- SALDO CARD -->
+    <div style="margin: 20px 20px 0; background: linear-gradient(135deg, #0070ba, #0ea5e9); border-radius: 20px; padding: 20px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,112,186,0.4);">
+        <!-- Círculos decorativos -->
+        <div style="position:absolute; top:-20px; right:-20px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.08);"></div>
+        <div style="position:absolute; bottom:-30px; left:-10px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.05);"></div>
+        
+        <div style="position:relative; z-index:2;">
+            <div style="font-size:0.7rem; color:rgba(255,255,255,0.7); font-weight:600; letter-spacing:2px; text-transform:uppercase;">Saldo Disponible</div>
+            <div style="font-size: 3rem; font-weight: 900; color: white; line-height:1.1; margin: 5px 0;">
+                <span id="retiroSaldoDisplay">0.00</span>
+                <span style="font-size:1.2rem; opacity:0.8;">PTS</span>
             </div>
-
-            <div style="background: white; padding: 2px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 1px;">
-                <div style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">SALDO DISPONIBLE</div>
-                <div style="font-size: 2.5rem; font-weight: 800; color: #0070ba; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <span id="retiroSaldoDisplay">0.00</span> <span style="font-size:1.2rem;">PTS</span>
-                </div>
+            <div style="font-size:0.75rem; color:rgba(255,255,255,0.6); margin-top:5px;">
+                ≈ $<span id="retiroUsdEquiv">0.00</span> USD estimado
             </div>
-
-            <div onclick="abrirRifa(); document.getElementById('modalRetiro').style.display='none'" style="background: linear-gradient(135deg, #fffbeb, #fff7ed); border: 2px dashed #f59e0b; padding: 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="font-size: 1.5rem;">🎟️</div>
-                    <div>
-                        <div style="font-weight: 800; color: #b45309; font-size: 0.9rem;">GRAN RIFA $50 USD</div>
-                        <div style="font-size: 0.7rem; color: #d97706;">Costo: 100 PTS</div>
-                    </div>
-                </div>
-                <div style="background: #f59e0b; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: bold;">
-                    JUGAR
-                </div>
-            </div>
-
-            <p style="font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:10px;">Solicitar Pago (PayPal):</p>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-                <div class="card-retiro" id="promoRetiro" onclick="seleccionarMonto(this, 0.10, 100)">
-                    <div style="position:absolute; top:-10px; right:-10px; background:#ef4444; color:white; font-size:0.6rem; padding:2px 6px; border-radius:4px; font-weight:bold;">¡NUEVO!</div>
-                    <div class="monto-dolar">$0.10 USD</div>
-                    <div class="costo-pts">⚡ 100 PTS</div>
-                </div>
-
-                <div class="card-retiro" onclick="seleccionarMonto(this, 1.50, 1500)">
-                    <div class="monto-dolar">$1.50 USD</div>
-                    <div class="costo-pts">⚡ 1,500 PTS</div>
-                </div>
-
-                <div class="card-retiro" onclick="seleccionarMonto(this, 5.00, 5000)">
-                    <div class="monto-dolar">$5.00 USD</div>
-                    <div class="costo-pts">⚡ 5,000 PTS</div>
-                </div>
-
-                <div class="card-retiro" onclick="seleccionarMonto(this, 10.00, 10000)">
-                    <div class="monto-dolar">$10.00 USD</div>
-                    <div class="costo-pts">⚡ 10,000 PTS</div>
-                </div>
-            </div>
-
-            <div style="background: white; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border: 1px solid #e2e8f0;">
-                <span style="font-weight: 700; font-size: 0.9rem;">Método:</span>
-                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" style="height: 20px;">
-            </div>
-
-            <input type="email" id="inputPaypal" placeholder="Tu Correo de PayPal" style="width: 100%; padding: 12px; border: 2px solid #cbd5e1; border-radius: 10px; text-align: left; margin-bottom: 10px;">
-
-            <button id="btnSolicitarRetiro" onclick="procesarRetiro()" class="btn-blue" disabled style="background: #cbd5e1; box-shadow: none;">
-                Solicitar Retiro
-            </button>
-            <div style="margin-top: 15px; font-size: 0.65rem; color: #94a3b8; line-height: 1.4;">
-                1. Los pagos llegan en 1-7 días hábiles.<br>
-                2. El uso de trampas anulará el pago.<br>
-                3. Google no está afiliado a estas recompensas.
-            </div>
-
-            <button onclick="document.getElementById('modalRetiro').style.display='none'" style="width:100%; margin-top:15px; background:none; border:none; color:#64748b;">Cancelar</button>
         </div>
+    </div>
+
+    <!-- RIFA BANNER -->
+    <div onclick="abrirRifa(); document.getElementById('modalRetiro').style.display='none'" 
+         style="margin: 15px 20px 0; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 15px; padding: 12px 15px; display:flex; align-items:center; gap:12px; cursor:pointer; box-shadow: 0 4px 15px rgba(245,158,11,0.3);">
+        <div style="font-size:1.8rem;">🎟️</div>
+        <div style="flex:1;">
+            <div style="font-weight:800; color:white; font-size:0.9rem;">GRAN RIFA $50 USD</div>
+            <div style="font-size:0.65rem; color:rgba(255,255,255,0.8);">Solo 100 PTS por ticket</div>
+        </div>
+        <div style="background:white; color:#d97706; padding:6px 14px; border-radius:20px; font-size:0.75rem; font-weight:800;">
+            JUGAR →
+        </div>
+    </div>
+
+    <!-- TÍTULO RETIROS -->
+    <div style="padding: 20px 20px 10px; display:flex; align-items:center; gap:10px;">
+        <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
+        <span style="color:#64748b; font-size:0.7rem; font-weight:700; letter-spacing:1px;">SOLICITAR PAGO</span>
+        <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
+    </div>
+
+    <!-- GRID DE MONTOS -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding: 0 20px;">
+
+        <div class="card-retiro" id="promoRetiro" onclick="seleccionarMonto(this, 0.10, 100)"
+             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:15px; text-align:center; cursor:pointer; position:relative; transition:0.2s;">
+            <div style="position:absolute; top:-8px; right:-8px; background:#ef4444; color:white; font-size:0.55rem; padding:3px 7px; border-radius:10px; font-weight:800;">¡NUEVO!</div>
+            <div style="font-size:1.4rem; font-weight:900; color:white;">$0.10</div>
+            <div style="font-size:0.7rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 100 PTS</div>
+        </div>
+
+        <div class="card-retiro" onclick="seleccionarMonto(this, 1.50, 1500)"
+             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:15px; text-align:center; cursor:pointer; transition:0.2s;">
+            <div style="font-size:1.4rem; font-weight:900; color:white;">$1.50</div>
+            <div style="font-size:0.7rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 1,500 PTS</div>
+        </div>
+
+        <div class="card-retiro" onclick="seleccionarMonto(this, 5.00, 5000)"
+             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:15px; text-align:center; cursor:pointer; transition:0.2s;">
+            <div style="font-size:1.4rem; font-weight:900; color:white;">$5.00</div>
+            <div style="font-size:0.7rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 5,000 PTS</div>
+        </div>
+
+        <div class="card-retiro" onclick="seleccionarMonto(this, 10.00, 10000)"
+             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:15px; text-align:center; cursor:pointer; transition:0.2s;">
+            <div style="font-size:1.4rem; font-weight:900; color:white;">$10.00</div>
+            <div style="font-size:0.7rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 10,000 PTS</div>
+        </div>
+
+    </div>
+
+    <!-- MÉTODO PAGO -->
+    <div style="margin: 15px 20px 0; background:#1e293b; border:1px solid #334155; border-radius:15px; padding:12px 15px; display:flex; align-items:center; justify-content:space-between;">
+        <div>
+            <div style="font-size:0.65rem; color:#64748b; font-weight:600; text-transform:uppercase;">Método de Pago</div>
+            <div style="color:white; font-weight:700; font-size:0.9rem; margin-top:2px;">PayPal</div>
+        </div>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" style="height:22px; filter:brightness(10);">
+    </div>
+
+    <!-- INPUT PAYPAL -->
+    <div style="margin: 12px 20px 0; position:relative;">
+        <div style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#64748b; font-size:0.9rem;">📧</div>
+        <input type="email" id="inputPaypal" placeholder="Correo de PayPal" 
+               style="background:#1e293b; border:2px solid #334155; border-radius:15px; color:white; padding:1px 1px 14px 40px; text-align:left; width:100%; outline:none; font-size:0.9rem;">
+    </div>
+
+    <!-- BOTÓN RETIRO -->
+    <div style="padding: 15px 20px;">
+        <button id="btnSolicitarRetiro" onclick="procesarRetiro()" disabled
+                style="width:100%; padding:16px; border-radius:15px; border:none; background:linear-gradient(135deg, #334155, #475569); color:#64748b; font-weight:800; font-size:1rem; cursor:not-allowed; transition:0.3s; letter-spacing:1px;">
+            SELECCIONA UN MONTO
+        </button>
+    </div>
+
+    <!-- NOTAS -->
+    <div style="margin: 0 20px 15px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:12px;">
+        <div style="font-size:0.65rem; color:#475569; line-height:1.8;">
+            ⏱️ Pagos en 1-7 días hábiles<br>
+            🛡️ El uso de trampas anulará el pago<br>
+            ⚠️ Google no está afiliado a estas recompensas
+        </div>
+    </div>
+
+    <!-- CERRAR -->
+    <button onclick="document.getElementById('modalRetiro').style.display='none'" 
+            style="width:100%; padding:15px; border:none; background:rgba(255,255,255,0.05); color:#64748b; font-weight:600; cursor:pointer; border-top:1px solid rgba(255,255,255,0.07);">
+        Cerrar
+    </button>
+
+</div>
     </div>
     <div id="modalUnlockVIP" class="modal-overlay">
         <div class="modal-content" style="border: 2px solid #a855f7;">
@@ -1173,7 +1282,7 @@
                  </div>
                  <i class="fas fa-check-circle" style="color:#10b981; font-size: 1.2rem;"></i>
             </div>
-            <div id="previewContainer" style="display:none; width:100%; aspect-ratio: 16/9; background:#000; margin-bottom:10px; border-radius:12px; overflow:hidden; position:relative; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+           <div id="previewContainer" style="display:none !important;">
                  <div id="previewFrame" style="width:100%; height:100%;"></div>
                  <button onclick="stopPreview()" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.7); color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold;">✕</button>
                  <div style="position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.6); color:white; font-size:0.7rem; padding:5px; text-align:center;">
@@ -2144,26 +2253,39 @@ function cargarMuroReportes() {
 
     // ESCUCHAR CAMBIOS (LIKES/COMENTARIOS)
     feedRef.on('child_changed', snap => {
-        const post = { k: snap.key, ...snap.val() };
-        const card = document.getElementById('post-' + post.k);
-        if (card) {
-            const likeSpan = card.querySelector('.fa-heart').parentElement.querySelector('span');
-            const commentSpan = card.querySelector('.fa-comment-dots').parentElement.querySelector('span');
-            
-            if(likeSpan) likeSpan.textContent = post.vCount || 0;
-            if(commentSpan) commentSpan.textContent = post.comentarios ? Object.keys(post.comentarios).length : 0;
-            
-            // Actualizar corazón rojo/blanco en tiempo real
-            const icon = card.querySelector('.fa-heart');
-            if(post.likes && post.likes[idAuditor]) {
-                icon.className = 'fas fa-heart liked';
+    const post = { k: snap.key, ...snap.val() };
+    const card = document.getElementById('post-' + post.k);
+    if (!card) return;
+
+    // Actualizar contador de likes
+    const btnLike = card.querySelector('.action-icon');
+    if (btnLike) {
+        const likeSpan = btnLike.querySelector('span');
+        const icon = btnLike.querySelector('i');
+
+        if (likeSpan) likeSpan.textContent = post.vCount || 0;
+
+        if (icon) {
+            if (post.likes && post.likes[idAuditor]) {
+                icon.className = 'fas fa-heart';
                 icon.style.color = '#e11d48';
             } else {
-                icon.className = 'fas fa-heart'; // Mantenemos solid para visibilidad
+                icon.className = 'fas fa-heart';
                 icon.style.color = 'white';
             }
         }
-    });
+    }
+
+    // Actualizar contador de comentarios
+    const botonesAction = card.querySelectorAll('.action-icon');
+    if (botonesAction[1]) {
+        const commentSpan = botonesAction[1].querySelector('span');
+        if (commentSpan) {
+            commentSpan.textContent = post.comentarios 
+                ? Object.keys(post.comentarios).length : 0;
+        }
+    }
+});
 }
   function construirPostHTML(post) {
     const avatarUrl = getAvatarUrl(post.uid);
@@ -2745,7 +2867,7 @@ window.manejarAuth = () => {
             
             // 2. Inicializar cachés y estados
             setTimeout(() => { if(typeof cachearUsuarios === "function") cachearUsuarios(); }, 1000);
-            setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 20000);
+            setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 10000);
             
             // 3. ESCUCHAR CAMBIOS EN TIEMPO REAL (Dinero, Avatar, etc)
             db.ref(`users/${idAuditor}`).on('value', snap => {
@@ -2919,7 +3041,28 @@ window.manejarAuth = () => {
             iniciarChat();
             procesarPublicacionPendiente();
             cargarGaleriaComunidad();
-            
+   // 🎰 MOSTRAR RULETA AL INICIO SI HAY GIROS
+setTimeout(() => {
+    if (!idAuditor) return;
+    const hoy = new Date().toISOString().split('T')[0];
+    db.ref(`users/${idAuditor}`).once('value').then(snap => {
+        if (!snap.exists()) return;
+        const u = snap.val() || {};
+        const spinsHoy = (u.lastSpinDate === hoy) ? (u.spinsUsed || 0) : 0;
+        const girosDisponibles = 3 - spinsHoy;
+        
+        if (girosDisponibles > 0) {
+            document.getElementById('modalRuletaGame').style.display = 'flex';
+            document.getElementById('spinInfo').textContent = 
+                `🎉 ¡Tienes ${girosDisponibles} giro${girosDisponibles > 1 ? 's' : ''} disponible${girosDisponibles > 1 ? 's' : ''}!`;
+            try { window.playSound('win'); } catch(e){}
+        } else {
+            notify("🎰 Ya usaste tus giros de hoy. ¡Vuelve mañana!");
+        }
+    }).catch(() => {
+        // Si falla Firebase, no hacer nada
+    });
+}, 4000); // ⬆️ Subimos a 4 segundos para dar más tiempo
             // Lógica Maestra (Usuarios Activos)
             iniciarMonitorDeBadges();
             cargarListaUsuariosHorizontal();
@@ -2972,6 +3115,7 @@ window.manejarAuth = () => {
 
             // MENSAJES PERSONALIZADOS AQUÍ 👇
             notify(resultado.msg);
+lanzarConfetti(); 
 
             if (resultado.val > 0) {
                 // Si ganó puntos
@@ -3457,13 +3601,30 @@ window.buscarEnYouTubeAPI = () => {
                              <i class="fas fa-play" style="color:white; font-size:1.2rem;"></i>
                         </div>
                     </div>
-                    <div style="flex:1; overflow:hidden;">
-                        <div style="font-size:0.8rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; color:#334155;">${titleSafe}</div>
-                        
-                        <button class="btn-blue" style="width:auto; padding:6px 15px; font-size:0.75rem; height:auto; background:#10b981;" onclick="seleccionarVideo('${vidId}', '${titleSafe}', this)">
-                            ✅ Elegir
-                        </button>
-                    </div>
+<div style="flex:1; overflow:hidden;">
+    <div style="font-size:0.8rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; color:#334155;">${titleSafe}</div>
+    
+    <div style="display:flex; flex-direction:column; gap:6px;">
+        <button class="btn-blue" style="width:100%; padding:6px 12px; font-size:0.75rem; height:auto; background:#0070ba; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="escucharCancion('${vidId}', this)">
+            <i class="fas fa-play" style="font-size:0.7rem;"></i> Escuchar
+        </button>
+        <button class="btn-blue" style="width:100%; padding:6px 12px; font-size:0.75rem; height:auto; background:#10b981;" onclick="seleccionarVideo('${vidId}', '${titleSafe}', this)">
+            ✅ Elegir
+        </button>
+    </div>
+    
+    <!-- BARRAS DE REPRODUCCIÓN -->
+    <div id="barras-${vidId}" style="display:none; align-items:center; gap:6px; margin-top:6px;">
+        <div style="display:flex; gap:3px; align-items:flex-end; height:14px;">
+            <div style="width:3px; background:#1db954; border-radius:2px; animation:musicBar 0.8s ease infinite; height:8px;"></div>
+            <div style="width:3px; background:#1db954; border-radius:2px; animation:musicBar 0.8s ease infinite 0.2s; height:14px;"></div>
+            <div style="width:3px; background:#1db954; border-radius:2px; animation:musicBar 0.8s ease infinite 0.4s; height:10px;"></div>
+            <div style="width:3px; background:#1db954; border-radius:2px; animation:musicBar 0.8s ease infinite 0.1s; height:12px;"></div>
+            <div style="width:3px; background:#1db954; border-radius:2px; animation:musicBar 0.8s ease infinite 0.3s; height:6px;"></div>
+        </div>
+        <span style="font-size:0.65rem; color:#1db954; font-weight:700;">Reproduciendo...</span>
+    </div>
+</div>
                 </div>`;
              });
              
@@ -3476,19 +3637,23 @@ window.buscarEnYouTubeAPI = () => {
 };
     // --- FUNCIÓN PARA VER PREVIEW EN EL MISMO MODAL ---
     window.previewMusic = (id) => {
-        const container = document.getElementById('previewContainer');
-        const frame = document.getElementById('previewFrame');
-        
-        container.style.display = 'block';
-        frame.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1&controls=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-    };
-
-    window.stopPreview = () => {
-        const container = document.getElementById('previewContainer');
-        const frame = document.getElementById('previewFrame');
-        if(container) container.style.display = 'none';
-        if(frame) frame.innerHTML = "";
-    };
+    // Solo audio, sin mostrar video
+    const audio = document.getElementById('audioPreviewBg');
+    if(audio) audio.remove();
+    
+    const nuevo = document.createElement('audio');
+    nuevo.id = 'audioPreviewBg';
+    nuevo.autoplay = true;
+    nuevo.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+    document.body.appendChild(nuevo);
+    
+    // Usamos iframe oculto para activar el audio
+    const frame = document.getElementById('previewFrame');
+    if(frame) frame.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&controls=0" style="width:1px; height:1px; opacity:0;" allow="autoplay"></iframe>`;
+    
+    notify("⏳ Cargando audio...");
+setTimeout(() => notify("🎵 ¡Reproduciendo!"), 3000);
+};
 
     // Al cerrar el modal, paramos la música
     window.cerrarSelectorMusica = () => { 
@@ -3512,13 +3677,14 @@ window.buscarEnYouTubeAPI = () => {
         }
         notify("🎵 Canción elegida"); 
     };
-    window.abrirSelectorMusica = () => document.getElementById('modalMusicSelector').style.display='flex';
-    
-    // ==========================================
-    // 🎮 SECCIÓN DE JUEGOS (SNAKE + CARRERA + DISPAROS)
-    // ==========================================
-    
-    // VARIABLES GLOBALES DE JUEGOS
+    window.abrirSelectorMusica = () => {
+    document.getElementById('modalMusicSelector').style.display='flex';
+    // Buscar automáticamente al abrir
+    const terminos = ['Pop Latino 2025', 'Reggaeton hits', 'Bad Bunny', 'Feid 2025', 'Karol G', 'Peso Pluma'];
+    const aleatorio = terminos[Math.floor(Math.random() * terminos.length)];
+    document.getElementById('inputSearchMusic').value = aleatorio;
+    buscarEnYouTubeAPI();
+};
     const canvas = document.getElementById('gameCanvas'); 
     const ctx = canvas.getContext('2d'); 
     let activeGameMode = null; 
@@ -4062,30 +4228,36 @@ window.abrirRetiro = () => {
 
     // SELECCIONAR OPCIÓN
     window.seleccionarMonto = (elemento, dolares, puntos) => {
-        // 1. Quitar selección anterior
-        document.querySelectorAll('.card-retiro').forEach(el => el.classList.remove('selected'));
-        
-        // 2. Marcar nuevo
-        elemento.classList.add('selected');
-        
-        // 3. Guardar datos
-        retiroMontoSeleccionado = dolares;
-        retiroCostoPuntos = puntos;
+    // 1. Quitar selección anterior
+    document.querySelectorAll('.card-retiro').forEach(el => el.classList.remove('selected'));
+    
+    // 2. Marcar nuevo
+    elemento.classList.add('selected');
+    
+    // 3. Guardar datos
+    retiroMontoSeleccionado = dolares;
+    retiroCostoPuntos = puntos;
 
-        // 4. Activar botón si alcanza el saldo
-        const btn = document.getElementById('btnSolicitarRetiro');
-        if (currentEarnings >= puntos) {
-            btn.disabled = false;
-            btn.style.background = "#0070ba";
-            btn.style.boxShadow = "0 4px 15px rgba(0,112,186,0.3)";
-            btn.textContent = `Retirar $${dolares} USD`;
-        } else {
-            btn.disabled = true;
-            btn.style.background = "#cbd5e1";
-            btn.style.boxShadow = "none";
-            btn.textContent = `Faltan ${(puntos - currentEarnings).toFixed(2)} PTS`;
-        }
-    };
+    // 4. Actualizar equivalente USD
+    const equiv = document.getElementById('retiroUsdEquiv');
+    if(equiv) equiv.textContent = dolares.toFixed(2);
+
+    // 5. Estilo botón activo
+    const btn = document.getElementById('btnSolicitarRetiro');
+    if (currentEarnings >= puntos) {
+        btn.disabled = false;
+        btn.style.background = 'linear-gradient(135deg, #0070ba, #0ea5e9)';
+        btn.style.color = 'white';
+        btn.style.cursor = 'pointer';
+        btn.textContent = `💸 Retirar $${dolares} USD`;
+    } else {
+        btn.disabled = true;
+        btn.style.background = 'linear-gradient(135deg, #334155, #475569)';
+        btn.style.color = '#64748b';
+        btn.style.cursor = 'not-allowed';
+        btn.textContent = `Faltan ${(puntos - currentEarnings).toFixed(2)} PTS`;
+    }
+};
 
     // PROCESAR RETIRO
     window.procesarRetiro = () => {
@@ -4801,7 +4973,7 @@ function cargarListaUsuariosHorizontal() {
             if (child.key !== idAuditor) {
                 const tiempo = u.lastSeen || 0;
                 const minutos = Math.floor((ahora - tiempo) / 60000);
-                const esOnline = minutos < 10;
+                const esOnline = minutos < 2;
                 
                 listaUsuariosCacheReal.push({
                     key: child.key,
@@ -4852,7 +5024,7 @@ function renderizarUsuariosHorizontal() {
         const msDiff = ahora - user.rawTime;
         const minDiff = Math.floor(msDiff / 60000);
 
-        if (minDiff < 10) {
+        if (minDiff < 2) {
             tiempoTexto = "Online";
             colorTiempo = "#10b981"; // Verde
         } else if (minDiff < 60) {
@@ -5640,6 +5812,153 @@ window.addEventListener('load', () => {
         }, 1500); // Le damos 1.5 segundos para que cargue la app y haga el cambio
     }
 });
+// 🎊 FUNCIÓN CONFETTI
+function lanzarConfetti() {
+    const colores = ['#ff0', '#f0f', '#0ff', '#f00', '#0f0', '#00f', 
+                     '#ffa500', '#ff69b4', '#7fff00', '#ff6347'];
+    const emojis = ['🌸', '🌺', '⭐', '💛', '🎊', '🎉', '✨', '💫'];
+    
+    for (let i = 0; i < 60; i++) {
+        setTimeout(() => {
+            const piece = document.createElement('div');
+            
+            // 50% emojis, 50% confetti de colores
+            if (Math.random() > 0.5) {
+                piece.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                piece.style.fontSize = (Math.random() * 20 + 15) + 'px';
+                piece.style.background = 'transparent';
+            } else {
+                piece.style.background = colores[Math.floor(Math.random() * colores.length)];
+                piece.style.width = (Math.random() * 8 + 5) + 'px';
+                piece.style.height = (Math.random() * 8 + 5) + 'px';
+            }
+            
+            piece.className = 'confetti-piece';
+            piece.style.left = Math.random() * 100 + 'vw';
+            piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            piece.style.animationDelay = '0s';
+            
+            document.body.appendChild(piece);
+            
+            // Eliminar del DOM al terminar
+            setTimeout(() => piece.remove(), 4000);
+        }, i * 40);
+    }
+}
+// 🎁 SISTEMA DE REGALO EN CHAT PRIVADO
+window.abrirRegaloPrivado = () => {
+    if (!targetUserUid) return notify("❌ Abre un chat primero");
+    
+    // Mostrar saldo actual
+    document.getElementById('saldoRegaloDisplay').textContent = 
+        currentEarnings.toFixed(2) + " PTS";
+    document.getElementById('labelDestinoRegalo').textContent = 
+        "Para: " + document.getElementById('privChatTitle').innerText;
+    document.getElementById('inputMontoRegalo').value = "";
+    
+    document.getElementById('modalRegaloPrivado').style.display = 'flex';
+};
+
+window.seleccionarMontoRegalo = (cantidad) => {
+    document.getElementById('inputMontoRegalo').value = cantidad;
+    actualizarBtnRegalo();
+};
+
+window.actualizarBtnRegalo = () => {
+    const monto = parseFloat(document.getElementById('inputMontoRegalo').value) || 0;
+    const btn = document.getElementById('btnConfirmarRegalo');
+    
+    if (monto > 0 && monto <= currentEarnings) {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        btn.textContent = `🎁 Enviar ${monto} PTS`;
+    } else {
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+        btn.textContent = monto > currentEarnings ? "❌ Saldo insuficiente" : "🎁 Enviar Regalo";
+    }
+};
+
+window.confirmarRegaloPrivado = () => {
+    const monto = parseFloat(document.getElementById('inputMontoRegalo').value);
+    const nombreDestino = document.getElementById('privChatTitle').innerText;
+    
+    if (!monto || monto <= 0) return notify("❌ Cantidad inválida");
+    if (monto > currentEarnings) return notify("❌ Saldo insuficiente");
+    if (!targetUserUid) return notify("❌ Usuario no encontrado");
+    
+    const btn = document.getElementById('btnConfirmarRegalo');
+    btn.disabled = true;
+    btn.textContent = "Enviando...";
+    
+    const updates = {};
+    const fecha = firebase.database.ServerValue.TIMESTAMP;
+    
+    // Transferir puntos
+    updates[`users/${idAuditor}/earnings`] = 
+        firebase.database.ServerValue.increment(-monto);
+    updates[`users/${targetUserUid}/earnings`] = 
+        firebase.database.ServerValue.increment(monto);
+    
+    // Notificación
+    const notiKey = db.ref(`users/${targetUserUid}/notifications`).push().key;
+    updates[`users/${targetUserUid}/notifications/${notiKey}`] = {
+        from: myCurrentKey,
+        type: 'gift',
+        text: `🎁 Te envió un regalo de ${monto} PTS`,
+        extra: `${monto}|${idAuditor}`,
+        timestamp: fecha,
+        read: false
+    };
+    
+    // Mensaje en el chat privado
+    const chatId = [idAuditor, targetUserUid].sort().join('_');
+    
+    db.ref().update(updates).then(() => {
+        // Enviar mensaje automático en el chat
+        db.ref(`chats_privados/${chatId}`).push({
+            uid: idAuditor,
+            texto: `🎁 Te envié ${monto} PTS como regalo`,
+            fecha: firebase.database.ServerValue.TIMESTAMP
+        });
+        
+        registrarHistorial(`Regalo a ${nombreDestino}`, -monto);
+        document.getElementById('modalRegaloPrivado').style.display = 'none';
+        notify(`✅ ¡Enviaste ${monto} PTS a ${nombreDestino}!`);
+        try { window.playSound('win'); lanzarConfetti(); } catch(e){}
+    }).catch(e => {
+        notify("❌ Error: " + e.message);
+        btn.disabled = false;
+    });
+};
+window.escucharCancion = (id, btn) => {
+    // Ocultar barras anteriores
+    document.querySelectorAll('[id^="barras-"]').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Resetear botones anteriores
+    document.querySelectorAll('.btn-escuchando').forEach(b => {
+        b.innerHTML = '<i class="fas fa-play" style="font-size:0.7rem;"></i> Escuchar';
+        b.style.background = '#0070ba';
+        b.classList.remove('btn-escuchando');
+    });
+    
+    // Activar barras del actual
+    const barras = document.getElementById(`barras-${id}`);
+    if(barras) barras.style.display = 'flex';
+    
+    // Cambiar botón
+    btn.innerHTML = '⏸ Pausar';
+    btn.style.background = '#ef4444';
+    btn.classList.add('btn-escuchando');
+    
+    // Audio con iframe oculto
+    const frame = document.getElementById('previewFrame');
+    if(frame) frame.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&controls=0" style="width:1px; height:1px; opacity:0;" allow="autoplay"></iframe>`;
+    
+    notify("🎵 Reproduciendo...");
+};
     </script>
 </body>
 </html>
