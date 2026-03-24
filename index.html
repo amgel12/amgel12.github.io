@@ -1669,6 +1669,16 @@
     <h2 id="profKey" style="color:#1e293b; letter-spacing: 1px; margin-bottom: 5px; font-weight: 800;">Cargando...</h2>
     <p id="profRank" style="font-size:0.75rem; font-weight:600; color:#64748b;">MIEMBRO OFICIAL</p>
     <div id="myKeyDisplay" style="display:none;">---</div>
+<p id="profEmail" style="font-size:0.78rem; color:#64748b; margin-top:6px;">
+    Correo: ---
+</p>
+
+<p style="font-size:0.7rem; color:#94a3b8;">
+    🔒 Solo tú puedes ver este correo. No es visible para otros usuarios.
+</p>
+<p id="profEmail" style="font-size:0.78rem; color:#64748b; margin-top:6px; word-break:break-all;">
+    
+</p>
 </div>
 
 <div class="menu-card-btn" onclick="abrirModalInvitar()">
@@ -3007,6 +3017,11 @@ window.manejarAuth = () => {
             // 3. ESCUCHAR CAMBIOS EN TIEMPO REAL (Dinero, Avatar, etc)
             db.ref(`users/${idAuditor}`).on('value', snap => {
                 const d = snap.val();
+                const correoUsuario = user.email || d.email || "Sin correo";
+const labelEmail = document.getElementById('profEmail');
+if (labelEmail) {
+    labelEmail.textContent = "Correo: " + correoUsuario;
+}
                 if (d && d.email) verificarSiEsAdmin(d.email);
                 // Si es usuario nuevo, crearlo
                 if (!d) { 
