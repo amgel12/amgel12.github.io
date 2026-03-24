@@ -8,6 +8,29 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+  #fabPublicar {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: white;
+    border: none;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    cursor: pointer;
+
+    /* Animaciones */
+    animation: bounce 1.5s infinite, glow 2s infinite alternate;
+}
+#fabPublicar:active {
+    transform: scale(0.9);
+}
   #modalRetiro .modal-content {
     max-height: 90vh;
     overflow-y: auto;
@@ -646,7 +669,12 @@
        })();
     </script>
 </head>
+
 <body>
+  
+<button id="fabPublicar" onclick="abrirMision()">
+    <i class="fas fa-plus"></i>
+</button>
   <div id="modalRegaloPrivado" class="modal-overlay" style="z-index:32000;">
     <div class="modal-content" style="border:2px solid #a855f7; text-align:center;">
         <div style="font-size:3rem; animation:bounce 1s infinite;">🎁</div>
@@ -1667,6 +1695,32 @@
         </div>
     </div>
 </div>
+<div id="modalPostOptions" class="modal-overlay" style="z-index:34000; align-items:flex-end;">
+    <div class="modal-content" style="width:100%; max-width:100%; border-radius:20px 20px 0 0; padding:0; margin:0; background:#f8fafc; animation: slideUp 0.2s;">
+        
+        <h3 style="padding:15px; margin:0; font-size:1rem; border-bottom:1px solid #e2e8f0; color:#334155;">
+            Opciones de publicación
+        </h3>
+
+        <button id="btnEliminarPost" onclick="eliminarPostActual()" class="btn-blue" style="display:none; margin:15px 15px 5px; background:#fee2e2; color:#ef4444; border:1px solid #fca5a5; display:flex; align-items:center; justify-content:center; gap:10px;">
+            🗑️ Eliminar publicación
+        </button>
+
+        <button onclick="verEstadisticasPost()" class="btn-blue" style="margin:5px 15px 5px; background:white; color:#0070ba; border:1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; gap:10px;">
+            📊 Ver estadísticas
+        </button>
+
+        <button onclick="compartirPostWhatsapp()" class="btn-blue" style="margin:5px 15px 15px; background:white; color:#16a34a; border:1px solid #86efac; display:flex; align-items:center; justify-content:center; gap:10px;">
+            🟢 Compartir por WhatsApp
+        </button>
+
+        <div style="height:10px; background:#f1f5f9; border-top:1px solid #e2e8f0;"></div>
+
+        <button onclick="document.getElementById('modalPostOptions').style.display='none'" style="width:100%; padding:15px; border:none; background:white; font-weight:bold; color:#64748b; cursor:pointer;">
+            Cancelar
+        </button>
+    </div>
+</div>
 <div id="modalChatOptions" class="modal-overlay" style="z-index: 24000; align-items: flex-end;">
     <div class="modal-content" style="width:100%; max-width: 100%; border-radius: 20px 20px 0 0; padding: 0; margin: 0; background: #f8fafc; animation: slideUp 0.2s;">
         <button onclick="copiarTextoSeleccionado()" class="btn-blue" style="margin: 15px 15px 5px; background: white; color: #334155; border: 1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; gap:10px;">
@@ -1720,12 +1774,7 @@
     const db = firebase.database();
     const auth = firebase.auth();
     
-    
-    // --- SISTEMA DE SONIDO GLOBAL (MASTER CLICK) ---
-// Enlace directo a tu sonido en GitHub:
-const SONIDO_CLICK_URL = "https://raw.githubusercontent.com/amgel12/amgel12.github.io/main/select-button-ui-395763.mp3"; 
-const globalAudio = new Audio(SONIDO_CLICK_URL);
-globalAudio.volume = 0.5; // Volumen medio
+   
 
 document.addEventListener('click', (e) => {
     // 1. Buscamos si lo que se tocó es un botón
@@ -2005,6 +2054,12 @@ function getAvatarUrl(seed) {
     // Usamos Pravatar con el ID del usuario para que siempre tenga la misma "cara real"
     return 'https://i.pravatar.cc/300?u=' + seed; 
 }
+function getUserProfilePhoto(uid) {
+    if (cacheFotosPerfil[uid]) {
+        return cacheFotosPerfil[uid];
+    }
+    return getAvatarUrl(uid);
+}
     function getYouTubeID(url) { if (!url) return null; const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/; const match = url.match(regExp); return (match && match[2].length === 11) ? match[2] : null; }
     
     function registrarHistorial(motivo, puntos) { if (!idAuditor) return; var ruta = 'users/' + idAuditor + '/historial'; db.ref(ruta).push({ motivo: motivo, puntos: parseFloat(puntos), fecha: firebase.database.ServerValue.TIMESTAMP }); }
@@ -2083,7 +2138,9 @@ window.goToScreen = (index, userAction = false) => {
 
 let videoActualJugando = null;
 let debounceScroll = null;
-
+let postSeleccionadoKey = null;
+let postSeleccionadoData = null;
+let cacheFotosPerfil = {};
 function checkScrollVideos() {
     // 1. Obtenemos el contenedor del feed
     const container = document.getElementById('muroReportes');
@@ -2288,7 +2345,7 @@ function cargarMuroReportes() {
 });
 }
   function construirPostHTML(post) {
-    const avatarUrl = getAvatarUrl(post.uid);
+    const avatarUrl = getUserProfilePhoto(post.uid);
     const nombre = post.autorClave || "Anónimo";
     let numComentarios = post.comentarios ? Object.keys(post.comentarios).length : 0;
             
@@ -2360,11 +2417,9 @@ function cargarMuroReportes() {
             <button class="action-icon" onclick="abrirModalCompartir('${ytId}', '${escapeHtml(post.texto.substring(0,30))}...')">
                 <i class="fas fa-share"></i>
                 <span>Share</span>
-            </button>
-
-            <button class="action-icon" onclick="window.abrirModalComentarios('${post.k}')" style="margin-top:10px;">
-                <i class="fas fa-ellipsis-h" style="font-size:1.2rem;"></i>
-            </button>
+   <button class="action-icon" onclick="abrirOpcionesPost('${post.k}')" style="margin-top:10px;">
+    <i class="fas fa-ellipsis-h" style="font-size:1.2rem;"></i>
+</button>
         </div>
     </article>`;
 }
@@ -2507,57 +2562,70 @@ function cargarMuroReportes() {
             });
         };
     }
- // --- ABRIR MODAL PUBLICAR (DETENIENDO FONDO) ---
 window.abrirMision = () => {
-     // 🛑 DETENER VIDEO DE FONDO (Para que no moleste)
-     detenerVideoMuro();
-     
-     db.ref(`users/${idAuditor}`).once('value').then(snap => {
-         const u = snap.val();
-         const ahora = Date.now();
-         const ultimoTime = u.lastMissionTime || 0; 
-         const horasDiff = (ahora - ultimoTime) / (1000 * 60 * 60); 
-         
-         let conteo = u.missionCount || 0;
-         if (horasDiff >= 8) conteo = 0;
-         
-         if (conteo >= 2) {
-             const falta = 8 - horasDiff;
-             const hRestante = Math.floor(falta);
-             const mRestante = Math.floor((falta - hRestante) * 60);
-             return notify(`⏳ Espera ${hRestante}h ${mRestante}m para publicar más`);
-         }
-         
-         document.getElementById('modalMision').style.display = 'flex';
-         document.getElementById('step1Mision').style.display = 'block';
-         document.getElementById('step2Mision').style.display = 'none';
-         document.getElementById('invisiblePlayer').innerHTML = "";
-         if(window.resetAudioControls) window.resetAudioControls();
-         
-         document.getElementById('mMusic').value = "";
-         document.getElementById('mText').value = "";
-         document.getElementById('musicDisplayLabel').textContent = "🔍 Toca para buscar canción...";
-         document.getElementById('songNamePreview').textContent = "---";
-         
-         const btnNext = document.getElementById('btnMisionNext');
-         if(btnNext) {
-             btnNext.style.opacity = "0.5";
-             btnNext.disabled = true;
-         }
-     });
- };
-    
+    // 🛑 DETENER VIDEO DE FONDO
+    detenerVideoMuro();
+
+    db.ref(`users/${idAuditor}`).once('value').then(snap => {
+        const u = snap.val();
+        const ahora = Date.now();
+        const ultimoTime = u.lastMissionTime || 0;
+        const horasDiff = (ahora - ultimoTime) / (1000 * 60 * 60);
+
+        let conteo = u.missionCount || 0;
+        if (horasDiff >= 8) conteo = 0;
+
+        if (conteo >= 2) {
+            const falta = 8 - horasDiff;
+            const hRestante = Math.floor(falta);
+            const mRestante = Math.floor((falta - hRestante) * 60);
+            return notify(`⏳ Espera ${hRestante}h ${mRestante}m para publicar más`);
+        }
+
+        // Abrir modal principal
+        document.getElementById('modalMision').style.display = 'flex';
+
+        // Ocultar paso 1
+        document.getElementById('step1Mision').style.display = 'none';
+
+        // Mostrar paso 2 directamente
+        document.getElementById('step2Mision').style.display = 'block';
+
+        // Reset visual
+        document.getElementById('invisiblePlayer').innerHTML = "";
+        if (window.resetAudioControls) window.resetAudioControls();
+
+        document.getElementById('mMusic').value = "";
+        document.getElementById('mText').value = "";
+        document.getElementById('musicDisplayLabel').textContent = "🔍 Toca para buscar canción...";
+        document.getElementById('songNamePreview').textContent = "---";
+
+        // Abrir selector de música automáticamente
+        setTimeout(() => {
+            abrirSelectorMusica();
+        }, 200);
+    });
+};
     document.getElementById('btnEnviarMision').onclick = () => { 
-        const txt = document.getElementById('mText').value; 
-        const mus = document.getElementById('mMusic').value; 
-        if (!txt) return notify("Escribe algo..."); 
+    const txt = document.getElementById('mText').value.trim(); 
+    const mus = document.getElementById('mMusic').value.trim(); 
+
+    if (!mus) return notify("🎵 Primero elige una canción");
+    if (!txt) return notify("✍️ Escribe algo...");
         
-        localStorage.setItem('pendingPost', JSON.stringify({ texto: txt, musica: mus })); 
-        notify("📢 Procesando..."); 
-        document.getElementById('btnEnviarMision').textContent = "Publicando..."; 
-        document.getElementById('btnEnviarMision').disabled = true; 
-        setTimeout(() => { window.location.href = "go:s7"; }, 500); 
-    };
+    localStorage.setItem('pendingPost', JSON.stringify({ 
+        texto: txt, 
+        musica: mus 
+    })); 
+    
+    notify("📢 Procesando..."); 
+    document.getElementById('btnEnviarMision').textContent = "Publicando..."; 
+    document.getElementById('btnEnviarMision').disabled = true; 
+    
+    setTimeout(() => { 
+        window.location.href = "go:s7"; 
+    }, 500); 
+};
     
     function procesarPublicacionPendiente() {
         const pending = localStorage.getItem('pendingPost');
@@ -3041,6 +3109,7 @@ window.manejarAuth = () => {
             iniciarChat();
             procesarPublicacionPendiente();
             cargarGaleriaComunidad();
+            cachearFotosPerfiles();
    // 🎰 MOSTRAR RULETA AL INICIO SI HAY GIROS
 setTimeout(() => {
     if (!idAuditor) return;
@@ -3295,7 +3364,7 @@ lanzarConfetti();
              const esMio = m.uid === idAuditor;
              
              // URL por defecto (Robot)
-             const avatarDefault = getAvatarUrl(m.uid);
+             const avatarDefault = getUserProfilePhoto(m.uid);
              
              // Crear contenedor de fila (Flexbox)
              const row = document.createElement('div');
@@ -3948,7 +4017,7 @@ setTimeout(() => notify("🎵 ¡Reproduciendo!"), 3000);
                 html += `
                 <div style="display:flex; align-items:center; padding: 12px; border-radius: 12px; ${estiloFondo}">
                     <div style="font-size: 1.5rem; width: 40px; text-align:center;">${medallas[index]}</div>
-                    <div style="width: 45px; height: 45px; border-radius: 50%; background-image: url('${getAvatarUrl(u.k)}'); background-size: cover; margin: 0 15px; border: 2px solid ${colores[index]};"></div>
+                    <div style="width: 45px; height: 45px; border-radius: 50%; background-image: url('${getUserProfilePhoto(u.k)}'); background-size: cover; margin: 0 15px; border: 2px solid ${colores[index]};"></div>
                     <div style="flex: 1;">
                         <div style="font-weight: 700; color: white; font-size: 0.95rem;">${nombre} ${esYo ? '<span style="font-size:0.6rem; background:#10b981; padding:2px 5px; border-radius:4px;">TÚ</span>' : ''}</div>
                         <div style="font-size: 0.75rem; color: #94a3b8;">Nivel ${u.englishLevel || 1}</div>
@@ -4625,7 +4694,7 @@ function cargarGaleriaComunidad() {
                     <img src="${imagenSrc}" class="photo-img-content" loading="lazy" style="width:100%; display:block; border-radius:12px;">
                     
                     <div class="photo-user-badge">
-                        <div style="width:20px; height:20px; border-radius:50%; background-image:url('${getAvatarUrl(f.uid)}'); background-size:cover; margin-right:5px; border:1px solid white;"></div>
+                        <div style="width:20px; height:20px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; margin-right:5px; border:1px solid white;"></div>
                         <span style="font-weight:600;">${nombre}</span>
                     </div>
                 </div>
@@ -4767,7 +4836,7 @@ window.abrirChatPrivado = (targetUid, targetName) => {
 
     // Configurar UI
     document.getElementById('privChatTitle').innerText = targetName;
-    document.getElementById('privAvatar').style.backgroundImage = "url('" + getAvatarUrl(targetUid) + "')";
+    document.getElementById('privAvatar').style.backgroundImage = "url('" + getUserProfilePhoto(targetUid) + "')";
     document.getElementById('modalChatPrivado').style.display = 'flex';
     document.getElementById('privChatList').innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando chat...</div>';
     
@@ -4978,7 +5047,7 @@ function cargarListaUsuariosHorizontal() {
                 listaUsuariosCacheReal.push({
                     key: child.key,
                     nombre: u.myInviteKey ? (u.myInviteKey.split('-')[1] || "User") : "User", 
-                    avatar: getAvatarUrl(child.key),
+                    avatar: getUserProfilePhoto(child.key),
                     online: esOnline,
                     rawTime: tiempo
                 });
@@ -5959,6 +6028,146 @@ window.escucharCancion = (id, btn) => {
     
     notify("🎵 Reproduciendo...");
 };
+function validarPublicacionMision() {
+    const txt = document.getElementById('mText').value.trim();
+    const mus = document.getElementById('mMusic').value.trim();
+    const btn = document.getElementById('btnEnviarMision');
+
+    if (!btn) return;
+
+    if (txt && mus) {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+    } else {
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+    }
+}
+window.abrirOpcionesPost = (postKey) => {
+    if (!postKey) return;
+
+    db.ref(`reportes/${postKey}`).once('value').then(snap => {
+        if (!snap.exists()) return notify("❌ La publicación ya no existe");
+
+        const post = snap.val();
+        postSeleccionadoKey = postKey;
+        postSeleccionadoData = post;
+
+        const btnEliminar = document.getElementById('btnEliminarPost');
+
+        if (post.uid === idAuditor) {
+            btnEliminar.style.display = 'flex';
+        } else {
+            btnEliminar.style.display = 'none';
+        }
+
+        document.getElementById('modalPostOptions').style.display = 'flex';
+    });
+};
+
+window.eliminarPostActual = () => {
+    if (!postSeleccionadoKey || !postSeleccionadoData) return;
+
+    if (postSeleccionadoData.uid !== idAuditor) {
+        return notify("❌ No puedes eliminar esta publicación");
+    }
+
+    db.ref(`reportes/${postSeleccionadoKey}`).remove().then(() => {
+        document.getElementById('modalPostOptions').style.display = 'none';
+        notify("🗑️ Publicación eliminada");
+        try { window.playSound('gameover'); } catch(e){}
+    }).catch(err => {
+        notify("❌ Error al eliminar: " + err.message);
+    });
+};
+
+window.verEstadisticasPost = () => {
+    if (!postSeleccionadoData) return;
+
+    const likes = postSeleccionadoData.vCount || 0;
+    const comentarios = postSeleccionadoData.comentarios ? Object.keys(postSeleccionadoData.comentarios).length : 0;
+    const fecha = postSeleccionadoData.fecha 
+        ? new Date(postSeleccionadoData.fecha).toLocaleString() 
+        : "Sin fecha";
+
+    document.getElementById('modalPostOptions').style.display = 'none';
+
+    notify(`📊 Likes: ${likes} | 💬 Comentarios: ${comentarios}`);
+    
+    setTimeout(() => {
+        notify(`🕒 Publicado: ${fecha}`);
+    }, 1800);
+};
+
+window.compartirPostWhatsapp = () => {
+    if (!postSeleccionadoData || !postSeleccionadoKey) return;
+
+    let texto = postSeleccionadoData.texto || "Mira esta publicación en PAGOCODE";
+    let link = "";
+
+    const ytId = getYouTubeID(postSeleccionadoData.musica);
+    if (ytId) {
+        link = `https://youtu.be/${ytId}`;
+    } else {
+        link = `https://pagocode.app/post/${postSeleccionadoKey}`;
+    }
+
+    const mensaje = `${texto}\n${link}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+
+    document.getElementById('modalPostOptions').style.display = 'none';
+    window.open(url, '_blank');
+};
+function cachearFotosPerfiles() {
+    db.ref('users').limitToLast(200).once('value').then(snap => {
+        if (!snap.exists()) return;
+
+        snap.forEach(child => {
+            const u = child.val() || {};
+            if (u.fotoPerfil) {
+                cacheFotosPerfil[child.key] = u.fotoPerfil;
+            }
+        });
+
+        // Redibujar vistas importantes
+        if (typeof cargarMuroReportes === "function") cargarMuroReportes();
+        if (typeof renderizarUsuariosHorizontal === "function") renderizarUsuariosHorizontal();
+        if (typeof cargarGaleriaComunidad === "function") cargarGaleriaComunidad();
+    });
+}
+const sonidoClick = new Audio("https://raw.githubusercontent.com/amgel12/amgel12.github.io/main/freesoundeffects-button-click-289742.mp3");
+sonidoClick.volume = 0.4;
+
+function playClickSound() {
+    try {
+        sonidoClick.currentTime = 0;
+        sonidoClick.play();
+    } catch (e) {}
+}
+
+document.addEventListener("click", function(e) {
+    const el = e.target;
+
+    // evitar inputs, videos, etc
+    if (el.closest("input, textarea, video")) return;
+
+    // evitar elementos sin sonido
+    if (el.closest(".no-sound")) return;
+
+    // solo elementos interactivos
+    if (
+        el.closest("button") ||
+        el.closest(".btn") ||
+        el.closest("[onclick]") ||
+        el.closest(".menu-item") ||
+        el.closest(".nav-item") ||
+        el.closest(".fab") ||
+        el.closest(".card") ||
+        el.closest(".icon-btn")
+    ) {
+        playClickSound();
+    }
+});
     </script>
 </body>
 </html>
