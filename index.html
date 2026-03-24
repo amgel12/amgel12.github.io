@@ -8,6 +8,78 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
+  #giftFxLayer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999999;
+    overflow: hidden;
+}
+
+.gift-float {
+    position: absolute;
+    font-size: 2rem;
+    animation: giftRise 1.8s ease-out forwards;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25));
+}
+
+.gift-burst {
+    position: absolute;
+    font-size: 1.4rem;
+    animation: giftBurst 1.2s ease-out forwards;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2));
+}
+
+.gift-center-pop {
+    position: fixed;
+    left: 50%;
+    top: 55%;
+    transform: translate(-50%, -50%) scale(0.4);
+    font-size: 5rem;
+    z-index: 1000000;
+    animation: giftPop 0.9s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes giftRise {
+    0% {
+        transform: translateY(0) scale(0.7) rotate(0deg);
+        opacity: 0;
+    }
+    15% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-180px) scale(1.2) rotate(18deg);
+        opacity: 0;
+    }
+}
+
+@keyframes giftBurst {
+    0% {
+        transform: translate(0,0) scale(0.3);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--x), var(--y)) scale(1.1);
+        opacity: 0;
+    }
+}
+
+@keyframes giftPop {
+    0% {
+        transform: translate(-50%, -50%) scale(0.3);
+        opacity: 0;
+    }
+    35% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+    }
+}
   #fabPublicar {
     position: fixed;
     bottom: 80px;
@@ -671,6 +743,7 @@
 </head>
 
 <body>
+  <div id="giftFxLayer"></div>
   
 <button id="fabPublicar" onclick="abrirMision()">
     <i class="fas fa-plus"></i>
@@ -2311,36 +2384,29 @@ function cargarMuroReportes() {
     // ESCUCHAR CAMBIOS (LIKES/COMENTARIOS)
     feedRef.on('child_changed', snap => {
     const post = { k: snap.key, ...snap.val() };
-    const card = document.getElementById('post-' + post.k);
-    if (!card) return;
 
-    // Actualizar contador de likes
-    const btnLike = card.querySelector('.action-icon');
-    if (btnLike) {
-        const likeSpan = btnLike.querySelector('span');
-        const icon = btnLike.querySelector('i');
+    const likeCount = document.getElementById(`like-count-${post.k}`);
+    const likeIcon = document.getElementById(`like-icon-${post.k}`);
+    const commentCount = document.getElementById(`comment-count-${post.k}`);
 
-        if (likeSpan) likeSpan.textContent = post.vCount || 0;
+    if (likeCount) {
+        likeCount.textContent = post.vCount || 0;
+    }
 
-        if (icon) {
-            if (post.likes && post.likes[idAuditor]) {
-                icon.className = 'fas fa-heart';
-                icon.style.color = '#e11d48';
-            } else {
-                icon.className = 'fas fa-heart';
-                icon.style.color = 'white';
-            }
+    if (likeIcon) {
+        if (post.likes && post.likes[idAuditor]) {
+            likeIcon.className = 'fas fa-heart liked';
+            likeIcon.style.color = '#e11d48';
+        } else {
+            likeIcon.className = 'fas fa-heart';
+            likeIcon.style.color = 'white';
         }
     }
 
-    // Actualizar contador de comentarios
-    const botonesAction = card.querySelectorAll('.action-icon');
-    if (botonesAction[1]) {
-        const commentSpan = botonesAction[1].querySelector('span');
-        if (commentSpan) {
-            commentSpan.textContent = post.comentarios 
-                ? Object.keys(post.comentarios).length : 0;
-        }
+    if (commentCount) {
+        commentCount.textContent = post.comentarios
+            ? Object.keys(post.comentarios).length
+            : 0;
     }
 });
 }
@@ -2399,28 +2465,29 @@ function cargarMuroReportes() {
             <div style="margin-bottom:5px; font-weight:bold;">${escapeHtml(post.texto)}</div>
             <div style="font-size:0.8rem; opacity:0.8;">🎵 Sonido original - PAGOCODE</div>
         </div>
+<div class="card-actions">
+    
+    <div style="width:45px; height:45px; border-radius:50%; background-image:url('${avatarUrl}'); background-size:cover; border:2px solid white; margin-bottom:10px;"></div>
 
-        <div class="card-actions">
-            
-            <div style="width:45px; height:45px; border-radius:50%; background-image:url('${avatarUrl}'); background-size:cover; border:2px solid white; margin-bottom:10px;"></div>
+    <button class="action-icon" onclick="likePost('${post.k}', '${post.uid}', this)">
+        <i id="like-icon-${post.k}" class="${heartClass}" style="color:${heartColor};"></i>
+        <span id="like-count-${post.k}">${post.vCount || 0}</span>
+    </button>
 
-            <button class="action-icon" onclick="likePost('${post.k}', '${post.uid}', this)">
-                <i class="${heartClass}" style="color:${heartColor};"></i>
-                <span>${post.vCount||0}</span>
-            </button>
+    <button class="action-icon" onclick="window.abrirModalComentarios('${post.k}')">
+        <i class="fas fa-comment-dots"></i>
+        <span id="comment-count-${post.k}">${numComentarios}</span>
+    </button>
 
-            <button class="action-icon" onclick="window.abrirModalComentarios('${post.k}')">
-                <i class="fas fa-comment-dots"></i>
-                <span>${numComentarios}</span>
-            </button>
+    <button class="action-icon" onclick="abrirModalCompartir('${ytId}', '${escapeHtml(post.texto.substring(0,30))}...')">
+        <i class="fas fa-share"></i>
+        <span>Share</span>
+    </button>
 
-            <button class="action-icon" onclick="abrirModalCompartir('${ytId}', '${escapeHtml(post.texto.substring(0,30))}...')">
-                <i class="fas fa-share"></i>
-                <span>Share</span>
-   <button class="action-icon" onclick="abrirOpcionesPost('${post.k}')" style="margin-top:10px;">
-    <i class="fas fa-ellipsis-h" style="font-size:1.2rem;"></i>
-</button>
-        </div>
+    <button class="action-icon" onclick="abrirOpcionesPost('${post.k}')" style="margin-top:10px;">
+        <i class="fas fa-ellipsis-h" style="font-size:1.2rem;"></i>
+    </button>
+</div>
     </article>`;
 }
     window.likePost = function(postKey, postOwnerUid, btnElement) {
@@ -2450,7 +2517,7 @@ function cargarMuroReportes() {
                         icon.classList.add('far'); // Corazón vacío
                         icon.style.color = "white"; // O el color original
                     }
-                    if(span) span.textContent = parseInt(span.textContent) - 1;
+                    
                 })
                 .catch(err => notify("Error al quitar like: " + err.message));
 
@@ -2481,7 +2548,7 @@ function cargarMuroReportes() {
                         icon.classList.add('fas', 'liked'); // Corazón lleno
                         icon.style.color = "#e11d48";
                     }
-                    if(span) span.textContent = parseInt(span.textContent) + 1;
+                   
                     
                     try { window.playSound('coin'); } catch(e){}
                     notify("❤️ Like enviado");
@@ -3220,57 +3287,12 @@ lanzarConfetti();
     
     // --- TRANSFERENCIA ULTRA-SEGURA (1 MINUTO) ---
     window.openTransfer = (tid, tname) => {
-        notify("🔍 Buscando señal...");
-        db.ref(`users/${tid}/lastSeen`).once('value').then(snap => {
-            const ultimaVez = snap.val() || 0;
-            const ahora = Date.now();
-            const esOnline = (ahora - ultimaVez) < (60 * 1000); 
+    notify(" abriendo chat ");
 
-            if (!esOnline) {
-                notify(`🚫 ${tname} no está activo ahora.`);
-                try { window.playSound('gameover'); } catch(e){}
-                return; 
-            }
+    if (!tid || tid === idAuditor) return;
 
-            document.getElementById('targetUserLabel').textContent = "Para: " + tname;
-            document.getElementById('modalTransfer').style.display = 'flex';
-
-            document.getElementById('btnConfirmTransfer').onclick = () => {
-                const input = document.getElementById('amountTransfer');
-                const am = parseFloat(input.value);
-
-                if (!am || am <= 0) return notify("Cantidad inválida");
-                
-                db.ref(`users/${idAuditor}`).once('value', s => {
-                    if ((s.val().earnings || 0) < am) return notify("Saldo insuficiente");
-
-                    const updates = {}; 
-                    const fecha = firebase.database.ServerValue.TIMESTAMP;
-                    
-                    updates[`users/${idAuditor}/earnings`] = firebase.database.ServerValue.increment(-am);
-                    updates[`users/${tid}/earnings`] = firebase.database.ServerValue.increment(am);
-                    
-                    const notiKey = db.ref(`users/${tid}/notifications`).push().key;
-                    updates[`users/${tid}/notifications/${notiKey}`] = { 
-                        from: myCurrentKey, 
-                        type: 'gift', 
-                        text: `🎁 Te envió un regalo de ${am} PTS`, 
-                        extra: `${am}|${idAuditor}`, 
-                        timestamp: fecha, 
-                        read: false 
-                    };
-
-                    db.ref().update(updates).then(() => { 
-                        notify(`✅ Enviaste ${am} PTS a ${tname}`); 
-                        document.getElementById('modalTransfer').style.display = 'none'; 
-                        input.value = ""; 
-                        registrarHistorial("Regalo Enviado", -am); 
-                        try { window.playSound('coin'); } catch(e){}
-                    });
-                });
-            };
-        });
-    };
+    abrirChatPrivado(tid, tname);
+};
 
     window.darLasGracias = (targetUid) => { db.ref(`users/${targetUid}/notifications`).push({ from: myCurrentKey, type: 'simple', text: "🙏 ¡Te envió las gracias por el regalo!", timestamp: firebase.database.ServerValue.TIMESTAMP, read: false }).then(() => { notify("❤️ Agradecimiento enviado"); document.getElementById('modalGiftReceived').style.display = 'none'; }); };
     
@@ -3611,6 +3633,7 @@ function detectarYEnvarMenciones(txt, type) {
             document.getElementById('giftSender').textContent = nombreEmisor;
             document.getElementById('giftAmount').textContent = cantidad;
             document.getElementById('modalGiftReceived').style.display = 'flex';
+            lanzarAnimacionRegalo("receive");
             try { window.playSound('win'); } catch(e) {}
             
             // Configurar botón de gracias
@@ -4844,52 +4867,53 @@ window.abrirChatPrivado = (targetUid, targetName) => {
     checkLimiteDiario();
 };
 
-// 2. CARGAR MENSAJES
-// ==========================================
-// 🔒 CARGAR MENSAJES PRIVADOS (CON LINKS)
-// ==========================================
 function cargarMensajesPrivados() {
-    if(privChatRef) privChatRef.off();
-    
+    if (privChatRef) privChatRef.off();
+
     const list = document.getElementById('privChatList');
     privChatRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(30);
-    
-    let firstLoad = true;
-    
+
     privChatRef.on('value', snap => {
-        if(!snap.exists()) { 
-            list.innerHTML = '<div style="text-align:center; padding:20px; color:#cbd5e1; font-size:0.8rem;">🔒 Chat Privado y Seguro.<br>Empieza a escribir.</div>'; 
-            return; 
+        if (!snap.exists()) {
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:#cbd5e1; font-size:0.8rem;">🔒 Chat Privado y Seguro.<br>Empieza a escribir.</div>';
+            return;
         }
-        
-        if(firstLoad) { list.innerHTML = ""; firstLoad = false; }
-        
+
         let html = "";
+
         snap.forEach(s => {
             const m = s.val();
             const esMio = m.uid === idAuditor;
-            
-            // 1. Primero limpiamos el texto por seguridad (escapeHtml)
+
             let textoSeguro = escapeHtml(m.texto);
-            
-            // 2. Luego convertimos los links en cliqueables
             let textoFinal = hacerEnlacesClickeables(textoSeguro);
-            
+
+            const fotoMsg = getUserProfilePhoto(m.uid);
+
             html += `
-            <div class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}" style="max-width:75%;">
-                <div>${textoFinal}</div>
+            <div class="chat-row ${esMio ? 'mine' : 'other'}">
                 
-                <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
-                    ${new Date(m.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                <img 
+                    src="${fotoMsg}" 
+                    class="chat-avatar-img" 
+                    style="display:block;"
+                    onclick="mostrarPerfilUsuario('${m.uid}', '${esMio ? myCurrentKey : document.getElementById('privChatTitle').innerText}')"
+                >
+
+                <div class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}" style="max-width:75%;">
+                    <div>${textoFinal}</div>
+                    
+                    <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
+                        ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                    </div>
                 </div>
             </div>`;
         });
-        
+
         list.innerHTML = html;
         list.scrollTop = list.scrollHeight;
     });
 }
-
 // 3. ENVIAR MENSAJE
 window.enviarMensajePrivado = () => {
     const input = document.getElementById('inputPrivMsg');
@@ -5994,7 +6018,8 @@ window.confirmarRegaloPrivado = () => {
         registrarHistorial(`Regalo a ${nombreDestino}`, -monto);
         document.getElementById('modalRegaloPrivado').style.display = 'none';
         notify(`✅ ¡Enviaste ${monto} PTS a ${nombreDestino}!`);
-        try { window.playSound('win'); lanzarConfetti(); } catch(e){}
+lanzarAnimacionRegalo("send");
+try { lanzarConfetti(); } catch(e){}
     }).catch(e => {
         notify("❌ Error: " + e.message);
         btn.disabled = false;
@@ -6168,6 +6193,52 @@ document.addEventListener("click", function(e) {
         playClickSound();
     }
 });
+window.lanzarAnimacionRegalo = (modo = "send") => {
+    const layer = document.getElementById("giftFxLayer");
+    if (!layer) return;
+
+    const iconos = modo === "receive"
+        ? ["🎁", "💜", "✨", "💎", "🪙"]
+        : ["🎁", "⭐", "✨", "💸", "🪙"];
+
+    // POP central
+    const pop = document.createElement("div");
+    pop.className = "gift-center-pop";
+    pop.textContent = "🎁";
+    layer.appendChild(pop);
+    setTimeout(() => pop.remove(), 1000);
+
+    // Partículas
+    for (let i = 0; i < 18; i++) {
+        const el = document.createElement("div");
+        el.className = i < 8 ? "gift-float" : "gift-burst";
+        el.textContent = iconos[Math.floor(Math.random() * iconos.length)];
+
+        const left = 35 + Math.random() * 30;
+        const top = 52 + Math.random() * 12;
+
+        el.style.left = left + "vw";
+        el.style.top = top + "vh";
+
+        if (el.classList.contains("gift-burst")) {
+            const x = (Math.random() * 220 - 110) + "px";
+            const y = (Math.random() * 220 - 140) + "px";
+            el.style.setProperty("--x", x);
+            el.style.setProperty("--y", y);
+        }
+
+        layer.appendChild(el);
+        setTimeout(() => el.remove(), 1900);
+    }
+
+    // Vibración suave
+    try {
+        if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+    } catch(e) {}
+
+    // Sonido
+    try { window.playSound('win'); } catch(e) {}
+};
     </script>
 </body>
 </html>
