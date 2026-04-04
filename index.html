@@ -2515,7 +2515,10 @@ style="display:none;">
     <span style="font-weight:700; color:#475569; font-size:0.9rem;">Invitar</span>
 </div>
         <div class="menu-card-btn" onclick="verReferidos()"><i class="fas fa-users menu-icon ic-green"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Referidos</span></div>
-        <div class="menu-card-btn" onclick="document.getElementById('modalHistorial').style.display='flex'"><i class="fas fa-list-ul menu-icon ic-blue"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Historial</span></div>
+<div class="menu-card-btn" onclick="abrirHistorial()">
+    <i class="fas fa-list-ul menu-icon ic-blue"></i>
+    <span style="font-weight:700; color:#475569; font-size:0.9rem;">Historial</span>
+</div>
        <div class="menu-card-btn" onclick="abrirModalTareas()">
     <i class="fas fa-gamepad menu-icon ic-red"></i>
     <span style="font-weight:700; color:#475569; font-size:0.9rem;">Misiones</span>
@@ -2599,10 +2602,10 @@ style="display:none;">
             </div>
 
             <h4 style="color: #64748b; margin-bottom: 15px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; text-align: left;">Últimos Movimientos</h4>
-            
-            <div id="historialList" style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="text-align: center; padding: 20px; color: #94a3b8;">Cargando historial...</div>
-            </div>
+<div id="historialList" style="display: flex; flex-direction: column; gap: 8px;">
+    <div style="text-align: center; padding: 20px; color: #94a3b8;">Cargando historial...</div>
+</div>
+</div>
 
         </div>
     </div>
@@ -4012,15 +4015,16 @@ setTimeout(() => {
         const u = snap.val() || {};
         const spinsHoy = (u.lastSpinDate === hoy) ? (u.spinsUsed || 0) : 0;
         const girosDisponibles = 3 - spinsHoy;
-        
-        if (girosDisponibles > 0) {
-            document.getElementById('modalRuletaGame').style.display = 'flex';
-            document.getElementById('spinInfo').textContent = 
-                `🎉 ¡Tienes ${girosDisponibles} giro${girosDisponibles > 1 ? 's' : ''} disponible${girosDisponibles > 1 ? 's' : ''}!`;
-            try { window.playSound('win'); } catch(e){}
-        } else {
-            notify("🎰 Ya usaste tus giros de hoy. ¡Vuelve mañana!");
-        }
+canSpin = girosDisponibles > 0;
+
+if (girosDisponibles > 0) {
+    document.getElementById('modalRuletaGame').style.display = 'flex';
+    document.getElementById('spinInfo').textContent =
+        `🎉 ¡Tienes ${girosDisponibles} giro${girosDisponibles > 1 ? 's' : ''} disponible${girosDisponibles > 1 ? 's' : ''}!`;
+    try { window.playSound('win'); } catch(e){}
+} else {
+    notify("🎰 Ya usaste tus giros de hoy. ¡Vuelve mañana!");
+}
     }).catch(() => {
         // Si falla Firebase, no hacer nada
     });
@@ -4036,16 +4040,31 @@ setTimeout(() => {
         }
     });
     window.triggerSpin = () => {
-        if (!canSpin) return notify("🚫 Vuelve mañana para más giros");
+    const hoy = new Date().toISOString().split('T')[0];
+
+    db.ref(`users/${idAuditor}`).once('value').then(snap => {
+        const u = snap.val() || {};
+        const spinsHoy = (u.lastSpinDate === hoy) ? (u.spinsUsed || 0) : 0;
+        const girosDisponibles = 3 - spinsHoy;
+
+        if (girosDisponibles <= 0) {
+            if (document.getElementById('spinInfo')) {
+                document.getElementById('spinInfo').textContent = "🚫 Vuelve mañana para más giros";
+            }
+            return notify("🚫 Vuelve mañana para más giros");
+        }
+
+        canSpin = true;
+
         // 🔊 SONIDO RULETA
-        const sonidoGiro = new Audio('https://amgel12.github.io/ruleta.mp3'); 
-        sonidoGiro.volume = 0.5; 
+        const sonidoGiro = new Audio('https://amgel12.github.io/ruleta.mp3');
+        sonidoGiro.volume = 0.5;
         sonidoGiro.play().catch(e => console.log("Audio bloqueado"));
+
         const btn = document.getElementById('btnSpin');
         const w = document.getElementById('wheel');
         btn.disabled = true;
 
-        // 1. CONFIGURACIÓN EXACTA (Ángulos y Premios)
         const segmentos = [
             { rot: 338, val: 0.25, msg: "¡0.25 Ganamos!" },
             { rot: 293, val: 0,    msg: "😢 Caíste en un espacio VACÍO" },
@@ -4057,45 +4076,38 @@ setTimeout(() => {
             { rot: 23,  val: 0.50, msg: "¡0.50 Ganamos!" }
         ];
 
-        // 2. ELEGIR RESULTADO
         const resultado = segmentos[Math.floor(Math.random() * segmentos.length)];
 
-        // 3. GIRAR (Animación)
         w.style.transition = "transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)";
         w.style.transform = `rotate(${360 * 5 + resultado.rot}deg)`;
 
-        // 4. RESULTADO FINAL
         setTimeout(() => {
             w.style.transition = "none";
             w.style.transform = `rotate(${resultado.rot}deg)`;
 
-            const hoy = new Date().toISOString().split('T')[0];
-            const updates = {
+            const nuevosSpinsUsed = spinsHoy + 1;
+
+            db.ref(`users/${idAuditor}`).update({
                 lastSpinDate: hoy,
-                spinsUsed: firebase.database.ServerValue.increment(1)
-            };
+                spinsUsed: nuevosSpinsUsed,
+                dinero: (u.dinero || 0) + resultado.val
+            }).then(() => {
+                const restantes = 3 - nuevosSpinsUsed;
+                canSpin = restantes > 0;
 
-            // MENSAJES PERSONALIZADOS AQUÍ 👇
-            notify(resultado.msg);
-lanzarConfetti(); 
+                if (document.getElementById('spinInfo')) {
+                    document.getElementById('spinInfo').textContent =
+                        restantes > 0
+                            ? `🎉 ¡Tienes ${restantes} giro${restantes > 1 ? 's' : ''} disponible${restantes > 1 ? 's' : ''}!`
+                            : "🚫 Vuelve mañana para más giros";
+                }
 
-            if (resultado.val > 0) {
-                // Si ganó puntos
-                updates['earnings'] = firebase.database.ServerValue.increment(resultado.val);
-                registrarHistorial("Ruleta", resultado.val);
-                try { window.playSound('win'); } catch(e){}
-                
-                // Misión diaria
-                if(window.checarProgresoDiario) window.checarProgresoDiario();
-            } else {
-                // Si cayó en vacío
-                try { window.playSound('gameover'); } catch(e){}
-            }
-
-            db.ref(`users/${idAuditor}`).update(updates);
-            btn.disabled = false;
+                notify(resultado.msg);
+                btn.disabled = false;
+            });
         }, 3000);
-    };
+    });
+};
     window.abrirSoporte = () => document.getElementById('modalSoporte').style.display = 'flex';
     window.abrirRifa = () => {
         document.getElementById('modalRifa').style.display = 'flex';
@@ -5948,28 +5960,108 @@ window.cerrarChatPrivado = () => {
 };
 // --- FUNCIÓN ABRIR HISTORIAL CON LEALTAD ---
 window.abrirHistorial = () => {
-    // 1. Mostrar el modal
     document.getElementById('modalHistorial').style.display = 'flex';
-    
-    // 2. Obtener y animar el porcentaje de lealtad
-    if(idAuditor) {
+
+    if (idAuditor) {
         db.ref(`users/${idAuditor}/loyaltyPercent`).once('value').then(snap => {
             const porcentaje = snap.val() || 0;
-            
-            // Texto
-            document.getElementById('historialLoyaltyPercent').textContent = porcentaje + "%";
-            
-            // Barra (con animación desde 0)
+
+            const txt = document.getElementById('historialLoyaltyPercent');
+            if (txt) txt.textContent = porcentaje + "%";
+
             const barra = document.getElementById('historialLoyaltyBar');
-            barra.style.width = "0%";
-            setTimeout(() => {
-                barra.style.width = porcentaje + "%";
-            }, 100);
+            if (barra) {
+                barra.style.width = "0%";
+                setTimeout(() => {
+                    barra.style.width = porcentaje + "%";
+                }, 100);
+            }
+        });
+
+        const lista = document.getElementById('historialList');
+        if (lista) {
+            lista.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:20px;">Cargando historial...</div>`;
+        }
+
+        db.ref(`users/${idAuditor}/historial`).limitToLast(20).once('value').then(snap => {
+            if (!lista) return;
+
+            if (!snap.exists()) {
+                lista.innerHTML = `
+                    <div style="text-align:center; color:#94a3b8; padding:20px;">
+                        Aún no tienes movimientos registrados.
+                    </div>
+                `;
+                return;
+            }
+
+            let movimientos = [];
+            snap.forEach(child => {
+                movimientos.push(child.val());
+            });
+
+            movimientos.reverse();
+
+            let html = "";
+            movimientos.forEach(m => {
+                const puntos = parseFloat(m.puntos || 0);
+                const esPositivo = puntos >= 0;
+                const color = esPositivo ? "#10b981" : "#ef4444";
+                const signo = esPositivo ? "+" : "";
+                const fecha = m.fecha
+                    ? new Date(m.fecha).toLocaleString([], {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                    : "--/--/--";
+
+                html += `
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        padding:12px 0;
+                        border-bottom:1px solid #f1f5f9;
+                        gap:10px;
+                    ">
+                        <div style="flex:1; text-align:left;">
+                            <div style="font-weight:700; color:#334155; font-size:0.9rem;">
+                                ${m.motivo || "Movimiento"}
+                            </div>
+                            <div style="font-size:0.72rem; color:#94a3b8; margin-top:2px;">
+                                ${fecha}
+                            </div>
+                        </div>
+
+                        <div style="
+                            font-weight:800;
+                            color:${color};
+                            font-size:0.9rem;
+                            white-space:nowrap;
+                        ">
+                            ${signo}${puntos.toFixed(2)} PTS
+                        </div>
+                    </div>
+                `;
+            });
+
+            lista.innerHTML = html;
+        }).catch(err => {
+            if (lista) {
+                lista.innerHTML = `
+                    <div style="text-align:center; color:#ef4444; padding:20px;">
+                        Error cargando historial
+                    </div>
+                `;
+            }
+            console.error("Error cargando historial:", err);
         });
     }
-    
-    // Sonido
-    try { window.playSound('click'); } catch(e){}
+
+    try { window.playSound('click'); } catch (e) {}
 };
 // ==========================================
 // 🔴 LÓGICA MAESTRA: USUARIOS + ONLINE + BADGES
@@ -6852,6 +6944,7 @@ window.validarLeccionIngles = function () {
         resultado.innerHTML = '✅ Correcto. Ganaste 5 puntos';
         resultado.style.color = '#16a34a';
         sumarPuntosMision(5);
+        registrarHistorial("Misión completada", 5);
         marcarMisionCompletada('mision_ingles_1');
     } else {
         resultado.innerHTML = '❌ Respuesta incorrecta. Intenta otra vez';
