@@ -1905,10 +1905,7 @@
 
         <!-- 🔴 BOTÓN DE RESET INMEDIATO (SOLO PARA PRUEBAS) -->
         <div id="resetDebug" style="position:fixed; bottom:80px; right:10px; z-index:9999;">
-            <button onclick="resetearMisionesInmediatas()" 
-                    style="background:#ff4444; color:white; border:none; padding:10px 15px; border-radius:8px; font-size:11px; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
-                🔄 RESET<br>MISIONES
-            </button>
+
         </div>
 
         <div id="modalConfirmarNavegador" class="modal-overlay" style="z-index: 30000; display:none;">
@@ -4982,17 +4979,21 @@ window.addEventListener('popstate', (e) => {
 
     // LISTA MAESTRA DE MODALES A CERRAR
     const modales = [
-        'modalNotificaciones', 'modalReferidos', 'modalSoporte', 'modalRifa', 
-        'modalUnlockVIP', 'modalTransfer', 'modalMision', 'modalTareas', 
-        'modalGiftReceived', 'modalCine', 'modalMusicSelector', 'modalComments', 
-        'modalGameOver', 'modalLesson', 'modalNoVidas', 'modalRanking',
-        'modalChatOptions', 'modalInvitar', 'modalSubirFoto', 'modalFotoOptions', 
-        'modalConfirmDelete', 'modalChatPrivado', 
-        'modalRetiro',      // Billetera
-        'modalFotoDetalle', // Foto Pantalla Completa
-        'modalCompartir',   // Compartir
-        'modalHistorial'    // <--- ¡AGREGADO! (Mi Trayectoria)
-    ];
+    'modalNotificaciones', 'modalReferidos', 'modalSoporte', 'modalRifa', 
+    'modalUnlockVIP', 'modalTransfer', 'modalMision', 'modalTareas', 
+    'modalGiftReceived', 'modalCine', 'modalMusicSelector', 'modalComments', 
+    'modalGameOver', 'modalLesson', 'modalNoVidas', 'modalRanking',
+    'modalChatOptions', 'modalInvitar', 'modalSubirFoto', 'modalFotoOptions', 
+    'modalConfirmDelete', 'modalChatPrivado', 
+    'modalRetiro',
+    'modalFotoDetalle',
+    'modalCompartir',
+    'modalHistorial',
+    'modalLecturaMision',
+    'modalVideosMision',
+    'modalMusicaMision'
+    
+];
 
     modales.forEach(id => {
         const el = document.getElementById(id);
@@ -6404,6 +6405,9 @@ window.abrirFotoDetalle = (key, ownerUid, ownerName, url) => {
 window.cerrarFotoDetalle = () => {
     document.getElementById('modalFotoDetalle').style.display = 'none';
     document.getElementById('detalleFotoImg').src = "";
+
+    // 🔥 IMPORTANTE: evitar que el historial se agote
+    history.pushState({ modalClosed: 'fotoDetalle' }, "");
 };
 
 window.likePhoto = (key, ownerUid, btn) => {
