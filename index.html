@@ -2553,7 +2553,6 @@ style="display:none;">
     </div>
     <div style="height: 30px;"></div>
 </div> </div>
-
 <div id="modalPaypal" class="modal-overlay" style="z-index:30000; display:none;">
   <div class="modal-content" style="text-align:center;">
     
@@ -2561,21 +2560,25 @@ style="display:none;">
     
     <p style="font-size:0.9rem; color:#334155;">
       Ya estás acumulando ganancias viendo videos 📺💸  
-      Ahora agrega tu PayPal para poder retirar tu dinero cuando quieras.
+      Agrega tu PayPal para retirar tu dinero cuando quieras.
     </p>
 
     <p style="font-size:0.8rem; color:#64748b; margin-top:8px;">
-      ⚡ Sin PayPal no podrás retirar tus ganancias  
-      ✔ Solo te tomará unos segundos
+      ⚡ Sin PayPal no podrás retirar  
+      ✔ Solo toma unos segundos
     </p>
 
-    <input type="email" id="inputPaypal"
+    <!-- INPUT CORREGIDO (ID ÚNICO) -->
+    <input type="email" id="inputPaypalUnico"
       placeholder="Tu correo PayPal aquí"
-      style="margin-top:15px; border:2px solid #e2e8f0; padding:10px; border-radius:10px; width:90%;">
-<button id="btnGuardarPaypal" class="btn-blue"
-  style="margin-top:12px; background:#0070ba; width:90%; border-radius:10px;">
-  Guardar y continuar 💸
-</button>
+      style="margin-top:15px; border:2px solid #e2e8f0; padding:12px; border-radius:10px; width:90%; outline:none;">
+
+    <!-- BOTÓN LIMPIO -->
+    <button id="btnGuardarPaypal" class="btn-blue"
+      style="margin-top:12px; background:#0070ba; width:90%; border-radius:10px;">
+      Guardar y continuar 💸
+    </button>
+
     <p style="font-size:0.7rem; color:#94a3b8; margin-top:10px;">
       Tus datos están protegidos 🔒
     </p>
@@ -3804,54 +3807,66 @@ window.toggleAuthMode = () => {
 };
 
 window.manejarAuth = () => {
-    const email = document.getElementById('emailInput').value.trim();
-    const pass = document.getElementById('passInput').value.trim();
+    console.log("[v0] manejarAuth called");
     
-    if (!email || pass.length < 6) return notify("⚠️ Email válido y clave de 6 caracteres");
-
+    const emailEl = document.getElementById('emailInput');
+    const passEl = document.getElementById('passInput');
+    
+    console.log("[v0] emailEl:", emailEl);
+    console.log("[v0] passEl:", passEl);
+    
+    if (!emailEl || !passEl) {
+        console.log("[v0] ERROR: Input elements not found");
+        notify("Error: Campos no encontrados");
+        return;
+    }
+    
+    const email = emailEl.value.trim();
+    const pass = passEl.value.trim();
+    
+    console.log("[v0] email:", email);
+    console.log("[v0] pass length:", pass.length);
+    console.log("[v0] isLoginMode:", isLoginMode);
+    
+    if (!email || pass.length < 6) {
+        notify("Completa los campos correctamente");
+        return;
+    }
+    
     const btn = document.getElementById('btnAuthAction');
-    btn.disabled = true; btn.textContent = "Procesando...";
-
+    btn.disabled = true;
+    btn.textContent = isLoginMode ? "Entrando..." : "Registrando...";
+    
+    console.log("[v0] Attempting auth with Firebase...");
+    
     if (isLoginMode) {
-        // --- INICIAR SESIÓN ---
-        auth.signInWithEmailAndPassword(email, pass).catch(err => {
-            notify("❌ Error: " + err.message);
-            btn.disabled = false; btn.textContent = "ENTRAR";
+        auth.signInWithEmailAndPassword(email, pass).then(() => {
+            console.log("[v0] Login success");
+            notify("Bienvenido de nuevo");
+        }).catch(err => {
+            console.log("[v0] Login error:", err.message);
+            notify("Error: " + err.message);
+            btn.disabled = false; 
+            btn.textContent = "ENTRAR";
         });
     } else {
-        // --- REGISTRO DE NUEVO USUARIO ---
         auth.createUserWithEmailAndPassword(email, pass).then((u) => {
+            console.log("[v0] Registration success");
             const nuevoCodigo = "INV-" + u.user.uid.substring(0, 5).toUpperCase();
             
-            // 1. Guardar en Base de Datos
             db.ref(`users/${u.user.uid}`).update({
                 email: email,
                 fechaRegistro: firebase.database.ServerValue.TIMESTAMP,
                 myInviteKey: nuevoCodigo,
                 earnings: 0.25
             });
-
-            // 2. Enviar Correo (Silencioso y Elegante) 🤫
-            const templateParams = {
-                to_name: email,          
-                invite_code: nuevoCodigo 
-            };
-
-            emailjs.send('service_g3c2umf', 'template_r8oxlta', templateParams)
-                .then(() => {
-                    console.log("✅ Correo enviado internamente.");
-                })
-                .catch((error) => {
-                    console.log("⚠️ El correo falló, pero el registro sigue:", error);
-                });
-
-            // 3. Notificar al usuario (Burbuja negra bonita)
-            notify("📧 ¡Bienvenido! Te enviamos un regalo a tu correo.");
-            try { window.playSound('win'); } catch(e){} 
-
+            
+            notify("Cuenta creada exitosamente");
         }).catch(err => {
-            notify("❌ Error: " + err.message);
-            btn.disabled = false; btn.textContent = "REGISTRARME";
+            console.log("[v0] Registration error:", err.message);
+            notify("Error: " + err.message);
+            btn.disabled = false; 
+            btn.textContent = "REGISTRARME";
         });
     }
 };
@@ -7516,49 +7531,50 @@ function verificarAvisoGiross() {
 }
 // AGREGAR ESTA FUNCIÓN AL FINAL DE TU SCRIPT
 
-// FUNCION PARA GUARDAR PAYPAL Y ABRIR SELECTOR DE MUSICA
 function guardarPaypalNuevo() {
-    const input = document.getElementById('inputPaypalNuevo');
-    const correo = input ? input.value.trim() : '';
-    
-    if (!correo || !correo.includes('@')) {
-        notify("Ingresa un correo PayPal valido");
+    const modal = document.getElementById('modalPaypal');
+
+    if (!modal) {
+        console.error('Modal no encontrado');
         return;
     }
-    
-    // Guardar en localStorage
-    localStorage.setItem('paypalCorreo', correo);
-    
-    // Guardar en Firebase si el usuario esta logueado
-    if (idAuditor) {
-        db.ref(`users/${idAuditor}`).update({ 
-            paypalCorreo: correo 
-        });
+
+    // 🔥 toma el input visible dentro del modal
+    const input = modal.querySelector('input[type="email"]');
+
+    if (!input) {
+        console.error('Input no encontrado dentro del modal');
+        return;
     }
-    
-    // Cerrar modal de PayPal
-    const modalPaypal = document.getElementById('modalPaypal');
-    if (modalPaypal) modalPaypal.style.display = 'none';
-    
-    notify("Correo PayPal guardado");
-    
-    // Abrir el selector de musica directamente
+
+    let correo = input.value;
+
+    console.log('RAW:', correo);
+
+    correo = correo.trim();
+
+    console.log('LIMPIO:', correo);
+
+    // validación mínima
+    if (!correo) {
+        mostrarToast('❌ Escribe tu correo PayPal');
+        return;
+    }
+
+    // guardar
+    localStorage.setItem('paypalCorreo', correo);
+
+    modal.style.display = 'none';
+
+    mostrarToast('✅ PayPal guardado');
+
     setTimeout(() => {
         document.getElementById('modalMusicSelector').style.display = 'flex';
-        // Buscar automaticamente al abrir
-        const terminos = ['Pop Latino 2025', 'Reggaeton hits', 'Bad Bunny', 'Feid 2025', 'Karol G', 'Peso Pluma'];
-        const aleatorio = terminos[Math.floor(Math.random() * terminos.length)];
-        document.getElementById('inputSearchMusic').value = aleatorio;
-        buscarEnYouTubeAPI();
-    }, 300);
+    }, 400);
 }
-
-window.guardarPaypalNuevo = guardarPaypalNuevo;
-// Hacer la función global
-window.guardarPaypalNuevo = guardarPaypalNuevo;
+// Toast limpio (solo una vez)
 function mostrarToast(mensaje) {
     const toast = document.getElementById('toast');
-
     if (!toast) return;
 
     toast.textContent = mensaje;
@@ -7569,25 +7585,25 @@ function mostrarToast(mensaje) {
     }, 2500);
 }
 
+
+// Eventos al cargar DOM
 document.addEventListener('DOMContentLoaded', () => {
+
     // Botón PayPal
     const btn = document.getElementById('btnGuardarPaypal');
     if (btn) {
         btn.addEventListener('click', guardarPaypalNuevo);
     }
-    
-    // Botón de Autenticación (ENTRAR/REGISTRARME)
+
+    // Auth
     const btnAuth = document.getElementById('btnAuthAction');
     if (btnAuth) {
-        btnAuth.addEventListener('click', function() {
-            manejarAuth();
-        });
+        btnAuth.addEventListener('click', manejarAuth);
     }
-    
-    // Toggle entre Login y Registro
+
     const toggleLink = document.getElementById('toggleAuthLink');
     if (toggleLink) {
-        toggleLink.addEventListener('click', function(e) {
+        toggleLink.addEventListener('click', (e) => {
             e.preventDefault();
             toggleAuthMode();
         });
