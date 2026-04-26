@@ -1456,7 +1456,7 @@
     <div style="width: 100%; max-width: 320px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
         <h3 id="authTitle" style="margin-bottom: 20px; color: #1e293b;">Crear Cuenta</h3>
       <!-- En tu modal de PayPal, asegúrate de tener: -->
-<input type="email" id="inputPaypalNuevo" placeholder="tucorreo@paypal.com" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 15px;">
+<input type="email" id="emailInput" placeholder="tucorreo@gmail.com" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 15px;">
         <input type="password" id="passInput" placeholder="Contraseña (6+ caracteres)" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 20px;">
         
         <button id="btnAuthAction" onclick="manejarAuth()" class="btn-blue" style="background: #0070ba; margin-bottom: 15px;">REGISTRARME</button>
@@ -7570,15 +7570,27 @@ function mostrarToast(mensaje) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Botón PayPal
     const btn = document.getElementById('btnGuardarPaypal');
     if (btn) {
         btn.addEventListener('click', guardarPaypalNuevo);
     }
     
-    // Add this for the auth button
+    // Botón de Autenticación (ENTRAR/REGISTRARME)
     const btnAuth = document.getElementById('btnAuthAction');
     if (btnAuth) {
-        btnAuth.addEventListener('click', manejarAuth);
+        btnAuth.addEventListener('click', function() {
+            manejarAuth();
+        });
+    }
+    
+    // Toggle entre Login y Registro
+    const toggleLink = document.getElementById('toggleAuthLink');
+    if (toggleLink) {
+        toggleLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleAuthMode();
+        });
     }
 });
 </script>
