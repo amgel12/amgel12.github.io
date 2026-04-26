@@ -1455,8 +1455,8 @@
 
     <div style="width: 100%; max-width: 320px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
         <h3 id="authTitle" style="margin-bottom: 20px; color: #1e293b;">Crear Cuenta</h3>
-        
-        <input type="email" id="emailInput" placeholder="Correo Electrónico" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 15px;">
+      <!-- En tu modal de PayPal, asegúrate de tener: -->
+<input type="email" id="inputPaypalNuevo" placeholder="tucorreo@paypal.com" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 15px;">
         <input type="password" id="passInput" placeholder="Contraseña (6+ caracteres)" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 20px;">
         
         <button id="btnAuthAction" onclick="manejarAuth()" class="btn-blue" style="background: #0070ba; margin-bottom: 15px;">REGISTRARME</button>
@@ -1555,9 +1555,17 @@
             </div>
         </div>
 
-        <button onclick="document.getElementById('modalInvitar').style.display='none'" style="background: none; border: none; color: #94a3b8; font-size: 0.85rem; margin-top: 10px; cursor: pointer; text-decoration: underline;">
-            Cerrar
-        </button>
+<button onclick="
+document.getElementById('modalInvitar').style.display='none';
+
+setTimeout(() => {
+    if (!localStorage.getItem('paypalCorreo')) {
+        document.getElementById('modalPaypal').style.display='flex';
+    }
+}, 500);
+">
+Cerrar
+</button>
     </div>
 </div>
 
@@ -2034,8 +2042,8 @@
     <!-- INPUT PAYPAL -->
     <div style="margin: 12px 20px 0; position:relative;">
         <div style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#64748b; font-size:0.9rem;">📧</div>
-        <input type="email" id="inputPaypal" placeholder="Correo de PayPal" 
-               style="background:#1e293b; border:2px solid #334155; border-radius:15px; color:white; padding:1px 1px 14px 40px; text-align:left; width:100%; outline:none; font-size:0.9rem;">
+<input type="email" id="inputPaypalUnico" placeholder="Correo de PayPal"
+style="background:#1e293b; border:2px solid #334155; border-radius:15px; color:white; padding:12px 14px; width:100%;">
     </div>
 
     <!-- BOTÓN RETIRO -->
@@ -2545,6 +2553,35 @@ style="display:none;">
     </div>
     <div style="height: 30px;"></div>
 </div> </div>
+
+<div id="modalPaypal" class="modal-overlay" style="z-index:30000; display:none;">
+  <div class="modal-content" style="text-align:center;">
+    
+    <h3 style="margin-bottom:10px;">💰 ¡Empieza a ganar dinero real!</h3>
+    
+    <p style="font-size:0.9rem; color:#334155;">
+      Ya estás acumulando ganancias viendo videos 📺💸  
+      Ahora agrega tu PayPal para poder retirar tu dinero cuando quieras.
+    </p>
+
+    <p style="font-size:0.8rem; color:#64748b; margin-top:8px;">
+      ⚡ Sin PayPal no podrás retirar tus ganancias  
+      ✔ Solo te tomará unos segundos
+    </p>
+
+    <input type="email" id="inputPaypal"
+      placeholder="Tu correo PayPal aquí"
+      style="margin-top:15px; border:2px solid #e2e8f0; padding:10px; border-radius:10px; width:90%;">
+<button id="btnGuardarPaypal" class="btn-blue"
+  style="margin-top:12px; background:#0070ba; width:90%; border-radius:10px;">
+  Guardar y continuar 💸
+</button>
+    <p style="font-size:0.7rem; color:#94a3b8; margin-top:10px;">
+      Tus datos están protegidos 🔒
+    </p>
+
+  </div>
+</div>
 <div id="modalRuletaGame" class="modal-overlay">
     <div class="modal-content" style="text-align:center;">
         <h3 style="color:#f59e0b; margin-bottom: 10px;">🎰 Ruleta Diaria</h3>
@@ -2569,8 +2606,12 @@ style="display:none;">
                 📺 Ver Video (+0.25 & Giro)
             </button>
         </div>
-
-        <button onclick="document.getElementById('modalRuletaGame').style.display='none'" class="btn-blue" style="background:#cbd5e1; color:#475569; margin-top:15px;">Cerrar</button>
+<button onclick="
+document.getElementById('modalRuletaGame').style.display='none';
+document.getElementById('modalInvitar').style.display='flex';
+" class="btn-blue" style="background:#cbd5e1; color:#475569; margin-top:15px;">
+Cerrar
+</button>
     </div>
 </div>
 <div id="modalHistorial" class="modal-overlay" style="z-index: 26000;">
@@ -7473,6 +7514,73 @@ function verificarAvisoGiross() {
         }
     }
 }
+// AGREGAR ESTA FUNCIÓN AL FINAL DE TU SCRIPT
+
+// FUNCION PARA GUARDAR PAYPAL Y ABRIR SELECTOR DE MUSICA
+function guardarPaypalNuevo() {
+    const input = document.getElementById('inputPaypalNuevo');
+    const correo = input ? input.value.trim() : '';
+    
+    if (!correo || !correo.includes('@')) {
+        notify("Ingresa un correo PayPal valido");
+        return;
+    }
+    
+    // Guardar en localStorage
+    localStorage.setItem('paypalCorreo', correo);
+    
+    // Guardar en Firebase si el usuario esta logueado
+    if (idAuditor) {
+        db.ref(`users/${idAuditor}`).update({ 
+            paypalCorreo: correo 
+        });
+    }
+    
+    // Cerrar modal de PayPal
+    const modalPaypal = document.getElementById('modalPaypal');
+    if (modalPaypal) modalPaypal.style.display = 'none';
+    
+    notify("Correo PayPal guardado");
+    
+    // Abrir el selector de musica directamente
+    setTimeout(() => {
+        document.getElementById('modalMusicSelector').style.display = 'flex';
+        // Buscar automaticamente al abrir
+        const terminos = ['Pop Latino 2025', 'Reggaeton hits', 'Bad Bunny', 'Feid 2025', 'Karol G', 'Peso Pluma'];
+        const aleatorio = terminos[Math.floor(Math.random() * terminos.length)];
+        document.getElementById('inputSearchMusic').value = aleatorio;
+        buscarEnYouTubeAPI();
+    }, 300);
+}
+
+window.guardarPaypalNuevo = guardarPaypalNuevo;
+// Hacer la función global
+window.guardarPaypalNuevo = guardarPaypalNuevo;
+function mostrarToast(mensaje) {
+    const toast = document.getElementById('toast');
+
+    if (!toast) return;
+
+    toast.textContent = mensaje;
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 2500);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('btnGuardarPaypal');
+    if (btn) {
+        btn.addEventListener('click', guardarPaypalNuevo);
+    }
+    
+    // Add this for the auth button
+    const btnAuth = document.getElementById('btnAuthAction');
+    if (btnAuth) {
+        btnAuth.addEventListener('click', manejarAuth);
+    }
+});
 </script>
 <!-- 3. AL FINAL: Cerrar etiquetas HTML -->
 </body>
