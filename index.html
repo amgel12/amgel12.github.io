@@ -40,13 +40,12 @@
 
   .mision-card {
       background: #f59e0b;
-      border-radius: 20px; /* Bordes más redondos */
-      padding: 16px;
-      margin-bottom: 14px;
+      border-radius: 12px;
+      padding: 8px;
+      margin-bottom: 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      /* Sombra suave y moderna */
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); 
       border: 1px solid #f8fafc;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -65,12 +64,12 @@
 
   .mision-title {
       font-weight: 800;
-      font-size: 15px;
+      font-size: 11px;
       color: #0f172a;
   }
 
   .mision-desc {
-      font-size: 13px;
+      font-size: 9px;
       color: #64748b;
       margin-top: 2px;
   }
@@ -78,9 +77,9 @@
   .mision-reward {
       background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
       color: #0891b2;
-      padding: 8px 14px;
+      padding: 4px 8px;
       border-radius: 50px;
-      font-size: 12px;
+      font-size: 9px;
       font-weight: 800;
       box-shadow: 0 2px 5px rgba(8, 145, 178, 0.1);
   }
@@ -100,14 +99,14 @@
 }
 
   .mision-title {
-      font-size: 1rem;
+      font-size: 0.75rem;
       font-weight: 800;
       color: #0f172a;
       margin: 0 0 4px 0;
   }
 
   .mision-desc {
-      font-size: 0.85rem;
+      font-size: 0.65rem;
       color: #64748b;
       margin: 0;
   }
@@ -116,8 +115,8 @@
       background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
       color: #0284c7;
       font-weight: 800;
-      font-size: 0.85rem;
-      padding: 8px 12px;
+      font-size: 0.65rem;
+      padding: 4px 8px;
       border-radius: 999px;
       white-space: nowrap;
   }
@@ -1080,14 +1079,19 @@
   
   .chat-messages-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
   
-  .msg-bubble {
-      max-width: 80%; padding: 12px 16px;
-      border-radius: 18px; font-size: 0.95rem;
-      line-height: 1.4; position: relative;
-      word-wrap: break-word;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-      cursor: grab; transition: transform 0.2s ease-out;
-  }
+   .msg-bubble {
+       max-width: 80%; padding: 12px 16px;
+       border-radius: 18px; font-size: 0.95rem;
+       line-height: 1.4; position: relative;
+       word-wrap: break-word;
+       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+       cursor: grab; transition: transform 0.2s ease-out;
+       touch-action: pan-y;
+   }
+
+   .msg-bubble.swiping {
+       transition: none;
+   }
 
   .msg-mine {
       align-self: flex-end;
@@ -1397,6 +1401,56 @@
     border-top: 1px solid #e5e7eb;
     background: #ffffff;
 }
+/* Barra de progreso para videos públicos */
+.video-progress-wrapper {
+    position: fixed;
+    bottom: 90px;
+    left: 20px;
+    right: 80px;
+    z-index: 50;
+    display: none;
+}
+
+.video-progress-container {
+    width: 100%;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.video-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 12px;
+    transition: width 1s linear;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    box-sizing: border-box;
+}
+
+.dollar-icon {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.video-progress-text {
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-top: 4px;
+    text-align: right;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
 </style>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
@@ -1493,6 +1547,16 @@
     </header>
 
     <div id="toast" class="toast"></div>
+
+    <!-- Barra de progreso para videos públicos -->
+    <div id="videoProgressWrapper" class="video-progress-wrapper">
+        <div class="video-progress-container">
+            <div class="video-progress-fill" id="videoProgressFill">
+                <span class="dollar-icon">$</span>
+            </div>
+        </div>
+        <div class="video-progress-text" id="videoProgressText">0s / 30s → +0.50 PTS</div>
+    </div>
     
     <div id="modalNotificaciones" class="modal-overlay">
         <div class="modal-content">
@@ -2401,6 +2465,30 @@ style="display:none;">
             Completa tareas y gana puntos
         </p>
 
+        <!-- BARRA DE ICONOS MISIONES -->
+        <div style="display: flex; gap: 8px; margin: 15px 0; padding: 10px; background: #f8fafc; border-radius: 12px; overflow-x: auto; scrollbar-width: none;">
+            <button onclick="abrirRetiro()" style="min-width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; color: white; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(99, 102, 241, 0.3);">
+                <span style="font-size: 1.4rem;">💰</span>
+                <span style="font-size: 0.55rem; font-weight: 700;">Saldo</span>
+            </button>
+            <button onclick="abrirJuego()" style="min-width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);">
+                <span style="font-size: 1.4rem;">🎮</span>
+                <span style="font-size: 0.55rem; font-weight: 700;">Juegos</span>
+            </button>
+            <button onclick="abrirListaChats()" style="min-width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(59, 130, 246, 0.3);">
+                <span style="font-size: 1.4rem;">💬</span>
+                <span style="font-size: 0.55rem; font-weight: 700;">Chats</span>
+            </button>
+            <button onclick="abrirBusquedaUsuarios()" style="min-width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: white; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(245, 158, 11, 0.3);">
+                <span style="font-size: 1.4rem;">🔍</span>
+                <span style="font-size: 0.55rem; font-weight: 700;">Buscar</span>
+            </button>
+            <button onclick="compartirApp()" style="min-width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #ec4899, #db2777); border: none; color: white; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(236, 72, 153, 0.3);">
+                <span style="font-size: 1.4rem;">📤</span>
+                <span style="font-size: 0.55rem; font-weight: 700;">Compartir</span>
+            </button>
+        </div>
+
         <div id="listaMisiones"></div>
     </div>
 </div>
@@ -2478,12 +2566,22 @@ style="display:none;">
 </div>
         <div id="chatList" class="chat-messages-area" style="flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 20px;">
              <div style="text-align:center; padding:20px; color:#94a3b8;">Cargando chat...</div>
-        </div>
-        <div id="mentionList" style="display: none; position: fixed; bottom: 65px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 300px; background: #1e293b; border-radius: 12px; z-index: 25000; border: 2px solid #fbbf24;"></div>
-        <div style="background: White; width: 100%; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 1px; flex-shrink: 0; padding: 1px; padding-bottom: -70px; margin-bottom: -60px; z-index: 200;">
-              <input type="text" id="inputChatMsg" placeholder="Escribe..." autocomplete="off" style="background:#f0f2f5; border:none; border-radius:20px; flex:1; margin:0; padding: 0 15px; height: 40px; color: #333;">
-              <button onclick="enviarTexto()" class="btn-blue" style="width: 40px; height: 40px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: #0070ba; color: white; border: none;">➤</button>
-        </div>
+         </div>
+         <div id="mentionList" style="display: none; position: fixed; bottom: 65px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 300px; background: #1e293b; border-radius: 12px; z-index: 25000; border: 2px solid #fbbf24;"></div>
+         <div id="replyBar" class="reply-bar" style="display: none;">
+             <div style="display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;">
+                 <i class="fas fa-reply" style="color: #6366f1;"></i>
+                 <div style="flex: 1; overflow: hidden;">
+                     <div id="replyAuthor" style="font-weight: 700; color: #6366f1; font-size: 0.75rem;"></div>
+                     <div id="replyText" style="color: #64748b; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                 </div>
+             </div>
+             <button onclick="cancelarRespuesta()" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.2rem; padding: 0 5px;">×</button>
+         </div>
+         <div style="background: White; width: 100%; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 1px; flex-shrink: 0; padding: 1px; padding-bottom: -70px; margin-bottom: -60px; z-index: 200;">
+               <input type="text" id="inputChatMsg" placeholder="Escribe..." autocomplete="off" style="background:#f0f2f5; border:none; border-radius:20px; flex:1; margin:0; padding: 0 15px; height: 40px; color: #333;">
+               <button onclick="enviarTexto()" class="btn-blue" style="width: 40px; height: 40px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: #0070ba; color: white; border: none;">➤</button>
+         </div>
     </div>
 
    <div class="screen">
@@ -2501,6 +2599,17 @@ style="display:none;">
     <input type="file" id="inputAvatarPerfil" accept="image/*" style="display: none;" onchange="subirMiFotoPerfil(this)">
 
     <h2 id="profKey" style="color:#1e293b; letter-spacing: 1px; margin-bottom: 5px; font-weight: 800;">Cargando...</h2>
+    
+    <!-- APODO EDITABLE -->
+    <div style="margin: 10px 0;">
+        <span style="font-size: 0.7rem; color: #64748b;">Apodo:</span>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">
+            <input type="text" id="inputApodo" placeholder="Sin apodo" style="width: auto; padding: 5px 10px; font-size: 0.85rem; text-align: center; border: 1px dashed #cbd5e1; border-radius: 8px; background: transparent;" maxlength="15">
+            <button onclick="guardarApodo()" style="background: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer;">✓</button>
+        </div>
+        <span style="font-size: 0.65rem; color: #94a3b8;">Máx. 15 caracteres</span>
+    </div>
+    
     <p id="profRank" style="font-size:0.75rem; font-weight:600; color:#64748b;">MIEMBRO OFICIAL</p>
     <div id="myKeyDisplay" style="display:none;">---</div>
 <p id="profEmail" style="font-size:0.78rem; color:#64748b; margin-top:6px;">
@@ -2693,8 +2802,8 @@ Cerrar
 </div>
 <nav class="bottom-nav">
    <button class="nav-item" id="nav0" onclick="goToScreen(0, true)">
-        <span class="nav-icon"><i class="fas fa-graduation-cap"></i></span>
-        <span>Aprender</span>
+        <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+        <span>Misiones</span>
     </button>
     
     <button class="nav-item" id="nav1" onclick="goToScreen(1, true)">
@@ -2704,7 +2813,7 @@ Cerrar
     
     <button class="nav-item active" id="nav2" onclick="goToScreen(2, true)">
         <span class="nav-icon"><i class="fas fa-feather-alt"></i></span>
-        <span>Pensar</span>
+        <span>Feeds</span>
     </button>
 
     <button class="nav-item" id="nav3" onclick="goToScreen(3, true)" style="position: relative;">
@@ -3053,11 +3162,22 @@ window.goToScreen = (index, userAction = false) => {
     const btnActivo = document.getElementById(`nav${index}`);
     if (btnActivo) btnActivo.classList.add('active');
 
+    // 6.1 GARANTIZAR QUE LA BARRA DE VIDEO SE OCULTE AL SALIR DEL FEED
+    if (index !== 2) {
+        detenerProgresoVideo();
+    }
+
     // 7. LÓGICA ESPECÍFICA POR PANTALLA
     if (index === 0) {
         if (typeof renderizarMisionesAprender === 'function') {
             renderizarMisionesAprender();
         }
+    }
+
+    // Mostrar/ocultar botón flotante (+) solo en Feeds (pantalla 2)
+    const fabBtn = document.getElementById('fabPublicar');
+    if (fabBtn) {
+        fabBtn.style.display = (index === 2) ? 'flex' : 'none';
     }
 
     if (index === 2) {
@@ -3077,7 +3197,99 @@ window.goToScreen = (index, userAction = false) => {
     }
 };
 
-// --- LOGICA VIDEOS ---
+// --- FUNCIONES PARA BARRA DE PROGRESO DE VIDEOS ---
+let videoProgressInterval = null;
+let videoWatchSeconds = 0;
+let videoWatchId = null;
+const VIDEO_REWARD_SECONDS = 30;
+const VIDEO_REWARD_POINTS = 0.50;
+
+function iniciarProgresoVideo(ytId) {
+    // Detener progreso anterior si existe
+    if (videoProgressInterval) clearInterval(videoProgressInterval);
+
+    videoWatchId = ytId;
+    videoWatchSeconds = parseFloat(localStorage.getItem('vid_' + ytId) || '0');
+
+    // Mostrar barra
+    document.getElementById('videoProgressWrapper').style.display = 'block';
+    actualizarBarraProgreso();
+
+    // Iniciar contador
+    videoProgressInterval = setInterval(() => {
+        if (videoActualJugando && videoWatchId) {
+            videoWatchSeconds++;
+            localStorage.setItem('vid_' + videoWatchId, videoWatchSeconds.toString());
+
+            actualizarBarraProgreso();
+
+            // Si llega a 30 segundos, otorgar puntos
+            if (videoWatchSeconds >= VIDEO_REWARD_SECONDS) {
+                otorgarPuntosVideo(ytId);
+            }
+        }
+    }, 1000);
+}
+
+function actualizarBarraProgreso() {
+    const fill = document.getElementById('videoProgressFill');
+    const text = document.getElementById('videoProgressText');
+
+    const porcentaje = Math.min((videoWatchSeconds / VIDEO_REWARD_SECONDS) * 100, 100);
+    fill.style.width = porcentaje + '%';
+
+    if (videoWatchSeconds >= VIDEO_REWARD_SECONDS) {
+        text.textContent = '✅ +0.50 PTS ganados';
+        fill.style.background = 'linear-gradient(90deg, #10b981, #059669)';
+    } else {
+        text.textContent = videoWatchSeconds + 's / ' + VIDEO_REWARD_SECONDS + 's → +0.50 PTS';
+    }
+}
+
+function otorgarPuntosVideo(ytId) {
+    const yaGanado = localStorage.getItem('v2_' + ytId);
+    if (yaGanado) return;
+
+    localStorage.setItem('v2_' + ytId, '1');
+
+    // Sumar puntos en Firebase
+    if (idAuditor) {
+        db.ref(`users/${idAuditor}`).once('value', s => {
+            const u = s.val() || {};
+            const nuevoSaldo = (u.earnings || 0) + VIDEO_REWARD_POINTS;
+            db.ref(`users/${idAuditor}`).update({ earnings: nuevoSaldo });
+            registrarHistorial("Video Feed", VIDEO_REWARD_POINTS);
+        });
+    }
+
+    // Actualizar display local
+    let puntos = parseFloat(localStorage.getItem('puntos') || '0');
+    puntos += VIDEO_REWARD_POINTS;
+    localStorage.setItem('puntos', puntos.toString());
+
+    const display = document.getElementById('mainPts');
+    if (display) display.textContent = puntos.toFixed(2) + ' PTS';
+
+    const snakeDisplay = document.getElementById('snakeWalletDisplay');
+    if (snakeDisplay) snakeDisplay.textContent = '👾 ' + puntos.toFixed(2);
+
+    notify('💰 +0.50 PTS por ver video');
+    try { window.playSound('win'); } catch(e){}
+
+    if (videoProgressInterval) clearInterval(videoProgressInterval);
+    actualizarBarraProgreso();
+}
+
+function detenerProgresoVideo() {
+    if (videoProgressInterval) {
+        clearInterval(videoProgressInterval);
+        videoProgressInterval = null;
+    }
+    document.getElementById('videoProgressWrapper').style.display = 'none';
+    videoWatchId = null;
+    videoWatchSeconds = 0;
+}
+
 // --- LÓGICA DE AUTO-PLAY TIKTOK (OPTIMIZADA) ---
 
 let videoActualJugando = null;
@@ -3087,6 +3299,12 @@ let postSeleccionadoData = null;
 let cacheFotosPerfil = {};
 
 function checkScrollVideos() {
+    // Seguridad: solo procesar si estamos en el Feed (pantalla 2)
+    if (currentScreen !== 2) {
+        detenerProgresoVideo();
+        return;
+    }
+
     const container = document.getElementById('muroReportes');
     if (!container) return;
 
@@ -3128,6 +3346,8 @@ function checkScrollVideos() {
                         const btnViejo = anterior.querySelector('.btn-sonido-flotante');
                         if (btnViejo) btnViejo.remove();
                     }
+                    // Detener progreso del video anterior
+                    detenerProgresoVideo();
                 }
 
                 // B) Reproducir el nuevo
@@ -3158,6 +3378,13 @@ function checkScrollVideos() {
                 }
 
                 videoActualJugando = nuevoId;
+                // Iniciar progreso del nuevo video
+                iniciarProgresoVideo(ytId);
+            }
+        } else {
+            // No hay video visible, detener progreso
+            if (videoActualJugando) {
+                detenerProgresoVideo();
             }
         }
     }, 50);
@@ -3275,9 +3502,43 @@ function cargarMuroReportes() {
     }
 });
 }
-  function construirPostHTML(post) {
+
+// Helper para obtener nombre del usuario actual para notificaciones
+function getMiNombre() {
+    return document.getElementById('profKey')?.textContent || myCurrentKey;
+}
+
+// Retorna el apodo del usuario si existe, sinon retorna la clave INV o fallback
+function getDisplayName(uid, fallback) {
+    if (apodosCache[uid]) return apodosCache[uid];
+    return fallback || "Usuario";
+}
+
+function cargarApodos() {
+    db.ref('users').once('value', snap => {
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const u = child.val();
+                if (u.apodo) apodosCache[child.key] = u.apodo;
+            });
+        }
+    });
+    // También cargar en el cache global
+    db.ref('users').limitToLast(100).once('value', s => {
+        if (s.exists()) {
+            s.forEach(c => {
+                const u = c.val();
+                if (u.apodo) apodosCache[c.key] = u.apodo;
+            });
+        }
+    });
+}
+// Cargar apodos al inicio
+cargarApodos();
+
+function construirPostHTML(post) {
     const avatarUrl = getUserProfilePhoto(post.uid);
-    const nombre = post.autorClave || "Anónimo";
+    const nombre = getDisplayName(post.uid, post.autorClave || "Anónimo");
     let numComentarios = post.comentarios ? Object.keys(post.comentarios).length : 0;
             
     let tiempo = "Reciente";
@@ -3757,7 +4018,7 @@ window.seleccionarVideo = (id, title, btnElement) => {
             const nombreSeguro = (c.autor || 'Anónimo').replace(/'/g, "\\'");
             d.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span class="comment-author">${escapeHtml(c.autor)}</span>
+                    <span class="comment-author">${escapeHtml(getDisplayName(c.uid, c.autor))}</span>
                     <button onclick="replyToUser('${nombreSeguro}')" style="border:none; background:none; color:#0070ba; font-size:0.7rem; font-weight:bold; cursor:pointer; padding:2px 5px;">Responder ↩</button>
                 </div>
                 <div class="comment-text">${escapeHtml(c.texto)}</div>
@@ -3771,18 +4032,19 @@ window.seleccionarVideo = (id, title, btnElement) => {
         inp.value = `@${user} ` + inp.value;
         inp.focus();
     };
-    window.enviarComentarioModal = (e) => {
-        if (e) e.preventDefault();
-        const inp = document.getElementById('modalCommentInput');
-        const txt = inp.value.trim();
-        if (!txt) return; 
-        db.ref(`reportes/${currentPostId}/comentarios`).push({ uid: idAuditor, autor: myCurrentKey, texto: txt, timestamp: firebase.database.ServerValue.TIMESTAMP });
-        detectarYEnvarMenciones(txt, "comentario");
-        db.ref(`reportes/${currentPostId}`).once('value').then(snap => {
+window.enviarComentarioModal = (e) => {
+    if (e) e.preventDefault();
+    const inp = document.getElementById('modalCommentInput');
+    const txt = inp.value.trim();
+    if (!txt) return; 
+    const autorNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
+    db.ref(`reportes/${currentPostId}/comentarios`).push({ uid: idAuditor, autor: autorNombre, texto: txt, timestamp: firebase.database.ServerValue.TIMESTAMP });
+    detectarYEnvarMenciones(txt, "comentario");
+    db.ref(`reportes/${currentPostId}`).once('value').then(snap => {
             if (snap.exists()) {
                 const post = snap.val();
                 if (post.uid !== idAuditor) {
-                    db.ref(`users/${post.uid}/notifications`).push({ from: myCurrentKey, type: 'comentario', text: "💬 Comentó tu video", extra: currentPostId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false });
+                    db.ref(`users/${post.uid}/notifications`).push({ from: myCurrentKey, fromName: getMiNombre(), type: 'comentario', text: "💬 Comentó tu video", extra: currentPostId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false });
                 }
             }
         });
@@ -3936,8 +4198,13 @@ if (labelEmail) {
                 lastGameAd = d.lastGameAd || 0;
                 userEnglishLevel = d.englishLevel || 1;
                 
-                if(document.getElementById('profKey')) document.getElementById('profKey').textContent = myCurrentKey;
+                // Mostrar apodo si existe, sino mostrar clave INV
+                const nombreMostrar = d.apodo || myCurrentKey;
+                if(document.getElementById('profKey')) document.getElementById('profKey').textContent = nombreMostrar;
                 if(document.getElementById('myKeyDisplay')) document.getElementById('myKeyDisplay').textContent = myCurrentKey;
+                
+                // Cargar apodo en input
+                if(document.getElementById('inputApodo')) document.getElementById('inputApodo').value = d.apodo || '';
 
                 // --- C) LÓGICA DE AVATAR (PERSONALIZADO VS DEFAULT) ---
                 const imagenMostrar = d.fotoPerfil || getAvatarUrl(idAuditor);
@@ -4020,7 +4287,9 @@ if (labelEmail) {
                     let h = "";
                     Object.entries(d.notifications).reverse().slice(0, 20).forEach(([k, n]) => {
                         const idVideo = n.extra || "";
-                        h += `<div id="noti-${k}" class="noti-item" onclick="irANotificacion('${n.type}', '${idVideo}', '${k}')"><strong>${n.from}</strong><div class="noti-text">${n.text}</div></div>`;
+                        // Buscar el nombre del emisor (apodo o código INV)
+                        const nombreEmisor = n.fromName || n.from;
+                        h += `<div id="noti-${k}" class="noti-item" onclick="irANotificacion('${n.type}', '${idVideo}', '${k}')"><strong>${nombreEmisor}</strong><div class="noti-text">${n.text}</div></div>`;
                     });
                     if(document.getElementById('listaNotificaciones')) document.getElementById('listaNotificaciones').innerHTML = h || "<div style='padding:20px; color:#cbd5e1;'>Sin notificaciones.</div>";
                 }
@@ -4185,7 +4454,7 @@ if (girosDisponibles > 0) {
     abrirChatPrivado(tid, tname);
 };
 
-    window.darLasGracias = (targetUid) => { db.ref(`users/${targetUid}/notifications`).push({ from: myCurrentKey, type: 'simple', text: "🙏 ¡Te envió las gracias por el regalo!", timestamp: firebase.database.ServerValue.TIMESTAMP, read: false }).then(() => { notify("❤️ Agradecimiento enviado"); document.getElementById('modalGiftReceived').style.display = 'none'; }); };
+    window.darLasGracias = (targetUid) => { db.ref(`users/${targetUid}/notifications`).push({ from: myCurrentKey, fromName: getMiNombre(), type: 'simple', text: "🙏 ¡Te envió las gracias por el regalo!", timestamp: firebase.database.ServerValue.TIMESTAMP, read: false }).then(() => { notify("❤️ Agradecimiento enviado"); document.getElementById('modalGiftReceived').style.display = 'none'; }); };
     
     // CINE
     let cineTimerInterval = null;
@@ -4248,23 +4517,37 @@ if (girosDisponibles > 0) {
         const w = document.getElementById('chatWindow');
         if (!isChatOpen) { w.classList.add('open'); isChatOpen = true; document.getElementById('chatBadge').style.display = 'none'; scrollToBottom(); window.history.pushState({chat: true}, ""); } else { w.classList.remove('open'); isChatOpen = false; document.getElementById('inputChatMsg').blur(); }
     };
-    window.enviarTexto = () => { 
-    const i = document.getElementById('inputChatMsg'); 
-    const t = i.value.trim(); 
-    if(!t) return; 
-    
-    i.value=""; 
-    
+    window.enviarTexto = () => {
+    const i = document.getElementById('inputChatMsg');
+    const t = i.value.trim();
+    if(!t) return;
+
+    i.value="";
+
+    // Preparar datos del mensaje
+    const msgData = {
+        uid: idAuditor,
+        autor: myCurrentKey,
+        texto: t,
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    // Si es una respuesta, agregar datos del mensaje original
+    if (window.replyToMsgKey) {
+        msgData.replyTo = {
+            key: window.replyToMsgKey,
+            text: window.replyToMsgText,
+            author: window.replyToMsgAuthor,
+            uid: window.replyToMsgUid
+        };
+        cancelarRespuesta();
+    }
+
     // Guardar mensaje en Chat
-    db.ref('chat_global').push({ 
-        uid: idAuditor, 
-        autor: myCurrentKey, 
-        texto: t, 
-        fecha: firebase.database.ServerValue.TIMESTAMP 
-    }); 
-    
+    db.ref('chat_global').push(msgData);
+
     // 🔥 ESTA LÍNEA ES LA QUE ACTIVA LA NOTIFICACIÓN:
-    detectarYEnvarMenciones(t, "chat"); 
+    detectarYEnvarMenciones(t, "chat");
 };
 
     // --- FUNCIÓN CHAT MEJORADA (CON FOTOS REALES) ---
@@ -4277,34 +4560,44 @@ if (girosDisponibles > 0) {
              const msgKey = s.key;
              const esMio = m.uid === idAuditor;
              
-             // URL por defecto (Robot)
-             const avatarDefault = getUserProfilePhoto(m.uid);
-             
-             // Crear contenedor de fila (Flexbox)
-             const row = document.createElement('div');
-             row.className = `chat-row ${esMio ? 'mine' : 'other'}`;
-             row.id = `msg-row-${msgKey}`;
-             
-             // HTML INTERNO: Foto + Burbuja
-             // Nota: Usamos un ID único en la imagen (img-uid-key) para actualizarla luego
-             row.innerHTML = `
-                <img id="img-chat-${msgKey}" src="${avatarDefault}" class="chat-avatar-img" onclick="mostrarPerfilUsuario('${m.uid}', '${m.autor}')">
-                
-                <div id="msg-${msgKey}" class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}">
-                    <div><span class="msg-user">${escapeHtml(m.autor)}</span></div>
-                    <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
-                    <div class="msg-time">${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-                </div>
-             `;
+// URL por defecto (Robot)
+              const avatarDefault = getUserProfilePhoto(m.uid);
+              const nombreMostrar = getDisplayName(m.uid, m.autor);
+              
+              // Crear contenedor de fila (Flexbox)
+              const row = document.createElement('div');
+              row.className = `chat-row ${esMio ? 'mine' : 'other'}`;
+              row.id = `msg-row-${msgKey}`;
+              
+              // HTML INTERNO: Foto + Burbuja
+               // Nota: Usamos un ID único en la imagen (img-uid-key) para actualizarla luego
+               const replyHtml = m.replyTo ? `
+                  <div class="quoted-msg" onclick="scrollToMessage('${m.replyTo.key}')">
+                      <span class="quoted-author">${escapeHtml(m.replyTo.author || 'Usuario')}</span>
+                      <span class="quoted-text">${escapeHtml(m.replyTo.text || '')}</span>
+                  </div>
+               ` : '';
 
-             // Eventos de "Mantener presionado" en la burbuja
-             const burbuja = row.querySelector(`#msg-${msgKey}`);
-             burbuja.onmousedown = () => startPress(msgKey, m.texto, m.uid);
-             burbuja.ontouchstart = () => startPress(msgKey, m.texto, m.uid);
-             burbuja.onmouseup = cancelPress;
-             burbuja.onmouseleave = cancelPress;
-             burbuja.ontouchend = cancelPress;
-             burbuja.ontouchmove = cancelPress;
+               row.innerHTML = `
+                  <img id="img-chat-${msgKey}" src="${avatarDefault}" class="chat-avatar-img" onclick="mostrarPerfilUsuario('${m.uid}', '${nombreMostrar}')">
+
+                  <div id="msg-${msgKey}" class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}">
+                      <div><span class="msg-user">${escapeHtml(nombreMostrar)}</span></div>
+                      ${replyHtml}
+                      <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
+                      <div class="msg-time">${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                  </div>
+               `;
+
+              // Eventos de "Mantener presionado" y swipe en la burbuja
+              const burbuja = row.querySelector(`#msg-${msgKey}`);
+              burbuja.onmousedown = (e) => { startPress(msgKey, m.texto, m.uid); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
+              burbuja.ontouchstart = (e) => { startPress(msgKey, m.texto, m.uid); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
+              burbuja.onmouseup = (e) => { cancelPress(); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+              burbuja.onmouseleave = (e) => { cancelPress(); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+              burbuja.ontouchend = (e) => { cancelPress(); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+              burbuja.ontouchmove = (e) => { handleSwipeMove(e, msgKey); };
+              burbuja.onmousemove = (e) => { if(e.buttons === 1) handleSwipeMove(e, msgKey); };
 
              list.appendChild(row);
              scrollToBottom();
@@ -4355,6 +4648,128 @@ if (girosDisponibles > 0) {
     function cancelPress() {
         clearTimeout(chatPressTimer); // Si suelta antes, cancela
     }
+
+    // --- LÓGICA DE SWIPE PARA RESPONDER ---
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    let swipeMsgKey = null;
+    let swipeMsgText = null;
+    let swipeMsgAuthor = null;
+    let isSwiping = false;
+
+    function handleSwipeStart(e, msgKey, text, author) {
+        const touch = e.touches ? e.touches[0] : e;
+        swipeStartX = touch.clientX;
+        swipeStartY = touch.clientY;
+        swipeMsgKey = msgKey;
+        swipeMsgText = text;
+        swipeMsgAuthor = author;
+        isSwiping = true;
+    }
+
+    function handleSwipeMove(e, msgKey) {
+        if (!isSwiping || swipeMsgKey !== msgKey) return;
+
+        const touch = e.touches ? e.touches[0] : e;
+        const deltaX = touch.clientX - swipeStartX;
+        const deltaY = Math.abs(touch.clientY - swipeStartY);
+
+        // Si se desplaza más verticalmente que horizontal, no es swipe
+        if (deltaY > 30) {
+            isSwiping = false;
+            cancelPress(); // Cancelar long-press
+            return;
+        }
+
+        if (Math.abs(deltaX) > 10) {
+            e.preventDefault();
+            cancelPress(); // Cancelar long-press cuando se detecta swipe
+            const burbuja = document.getElementById(`msg-${msgKey}`);
+            if (burbuja) {
+                burbuja.classList.add('swiping');
+                const translateX = Math.max(0, Math.min(deltaX, 100));
+                burbuja.style.transform = `translateX(${translateX}px)`;
+
+                // Cambiar apariencia cuando se desliza suficiente
+                if (translateX > 50) {
+                    burbuja.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
+                    burbuja.style.borderLeft = '4px solid #6366f1';
+                }
+            }
+        }
+    }
+
+    function handleSwipeEnd(e, msgKey, text, author, uid) {
+        if (!isSwiping || swipeMsgKey !== msgKey) return;
+        
+        const touch = e.changedTouches ? e.changedTouches[0] : e;
+        const deltaX = touch.clientX - swipeStartX;
+        
+        const burbuja = document.getElementById(`msg-${msgKey}`);
+        if (burbuja) {
+            burbuja.classList.remove('swiping');
+            burbuja.style.transform = '';
+            burbuja.style.background = '';
+        }
+        
+        // Si se deslizó más de 60px a la derecha, responder
+        if (deltaX > 60) {
+            responderMensaje(msgKey, text, author, uid);
+        }
+        
+        isSwiping = false;
+        swipeMsgKey = null;
+        swipeMsgText = null;
+        swipeMsgAuthor = null;
+    }
+
+    window.responderMensaje = (msgKey, text, author, uid) => {
+        const replyBar = document.getElementById('replyBar');
+        const replyAuthor = document.getElementById('replyAuthor');
+        const replyText = document.getElementById('replyText');
+        const input = document.getElementById('inputChatMsg');
+        
+        replyAuthor.textContent = author || 'Usuario';
+        replyText.textContent = text || '';
+        replyBar.style.display = 'flex';
+        
+        // Guardar datos del mensaje al que se responde
+        window.replyToMsgKey = msgKey;
+        window.replyToMsgText = text;
+        window.replyToMsgAuthor = author;
+        window.replyToMsgUid = uid;
+        
+        input.focus();
+        input.placeholder = `Respondiendo a ${author}...`;
+        
+        if (navigator.vibrate) navigator.vibrate(30);
+    };
+
+    window.cancelarRespuesta = () => {
+        const replyBar = document.getElementById('replyBar');
+        const input = document.getElementById('inputChatMsg');
+        
+        replyBar.style.display = 'none';
+        window.replyToMsgKey = null;
+        window.replyToMsgText = null;
+        window.replyToMsgAuthor = null;
+        window.replyToMsgUid = null;
+        
+        input.placeholder = 'Escribe...';
+    };
+
+    window.scrollToMessage = (msgKey) => {
+        const row = document.getElementById(`msg-row-${msgKey}`);
+        if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Efecto visual para resaltar el mensaje
+            row.style.transition = 'background 0.3s';
+            row.style.background = 'rgba(99, 102, 241, 0.2)';
+            setTimeout(() => {
+                row.style.background = '';
+            }, 1500);
+        }
+    };
 
     // --- ABRIR MENÚ ---
     function abrirOpcionesChat(uidAuthor) {
@@ -5382,9 +5797,11 @@ function cachearUsuarios() {
         listaUsuariosCache = [];
         snap.forEach(child => {
             const u = child.val();
+            // Mostrar apodo si existe, sino mostrar clave INV
+            const nombreMostrar = u.apodo || u.myInviteKey || "Usuario";
             listaUsuariosCache.push({
                 uid: child.key,
-                nombre: u.myInviteKey || "Usuario",
+                nombre: nombreMostrar,
                 avatar: getAvatarUrl(child.key)
             });
         });
@@ -5973,8 +6390,10 @@ window.enviarMensajePrivado = () => {
             return notify("🚫 Límite diario alcanzado (10/10)");
         }
 
+        const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
         db.ref(`chats_privados/${currentChatId}`).push({
             uid: idAuditor,
+            autor: miNombre,
             texto: txt,
             fecha: firebase.database.ServerValue.TIMESTAMP
         });
@@ -6192,9 +6611,12 @@ function cargarListaUsuariosHorizontal() {
                 const minutos = Math.floor((ahora - tiempo) / 60000);
                 const esOnline = minutos < 2;
                 
+                // Mostrar apodo si existe, sino mostrar código INV
+                const nombreMostrar = u.apodo || (u.myInviteKey ? (u.myInviteKey.split('-')[1] || "User") : "User");
+                
                 listaUsuariosCacheReal.push({
                     key: child.key,
-                    nombre: u.myInviteKey ? (u.myInviteKey.split('-')[1] || "User") : "User", 
+                    nombre: nombreMostrar,
                     avatar: getUserProfilePhoto(child.key),
                     online: esOnline,
                     rawTime: tiempo
@@ -6234,24 +6656,22 @@ function renderizarUsuariosHorizontal() {
     listaUsuariosCacheReal.forEach(user => {
         const numMensajes = mapaMensajesSinLeer[user.key] || 0;
 
-        // --- CÁLCULO DE TIEMPO (Hace cuánto) ---
         let tiempoTexto = "";
-        let colorTiempo = "#94a3b8"; // Gris por defecto
+        let colorTiempo = "#94a3b8";
         
         const msDiff = ahora - user.rawTime;
         const minDiff = Math.floor(msDiff / 60000);
 
         if (minDiff < 2) {
             tiempoTexto = "Online";
-            colorTiempo = "#10b981"; // Verde
+            colorTiempo = "#10b981";
         } else if (minDiff < 60) {
             tiempoTexto = minDiff + " min";
-        } else if (minDiff < 1440) { // Menos de 24 horas
+        } else if (minDiff < 1440) {
             tiempoTexto = Math.floor(minDiff / 60) + " h";
         } else {
             tiempoTexto = Math.floor(minDiff / 1440) + " d";
         }
-        // ---------------------------------------
 
         const badgeHtml = numMensajes > 0 
              ? `<div style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; display:flex; align-items:center; justify-content:center; border:2px solid white; font-weight:800; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index:10; animation: popIn 0.3s;">${numMensajes}</div>` 
@@ -6263,12 +6683,16 @@ function renderizarUsuariosHorizontal() {
 
         const dotClass = user.online ? "dot-online" : "dot-offline";
 
+        const userKey = user.key;
+        const userName = user.nombre.replace(/'/g, "\\'");
+        
         html += `
-        <div class="story-item" onclick="abrirChatPrivado('${user.key}', '${user.nombre}')" style="min-width: 65px;">
+        <div class="story-item" style="min-width: 65px; position:relative;" onclick="abrirChatPrivado('${userKey}', '${userName}')">
             <div class="story-avatar-box" style="border-color: ${bordeColor}; position:relative; transition:0.3s;">
                 <div class="story-img" style="background-image:url('${user.avatar}')"></div>
                 <div class="story-dot ${dotClass}"></div>
                 ${badgeHtml}
+                ${user.online ? `<button onclick="event.stopPropagation(); abrirRegaloPrivadoTarget('${userKey}', '${userName}')" style="position:absolute; bottom:-2px; left:-2px; width:22px; height:22px; border-radius:50%; background: linear-gradient(135deg, #a855f7, #8b5cf6); border:2px solid white; font-size:0.7rem; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 2px 5px rgba(168,85,247,0.5); z-index:20;" title="Enviar puntos">🎁</button>` : ''}
             </div>
             
             <div class="story-name" style="font-weight:${numMensajes>0?'800':'normal'}; color:${numMensajes>0?'#1e293b':'#334155'}; margin-bottom: 0;">
@@ -6398,7 +6822,7 @@ window.validarCodigoAmigo = () => {
             updates[`users/${idAuditor}/redeemedCodes/${codigo}`] = true;
             const notiKey = db.ref(`users/${ownerId}/notifications`).push().key;
             updates[`users/${ownerId}/notifications/${notiKey}`] = {
-                from: myCurrentKey, type: 'referido',
+                from: myCurrentKey, fromName: getMiNombre(), type: 'referido',
                 text: "🎉 ¡Alguien usó tu código! (+0.50 PTS)",
                 timestamp: fecha, read: false
             };
@@ -6485,7 +6909,7 @@ window.likePhoto = (key, ownerUid, btn) => {
             btn.querySelector('span').textContent = parseInt(btn.querySelector('span').textContent) + 1;
             if (ownerUid !== idAuditor) {
                 db.ref(`users/${ownerUid}/notifications`).push({
-                    from: myCurrentKey, type: 'simple',
+                    from: myCurrentKey, fromName: getMiNombre(), type: 'simple',
                     text: "❤️ Le gustó tu foto en la galería",
                     timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
                 });
@@ -6538,7 +6962,7 @@ window.enviarVideoA = (targetUid, targetName) => {
         fecha: firebase.database.ServerValue.TIMESTAMP
     });
     db.ref(`users/${targetUid}/notifications`).push({
-        from: myCurrentKey, type: 'chat_privado',
+        from: myCurrentKey, fromName: getMiNombre(), type: 'chat_privado',
         text: `Te compartió ${contenidoParaCompartir.tipo === 'video' ? 'un video' : 'una foto'}`,
         extra: idAuditor, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
     });
@@ -6617,6 +7041,7 @@ window.detenerVideoMuro = () => {
         }
         videoActualJugando = null;
     }
+    detenerProgresoVideo();
 };
 
 window.abrirModalTareas = () => {
@@ -6814,6 +7239,53 @@ window.abrirRegaloPrivado = () => {
     document.getElementById('modalRegaloPrivado').style.display = 'flex';
 };
 
+window.abrirRegaloPrivadoTarget = (targetUid, targetName) => {
+    if (!currentEarnings || currentEarnings <= 0) return notify("❌ No tienes puntos disponibles");
+    if (targetUid === idAuditor) return notify("No puedes enviarte puntos a ti mismo");
+    document.getElementById('saldoRegaloDisplay').textContent = currentEarnings.toFixed(2) + " PTS";
+    document.getElementById('labelDestinoRegalo').textContent = "Para: " + targetName;
+    document.getElementById('inputMontoRegalo').value = "";
+    document.getElementById('modalRegaloPrivado').style.display = 'flex';
+    targetUserUid = targetUid;
+};
+
+window.confirmarRegaloPrivadoTarget = () => {
+    const monto = parseFloat(document.getElementById('inputMontoRegalo').value);
+    const nombreDestino = document.getElementById('labelDestinoRegalo').textContent.replace('Para: ', '');
+    if (!monto || monto <= 0) return notify("❌ Cantidad inválida");
+    if (monto > currentEarnings) return notify("❌ Saldo insuficiente");
+    if (!targetUserUid) return notify("❌ Usuario no encontrado");
+    const btn = document.getElementById('btnConfirmarRegalo');
+    btn.disabled = true;
+    btn.textContent = "Enviando...";
+    const updates = {};
+    const fecha = firebase.database.ServerValue.TIMESTAMP;
+    updates[`users/${idAuditor}/earnings`] = firebase.database.ServerValue.increment(-monto);
+    updates[`users/${targetUserUid}/earnings`] = firebase.database.ServerValue.increment(monto);
+    const notiKey = db.ref(`users/${targetUserUid}/notifications`).push().key;
+    updates[`users/${targetUserUid}/notifications/${notiKey}`] = {
+        from: myCurrentKey, fromName: getMiNombre(), type: 'gift',
+        text: `🎁 Te envió un regalo de ${monto} PTS`,
+        extra: `${monto}|${idAuditor}`, timestamp: fecha, read: false
+    };
+    const chatId = [idAuditor, targetUserUid].sort().join('_');
+    db.ref().update(updates).then(() => {
+        db.ref(`chats_privados/${chatId}`).push({
+            uid: idAuditor, texto: `🎁 Te envié ${monto} PTS como regalo`,
+            fecha: firebase.database.ServerValue.TIMESTAMP
+        });
+        registrarHistorial(`Regalo a ${nombreDestino}`, -monto);
+        document.getElementById('modalRegaloPrivado').style.display = 'none';
+        notify(`✅ ¡Enviaste ${monto} PTS a ${nombreDestino}!`);
+        lanzarAnimacionRegalo("send");
+        try { lanzarConfetti(); } catch(e){}
+    }).catch(e => {
+        notify("❌ Error: " + e.message);
+        btn.disabled = false;
+        btn.textContent = "🎁 Enviar Regalo";
+    });
+};
+
 window.seleccionarMontoRegalo = (cantidad) => {
     document.getElementById('inputMontoRegalo').value = cantidad;
     actualizarBtnRegalo();
@@ -6835,7 +7307,10 @@ window.actualizarBtnRegalo = () => {
 
 window.confirmarRegaloPrivado = () => {
     const monto = parseFloat(document.getElementById('inputMontoRegalo').value);
-    const nombreDestino = document.getElementById('privChatTitle').innerText;
+    let nombreDestino = document.getElementById('privChatTitle').innerText;
+    if (!nombreDestino || nombreDestino === "Usuario") {
+        nombreDestino = document.getElementById('labelDestinoRegalo').textContent.replace('Para: ', '');
+    }
     if (!monto || monto <= 0) return notify("❌ Cantidad inválida");
     if (monto > currentEarnings) return notify("❌ Saldo insuficiente");
     if (!targetUserUid) return notify("❌ Usuario no encontrado");
@@ -6848,7 +7323,7 @@ window.confirmarRegaloPrivado = () => {
     updates[`users/${targetUserUid}/earnings`] = firebase.database.ServerValue.increment(monto);
     const notiKey = db.ref(`users/${targetUserUid}/notifications`).push().key;
     updates[`users/${targetUserUid}/notifications/${notiKey}`] = {
-        from: myCurrentKey, type: 'gift',
+        from: myCurrentKey, fromName: getMiNombre(), type: 'gift',
         text: `🎁 Te envió un regalo de ${monto} PTS`,
         extra: `${monto}|${idAuditor}`, timestamp: fecha, read: false
     };
@@ -6861,7 +7336,7 @@ window.confirmarRegaloPrivado = () => {
         registrarHistorial(`Regalo a ${nombreDestino}`, -monto);
         document.getElementById('modalRegaloPrivado').style.display = 'none';
         notify(`✅ ¡Enviaste ${monto} PTS a ${nombreDestino}!`);
-        lanzarAnimacionRegalo("send");
+        try { window.playSound('gift'); } catch(e){}
         try { lanzarConfetti(); } catch(e){}
     }).catch(e => {
         notify("❌ Error: " + e.message);
@@ -7028,6 +7503,22 @@ const misionesAprender = [
 function renderizarMisionesAprender() {
     const container = document.getElementById('listaMisiones');
     if (!container) return;
+    
+    // Verificar si pasaron 24 horas desde el último reseteo
+    const ultimoReseteo = localStorage.getItem('misiones_reseteo');
+    const ahora = Date.now();
+    const veinticuatroHoras = 24 * 60 * 60 * 1000; // 24 horas en ms
+    
+    if (!ultimoReseteo || (ahora - parseInt(ultimoReseteo)) > veinticuatroHoras) {
+        // Resetear todas las misiones
+        misionesAprender.forEach(m => localStorage.removeItem('mision_' + m.id));
+        localStorage.setItem('misiones_reseteo', ahora.toString());
+    }
+    
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = '1fr 1fr';
+    container.style.gap = '10px';
+    container.style.fontSize = '0.75rem';
     container.innerHTML = misionesAprender.map(m => {
         const done = localStorage.getItem('mision_' + m.id) === '1';
         return `<div class="mision-card ${done ? 'mision-completada' : ''}" onclick="ejecutarMision('${m.id}'); this.style.opacity='0.6'">
@@ -7584,6 +8075,170 @@ function mostrarToast(mensaje) {
         toast.classList.remove('show');
     }, 2500);
 }
+
+// --- FUNCIONES DE BARRA MISIONES ---
+
+window.abrirJuego = () => {
+    if (!currentEarnings || currentEarnings < 0.50) return notify("❌ Necesitas al menos 0.50 PTS para jugar");
+    const modal = document.getElementById('modalJuegos');
+    if (!modal) {
+        const div = document.createElement('div');
+        div.id = 'modalJuegos';
+        div.className = 'modal-overlay';
+        div.style.zIndex = '26000';
+        div.style.display = 'flex';
+        div.style.justifyContent = 'center';
+        div.style.alignItems = 'center';
+        div.innerHTML = `
+            <div class="modal-content" style="text-align: center;">
+                <h3 style="margin-bottom: 15px;">🎮 Elige un Juego</h3>
+                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Cuesta 0.50 PTS por juego</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button onclick="prepararJuego('snake'); document.getElementById('modalJuegos').style.display='none';" style="padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; font-size: 1rem; font-weight: 700; cursor: pointer;">
+                        🐍 Snake
+                    </button>
+                    <button onclick="prepararJuego('race'); document.getElementById('modalJuegos').style.display='none';" style="padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; font-size: 1rem; font-weight: 700; cursor: pointer;">
+                        🏎️ Race
+                    </button>
+                </div>
+                <button onclick="document.getElementById('modalJuegos').style.display='none'" style="margin-top: 15px; background: none; border: none; color: #94a3b8; cursor: pointer;">Cerrar</button>
+            </div>
+        `;
+        document.body.appendChild(div);
+    }
+    document.getElementById('modalJuegos').style.display = 'flex';
+};
+
+window.abrirListaChats = () => {
+    let modal = document.getElementById('modalListaChats');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalListaChats';
+        modal.className = 'modal-overlay';
+        modal.style.zIndex = '26000';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+                <h3>💬 Tus Chats Privados</h3>
+                <div id="listaChatsContainer" style="text-align: center; padding: 20px; color: #94a3b8;">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando...
+                </div>
+                <button onclick="document.getElementById('modalListaChats').style.display='none'" class="btn-blue" style="background: #94a3b8;">Cerrar</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        db.ref('users').orderByChild('lastSeen').limitToLast(50).once('value', snap => {
+            let html = '';
+            const ahora = Date.now();
+            snap.forEach(child => {
+                const u = child.val();
+                if (child.key !== idAuditor) {
+                    const minutos = Math.floor((ahora - (u.lastSeen || 0)) / 60000);
+                    const nombre = u.myInviteKey || 'Usuario';
+                    html += `<div onclick="abrirChatPrivado('${child.key}', '${nombre}')" style="padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; background-size: cover; background-image: url('${getUserProfilePhoto(child.key)}');"></div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 700; font-size: 0.9rem;">${nombre}</div>
+                            <div style="font-size: 0.7rem; color: #64748b;">${minutos < 2 ? 'Online' : minutos + ' min ago'}</div>
+                        </div>
+                    </div>`;
+                }
+            });
+            document.getElementById('listaChatsContainer').innerHTML = html || '<div style="padding: 20px;">No hay chats aún</div>';
+        });
+    }
+    document.getElementById('modalListaChats').style.display = 'flex';
+};
+
+window.abrirBusquedaUsuarios = () => {
+    let modal = document.getElementById('modalBuscarUsuario');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalBuscarUsuario';
+        modal.className = 'modal-overlay';
+        modal.style.zIndex = '26000';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>🔍 Buscar Usuario</h3>
+                <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 10px;">Ingresa su clave INV-XXXXX</p>
+                <input type="text" id="inputBuscarUsuario" placeholder="INV-XXXXX" style="text-transform: uppercase; border: 2px solid #6366f1;">
+                <button onclick="buscarUsuarioPorClave()" class="btn-blue">Buscar</button>
+                <div id="resultadoBusqueda" style="margin-top: 15px;"></div>
+                <button onclick="document.getElementById('modalBuscarUsuario').style.display='none'" style="margin-top: 10px; background: none; border: none; color: #94a3b8; cursor: pointer;">Cerrar</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    document.getElementById('modalBuscarUsuario').style.display = 'flex';
+};
+
+window.buscarUsuarioPorClave = () => {
+    const codigo = document.getElementById('inputBuscarUsuario').value.toUpperCase().trim();
+    if (!codigo) return notify("❌ Ingresa un código");
+    const resultado = document.getElementById('resultadoBusqueda');
+    resultado.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+    
+    db.ref('users').orderByChild('myInviteKey').equalTo(codigo).once('value', snap => {
+        if (snap.exists()) {
+            snap.forEach(user => {
+                const u = user.val();
+                resultado.innerHTML = `
+                    <div style="text-align: center; padding: 15px; background: #f0fdf4; border-radius: 12px; margin-top: 10px;">
+                        <div style="width: 60px; height: 60px; border-radius: 50%; background: #e2e8f0; margin: 0 auto 10px; background-size: cover; background-image: url('${getUserProfilePhoto(user.key)}');"></div>
+                        <div style="font-weight: 800; font-size: 1rem; color: #166534;">${u.myInviteKey || 'Usuario'}</div>
+                        <button onclick="abrirChatPrivado('${user.key}', '${u.myInviteKey}'); document.getElementById('modalBuscarUsuario').style.display='none';" class="btn-blue" style="margin-top: 10px; background: #10b981;">💬 Abrir Chat</button>
+                    </div>
+                `;
+            });
+        } else {
+            resultado.innerHTML = '<div style="color: #ef4444; margin-top: 10px;">❌ Usuario no encontrado</div>';
+        }
+    });
+};
+
+window.compartirApp = () => {
+    const texto = `¡Únete a PAGOCODE! Mi código: ${myCurrentKey}. Descárgala aquí:`;
+    const url = "https://pagocode.blogspot.com/p/app.html";
+    if (navigator.share) {
+        navigator.share({ title: 'PAGOCODE', text: texto, url: url }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(`${texto} ${url}`).then(() => {
+            notify("📋 Enlace copiado al portapapeles");
+        }).catch(() => {
+            prompt("Copia este enlace:", url);
+        });
+    }
+};
+
+window.guardarApodo = () => {
+    const apodo = document.getElementById('inputApodo').value.trim();
+    if (!apodo) return notify("❌ Ingresa un apodo");
+    if (apodo.length > 15) return notify("❌ Máximo 15 caracteres");
+    if (!idAuditor) return notify("❌ Inicia sesión primero");
+    
+    db.ref(`users/${idAuditor}`).update({ apodo: apodo }).then(() => {
+        notify("✅ Apodo guardado: " + apodo);
+    }).catch(e => {
+        notify("❌ Error al guardar");
+    });
+};
+
+window.cargarApodo = (uid) => {
+    return apodosCache && apodosCache[uid] ? apodosCache[uid] : null;
+};
+
+let apodosCache = {};
+
+db.ref('users').orderByChild('apodo').once('value', snap => {
+    if (snap.exists()) {
+        snap.forEach(child => {
+            const u = child.val();
+            if (u.apodo) apodosCache[child.key] = u.apodo;
+        });
+    }
+});
 
 
 // Eventos al cargar DOM
