@@ -1561,8 +1561,8 @@
     <div id="modalNotificaciones" class="modal-overlay">
         <div class="modal-content">
             <h3>🔔 Notificaciones</h3>
-            <div id="listaNotificaciones" style="max-height: 300px; overflow-y: auto;"><div style="padding:20px; color:#cbd5e1;">Sin notificaciones nuevas.</div></div>
-            <button onclick="document.getElementById('modalNotificaciones').style.display='none'" class="btn-blue" style="background:#94a3b8; margin-top:10px;">Cerrar</button>
+            <div id="listaNotificaciones" style="max-height: 300px; overflow-y: ;"><div style="padding:20px; color:#cbd5e1;">Sin notificaciones nuevas.</div></div>
+            <button onclick="document.getElementById('modalNotificaciones').style.display='none'" class="btn-blue" style="background:#94a3b8; margin-top:150px;"></button>
         </div>
     </div>
    
@@ -1854,6 +1854,52 @@ Cerrar
             <button onclick="document.getElementById('modalRifa').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cerrar</button>
         </div>
     </div>
+    <!-- =========================================
+         💎 MODAL: COMPRAR / DESBLOQUEAR MENSAJES PRIVADOS
+         ========================================= -->
+    <div id="modalComprarMensajes" class="modal-overlay" style="z-index: 30100;">
+      <div class="modal-content" style="max-width: 360px; text-align:center; border-radius:18px; padding:22px;">
+        <div style="font-size:3rem; margin-bottom:6px;">🚫</div>
+        <h3 style="color:#ef4444; margin:0 0 6px 0;">Llegaste al límite (10/10)</h3>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom:18px;">
+          Desbloquea más mensajes privados para seguir chateando hoy.
+        </p>
+
+        <!-- OPCIÓN 1: PAYPAL → 20 MENSAJES -->
+        <button onclick="comprarMensajesPaypal()"
+          style="width:100%; padding:14px; border:none; border-radius:14px;
+                 background:linear-gradient(135deg,#0070ba,#003087); color:white;
+                 font-weight:800; font-size:0.95rem; display:flex; align-items:center;
+                 justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(0,112,186,0.35);
+                 margin-bottom:12px; cursor:pointer;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg"
+               style="height:18px; filter:brightness(10);">
+          Comprar 20 mensajes — PayPal
+        </button>
+        <div style="font-size:0.7rem; color:#0070ba; margin-top:-6px; margin-bottom:14px;">
+          ✨ +20 mensajes extra hoy
+        </div>
+
+        <!-- OPCIÓN 2: VER ANUNCIO -->
+        <button onclick="verAnuncioMensajes()"
+          style="width:100%; padding:14px; border:none; border-radius:14px;
+                 background:linear-gradient(135deg,#10b981,#059669); color:white;
+                 font-weight:800; font-size:0.95rem; display:flex; align-items:center;
+                 justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(16,185,129,0.35);
+                 cursor:pointer;">
+          📺 Ver anuncio — Gana 5 mensajes
+        </button>
+        <div style="font-size:0.7rem; color:#10b981; margin-top:6px; margin-bottom:6px;">
+          🎁 +5 mensajes gratis
+        </div>
+
+        <button onclick="cerrarModalComprarMensajes()"
+          style="background:none; border:none; color:#94a3b8; margin-top:14px; font-size:0.85rem; cursor:pointer;">
+          Cancelar
+        </button>
+      </div>
+    </div>
+
     <div id="modalChatPrivado" class="modal-overlay" style="z-index: 29000;">
     <div class="modal-content" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; padding:0; display:flex; flex-direction:column; background:#e5e5f7;">
         
@@ -5476,7 +5522,7 @@ window.addEventListener('popstate', (e) => {
     'modalGiftReceived', 'modalCine', 'modalMusicSelector', 'modalComments', 
     'modalGameOver', 'modalLesson', 'modalNoVidas', 'modalRanking',
     'modalChatOptions', 'modalInvitar', 'modalSubirFoto', 'modalFotoOptions', 
-    'modalConfirmDelete', 'modalChatPrivado', 
+    'modalConfirmDelete', 'modalChatPrivado', 'modalComprarMensajes', 
     'modalRetiro',
     'modalFotoDetalle',
     'modalCompartir',
@@ -6316,6 +6362,8 @@ let currentChatId = null;
 let targetUserUid = null;
 let privChatRef = null;
 const LIMITE_DIARIO_MSGS = 10;
+const BONUS_PAYPAL_MSGS = 20; // 20 mensajes extra al comprar por PayPal
+const BONUS_AD_MSGS = 5;       // 5 mensajes extra al ver un anuncio
 
 // 1. ABRIR EL MODAL Y PREPARAR
 window.abrirChatPrivado = (targetUid, targetName) => {
@@ -6406,9 +6454,13 @@ window.enviarMensajePrivado = () => {
         const data = s.val() || {};
         const hoy = new Date().toISOString().split('T')[0];
         let conteo = (data.fecha === hoy) ? (data.count || 0) : 0;
+        let extras = (data.fecha === hoy) ? (data.extras || 0) : 0;
+        const totalDisponible = LIMITE_DIARIO_MSGS + extras;
 
-        if (conteo >= LIMITE_DIARIO_MSGS) {
-            return notify("🚫 Límite diario alcanzado (10/10)");
+        if (conteo >= totalDisponible) {
+            // 🚫 Límite alcanzado → abrir modal para comprar mensajes o ver anuncio
+            abrirModalComprarMensajes();
+            return;
         }
 
         const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
@@ -6421,7 +6473,8 @@ window.enviarMensajePrivado = () => {
 
         db.ref(`users/${idAuditor}/privados_diarios`).set({
             fecha: hoy,
-            count: conteo + 1
+            count: conteo + 1,
+            extras: extras
         });
 
         db.ref(`users/${targetUserUid}/notifications`).push({
@@ -6444,11 +6497,112 @@ function checkLimiteDiario() {
         const data = s.val() || {};
         const hoy = new Date().toISOString().split('T')[0];
         let conteo = (data.fecha === hoy) ? (data.count || 0) : 0;
+        let extras = (data.fecha === hoy) ? (data.extras || 0) : 0;
+        const total = LIMITE_DIARIO_MSGS + extras;
         
         const label = document.getElementById('privDailyCount');
-        if(label) label.textContent = `Mensajes hoy: ${conteo}/${LIMITE_DIARIO_MSGS}`;
+        if(label) {
+            if (extras > 0) {
+                label.textContent = `Mensajes hoy: ${conteo}/${total}  ✨ +${extras} extra`;
+                label.style.color = '#10b981';
+            } else {
+                label.textContent = `Mensajes hoy: ${conteo}/${LIMITE_DIARIO_MSGS}`;
+                label.style.color = '#ef4444';
+            }
+        }
     });
 }
+
+// ==========================================
+// 💎 COMPRAR / DESBLOQUEAR MÁS MENSAJES PRIVADOS
+// ==========================================
+window.abrirModalComprarMensajes = () => {
+    try { window.playSound('click'); } catch(e){}
+    const m = document.getElementById('modalComprarMensajes');
+    if(m) m.style.display = 'flex';
+};
+
+window.cerrarModalComprarMensajes = () => {
+    const m = document.getElementById('modalComprarMensajes');
+    if(m) m.style.display = 'none';
+};
+
+// 💳 OPCIÓN 1: Comprar 20 mensajes por PayPal
+window.comprarMensajesPaypal = () => {
+    try { window.playSound('click'); } catch(e){}
+    notify("💳 Abriendo PayPal para comprar 20 mensajes...");
+
+    // Registrar la solicitud de compra (pendiente de validación)
+    const hoy = new Date().toISOString().split('T')[0];
+    db.ref(`compras_mensajes_pendientes/${idAuditor}`).push({
+        tipo: 'paypal_20_msgs',
+        cantidad: BONUS_PAYPAL_MSGS,
+        fecha: hoy,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        estado: 'pendiente'
+    });
+
+    // Abrir PayPal (link de pago)
+    setTimeout(() => {
+        window.open('https://www.paypal.com/ncp/payment/GJBMF2C7A6Y9J', '_blank');
+    }, 400);
+
+    // Acreditar los 20 mensajes extra
+    db.ref(`users/${idAuditor}/privados_diarios`).once('value', s => {
+        const data = s.val() || {};
+        let extras = (data.fecha === hoy) ? (data.extras || 0) : 0;
+        let conteo = (data.fecha === hoy) ? (data.count || 0) : 0;
+        db.ref(`users/${idAuditor}/privados_diarios`).set({
+            fecha: hoy,
+            count: conteo,
+            extras: extras + BONUS_PAYPAL_MSGS
+        }).then(() => {
+            cerrarModalComprarMensajes();
+            notify("✅ +20 mensajes desbloqueados por PayPal");
+            checkLimiteDiario();
+            try { window.playSound('win'); } catch(e){}
+        });
+    });
+};
+
+// 📺 OPCIÓN 2: Ver anuncio (go:s7) para 5 mensajes extra
+window.verAnuncioMensajes = () => {
+    try { window.playSound('click'); } catch(e){}
+    notify("📺 Cargando anuncio...");
+
+    // Lanzar anuncio go:s7 vía iframe oculto (mismo patrón que el resto de la app)
+    try {
+        const adTrigger = document.createElement('iframe');
+        adTrigger.style.display = 'none';
+        adTrigger.src = 'go:s7';
+        document.body.appendChild(adTrigger);
+        setTimeout(() => {
+            try { document.body.removeChild(adTrigger); } catch(e){}
+        }, 3000);
+    } catch(err) {
+        console.log("Error al cargar anuncio: ", err);
+    }
+
+    // Acreditar los 5 mensajes extra después del anuncio
+    setTimeout(() => {
+        const hoy = new Date().toISOString().split('T')[0];
+        db.ref(`users/${idAuditor}/privados_diarios`).once('value', s => {
+            const data = s.val() || {};
+            let extras = (data.fecha === hoy) ? (data.extras || 0) : 0;
+            let conteo = (data.fecha === hoy) ? (data.count || 0) : 0;
+            db.ref(`users/${idAuditor}/privados_diarios`).set({
+                fecha: hoy,
+                count: conteo,
+                extras: extras + BONUS_AD_MSGS
+            }).then(() => {
+                cerrarModalComprarMensajes();
+                notify(`🎁 +${BONUS_AD_MSGS} mensajes desbloqueados por ver anuncio`);
+                checkLimiteDiario();
+                try { window.playSound('win'); } catch(e){}
+            });
+        });
+    }, 1200);
+};
 
 window.cerrarChatPrivado = () => {
     document.getElementById('modalChatPrivado').style.display = 'none';
