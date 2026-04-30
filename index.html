@@ -2950,6 +2950,24 @@ Cerrar
         </button>
     </div>
 </div>
+<div id="modalConfirmDeletePrivado" class="modal-overlay" style="z-index: 30500; display:none;">
+    <div class="modal-content" style="border: 2px solid #ef4444; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🗑️</div>
+        <h3 style="color:#b91c1c; margin-bottom: 10px;">¿Eliminar para todos?</h3>
+        <p style="font-size: 0.9rem; color:#64748b; margin-bottom: 20px;">
+            Esta acción eliminará el mensaje para ambos usuarios permanentemente.
+        </p>
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="cerrarConfirmacionBorradoPrivado()" class="btn-blue" style="background: #e2e8f0; color: #475569; flex: 1;">
+                Cancelar
+            </button>
+            <button onclick="confirmarBorradoPrivado()" class="btn-blue" style="background: #ef4444; color: white; flex: 1; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);">
+                Sí, Borrar
+            </button>
+        </div>
+    </div>
+</div>
 <nav class="bottom-nav">
    <button class="nav-item" id="nav0" onclick="goToScreen(0, true)">
         <span class="nav-icon"><i class="fas fa-tasks"></i></span>
@@ -4754,23 +4772,23 @@ if (girosDisponibles > 0) {
                row.innerHTML = `
                   <img id="img-chat-${msgKey}" src="${avatarDefault}" class="chat-avatar-img" onclick="mostrarPerfilUsuario('${m.uid}', '${nombreMostrar}')">
 
-                  <div id="msg-${msgKey}" class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}">
-                      <div><span class="msg-user">${escapeHtml(nombreMostrar)}</span></div>
-                      ${replyHtml}
-                      <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
-                      <div class="msg-time">${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-                  </div>
-               `;
+                   <div id="msg-${msgKey}" class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}">
+                       <div><span class="msg-user">${escapeHtml(nombreMostrar)}</span></div>
+                       ${replyHtml}
+                       <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
+                       <div class="msg-time">${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                   </div>
+                `;
 
-              // Eventos de "Mantener presionado" y swipe en la burbuja
-              const burbuja = row.querySelector(`#msg-${msgKey}`);
-              burbuja.onmousedown = (e) => { startPress(msgKey, m.texto, m.uid); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
-              burbuja.ontouchstart = (e) => { startPress(msgKey, m.texto, m.uid); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
-              burbuja.onmouseup = (e) => { cancelPress(); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
-              burbuja.onmouseleave = (e) => { cancelPress(); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
-              burbuja.ontouchend = (e) => { cancelPress(); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
-              burbuja.ontouchmove = (e) => { handleSwipeMove(e, msgKey); };
-              burbuja.onmousemove = (e) => { if(e.buttons === 1) handleSwipeMove(e, msgKey); };
+               // Eventos de "Mantener presionado" y swipe en la burbuja
+               const burbuja = row.querySelector(`#msg-${msgKey}`);
+               burbuja.onmousedown = (e) => { startPress(msgKey, m.texto, m.uid, false); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
+               burbuja.ontouchstart = (e) => { startPress(msgKey, m.texto, m.uid, false); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
+               burbuja.onmouseup = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+               burbuja.onmouseleave = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+               burbuja.ontouchend = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+               burbuja.ontouchmove = (e) => { handleSwipeMove(e, msgKey); };
+               burbuja.onmousemove = (e) => { if(e.buttons === 1) handleSwipeMove(e, msgKey); };
 
              list.appendChild(row);
              scrollToBottom();
@@ -4809,18 +4827,92 @@ if (girosDisponibles > 0) {
         });
     }
     // --- LÓGICA DE PRESIONAR ---
-    function startPress(key, text, uid) {
-        selectedMsgId = key;
-        selectedMsgText = text;
-        // Esperar 600ms (0.6 segundos) para considerar "larga duración"
-        chatPressTimer = setTimeout(() => {
-            abrirOpcionesChat(uid);
-        }, 600); 
+    let deletePressTimer = null;
+    let pressStartTime = 0;
+    let chatPrivadoActivo = false;
+    let chatPressTimer = null; // Declarar correctamente
+
+    function startPressFromElement(el, isPrivate = false) {
+        const key = el.dataset.msgKey;
+        const text = el.dataset.msgText;
+        const uid = el.dataset.msgUid;
+        startPress(key, text, uid, isPrivate);
     }
 
-    function cancelPress() {
-        clearTimeout(chatPressTimer); // Si suelta antes, cancela
+    function startPress(key, text, uid, isPrivate = false) {
+        // Limpiar temporizadores anteriores primero
+        clearTimeout(chatPressTimer);
+        clearTimeout(deletePressTimer);
+        
+        selectedMsgId = key;
+        selectedMsgText = text;
+        pressStartTime = Date.now();
+        
+        // Esperar 600ms para abrir opciones
+        chatPressTimer = setTimeout(() => {
+            abrirOpcionesChat(uid, isPrivate);
+        }, 600);
+        
+        // En chat privado: 2 segundos para mostrar confirmación de borrado
+        if (isPrivate && uid === idAuditor) {
+            const burbuja = document.getElementById(`priv-msg-${key}`);
+            if (burbuja) {
+                burbuja.style.transition = 'background 2s linear';
+                burbuja.style.background = 'rgba(239, 68, 68, 0.8)';
+            }
+            
+            deletePressTimer = setTimeout(() => {
+                mostrarConfirmacionBorradoPrivado(key);
+            }, 2000);
+        }
     }
+
+    function cancelPress(isPrivate = false) {
+        clearTimeout(chatPressTimer);
+        clearTimeout(deletePressTimer);
+        
+        // Restaurar estilo si se cancela
+        if (isPrivate && selectedMsgId) {
+            const burbuja = document.getElementById(`priv-msg-${selectedMsgId}`);
+            if (burbuja) {
+                burbuja.style.transition = 'background 0.3s';
+                burbuja.style.background = '';
+            }
+        }
+    }
+
+    function mostrarConfirmacionBorradoPrivado(msgKey) {
+        // Validar que el chat privado siga activo
+        if (!chatPrivadoActivo) {
+            return; // Ya salimos del chat, no mostrar nada
+        }
+        selectedMsgId = msgKey;
+        document.getElementById('modalConfirmDeletePrivado').style.display = 'flex';
+    }
+
+    window.confirmarBorradoPrivado = () => {
+        if (selectedMsgId && currentChatId) {
+            db.ref(`chats_privados/${currentChatId}/${selectedMsgId}`).remove()
+                .then(() => {
+                    notify("🗑️ Mensaje eliminado para todos");
+                    try { window.playSound('click'); } catch(e){}
+                })
+                .catch(e => notify("❌ Error al borrar"));
+        }
+        cerrarConfirmacionBorradoPrivado();
+    };
+
+    window.cerrarConfirmacionBorradoPrivado = () => {
+        document.getElementById('modalConfirmDeletePrivado').style.display = 'none';
+        // Restaurar estilo de la burbuja
+        if (selectedMsgId) {
+            const burbuja = document.getElementById(`priv-msg-${selectedMsgId}`);
+            if (burbuja) {
+                burbuja.style.transition = 'background 0.3s';
+                burbuja.style.background = '';
+            }
+        }
+    };
 
     // --- LÓGICA DE SWIPE PARA RESPONDER ---
     let swipeStartX = 0;
@@ -4945,7 +5037,7 @@ if (girosDisponibles > 0) {
     };
 
     // --- ABRIR MENÚ ---
-    function abrirOpcionesChat(uidAuthor) {
+    function abrirOpcionesChat(uidAuthor, isPrivate = false) {
         // Vibración háptica si el móvil lo soporta (feedback físico)
         if (navigator.vibrate) navigator.vibrate(50);
         
@@ -4978,7 +5070,12 @@ if (girosDisponibles > 0) {
     // --- ACCIÓN: BORRAR ---
     window.borrarMensajeSeleccionado = () => {
         if (selectedMsgId) {
-            db.ref(`chat_global/${selectedMsgId}`).remove()
+            // Detectar si es chat privado o global por el ID del elemento
+            const esPrivado = document.getElementById(`priv-msg-${selectedMsgId}`);
+            
+            const ruta = esPrivado ? `chats_privados/${currentChatId}/${selectedMsgId}` : `chat_global/${selectedMsgId}`;
+            
+            db.ref(ruta).remove()
                 .then(() => {
                     notify("🗑️ Mensaje eliminado");
                     try { window.playSound('click'); } catch(e){}
@@ -4987,6 +5084,18 @@ if (girosDisponibles > 0) {
         }
         document.getElementById('modalChatOptions').style.display = 'none';
     };
+
+    // --- BORRADO AUTOMÁTICO TRAS 4 SEGUNDOS (PRIVADO) ---
+    function ejecutarBorradoPrivadoParaTodos(msgKey) {
+        if (!msgKey || !currentChatId) return;
+        
+        db.ref(`chats_privados/${currentChatId}/${msgKey}`).remove()
+            .then(() => {
+                notify("🗑️ Mensaje eliminado para todos");
+                try { window.playSound('click'); } catch(e){}
+            })
+            .catch(e => notify("❌ Error al borrar"));
+    }
 
     function scrollToBottom() { const d = document.getElementById('chatList'); setTimeout(() => d.scrollTop = d.scrollHeight, 100); }
     // Enviar texto se mantiene igual, no hace falta cambiarlo
@@ -6613,9 +6722,10 @@ const BONUS_AD_MSGS = 5;       // 5 mensajes extra al ver un anuncio
 window.abrirChatPrivado = (targetUid, targetName) => {
     if(!idAuditor) return notify("Inicia sesión primero");
     if(targetUid === idAuditor) return notify("No puedes hablarte a ti mismo");
-
+    
     targetUserUid = targetUid;
     currentChatTargetUid = targetUid;
+    chatPrivadoActivo = true; // Marcar chat como activo
     
     // Generar ID único del chat (Orden alfabético)
     currentChatId = [idAuditor, targetUid].sort().join('_');
@@ -6690,7 +6800,15 @@ function cargarMensajesPrivados() {
                     onclick="mostrarPerfilUsuario('${m.uid}', '${esMio ? myCurrentKey : document.getElementById('privChatTitle').innerText}')"
                 >
 
-                <div class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}" style="max-width:75%;">
+                <div id="priv-msg-${s.key}" class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}" style="max-width:75%;" 
+                     data-msg-key="${s.key}"
+                     data-msg-text="${escapeHtml(m.texto).replace(/"/g, '&quot;')}"
+                     data-msg-uid="${m.uid}"
+                     onmousedown="startPressFromElement(this, true)"
+                     ontouchstart="startPressFromElement(this, true)"
+                     onmouseup="cancelPress(true)"
+                     onmouseleave="cancelPress(true)"
+                     ontouchend="cancelPress(true)">
                     <div>${textoFinal}</div>
                     
                     <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
@@ -6898,8 +7016,27 @@ window.verAnuncioMensajes = () => {
 };
 
 window.cerrarChatPrivado = () => {
+    // Limpiar TODOS los temporizadores y estados
+    try {
+        clearTimeout(chatPressTimer);
+        clearTimeout(deletePressTimer);
+        clearTimeout(window._pressTimer);
+        clearTimeout(window._deleteTimer);
+    } catch(e) {}
+    
+    selectedMsgId = null;
+    selectedMsgText = null;
+    pressStartTime = 0;
+    
+    // Ocultar modales
     document.getElementById('modalChatPrivado').style.display = 'none';
-    if(privChatRef) privChatRef.off();
+    document.getElementById('modalConfirmDeletePrivado').style.display = 'none';
+    document.getElementById('modalChatOptions').style.display = 'none';
+    
+    if(privChatRef) {
+        privChatRef.off();
+        privChatRef = null;
+    }
     currentChatId = null;
 };
 // --- FUNCIÓN ABRIR HISTORIAL CON LEALTAD ---
@@ -7128,6 +7265,11 @@ function cargarListaUsuariosHorizontal() {
                 
                 // Mostrar apodo si existe, sino mostrar código INV
                 const nombreMostrar = u.apodo || (u.myInviteKey ? (u.myInviteKey.split('-')[1] || "User") : "User");
+                
+                // 🔥 ACTUALIZAR CACHE DE FOTO EN TIEMPO REAL
+                if (u.fotoPerfil) {
+                    cacheFotosPerfil[child.key] = u.fotoPerfil;
+                }
                 
                 listaUsuariosCacheReal.push({
                     key: child.key,
@@ -8013,14 +8155,18 @@ window.compartirPostWhatsapp = () => {
 };
 
 function cachearFotosPerfiles() {
-    db.ref('users').limitToLast(200).once('value').then(snap => {
+    // Usar .on() en lugar de .once() para detectar cambios en tiempo real
+    db.ref('users').limitToLast(200).on('value', snap => {
         if (!snap.exists()) return;
         snap.forEach(child => {
             const u = child.val() || {};
-            if (u.fotoPerfil) { cacheFotosPerfil[child.key] = u.fotoPerfil; }
+            if (u.fotoPerfil) { 
+                cacheFotosPerfil[child.key] = u.fotoPerfil; 
+            }
         });
-        if (typeof cargarMuroReportes === "function") cargarMuroReportes();
+        // Actualizar listas después de actualizar el cache
         if (typeof renderizarUsuariosHorizontal === "function") renderizarUsuariosHorizontal();
+        if (typeof cargarMuroReportes === "function") cargarMuroReportes();
         if (typeof cargarGaleriaComunidad === "function") cargarGaleriaComunidad();
     });
 }
