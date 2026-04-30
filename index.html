@@ -2781,6 +2781,10 @@ style="display:none;">
             <i class="fas fa-money-bill-wave menu-icon" style="color: #0070ba;"></i>
             <span style="font-weight:800; color:#0070ba; font-size:0.9rem;">Admin: Pagar Retiros</span>
         </div>
+        <div id="btnAdminCompras" class="menu-card-btn" onclick="abrirAdminCompras()" style="display: none; border: 2px dashed #8b5cf6; background: #f5f3ff;">
+            <i class="fas fa-shopping-cart menu-icon" style="color: #8b5cf6;"></i>
+            <span style="font-weight:800; color:#8b5cf6; font-size:0.9rem;">Admin: Compras Mensajes</span>
+        </div>
 
 <div id="modalAdminRetiros" class="modal-overlay" style="z-index: 35000;">
     <div class="modal-content" style="width: 95%; max-width: 400px; height: 80vh; display: flex; flex-direction: column; padding: 15px;">
@@ -2790,6 +2794,18 @@ style="display:none;">
         </div>
         <div id="listaSolicitudes" style="flex: 1; overflow-y: auto; background: #f8fafc; border-radius: 10px; padding:5px;">
             <div style="text-align: center; padding: 20px; color: #94a3b8;">Cargando solicitudes...</div>
+        </div>
+    </div>
+</div>
+
+<div id="modalAdminCompras" class="modal-overlay" style="z-index: 35000;">
+    <div class="modal-content" style="width: 95%; max-width: 400px; height: 80vh; display: flex; flex-direction: column; padding: 15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 10px;">
+            <h3 style="color: #8b5cf6; margin:0;">🛒 Compras Pendientes</h3>
+            <button onclick="document.getElementById('modalAdminCompras').style.display='none'" style="background:none; border:none; font-size:1.2rem; color:#ef4444; font-weight:bold;">✕</button>
+        </div>
+        <div id="listaCompras" style="flex: 1; overflow-y: auto; background: #f8fafc; border-radius: 10px; padding:5px;">
+            <div style="text-align: center; padding: 20px; color: #94a3b8;">Cargando compras...</div>
         </div>
     </div>
 </div>
@@ -4298,6 +4314,9 @@ window.manejarAuth = () => {
         // 2. Inicializar cachés y heartbeat
         setTimeout(() => { if(typeof cachearUsuarios === "function") cachearUsuarios(); }, 1000);
         setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 10000);
+        
+        // 3. Verificar compras confirmadas pendientes de acreditar
+        verificarComprasConfirmadas();
         
         // 3. ESCUCHAR CAMBIOS EN TIEMPO REAL
         db.ref(`users/${idAuditor}`).on('value', snap => {
@@ -6775,36 +6794,69 @@ window.comprarMensajesPaypal = () => {
 
     // Registrar la solicitud de compra (pendiente de validación)
     const hoy = new Date().toISOString().split('T')[0];
-    db.ref(`compras_mensajes_pendientes/${idAuditor}`).push({
+    const compraRef = db.ref(`compras_mensajes_pendientes/${idAuditor}`).push();
+    compraRef.set({
         tipo: 'paypal_20_msgs',
         cantidad: BONUS_PAYPAL_MSGS,
         fecha: hoy,
         timestamp: firebase.database.ServerValue.TIMESTAMP,
-        estado: 'pendiente'
+        estado: 'pendiente',
+        id_compra: compraRef.key
     });
 
     // Abrir PayPal (link de pago)
     setTimeout(() => {
         window.open('https://www.paypal.com/ncp/payment/GJBMF2C7A6Y9J', '_blank');
+        cerrarModalComprarMensajes();
+        notify("⏳ Compra registrada. Los mensajes se acreditarán tras confirmar el pago.");
     }, 400);
+};
 
-    // Acreditar los 20 mensajes extra
-    db.ref(`users/${idAuditor}/privados_diarios`).once('value', s => {
-        const data = s.val() || {};
-        let extras = (data.fecha === hoy) ? (data.extras || 0) : 0;
-        let conteo = (data.fecha === hoy) ? (data.count || 0) : 0;
-        db.ref(`users/${idAuditor}/privados_diarios`).set({
-            fecha: hoy,
-            count: conteo,
-            extras: extras + BONUS_PAYPAL_MSGS
-        }).then(() => {
-            cerrarModalComprarMensajes();
-            notify("✅ +20 mensajes desbloqueados por PayPal");
-            checkLimiteDiario();
-            try { window.playSound('win'); } catch(e){}
+// Verificar si hay compras confirmadas por el admin y acreditar mensajes
+function verificarComprasConfirmadas() {
+    if (!idAuditor) return;
+    
+    db.ref(`compras_mensajes_pendientes/${idAuditor}`).once('value', snap => {
+        if (!snap.exists()) return;
+        
+        const comprasConfirmadas = [];
+        snap.forEach(child => {
+            const compra = child.val();
+            if (compra.estado === 'completado' && !compra.acreditado) {
+                comprasConfirmadas.push({ key: child.key, cantidad: compra.cantidad });
+            }
+        });
+        
+        if (comprasConfirmadas.length === 0) return;
+        
+        const hoy = new Date().toISOString().split('T')[0];
+        db.ref(`users/${idAuditor}/privados_diarios`).once('value', s => {
+            const data = s.val() || {};
+            let extras = (data.fecha === hoy) ? (data.extras || 0) : 0;
+            let conteo = (data.fecha === hoy) ? (data.count || 0) : 0;
+            
+            let totalMensajes = 0;
+            comprasConfirmadas.forEach(compra => totalMensajes += compra.cantidad);
+            
+            db.ref(`users/${idAuditor}/privados_diarios`).set({
+                fecha: hoy,
+                count: conteo,
+                extras: extras + totalMensajes
+            }).then(() => {
+                // Marcar todas las compras como acreditadas
+                const updates = {};
+                comprasConfirmadas.forEach(compra => {
+                    updates[`${compra.key}/acreditado`] = true;
+                });
+                db.ref(`compras_mensajes_pendientes/${idAuditor}`).update(updates).then(() => {
+                    notify(`✅ Se acreditaron ${totalMensajes} mensajes por compras confirmadas`);
+                    try { window.playSound('win'); } catch(e){}
+                    checkLimiteDiario();
+                });
+            });
         });
     });
-};
+}
 
 // 📺 OPCIÓN 2: Ver anuncio (go:s7) para 5 mensajes extra
 window.verAnuncioMensajes = () => {
@@ -7563,6 +7615,7 @@ function verificarSiEsAdmin(emailUsuario) {
     if (emailUsuario && emailUsuario.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         document.getElementById('btnAdminCorreos').style.display = 'flex';
         document.getElementById('btnAdminRetiros').style.display = 'flex';
+        document.getElementById('btnAdminCompras').style.display = 'flex';
     }
 }
 
@@ -7600,6 +7653,84 @@ window.marcarRetiroPagado = (key) => {
     db.ref(`solicitudes_retiro/${key}`).remove().then(() => {
         notify("✅ Solicitud marcada como pagada.");
         try { window.playSound('coin'); } catch(e){}
+    });
+};
+
+// 🛒 Admin: Gestionar compras de mensajes pendientes
+window.abrirAdminCompras = () => {
+    document.getElementById('modalAdminCompras').style.display = 'flex';
+    cargarComprasPendientes();
+};
+
+function cargarComprasPendientes() {
+    const lista = document.getElementById('listaCompras');
+    db.ref('compras_mensajes_pendientes').once('value', snap => {
+        if (!snap.exists()) {
+            lista.innerHTML = '<div style="text-align: center; padding: 20px; color:#94a3b8;">No hay compras pendientes. 😴</div>';
+            return;
+        }
+        let html = "";
+        const promises = [];
+        snap.forEach(userCompras => {
+            const userId = userCompras.key;
+            userCompras.forEach(compra => {
+                const key = compra.key;
+                const d = compra.val();
+                if (d.estado === 'pendiente') {
+                    promises.push(
+                        db.ref(`users/${userId}/username`).once('value').then(usernameSnap => {
+                            const username = usernameSnap.val() || userId.substring(0, 8);
+                            const fecha = new Date(d.timestamp).toLocaleDateString();
+                            html += `<div style="background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                    <span style="background:#ede9fe; color:#7c3aed; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold;">${username}</span>
+                                    <span style="font-size:0.7rem; color:#94a3b8;">${fecha}</span>
+                                </div>
+                                <div style="font-weight:900; color:#8b5cf6; font-size:1.2rem;">${d.cantidad} mensajes</div>
+                                <div style="font-size:0.75rem; color:#64748b; margin:5px 0;">ID: ${d.id_compra}</div>
+                                <button onclick="confirmarCompraPaypal('${userId}', '${key}', ${d.cantidad})" style="width:100%; padding:8px; border:none; background:#8b5cf6; color:white; font-weight:bold; border-radius:8px; margin-top:5px;">✅ Confirmar Pago</button>
+                            </div>`;
+                        })
+                    );
+                }
+            });
+        });
+        Promise.all(promises).then(() => {
+            if (html === "") {
+                lista.innerHTML = '<div style="text-align: center; padding: 20px; color:#94a3b8;">No hay compras pendientes. 😴</div>';
+            } else {
+                lista.innerHTML = html;
+            }
+        });
+    });
+}
+
+window.confirmarCompraPaypal = (userId, compraKey, cantidad) => {
+    if(!confirm(`¿Confirmar pago de ${cantidad} mensajes para ${userId}?`)) return;
+    
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    // Acreditar mensajes al usuario
+    db.ref(`users/${userId}/privados_diarios`).once('value', s => {
+        const data = s.val() || {};
+        let extras = (data.fecha === hoy) ? (data.extras || 0) : 0;
+        let conteo = (data.fecha === hoy) ? (data.count || 0) : 0;
+        
+        db.ref(`users/${userId}/privados_diarios`).set({
+            fecha: hoy,
+            count: conteo,
+            extras: extras + cantidad
+        }).then(() => {
+            // Marcar compra como completada
+            db.ref(`compras_mensajes_pendientes/${userId}/${compraKey}`).update({
+                estado: 'completado',
+                fecha_confirmacion: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                notify("✅ Mensajes acreditados correctamente");
+                try { window.playSound('win'); } catch(e){}
+                cargarComprasPendientes(); // Recargar lista
+            });
+        });
     });
 };
 
@@ -7961,7 +8092,7 @@ const misionesAprender = [
     { id: 'm7', titulo: 'Aprender inglés', descripcion: 'Completa una lección', recompensa: 10 },
     { id: 'm8', titulo: 'Jugar Snake', descripcion: 'Juega dentro de la app', recompensa: 7 },
  { id: 'm9', titulo: 'recompensa', descripcion: 'Mira un anuncio y prueba tu suerte', recompensa: 50 },
-  { id: 'm10', titulo: 'Escuchar Música', descripcion: 'Escucha 2 min en YouTube Music', recompensa: 3 },
+  { id: 'm10', titulo: 'Escuchar Música', descripcion: 'Escucha 2 min en Spotify', recompensa: 3 },
 ];
 
 function renderizarMisionesAprender() {
@@ -8136,12 +8267,12 @@ if (id === 'm7') {
         </button>
     `;
     
-    // Iframe con YouTube (playlist de éxitos)
+    // Iframe con Spotify (playlist éxitos)
     const iframe = document.createElement('iframe');
-    // Usamos YouTube embed que SÍ permite iframes
-    iframe.src = 'https://www.youtube.com/embed/videoseries?list=PLrEnWoR732-BHrPp_Pm8_VleD68f9s14-';
+    // Spotify embed con mejor diseño visual
+    iframe.src = 'https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator';
     iframe.style.cssText = 'flex: 1; border: none; width: 100%;';
-    iframe.allow = 'autoplay; encrypted-media; fullscreen';
+    iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
     iframe.setAttribute('allowfullscreen', '');
     
     modal.appendChild(barra);
@@ -8721,7 +8852,14 @@ window.abrirFacebookConAnuncio = (uid) => {
         adFrame.src = 'go:s7';
         document.body.appendChild(adFrame);
         setTimeout(() => {
-            window.open(url, '_blank');
+            // Detectar si es Android WebView y usar el método adecuado
+            if (typeof Android !== 'undefined' && Android.openExternalUrl) {
+                Android.openExternalUrl(url);
+            } else if (window.cordova && window.cordova.InAppBrowser) {
+                window.cordova.InAppBrowser.open(url, '_system');
+            } else {
+                window.location.href = url;
+            }
             if (adFrame.parentNode) adFrame.parentNode.removeChild(adFrame);
         }, 2500);
     });
