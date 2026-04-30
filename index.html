@@ -1451,6 +1451,55 @@
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
+
+/* Badge de notificaciones (número rojo encima de la campana) */
+.noti-badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+    z-index: 10;
+}
+.noti-badge.active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Animación de brinco para la campana */
+.noti-icon-box.bell-jump,
+.noti-icon-box.bell-jump .fa-bell {
+    animation: campanaBrinco 0.55s ease infinite;
+    transform-origin: top center;
+}
+@keyframes campanaBrinco {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    25% { transform: translateY(-6px) rotate(-12deg); }
+    50% { transform: translateY(2px) rotate(8deg); }
+    75% { transform: translateY(-3px) rotate(-5deg); }
+}
+
+/* Asegurar que el contenedor tenga posición relativa */
+.noti-icon-box {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
 </style>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
@@ -1558,11 +1607,17 @@
         <div class="video-progress-text" id="videoProgressText">0s / 30s → +0.50 PTS</div>
     </div>
     
-    <div id="modalNotificaciones" class="modal-overlay">
-        <div class="modal-content">
-            <h3>🔔 Notificaciones</h3>
-            <div id="listaNotificaciones" style="max-height: 300px; overflow-y: ;"><div style="padding:20px; color:#cbd5e1;">Sin notificaciones nuevas.</div></div>
-            <button onclick="document.getElementById('modalNotificaciones').style.display='none'" class="btn-blue" style="background:#94a3b8; margin-top:150px;"></button>
+<!-- 🔔 MODAL DE NOTIFICACIONES -->
+<div id="modalNotificaciones" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#1e293b; padding:20px; border-radius:12px; width:90%; max-width:400px; color:white; margin:auto; box-shadow:0 10px 40px rgba(0,0,0,0.4);">
+        <h3 style="margin:0 0 15px 0; display:flex; align-items:center; gap:8px;">🔔 Notificaciones</h3>
+        <div id="listaNotificaciones" style="max-height:300px; overflow-y:auto; background:rgba(30,41,59,0.6); border-radius:8px; padding:5px;">
+            <div style="padding:20px; color:#cbd5e1; text-align:center;">Sin notificaciones nuevas.</div>
+        </div>
+        <button onclick="cerrarModalNotif()" style="margin-top:15px; width:100%; padding:12px; background:#3b82f6; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; transition:background 0.2s;">Cerrar</button>
+    </div>
+</div>
+</div>
         </div>
     </div>
    
@@ -1776,6 +1831,24 @@ Cerrar
         </div>
     </div>
 
+    <!-- MODAL PERFIL DE USUARIO PÚBLICO -->
+    <div id="modalPerfilUsuario" class="modal-overlay" style="z-index: 27000;">
+        <div class="modal-content" style="text-align:center; max-width:320px;">
+            <div id="perfilUserAvatar" style="width:80px; height:80px; border-radius:50%; background:#e2e8f0; margin:0 auto 12px; background-size:cover; background-position:center; border:3px solid #6366f1;"></div>
+            <h3 id="perfilUserName" style="margin:0 0 5px; color:#1e293b; font-size:1.1rem;">Usuario</h3>
+            <p id="perfilUserKey" style="font-size:0.75rem; color:#94a3b8; margin-bottom:15px;">---</p>
+            <div id="perfilUserFbBox" style="display:none; margin-bottom:15px;">
+                <button onclick="abrirFacebookConAnuncio(perfilUserUidActual)" style="width:100%; padding:12px; border:none; border-radius:14px; background:linear-gradient(135deg,#1877f2,#0d5bbf); color:white; font-weight:800; font-size:0.9rem; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 15px rgba(24,119,242,0.35); cursor:pointer;">
+                    <i class="fab fa-facebook"></i> Abrir Facebook
+                </button>
+                <div style="font-size:0.65rem; color:#64748b; margin-top:4px;">Verás un anuncio antes de abrir el enlace</div>
+            </div>
+            <button onclick="window.openTransfer(perfilUserUidActual, document.getElementById('perfilUserName').textContent)" class="btn-blue" style="background:#8b5cf6; margin-bottom:8px; font-size:0.85rem;">🎁 Enviar Regalo</button>
+            <button onclick="abrirChatPrivado(perfilUserUidActual, document.getElementById('perfilUserName').textContent); document.getElementById('modalPerfilUsuario').style.display='none';" class="btn-blue" style="background:#10b981; margin-bottom:8px; font-size:0.85rem;">💬 Abrir Chat</button>
+            <button onclick="document.getElementById('modalPerfilUsuario').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.85rem; margin-top:10px; cursor:pointer;">Cerrar</button>
+        </div>
+    </div>
+
     <div id="gameContainer">
         <button onclick="cerrarJuego()" class="btn-salir-game">✕ SALIR</button>
         <div class="game-score" id="gameInfoText">PUNTOS: 0</div>
@@ -1911,7 +1984,12 @@ Cerrar
                     <span id="privDailyCount" style="font-size:0.65rem; color:#ef4444; font-weight:bold;">Cargando límite...</span>
                 </div>
             </div>
-            <div id="privAvatar" style="width:35px; height:35px; border-radius:50%; background-color:#ccc; background-size:cover;"></div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button id="btnChatFacebook" onclick="abrirFacebookDesdeChat()" style="display:none; background:#1877f2; color:white; border:none; width:35px; height:35px; border-radius:50%; font-size:1rem; display:none; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(24,119,242,0.3); cursor:pointer;">
+                    <i class="fab fa-facebook-f"></i>
+                </button>
+                <div id="privAvatar" onclick="mostrarPerfilUsuario(currentChatTargetUid, document.getElementById('privChatTitle').innerText)" style="width:35px; height:35px; border-radius:50%; background-color:#ccc; background-size:cover; cursor:pointer;"></div>
+            </div>
         </div>
 
         <div id="privChatList" style="flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:8px;">
@@ -2656,18 +2734,28 @@ style="display:none;">
         <span style="font-size: 0.65rem; color: #94a3b8;">Máx. 15 caracteres</span>
     </div>
     
+    <!-- FACEBOOK LINK -->
+    <div style="margin: 10px 0;">
+        <span style="font-size: 0.7rem; color: #64748b;">Facebook:</span>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">
+            <input type="url" id="inputFacebook" placeholder="https://facebook.com/tu.perfil" style="width: auto; padding: 5px 10px; font-size: 0.85rem; text-align: center; border: 1px dashed #1877f2; border-radius: 8px; background: transparent;" maxlength="150">
+            <button onclick="guardarFacebook()" style="background: #1877f2; color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer;">✓</button>
+        </div>
+        <span style="font-size: 0.65rem; color: #94a3b8;">Público · Los demás verán un anuncio antes de abrirlo</span>
+    </div>
+    
     <p id="profRank" style="font-size:0.75rem; font-weight:600; color:#64748b;">MIEMBRO OFICIAL</p>
     <div id="myKeyDisplay" style="display:none;">---</div>
 <p id="profEmail" style="font-size:0.78rem; color:#64748b; margin-top:6px;">
     Correo: ---
 </p>
 
-<p style="font-size:0.7rem; color:#94a3b8;">
-    🔒 Solo tú puedes ver este correo. No es visible para otros usuarios.
-</p>
-<p id="profEmail" style="font-size:0.78rem; color:#64748b; margin-top:6px; word-break:break-all;">
-    
-</p>
+    <p style="font-size:0.7rem; color:#94a3b8;">
+        🔒 Solo tú puedes ver este correo. No es visible para otros usuarios.
+    </p>
+    <p id="profEmail" style="font-size:0.78rem; color:#64748b; margin-top:6px; word-break:break-all;">
+        
+    </p>
 </div>
 
 <div class="menu-card-btn" onclick="abrirModalInvitar()">
@@ -3458,7 +3546,22 @@ window.activarSonido = (divId, ytId) => {
     }
 };  
     window.mostrarPerfilUsuario = (uid, nombre) => {
-        window.openTransfer(uid, nombre);
+        window.perfilUserUidActual = uid;
+        document.getElementById('perfilUserName').textContent = nombre || 'Usuario';
+        document.getElementById('perfilUserKey').textContent = uid;
+        document.getElementById('perfilUserAvatar').style.backgroundImage = "url('" + getUserProfilePhoto(uid) + "')";
+        document.getElementById('perfilUserFbBox').style.display = 'none';
+        db.ref(`users/${uid}/facebookUrl`).once('value').then(snap => {
+            if (snap.val()) {
+                document.getElementById('perfilUserFbBox').style.display = 'block';
+            }
+        });
+        document.getElementById('modalPerfilUsuario').style.display = 'flex';
+    };
+    
+    // Ir al perfil de otro usuario desde notificación
+    window.irPerfil = (uid, nombre) => {
+        window.mostrarPerfilUsuario(uid, nombre || 'Usuario');
     };
     
 // ==========================================
@@ -3481,7 +3584,7 @@ function cargarMuroReportes() {
         </div>`;
 
     // 3. NUEVA CONEXIÓN
-    feedRef = db.ref('reportes').limitToLast(50);
+    feedRef = db.ref('reportes').orderByChild('fecha').limitToLast(50);
     
     // Bandera para saber si es la carga inicial o un post nuevo en tiempo real
     let isInitialLoad = true;
@@ -3497,7 +3600,7 @@ function cargarMuroReportes() {
         div.innerHTML = html;
         const nuevoElemento = div.firstElementChild;
         
-        // INSERTAR SIEMPRE ARRIBA (LIFO)
+        // INSERTAR SIEMPRE ARRIBA (el más reciente queda primero)
         if (container.firstChild) {
             container.insertBefore(nuevoElemento, container.firstChild);
         } else {
@@ -4179,202 +4282,207 @@ window.manejarAuth = () => {
     }
 };
     auth.onAuthStateChanged(user => {
-        if (user) {
-            idAuditor = user.uid;
-            document.getElementById('authScreen').style.display = 'none';
-            // 1. Quitar pantalla de carga
-            document.getElementById('loadingOverlay').style.display = 'none';
+    if (user) {
+        // 1. Configuración Inicial
+        idAuditor = user.uid;
+        document.getElementById('authScreen').style.display = 'none';
+        
+        // Ocultar pantalla de carga
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if(loadingOverlay) loadingOverlay.style.display = 'none';
+
+        // 🔥 INICIALIZAR BANDERAS PARA EL BRINCO (CRUCIAL)
+        window._appInitialized = true; 
+        window._lastNotiCount = 0;
+
+        // 2. Inicializar cachés y heartbeat
+        setTimeout(() => { if(typeof cachearUsuarios === "function") cachearUsuarios(); }, 1000);
+        setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 10000);
+        
+        // 3. ESCUCHAR CAMBIOS EN TIEMPO REAL
+        db.ref(`users/${idAuditor}`).on('value', snap => {
+            const d = snap.val();
             
-            // 2. Inicializar cachés y estados
-            setTimeout(() => { if(typeof cachearUsuarios === "function") cachearUsuarios(); }, 1000);
-            setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 10000);
+            // --- A) DATOS BÁSICOS ---
+            const correoUsuario = user.email || (d ? d.email : null) || "Sin correo";
+            const labelEmail = document.getElementById('profEmail');
+            if (labelEmail) labelEmail.textContent = "Correo: " + correoUsuario;
             
-            // 3. ESCUCHAR CAMBIOS EN TIEMPO REAL (Dinero, Avatar, etc)
-            db.ref(`users/${idAuditor}`).on('value', snap => {
-                const d = snap.val();
-                const correoUsuario = user.email || d.email || "Sin correo";
-const labelEmail = document.getElementById('profEmail');
-if (labelEmail) {
-    labelEmail.textContent = "Correo: " + correoUsuario;
-}
-                if (d && d.email) verificarSiEsAdmin(d.email);
-                // Si es usuario nuevo, crearlo
-                if (!d) { 
-                    db.ref(`users/${idAuditor}`).set({ earnings: 0, myInviteKey: "INV-" + idAuditor.substring(0, 5).toUpperCase() }); 
-                    return; 
+            if (d && d.email && typeof verificarSiEsAdmin === "function") verificarSiEsAdmin(d.email);
+
+            // Si es usuario nuevo, crearlo
+            if (!d) { 
+                db.ref(`users/${idAuditor}`).set({ 
+                    earnings: 0, 
+                    myInviteKey: "INV-" + idAuditor.substring(0, 5).toUpperCase() 
+                }); 
+                return; // Salimos aquí para no ejecutar el resto si no hay datos aún
+            }
+
+            // --- B) PUNTOS Y ANIMACIÓN ---
+            const newEarnings = parseFloat(d.earnings || 0);
+            if (newEarnings > currentEarnings && currentEarnings > 0) {
+                const badge = document.getElementById('ptsDisplay');
+                if(badge) {
+                    badge.classList.remove('puntos-ganados-anim');
+                    void badge.offsetWidth; 
+                    badge.classList.add('puntos-ganados-anim'); 
                 }
-                
-                // --- A) LÓGICA DE PUNTOS (ARREGLADA) ---
-                const newEarnings = parseFloat(d.earnings || 0);
-                
-                // Animación si ganaste puntos
-                if (newEarnings > currentEarnings && currentEarnings > 0) {
-                    const badge = document.getElementById('ptsDisplay');
-                    if(badge) {
-                        badge.classList.remove('puntos-ganados-anim');
-                        void badge.offsetWidth; // Forzar reinicio de animación
-                        badge.classList.add('puntos-ganados-anim'); 
-                    }
-                }
-                currentEarnings = newEarnings;
-                
-                // 🔥 ESTA ES LA LÍNEA QUE DESCONGELA TUS PUNTOS:
-                const labelPuntos = document.getElementById('mainPts');
-                if (labelPuntos) {
-                    labelPuntos.textContent = `${currentEarnings.toFixed(2)} PTS`;
-                }
-                
-// Snake Wallet
-                const labelSnake = document.getElementById('snakeWalletDisplay');
-                if(labelSnake) {
-                    labelSnake.textContent = `👾 ${parseFloat(d.snakeTotal || 0).toFixed(2)}`;
-                }
-
-                // 🔥 NUEVO: CONEXIÓN EN VIVO - NIVEL DE LEALTAD
-                // Esto hace que el 0% cambie a 1% automáticamente
-                const nivelLealtad = d.loyaltyPercent || 0;
-                const labelLealtad = document.getElementById('historialLoyaltyPercent');
-                const barraLealtad = document.getElementById('historialLoyaltyBar');
-
-                if (labelLealtad) labelLealtad.textContent = nivelLealtad + "%";
-                if (barraLealtad) barraLealtad.style.width = nivelLealtad + "%";
-
-                // --- B) DATOS BÁSICOS ---
-                myCurrentKey = d.myInviteKey || "---";
-                lastGameAd = d.lastGameAd || 0;
-                userEnglishLevel = d.englishLevel || 1;
-                
-                // Mostrar apodo si existe, sino mostrar clave INV
-                const nombreMostrar = d.apodo || myCurrentKey;
-                if(document.getElementById('profKey')) document.getElementById('profKey').textContent = nombreMostrar;
-                if(document.getElementById('myKeyDisplay')) document.getElementById('myKeyDisplay').textContent = myCurrentKey;
-                
-                // Cargar apodo en input
-                if(document.getElementById('inputApodo')) document.getElementById('inputApodo').value = d.apodo || '';
-
-                // --- C) LÓGICA DE AVATAR (PERSONALIZADO VS DEFAULT) ---
-                const imagenMostrar = d.fotoPerfil || getAvatarUrl(idAuditor);
-                
-                // 1. Círculo Grande (Perfil)
-                const perfilGrande = document.getElementById('avatarPerfilGrande');
-                if (perfilGrande) perfilGrande.style.backgroundImage = "url('" + imagenMostrar + "')";
-                
-                // 2. Círculo Pequeño (Barra Arriba)
-                // Nota: Tu HTML usa 'barraMiAvatar' O a veces está dentro del header. 
-                // Si no tienes ese ID específico, no pasa nada, pero el perfil grande sí se verá.
-                const barraAvatar = document.getElementById('barraMiAvatar');
-                if (barraAvatar) barraAvatar.style.backgroundImage = "url('" + imagenMostrar + "')";
-                // 🔥 NUEVO: ALERTA DE FOTO FALTANTE (Solo 1 vez por sesión)
-            // 🔥 ALERTA REPETITIVA (Bucle hasta que suba foto)
-                if (!d.fotoPerfil) {
-                    // A) Poner punto rojo visual en el botón de Perfil
-                    const btnPerfil = document.getElementById('nav4');
-                    if(btnPerfil) btnPerfil.style.borderTop = "4px solid #ef4444";
-
-                    // B) Iniciar el bucle (Solo si no está corriendo ya)
-                    if (!window.avisoFotoInterval) {
-                        // Se ejecuta cada 5 segundos (Para dar tiempo a ir al perfil)
-                        window.avisoFotoInterval = setInterval(() => {
-                            notify("⚠️ ¡Atención! Sube tu foto real");
-                            // Vibración para llamar más la atención (si el móvil lo permite)
-                            try { if(navigator.vibrate) navigator.vibrate(200); } catch(e){}
-                        }, 5000);
-                    }
-                    
-                } 
-                // --- 🔔 NUEVO: ALERTA DE MISIONES (SOLO 2 VECES) ---
-                // Leemos el contador guardado en el teléfono
-                let misionesVistas = localStorage.getItem('infoMisionesCount');
-                misionesVistas = misionesVistas ? parseInt(misionesVistas) : 0;
-
-                // Si se ha mostrado menos de 2 veces...
-                if (misionesVistas < 2) {
-                    setTimeout(() => {
-                        // Mostramos el mensaje detallado
-                        notify("🚀 Atención: Haz 5 misiones para subir de nivel: Ruleta, Video+Giro, Foto, Pensar y Snake");
-                        
-                        // Sumamos 1 al contador y guardamos
-                        localStorage.setItem('infoMisionesCount', misionesVistas + 1);
-                        
-                        // Sonido de moneda para llamar la atención
-                        try { window.playSound('coin'); } catch(e){}
-                    }, 8000); // Sale a los 8 segundos (entre las alertas de foto)
-                }
-                else {
-                    // C) Si YA tiene foto: Detener todo y limpiar
-                    const btnPerfil = document.getElementById('nav4');
-                    if(btnPerfil) btnPerfil.style.borderTop = "none";
-
-                    // Matar el bucle de notificaciones
-                    if (window.avisoFotoInterval) {
-                        clearInterval(window.avisoFotoInterval);
-                        window.avisoFotoInterval = null;
-                    }
-                }
-                // --- D) OTROS ESTADOS (Vidas, Ruleta, Notis) ---
-                let userHearts = (typeof d.hearts !== 'undefined') ? d.hearts : 5;
-                actualizarVisualVidas(userHearts);
-                renderEnglishPath();
-                
-                // Ruleta
-                canSpin = ((d.lastSpinDate === new Date().toISOString().split('T')[0]) ? (d.spinsUsed || 0) : 0) < 3;
-                if(document.getElementById('spinInfo')) document.getElementById('spinInfo').textContent = canSpin ? "Giros disponibles" : " ";
-
-                // Notificaciones (Globo Rojo en campana)
-                if (d.notifications) {
-                    const count = Object.keys(d.notifications).length;
-                    const badgeN = document.getElementById('badgeNotis');
-                    if(badgeN) {
-                        badgeN.style.display = count > 0 ? 'flex' : 'none';
-                        badgeN.textContent = count;
-                    }
-                    
-                    // Llenar lista
-                    let h = "";
-                    Object.entries(d.notifications).reverse().slice(0, 20).forEach(([k, n]) => {
-                        const idVideo = n.extra || "";
-                        // Buscar el nombre del emisor (apodo o código INV)
-                        const nombreEmisor = n.fromName || n.from;
-                        h += `<div id="noti-${k}" class="noti-item" onclick="irANotificacion('${n.type}', '${idVideo}', '${k}')"><strong>${nombreEmisor}</strong><div class="noti-text">${n.text}</div></div>`;
-                    });
-                    if(document.getElementById('listaNotificaciones')) document.getElementById('listaNotificaciones').innerHTML = h || "<div style='padding:20px; color:#cbd5e1;'>Sin notificaciones.</div>";
-                }
-
-                // Historial
-                if (d.historial && document.getElementById('historialList')) {
-                     let h = "";
-                     Object.values(d.historial).reverse().slice(0,15).forEach(x => {
-                         // Formatear fecha
-                         const fechaObj = new Date(x.fecha || Date.now());
-                         const dia = fechaObj.getDate().toString().padStart(2, '0');
-                         const mes = (fechaObj.getMonth() + 1).toString().padStart(2, '0');
-                         const hora = fechaObj.getHours().toString().padStart(2, '0');
-                         const min = fechaObj.getMinutes().toString().padStart(2, '0');
-                         
-                         const colorPuntos = x.puntos > 0 ? '#10b981' : '#ef4444';
-                         const signo = x.puntos > 0 ? '+' : '';
-                         
-                         h += `
-                         <div class="historial-item" style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f1f5f9;">
-                             <div style="text-align:left;">
-                                 <div style="font-weight:600; font-size:0.85rem; color:#334155;">${x.motivo}</div>
-                                 <div style="font-size:0.65rem; color:#94a3b8;">📅 ${dia}/${mes} ${hora}:${min}</div>
-                             </div>
-                             <span style="color:${colorPuntos}; font-weight:800; font-size:0.9rem;">${signo}${parseFloat(x.puntos).toFixed(2)}</span>
-                         </div>`;
-                     });
-                     document.getElementById('historialList').innerHTML = h;
-                 }
-            });
+            }
+            currentEarnings = newEarnings;
             
-            // Cargas iniciales
-            cargarLeaderboard();
-            cargarMuroReportes();
-            iniciarChat();
-            procesarPublicacionPendiente();
-            cargarGaleriaComunidad();
-            cachearFotosPerfiles();
-   // 🎰 MOSTRAR RULETA AL INICIO SI HAY GIROS
+            const labelPuntos = document.getElementById('mainPts');
+            if (labelPuntos) labelPuntos.textContent = `${currentEarnings.toFixed(2)} PTS`;
+            
+            const labelSnake = document.getElementById('snakeWalletDisplay');
+            if(labelSnake) labelSnake.textContent = ` ${parseFloat(d.snakeTotal || 0).toFixed(2)}`;
+
+            // Lealtad
+            const nivelLealtad = d.loyaltyPercent || 0;
+            const labelLealtad = document.getElementById('historialLoyaltyPercent');
+            const barraLealtad = document.getElementById('historialLoyaltyBar');
+            if (labelLealtad) labelLealtad.textContent = nivelLealtad + "%";
+            if (barraLealtad) barraLealtad.style.width = nivelLealtad + "%";
+
+            // --- C) USUARIO (Apodo, Avatar) ---
+            myCurrentKey = d.myInviteKey || "---";
+            lastGameAd = d.lastGameAd || 0;
+            userEnglishLevel = d.englishLevel || 1;
+            
+            const nombreMostrar = d.apodo || myCurrentKey;
+            if(document.getElementById('profKey')) document.getElementById('profKey').textContent = nombreMostrar;
+            if(document.getElementById('myKeyDisplay')) document.getElementById('myKeyDisplay').textContent = myCurrentKey;
+            if(document.getElementById('inputApodo')) document.getElementById('inputApodo').value = d.apodo || '';
+            if(document.getElementById('inputFacebook')) document.getElementById('inputFacebook').value = d.facebookUrl || '';
+
+            // Avatar
+            const imagenMostrar = d.fotoPerfil || getAvatarUrl(idAuditor);
+            const perfilGrande = document.getElementById('avatarPerfilGrande');
+            if (perfilGrande) perfilGrande.style.backgroundImage = "url('" + imagenMostrar + "')";
+            
+            const barraAvatar = document.getElementById('barraMiAvatar');
+            if (barraAvatar) barraAvatar.style.backgroundImage = "url('" + imagenMostrar + "')";
+
+            // Alerta Foto
+            if (!d.fotoPerfil) {
+                const btnPerfil = document.getElementById('nav4');
+                if(btnPerfil) btnPerfil.style.borderTop = "4px solid #ef4444";
+                if (!window.avisoFotoInterval) {
+                    window.avisoFotoInterval = setInterval(() => {
+                        notify("⚠️ ¡Atención! Sube tu foto real");
+                        try { if(navigator.vibrate) navigator.vibrate(200); } catch(e){}
+                    }, 5000);
+                }
+            } else {
+                const btnPerfil = document.getElementById('nav4');
+                if(btnPerfil) btnPerfil.style.borderTop = "none";
+                if (window.avisoFotoInterval) {
+                    clearInterval(window.avisoFotoInterval);
+                    window.avisoFotoInterval = null;
+                }
+            }
+
+            // Alerta Misiones
+            let misionesVistas = localStorage.getItem('infoMisionesCount');
+            misionesVistas = misionesVistas ? parseInt(misionesVistas) : 0;
+            if (misionesVistas < 2) {
+                setTimeout(() => {
+                    notify("🚀 Atención: Haz 5 misiones para subir de nivel");
+                    localStorage.setItem('infoMisionesCount', misionesVistas + 1);
+                    try { window.playSound('coin'); } catch(e){}
+                }, 8000);
+            }
+
+            // --- D) ESTADOS (Vidas, Ruleta) ---
+            let userHearts = (typeof d.hearts !== 'undefined') ? d.hearts : 5;
+            if(typeof actualizarVisualVidas === "function") actualizarVisualVidas(userHearts);
+            if(typeof renderEnglishPath === "function") renderEnglishPath();
+            
+            canSpin = ((d.lastSpinDate === new Date().toISOString().split('T')[0]) ? (d.spinsUsed || 0) : 0) < 3;
+            if(document.getElementById('spinInfo')) document.getElementById('spinInfo').textContent = canSpin ? "Giros disponibles" : " ";
+
+            // 🔔 NOTIFICACIONES (Badge + Brinco Automático)
+            if (d.notifications) {
+                // Contar solo las no leídas
+                let unreadCount = 0;
+                let totalCount = 0;
+                Object.values(d.notifications).forEach(n => {
+                    totalCount++;
+                    if (!n.read) unreadCount++;
+                });
+
+                const badgeN = document.getElementById('badgeNotis');
+                
+                if(badgeN) {
+                    if (unreadCount > 0) {
+                        badgeN.classList.add('active');
+                        badgeN.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                    } else {
+                        badgeN.classList.remove('active');
+                    }
+                }
+
+                // La campana brinca continuamente mientras haya notificaciones sin leer
+                const campana = document.getElementById('btnNotis');
+                if (campana) {
+                    if (unreadCount > 0) {
+                        campana.classList.add('bell-jump');
+                    } else {
+                        campana.classList.remove('bell-jump');
+                    }
+                }
+
+                window._lastNotiCount = totalCount;
+
+                // Llenar lista
+                let h = "";
+                Object.entries(d.notifications).reverse().slice(0, 20).forEach(([k, n]) => {
+                    const idVideo = n.extra || "";
+                    const nombreEmisor = n.fromName || n.from || "Usuario";
+                    const safeType = String(n.type || '').replace(/'/g, "\\'");
+                    const safeExtra = String(idVideo).replace(/'/g, "\\'");
+                    const safeKey = String(k).replace(/'/g, "\\'");
+                    const safeName = String(nombreEmisor).replace(/'/g, "\\'");
+                    const safeFrom = String(n.from || '').replace(/'/g, "\\'");
+                    h += `<div id="noti-${k}" class="noti-item" onclick="irANotificacion('${safeType}', '${safeExtra}', '${safeKey}', '${safeFrom}')"><strong>${safeName}</strong><div class="noti-text">${n.text || ''}</div></div>`;
+                });
+                const listaContainer = document.getElementById('listaNotificaciones');
+                if(listaContainer) listaContainer.innerHTML = h || "<div style='padding:20px; color:#cbd5e1;'>Sin notificaciones.</div>";
+
+            } else {
+                window._lastNotiCount = 0;
+                const badgeN = document.getElementById('badgeNotis');
+                if(badgeN) { badgeN.classList.remove('active'); badgeN.textContent = '0'; }
+                const campana = document.getElementById('btnNotis');
+                if(campana) campana.classList.remove('bell-jump');
+            }
+
+            // --- E) HISTORIAL ---
+            if (d.historial && document.getElementById('historialList')) {
+                 let hHist = "";
+                 Object.values(d.historial).reverse().slice(0,15).forEach(x => {
+                     const fechaObj = new Date(x.fecha || Date.now());
+                     const dia = fechaObj.getDate().toString().padStart(2, '0');
+                     const mes = (fechaObj.getMonth() + 1).toString().padStart(2, '0');
+                     const hora = fechaObj.getHours().toString().padStart(2, '0');
+                     const min = fechaObj.getMinutes().toString().padStart(2, '0');
+                     const colorPuntos = x.puntos > 0 ? '#10b981' : '#ef4444';
+                     const signo = x.puntos > 0 ? '+' : '';
+                     hHist += `<div class="historial-item" style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f1f5f9;"><div style="text-align:left;"><div style="font-weight:600; font-size:0.85rem; color:#334155;">${x.motivo}</div><div style="font-size:0.65rem; color:#94a3b8;">📅 ${dia}/${mes} ${hora}:${min}</div></div><span style="color:${colorPuntos}; font-weight:800; font-size:0.9rem;">${signo}${parseFloat(x.puntos).toFixed(2)}</span></div>`;
+                 });
+                 document.getElementById('historialList').innerHTML = hHist;
+             }
+        }); // <--- CIERRE DEL LISTENER .on('value')
+        
+        // Cargas iniciales únicas
+        if(typeof cargarLeaderboard === "function") cargarLeaderboard();
+        if(typeof cargarMuroReportes === "function") cargarMuroReportes();
+        if(typeof iniciarChat === "function") iniciarChat();
+        if(typeof procesarPublicacionPendiente === "function") procesarPublicacionPendiente();
+        if(typeof cargarGaleriaComunidad === "function") cargarGaleriaComunidad();
+        if(typeof cachearFotosPerfiles === "function") cachearFotosPerfiles();
+
+
 setTimeout(() => {
     if (!idAuditor) return;
     const hoy = new Date().toISOString().split('T')[0];
@@ -4911,7 +5019,7 @@ function detectarYEnvarMenciones(txt, type) {
 }
     
     // --- FUNCIÓN IR A NOTIFICACIÓN (CORREGIDA) ---
-    window.irANotificacion = (type, extra, key) => {
+    window.irANotificacion = (type, extra, key, fromUid) => {
         let nombreEmisor = "Alguien";
         
         // 1. Obtener el nombre de quien te escribió desde la propia notificación
@@ -4928,54 +5036,123 @@ function detectarYEnvarMenciones(txt, type) {
         // 3. Cerrar el modal de notificaciones
         document.getElementById('modalNotificaciones').style.display = 'none';
         
+        // 4. Obtener el uid del emisor para poder ir a su perfil
+        const senderUid = fromUid || extra.split('|').pop() || extra;
+        
         // --- AQUÍ ESTÁ LA MAGIA DE REDIRECCIÓN ---
         
         if (type === 'chat_privado') {
-            // ✅ ESTO ES LO NUEVO: Abre el chat privado con esa persona
-            // 'extra' contiene el UID del usuario, 'nombreEmisor' su nombre
+            // Abre el chat privado con esa persona
             abrirChatPrivado(extra, nombreEmisor);
         }
         else if (type === 'chat') {
             // Chat Global
             if (!isChatOpen) toggleChat();
         } 
-        else if (type === 'comentario' || type === 'like') {
-            // 1. CORRECCIÓN: Ir a la pantalla 2 (PENSAR/VIDEOS)
-            // Antes decía goToScreen(1), por eso se iba a las fotos.
-            goToScreen(2); 
-
-            // 2. Buscar y enfocar el video suavemente
+        else if (type === 'comentario') {
+            // Ir a la pantalla 2 (VIDEOS)
+            goToScreen(2);
             setTimeout(() => {
                 const vid = document.getElementById('post-' + extra);
                 const container = document.getElementById('muroReportes');
-                
                 if (vid && container) {
-                    // TRUCO PRO: Desactivar el imán un momento para que el scroll sea exacto
                     container.style.scrollSnapType = "none";
-                    
-                    // Llevar el video al centro
                     vid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    
-                    // Resaltarlo visualmente
                     vid.style.transition = "0.3s";
-                    vid.style.border = "4px solid #0070ba"; // Borde azul
-                    vid.style.transform = "scale(1.02)";    // Pequeño zoom
-
-                    // Restaurar todo después de 1 segundo
+                    vid.style.border = "4px solid #0070ba";
+                    vid.style.transform = "scale(1.02)";
                     setTimeout(() => { 
-                        container.style.scrollSnapType = "y mandatory"; // Vuelve el imán
+                        container.style.scrollSnapType = "y mandatory";
                         vid.style.border = "none"; 
                         vid.style.transform = "scale(1)";
-                    }, 1000);
+                    }, 1500);
                 } else {
                     notify("⚠️ Video no cargado o muy antiguo");
                 }
-
-                // Si es comentario, abrir la caja de comentarios automáticamente
-                if (type === 'comentario') {
-                    if (window.abrirModalComentarios) window.abrirModalComentarios(extra);
+                // Abrir la caja de comentarios automáticamente
+                if (window.abrirModalComentarios) window.abrirModalComentarios(extra);
+            }, 800);
+        }
+        else if (type === 'like') {
+            // Ir a la pantalla 2 (VIDEOS) y resaltar el post
+            goToScreen(2);
+            setTimeout(() => {
+                const vid = document.getElementById('post-' + extra);
+                const container = document.getElementById('muroReportes');
+                if (vid && container) {
+                    container.style.scrollSnapType = "none";
+                    vid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    vid.style.transition = "0.3s";
+                    vid.style.border = "4px solid #e11d48";
+                    vid.style.transform = "scale(1.02)";
+                    setTimeout(() => { 
+                        container.style.scrollSnapType = "y mandatory";
+                        vid.style.border = "none"; 
+                        vid.style.transform = "scale(1)";
+                    }, 1500);
+                } else {
+                    notify("⚠️ Video no cargado o muy antiguo");
                 }
-            }, 800); // Esperamos 0.8s para asegurar que cargó la pantalla
+            }, 800);
+        }
+        else if (type === 'simple') {
+            // Notificaciones genéricas: foto like, agradecimiento, etc.
+            const textoNoti = notiElement?.querySelector('.noti-text')?.textContent || '';
+            
+            if (textoNoti.includes('foto') || textoNoti.includes('galería') || textoNoti.includes('foto en la galería')) {
+                // Ir a la galería/fotos (pantalla 1) y abrir la foto
+                goToScreen(1);
+                setTimeout(() => {
+                    const photoEl = document.getElementById('photo-' + extra);
+                    if (photoEl) {
+                        photoEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        photoEl.style.transition = "0.3s";
+                        photoEl.style.border = "4px solid #e11d48";
+                        photoEl.style.transform = "scale(1.05)";
+                        setTimeout(() => { 
+                            photoEl.style.border = "none"; 
+                            photoEl.style.transform = "scale(1)";
+                        }, 1500);
+                    }
+                    // Abrir la foto en detalle
+                    const imgSrc = photoEl?.querySelector('img')?.src || '';
+                    if (extra && window.abrirFotoDetalle) {
+                        db.ref(`galeria_comunidad/${extra}`).once('value', snap => {
+                            const f = snap.val();
+                            if (f) {
+                                abrirFotoDetalle(extra, f.uid || '', f.autor || 'Anónimo', f.foto || imgSrc);
+                            } else {
+                                notify("⚠️ Foto no encontrada o muy antigua");
+                            }
+                        });
+                    }
+                }, 800);
+            }
+            else if (textoNoti.includes('gracias') || textoNoti.includes('agradecimiento')) {
+                // Agradecimiento - ir al perfil del emisor
+                goToScreen(4);
+                setTimeout(() => {
+                    if (window.irPerfil) window.irPerfil(senderUid, nombreEmisor);
+                }, 500);
+            }
+            else if (textoNoti.includes('clave') || textoNoti.includes('referido') || textoNoti.includes('usó')) {
+                // Alguien usó tu clave - ir a referidos
+                verReferidos();
+            }
+            else if (textoNoti.includes('mencion')) {
+                // Mención - ir al chat global
+                goToScreen(3);
+                setTimeout(() => {
+                    if (!isChatOpen) toggleChat();
+                }, 500);
+            }
+            else {
+                // Ir al perfil del emisor por defecto
+                goToScreen(4);
+                setTimeout(() => {
+                    if (window.irPerfil) window.irPerfil(senderUid, nombreEmisor);
+                }, 500);
+            }
         }
         else if (type === 'gift') {
             // Regalos
@@ -4992,6 +5169,20 @@ function detectarYEnvarMenciones(txt, type) {
             // Configurar botón de gracias
             const btnThanks = document.getElementById('btnThanks');
             if(btnThanks) btnThanks.onclick = () => { darLasGracias(uidEmisor); };
+        }
+        else if (type === 'mencion') {
+            // Mención en chat - ir al chat global
+            goToScreen(3);
+            setTimeout(() => {
+                if (!isChatOpen) toggleChat();
+            }, 500);
+        }
+        else {
+            // Para cualquier otro tipo, ir al perfil del emisor
+            goToScreen(4);
+            setTimeout(() => {
+                if (window.irPerfil) window.irPerfil(senderUid, nombreEmisor);
+            }, 500);
         }
     };
     window.solicitarPermisoNotificaciones = () => { if(Notification.permission !== "granted") Notification.requestPermission(); else notify("Activas"); };
@@ -5578,7 +5769,40 @@ window.addEventListener('popstate', (e) => {
         notify("🏠 Estás en el Inicio"); 
     }
 });
-    window.abrirNotificaciones = () => { document.getElementById('modalNotificaciones').style.display = 'flex'; document.getElementById('badgeNotis').style.display = 'none'; };
+    // ✅ FUNCIÓN CORREGIDA: Abre modal, marca como leídas y limpia badge/animación
+window.abrirNotificaciones = () => {
+    const modal = document.getElementById('modalNotificaciones');
+    const badge = document.getElementById('badgeNotis');
+    const campana = document.getElementById('btnNotis');
+    
+    if (modal) modal.style.display = 'flex';
+    
+    // Ocultar badge
+    if(badge) badge.classList.remove('active');
+    
+    // Quitar animación si estaba brincando
+    if(campana) campana.classList.remove('bell-jump');
+    
+    // Resetear contador global para evitar falsos positivos al volver
+    window._lastNotiCount = 0; 
+
+    // Marcar como leídas en Firebase (Lógica real)
+    try { 
+        if(idAuditor && db) {
+            db.ref(`users/${idAuditor}/notifications`).once('value', snap => {
+                if (!snap.exists()) return;
+                const updates = {};
+                snap.forEach(s => {
+                    const n = s.val() || {};
+                    if (!n.read) updates[s.key + '/read'] = true;
+                });
+                if (Object.keys(updates).length > 0) {
+                    db.ref(`users/${idAuditor}/notifications`).update(updates);
+                }
+            });
+        }
+    } catch(e) { console.error("Error marcando leídas:", e); }
+};
    // --- FUNCIÓN SNAKE CON ANUNCIO (CORREGIDA) ---
    window.jugarSnakeConAnuncio = () => {
     // 1. Sonido y Feedback inmediato
@@ -6360,6 +6584,7 @@ window.ejecutarBorradoFoto = () => {
 
 let currentChatId = null; 
 let targetUserUid = null;
+let currentChatTargetUid = null;
 let privChatRef = null;
 const LIMITE_DIARIO_MSGS = 10;
 const BONUS_PAYPAL_MSGS = 20; // 20 mensajes extra al comprar por PayPal
@@ -6371,6 +6596,7 @@ window.abrirChatPrivado = (targetUid, targetName) => {
     if(targetUid === idAuditor) return notify("No puedes hablarte a ti mismo");
 
     targetUserUid = targetUid;
+    currentChatTargetUid = targetUid;
     
     // Generar ID único del chat (Orden alfabético)
     currentChatId = [idAuditor, targetUid].sort().join('_');
@@ -6390,11 +6616,26 @@ window.abrirChatPrivado = (targetUid, targetName) => {
     // Configurar UI
     document.getElementById('privChatTitle').innerText = targetName;
     document.getElementById('privAvatar').style.backgroundImage = "url('" + getUserProfilePhoto(targetUid) + "')";
+    
+    // Mostrar botón Facebook si existe
+    const btnFb = document.getElementById('btnChatFacebook');
+    btnFb.style.display = 'none';
+    db.ref(`users/${targetUid}/facebookUrl`).once('value').then(snap => {
+        if (snap.val()) {
+            btnFb.style.display = 'flex';
+        }
+    });
+
     document.getElementById('modalChatPrivado').style.display = 'flex';
     document.getElementById('privChatList').innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando chat...</div>';
     
     cargarMensajesPrivados();
     checkLimiteDiario();
+};
+
+window.abrirFacebookDesdeChat = () => {
+    if (!currentChatTargetUid) return notify("⏳ Cargando...");
+    abrirFacebookConAnuncio(currentChatTargetUid);
 };
 
 function cargarMensajesPrivados() {
@@ -7133,6 +7374,7 @@ window.likePhoto = (key, ownerUid, btn) => {
                 db.ref(`users/${ownerUid}/notifications`).push({
                     from: myCurrentKey, fromName: getMiNombre(), type: 'simple',
                     text: "❤️ Le gustó tu foto en la galería",
+                    extra: key,
                     timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
                 });
             }
@@ -8406,11 +8648,16 @@ window.buscarUsuarioPorClave = () => {
         if (snap.exists()) {
             snap.forEach(user => {
                 const u = user.val();
+                const fbBtn = u.facebookUrl ? `
+                    <button onclick="abrirFacebookConAnuncio('${user.key}')" class="btn-blue" style="margin-top:8px; background:#1877f2;">
+                        <i class="fab fa-facebook"></i> Ver Facebook
+                    </button>` : '';
                 resultado.innerHTML = `
                     <div style="text-align: center; padding: 15px; background: #f0fdf4; border-radius: 12px; margin-top: 10px;">
                         <div style="width: 60px; height: 60px; border-radius: 50%; background: #e2e8f0; margin: 0 auto 10px; background-size: cover; background-image: url('${getUserProfilePhoto(user.key)}');"></div>
-                        <div style="font-weight: 800; font-size: 1rem; color: #166534;">${u.myInviteKey || 'Usuario'}</div>
+                        <div style="font-weight: 800; font-size: 1rem; color: #166534;">${u.apodo || u.myInviteKey || 'Usuario'}</div>
                         <button onclick="abrirChatPrivado('${user.key}', '${u.myInviteKey}'); document.getElementById('modalBuscarUsuario').style.display='none';" class="btn-blue" style="margin-top: 10px; background: #10b981;">💬 Abrir Chat</button>
+                        ${fbBtn}
                     </div>
                 `;
             });
@@ -8444,6 +8691,39 @@ window.guardarApodo = () => {
         notify("✅ Apodo guardado: " + apodo);
     }).catch(e => {
         notify("❌ Error al guardar");
+    });
+};
+
+window.guardarFacebook = () => {
+    let fbUrl = document.getElementById('inputFacebook').value.trim();
+    if (!fbUrl) return notify("❌ Ingresa tu enlace de Facebook");
+    if (!idAuditor) return notify("❌ Inicia sesión primero");
+    if (!fbUrl.startsWith('http://') && !fbUrl.startsWith('https://')) {
+        fbUrl = 'https://' + fbUrl;
+    }
+    if (!fbUrl.includes('facebook.com')) {
+        return notify("❌ Ingresa un enlace válido de Facebook");
+    }
+    db.ref(`users/${idAuditor}`).update({ facebookUrl: fbUrl }).then(() => {
+        notify("✅ Facebook guardado");
+    }).catch(e => {
+        notify("❌ Error al guardar");
+    });
+};
+
+window.abrirFacebookConAnuncio = (uid) => {
+    if (!uid) return notify("⏳ Cargando perfil...");
+    db.ref(`users/${uid}/facebookUrl`).once('value').then(snap => {
+        const url = snap.val();
+        if (!url) return notify("Este usuario no tiene Facebook configurado");
+        const adFrame = document.createElement('iframe');
+        adFrame.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;';
+        adFrame.src = 'go:s7';
+        document.body.appendChild(adFrame);
+        setTimeout(() => {
+            window.open(url, '_blank');
+            if (adFrame.parentNode) adFrame.parentNode.removeChild(adFrame);
+        }, 2500);
     });
 };
 
@@ -8511,6 +8791,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+let cantidadNotificaciones = 0;
+const badge = document.getElementById('badgeNotif');
+const campana = document.getElementById('btnCampana');
+const modal = document.getElementById('modalNotificaciones');
+const lista = document.getElementById('listaNotificaciones');
+
+function abrirNotificaciones() {
+    modal.style.display = 'flex'; // o 'block' según tu CSS de modal
+    cantidadNotificaciones = 0;
+    badge.textContent = '0';
+    badge.classList.remove('active');
+}
+
+function cerrarNotificaciones() {
+    modal.style.display = 'none';
+}
+
+// Llámala cuando llegue una notificación real o por prueba:
+function notificarLlegada(mensaje = "Nueva actividad") {
+    cantidadNotificaciones++;
+    badge.textContent = cantidadNotificaciones > 99 ? '99+' : cantidadNotificaciones;
+    badge.classList.add('active');
+
+    // Quitar "Sin notificaciones" si es la primera
+    if (lista.querySelector('div[style*="padding:20px"]')) lista.innerHTML = '';
+    lista.innerHTML = `<div style="padding:10px; border-bottom:1px solid #334155;">${mensaje}</div>` + lista.innerHTML;
+
+    // Brinco
+    campana.classList.remove('bell-jump');
+    void campana.offsetWidth;
+    campana.classList.add('bell-jump');
+    setTimeout(() => campana.classList.remove('bell-jump'), 600);
+}
+
+// === VARIABLES GLOBALES PARA NOTIFICACIONES ===
+
+// === CERRAR MODAL DE NOTIFICACIONES ===
+// ✅ FUNCIÓN PARA CERRAR EL MODAL
+window.cerrarModalNotif = () => {
+    const modal = document.getElementById('modalNotificaciones');
+    if (modal) modal.style.display = 'none';
+    // Opcional: Reproducir sonido suave al cerrar
+    try { window.playSound('click'); } catch(e){}
+};
+
 </script>
 <!-- 3. AL FINAL: Cerrar etiquetas HTML -->
 </body>
