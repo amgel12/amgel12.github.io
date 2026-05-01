@@ -3158,7 +3158,7 @@ const audioLibrary = {
     };
     document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('button').forEach(btn => { btn.addEventListener('click', () => playSound('click')); }); });
     
-    let idAuditor = null; let myCurrentKey = ""; let currentEarnings = 0; let canSpin = false; let currentVideoId = null; let scrollTimeout = null; let audioActivadoGlobal = false; let isCommenting = false; let lastGameAd = 0;
+    let idAuditor = null; let myCurrentKey = ""; let currentEarnings = 0; let canSpin = false; let currentVideoId = null; let scrollTimeout = null; let audioActivadoGlobal = false; let isCommenting = false; let lastGameAd = 0; let isAdmin = false;
     let mensajesNoLeidos = 0;
     let currentQIndex = 0;
     let selectedOptionText = null;
@@ -3718,7 +3718,6 @@ function cargarApodos() {
 }
 // Cargar apodos al inicio
 cargarApodos();
-
 function construirPostHTML(post) {
     const avatarUrl = getUserProfilePhoto(post.uid);
     const nombre = getDisplayName(post.uid, post.autorClave || "Anónimo");
@@ -3734,9 +3733,10 @@ function construirPostHTML(post) {
     let mediaBlock = "";
     const ytId = getYouTubeID(post.musica);
     if (ytId) {
+        // Nota: El iframe se inyecta dinámicamente por checkScrollVideos, aquí solo va el contenedor
         mediaBlock = `
         <div class="card-media smart-video-container" id="feed-vid-${post.k}" data-yt="${ytId}">
-            <div class="vid-poster" style="position:absolute;inset:0;width:100%;height:100%;">
+            <div class="vid-poster" style="position:absolute;inset:0;width:100%;height:100%; pointer-events:none;">
                 <img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;opacity:0.6;">
                 <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
                     <i class="fas fa-play" style="color:white;font-size:3rem; opacity:0.8; filter:drop-shadow(0 0 10px black);"></i>
@@ -3752,7 +3752,7 @@ function construirPostHTML(post) {
     }
             
     const iLikedIt = (post.likes && idAuditor && post.likes[idAuditor]) ? true : false;
-    const heartClass = iLikedIt ? 'fas fa-heart liked' : 'fas fa-heart'; // Usamos solid (fas) siempre para mejor visibilidad, color cambia
+    const heartClass = iLikedIt ? 'fas fa-heart liked' : 'far fa-heart'; // Usamos far si no tiene like para diferenciar visualmente en el HTML inicial
     const heartColor = iLikedIt ? '#e11d48' : 'white';
             
     return `
@@ -3774,99 +3774,105 @@ function construirPostHTML(post) {
             <div style="margin-bottom:5px; font-weight:bold;">${escapeHtml(post.texto)}</div>
             <div style="font-size:0.8rem; opacity:0.8;">🎵 Sonido original - PAGOCODE</div>
         </div>
-<div class="card-actions">
-    
-    <div style="width:45px; height:45px; border-radius:50%; background-image:url('${avatarUrl}'); background-size:cover; border:2px solid white; margin-bottom:10px;"></div>
 
-    <button class="action-icon" onclick="likePost('${post.k}', '${post.uid}', this)">
-        <i id="like-icon-${post.k}" class="${heartClass}" style="color:${heartColor};"></i>
-        <span id="like-count-${post.k}">${post.vCount || 0}</span>
-    </button>
+        <div class="card-actions">
+            <!-- Avatar pequeño flotante -->
+            <div style="width:45px; height:45px; border-radius:50%; background-image:url('${avatarUrl}'); background-size:cover; border:2px solid white; margin-bottom:10px; pointer-events:none;"></div>
 
-    <button class="action-icon" onclick="window.abrirModalComentarios('${post.k}')">
-        <i class="fas fa-comment-dots"></i>
-        <span id="comment-count-${post.k}">${numComentarios}</span>
-    </button>
+            <!-- BOTÓN LIKE CORREGIDO CON stopPropagation -->
+            <button class="action-icon" onclick="event.stopPropagation(); window.likePost('${post.k}', '${post.uid}', this)">
+                <i id="like-icon-${post.k}" class="${heartClass}" style="color:${heartColor}; transition: transform 0.2s;"></i>
+                <span id="like-count-${post.k}">${post.vCount || 0}</span>
+            </button>
 
-    <button class="action-icon" onclick="abrirModalCompartir('${ytId}', '${escapeHtml(post.texto.substring(0,30))}...')">
-        <i class="fas fa-share"></i>
-        <span>Share</span>
-    </button>
+            <button class="action-icon" onclick="event.stopPropagation(); window.abrirModalComentarios('${post.k}')">
+                <i class="fas fa-comment-dots"></i>
+                <span id="comment-count-${post.k}">${numComentarios}</span>
+            </button>
 
-   <button class="action-icon" onclick="event.stopPropagation(); abrirOpcionesPost('${post.k}')" style="margin-top:10px;">
-    <i class="fas fa-ellipsis-h" style="font-size:1.2rem;"></i>
-</button>
-</div>
+            <button class="action-icon" onclick="event.stopPropagation(); abrirModalCompartir('${ytId}', '${escapeHtml(post.texto.substring(0,30))}...')">
+                <i class="fas fa-share"></i>
+                <span>Share</span>
+            </button>
+
+            <button class="action-icon" onclick="event.stopPropagation(); abrirOpcionesPost('${post.k}')" style="margin-top:10px;">
+                <i class="fas fa-ellipsis-h" style="font-size:1.2rem;"></i>
+            </button>
+        </div>
     </article>`;
 }
-    window.likePost = function(postKey, postOwnerUid, btnElement) {
-    // 1. Validar sesión
-    if (!idAuditor) return notify("❌ Inicia sesión para dar like");
-    if (!postKey) return console.error("Error: Post ID no encontrado");
 
+// ✅ FUNCIÓN LIKE OPTIMIZADA (No toca el DOM del video)
+window.likePost = function(postKey, postOwnerUid, btnElement) {
+    if (!idAuditor) return notify(" Inicia sesión para dar like");
+    if (!btnElement) return;
+
+    // Referencias directas a los elementos hijos del botón clickeado
+    const icon = btnElement.querySelector('i');
+    const countSpan = btnElement.querySelector('span') || document.getElementById(`like-count-${postKey}`);
+    
     const likesRef = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
     const countRef = db.ref(`reportes/${postKey}/vCount`);
 
-    // 2. Revisar si ya di like para saber si sumar o restar
+    // Pequeña animación de escala en el ícono antes de procesar (feedback visual inmediato)
+    if(icon) {
+        icon.style.transform = "scale(1.3)";
+        setTimeout(() => { if(icon) icon.style.transform = "scale(1)"; }, 200);
+    }
+
     likesRef.once('value').then(snapshot => {
         const yaDioLike = snapshot.exists();
 
         if (yaDioLike) {
             // --- QUITAR LIKE ---
-            likesRef.remove()
-                .then(() => {
-                    // Restar 1 al contador
-                    countRef.transaction(current => (current || 0) - 1);
-                    
-                    // Actualizar UI visualmente (Toggle gris)
-                    const icon = btnElement.querySelector('i');
-                    const span = btnElement.querySelector('span');
-                    if(icon) {
-                        icon.classList.remove('fas', 'liked');
-                        icon.classList.add('far'); // Corazón vacío
-                        icon.style.color = "white"; // O el color original
-                    }
-                    
-                })
-                .catch(err => notify("Error al quitar like: " + err.message));
-
+            likesRef.remove().then(() => {
+                countRef.transaction(current => (current || 0) - 1);
+                
+                if(icon) {
+                    icon.classList.remove('fas', 'liked');
+                    icon.classList.add('far');
+                    icon.style.color = "white";
+                }
+                if(countSpan) {
+                    let val = parseInt(countSpan.textContent) || 0;
+                    countSpan.textContent = Math.max(0, val - 1);
+                }
+            });
         } else {
             // --- DAR LIKE ---
-            likesRef.set(true)
-                .then(() => {
-                    // Sumar 1 al contador
-                    countRef.transaction(current => (current || 0) + 1);
-                    
-                    // Notificar al dueño (si no soy yo mismo)
-                    if (postOwnerUid && postOwnerUid !== idAuditor) {
-                        db.ref(`users/${postOwnerUid}/notifications`).push({
-                            from: myCurrentKey, // Tu código INV-...
-                            type: 'like',
-                            text: "❤️ Le gustó tu publicación",
-                            extra: postKey,
-                            timestamp: firebase.database.ServerValue.TIMESTAMP,
-                            read: false
-                        });
-                    }
+            likesRef.set(true).then(() => {
+                countRef.transaction(current => (current || 0) + 1);
 
-                    // Actualizar UI visualmente (Toggle rojo)
-                    const icon = btnElement.querySelector('i');
-                    const span = btnElement.querySelector('span');
-                    if(icon) {
-                        icon.classList.remove('far');
-                        icon.classList.add('fas', 'liked'); // Corazón lleno
-                        icon.style.color = "#e11d48";
-                    }
-                   
-                    
-                    try { window.playSound('coin'); } catch(e){}
-                    notify("❤️ Like enviado");
-                })
-                .catch(err => notify("Error al dar like: " + err.message));
+                // Notificación al dueño
+                if (postOwnerUid && postOwnerUid !== idAuditor) {
+                    db.ref(`users/${postOwnerUid}/notifications`).push({
+                        from: myCurrentKey,
+                        fromName: getMiNombre ? getMiNombre() : "Usuario",
+                        type: 'like',
+                        text: "❤️ Le gustó tu publicación",
+                        extra: postKey,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        read: false
+                    });
+                }
+
+                if(icon) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas', 'liked');
+                    icon.style.color = "#e11d48";
+                }
+                if(countSpan) {
+                    let val = parseInt(countSpan.textContent) || 0;
+                    countSpan.textContent = val + 1;
+                }
+
+                try { if(window.playSound) window.playSound('coin'); } catch(e){}
+                // notify("❤️ Like enviado"); // Opcional: comentar para no molestar
+
+            }).catch(err => console.error(err));
         }
     });
 };
-    
     function cargarLeaderboard() { db.ref('users').orderByChild('earnings').limitToLast(1).on('value', snap => { if (!snap.exists()) return; snap.forEach(child => { const u = child.val(); /* Ya no actualizamos el leaderboard viejo */ }); }); }
     
     // --- ACCIONES DE USUARIO ---
@@ -6828,6 +6834,31 @@ window.enviarMensajePrivado = () => {
     const txt = input.value.trim();
     if(!txt) return;
 
+    // 🔑 ADMIN: Mensajes ilimitados sin anuncios ni compras
+    if (isAdmin) {
+        const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
+        db.ref(`chats_privados/${currentChatId}`).push({
+            uid: idAuditor,
+            autor: miNombre,
+            texto: txt,
+            fecha: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        db.ref(`users/${targetUserUid}/notifications`).push({
+            from: myCurrentKey,
+            type: 'chat_privado',
+            text: "🔒 Nuevo mensaje privado",
+            extra: idAuditor,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            read: false
+        });
+
+        input.value = "";
+        checkLimiteDiario();
+        try { window.playSound('click'); } catch(e){}
+        return;
+    }
+
     db.ref(`users/${idAuditor}/privados_diarios`).once('value', s => {
         const data = s.val() || {};
         const hoy = new Date().toISOString().split('T')[0];
@@ -6871,6 +6902,16 @@ window.enviarMensajePrivado = () => {
 };
 
 function checkLimiteDiario() {
+    // 🔑 ADMIN: Mostrar mensajes ilimitados
+    if (isAdmin) {
+        const label = document.getElementById('privDailyCount');
+        if(label) {
+            label.textContent = '👑 Admin: Mensajes Ilimitados';
+            label.style.color = '#f59e0b';
+        }
+        return;
+    }
+
     db.ref(`users/${idAuditor}/privados_diarios`).once('value', s => {
         const data = s.val() || {};
         const hoy = new Date().toISOString().split('T')[0];
@@ -7755,6 +7796,7 @@ window.irMision = (tipo) => {
 const ADMIN_EMAIL = "imermejiaramirez@gmail.com";
 function verificarSiEsAdmin(emailUsuario) {
     if (emailUsuario && emailUsuario.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        isAdmin = true;
         document.getElementById('btnAdminCorreos').style.display = 'flex';
         document.getElementById('btnAdminRetiros').style.display = 'flex';
         document.getElementById('btnAdminCompras').style.display = 'flex';
