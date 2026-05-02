@@ -1996,16 +1996,23 @@ Cerrar
             <div style="text-align:center; padding:20px; color:#94a3b8;">Inicia la conversación...</div>
         </div>
 
-      <div style="background:white; padding:10px; border-top:1px solid #e2e8f0; display:flex; gap:8px; align-items:center; flex-shrink:0;">
-    
+     <div style="background:white; padding:10px; border-top:1px solid #e2e8f0; display:flex; gap:8px; align-items:center; flex-shrink:0;">
+     
     <!-- BOTÓN REGALO -->
     <button onclick="abrirRegaloPrivado()" style="width:45px; height:45px; border-radius:50%; background:linear-gradient(135deg,#a855f7,#8b5cf6); border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(168,85,247,0.4); flex-shrink:0;">
         🎁
     </button>
+
+    <!-- BOTÓN FOTO PRIVADA -->
+    <button onclick="abrirModalFotoPrivada()" style="width:45px; height:45px; border-radius:50%; background:linear-gradient(135deg,#10b981,#059669); border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(16,185,129,0.4); flex-shrink:0;">
+        📷
+    </button>
     
     <input type="text" id="inputPrivMsg" placeholder="Mensaje privado..." style="flex:1; background:#f0f2f5; border:none; padding:12px 15px; border-radius:20px; outline:none;">
     
-    <button onclick="enviarMensajePrivado()" class="btn-blue" style="width:45px; height:45px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">➤</button>
+    <button onclick="enviarMensajePrivado()" class="btn-blue" style="width:45px; height:45px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">
+        ➤
+    </button>
 </div>
     </div>
 </div>
@@ -2034,6 +2041,35 @@ Cerrar
             💰 Publicar y Ganar
         </button>
         <button onclick="cerrarModalFoto()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
+    </div>
+</div>
+
+<!-- MODAL SUBIR FOTO PRIVADA -->
+<div id="modalFotoPrivada" class="modal-overlay" style="z-index: 30000;">
+    <div class="modal-content">
+        <h3 style="color:#10b981;">📷 Enviar Foto Privada</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
+            Solo <b style="color:#10b981;">tu y la otra persona</b> podrán ver esta foto.
+        </p>
+        
+        <div style="background:#f0fdf4; border:2px dashed #10b981; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
+            <img id="imgPreviewPrivada" style="width:100%; height:100%; object-fit:contain; display:none;">
+            <div id="placeholderUploadPrivada" style="text-align:center; color:#10b981;">
+                <i class="fas fa-camera" style="font-size:2.5rem; margin-bottom: 10px;"></i>
+                <p style="font-size:0.8rem; font-weight:bold;">Foto privada</p>
+                <p style="font-size:0.65rem; opacity:0.8;">Solo visible para los dos</p>
+            </div>
+            <input type="file" id="inputFotoPrivada" accept="image/*" onchange="procesarFotoPrivada()" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+        </div>
+
+        <div style="font-size:0.65rem; color:#ef4444; margin-bottom:15px; background: #fef2f2; padding: 8px; border-radius: 8px;">
+            ⚠️ Prohibido contenido +18 o violento. Serás baneado.
+        </div>
+        
+        <button id="btnEnviarFotoPrivada" class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" disabled onclick="enviarFotoPrivada()">
+            📷 Enviar Foto
+        </button>
+        <button onclick="cerrarModalFotoPrivada()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
     </div>
 </div>
 <div id="modalFotoDetalle" class="modal-overlay" style="z-index:29000; background:black; align-items:center; justify-content:center; display:none;">
@@ -6712,6 +6748,148 @@ window.ejecutarBorradoFoto = () => {
             .catch(e => notify("Error: " + e.message));
     }
 };
+
+// ==========================================
+// 📷 FUNCIONES PARA FOTO PRIVADA
+// ==========================================
+
+let fotoPrivadaBase64 = "";
+
+// 1. ABRIR MODAL FOTO PRIVADA
+window.abrirModalFotoPrivada = () => {
+    if (!currentChatId) return notify("Chat no activo");
+    document.getElementById('modalFotoPrivada').style.display = 'flex';
+    // Limpiar estado anterior
+    document.getElementById('imgPreviewPrivada').style.display = 'none';
+    document.getElementById('placeholderUploadPrivada').style.display = 'block';
+    document.getElementById('btnEnviarFotoPrivada').disabled = true;
+    document.getElementById('btnEnviarFotoPrivada').innerHTML = '📷 Enviar Foto';
+    fotoPrivadaBase64 = "";
+};
+
+// 2. CERRAR MODAL
+window.cerrarModalFotoPrivada = () => {
+    document.getElementById('modalFotoPrivada').style.display = 'none';
+    document.getElementById('inputFotoPrivada').value = "";
+    fotoPrivadaBase64 = "";
+};
+
+// 3. PROCESAR FOTO SELECCIONADA
+window.procesarFotoPrivada = () => {
+    const file = document.getElementById('inputFotoPrivada').files[0];
+    if (!file) return;
+
+    document.getElementById('placeholderUploadPrivada').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+            // Comprimir imagen
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 600;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            fotoPrivadaBase64 = canvas.toDataURL('image/jpeg', 0.6);
+
+            // Mostrar preview
+            document.getElementById('imgPreviewPrivada').src = fotoPrivadaBase64;
+            document.getElementById('imgPreviewPrivada').style.display = 'block';
+            document.getElementById('placeholderUploadPrivada').style.display = 'none';
+
+            // Activar botón
+            const btn = document.getElementById('btnEnviarFotoPrivada');
+            btn.disabled = false;
+            btn.innerHTML = '📷 Enviar Foto';
+            btn.style.opacity = "1";
+        };
+    };
+    reader.readAsDataURL(file);
+};
+
+// 4. ENVIAR FOTO PRIVADA
+window.enviarFotoPrivada = () => {
+    if (!fotoPrivadaBase64) return notify("Elige una foto primero");
+    if (!currentChatId || !targetUserUid) return notify("Chat no activo");
+
+    const btn = document.getElementById('btnEnviarFotoPrivada');
+    btn.disabled = true;
+    btn.innerHTML = 'Enviando...';
+
+    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
+
+    db.ref(`chats_privados/${currentChatId}`).push({
+        uid: idAuditor,
+        autor: miNombre,
+        texto: "📷 Foto",
+        foto: fotoPrivadaBase64,
+        esFoto: true,
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        // Notificar al otro usuario
+        db.ref(`users/${targetUserUid}/notifications`).push({
+            from: myCurrentKey,
+            fromName: miNombre,
+            type: 'chat_privado',
+            text: "📷 Te envió una foto privada",
+            extra: idAuditor,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            read: false
+        });
+
+        cerrarModalFotoPrivada();
+        notify("✅ Foto enviada");
+        try { window.playSound('win'); } catch(e){}
+    }).catch(err => {
+        notify("Error: " + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '📷 Enviar Foto';
+    });
+};
+
+// 5. MOSTRAR FOTO PRIVADA EN MODAL
+window.mostrarFotoPrivada = (el) => {
+    const fotoSrc = el.getAttribute('data-foto');
+    if (!fotoSrc) return;
+    
+    // Crear modal dinámico si no existe
+    let modal = document.getElementById('modalVerFotoPrivada');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalVerFotoPrivada';
+        modal.style.cssText = `
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 31000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        `;
+        modal.onclick = () => modal.style.display = 'none';
+        document.body.appendChild(modal);
+    }
+    
+    modal.innerHTML = `
+        <img src="${fotoSrc}" style="max-width:95%; max-height:90vh; object-fit:contain; border-radius:12px; box-shadow:0 4px 30px rgba(0,0,0,0.5);">
+        <button onclick="document.getElementById('modalVerFotoPrivada').style.display='none'" style="
+            position:absolute; top:15px; right:15px;
+            background:rgba(255,255,255,0.2); color:white; border:none;
+            width:40px; height:40px; border-radius:50%; font-size:1.5rem;
+            display:flex; align-items:center; justify-content:center; cursor:pointer;">
+            ✕
+        </button>
+    `;
+    
+    modal.style.display = 'flex';
+};
 // ==========================================
 // 🔒 LÓGICA DE CHAT PRIVADO (1 vs 1)
 // ==========================================
@@ -6790,12 +6968,22 @@ function cargarMensajesPrivados() {
         snap.forEach(s => {
             const m = s.val();
             const esMio = m.uid === idAuditor;
-
+            
             let textoSeguro = escapeHtml(m.texto);
             let textoFinal = hacerEnlacesClickeables(textoSeguro);
-
+            
             const fotoMsg = getUserProfilePhoto(m.uid);
-
+            
+            // Si es una foto, mostrar la imagen
+            let fotoHTML = "";
+            if (m.esFoto && m.foto) {
+                fotoHTML = `
+                    <div style="margin:8px 0; cursor:pointer;" onclick="mostrarFotoPrivada(this)" data-foto="${m.foto.replace(/"/g, '&quot;')}">
+                        <img src="${m.foto}" style="max-width:200px; max-height:200px; border-radius:12px; object-fit:cover; box-shadow:0 2px 8px rgba(0,0,0,0.15);" loading="lazy">
+                    </div>
+                `;
+            }
+            
             html += `
             <div class="chat-row ${esMio ? 'mine' : 'other'}">
                 
@@ -6805,7 +6993,7 @@ function cargarMensajesPrivados() {
                     style="display:block;"
                     onclick="mostrarPerfilUsuario('${m.uid}', '${esMio ? myCurrentKey : document.getElementById('privChatTitle').innerText}')"
                 >
-
+                
                 <div id="priv-msg-${s.key}" class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}" style="max-width:75%;" 
                      data-msg-key="${s.key}"
                      data-msg-text="${escapeHtml(m.texto).replace(/"/g, '&quot;')}"
@@ -6815,6 +7003,7 @@ function cargarMensajesPrivados() {
                      onmouseup="cancelPress(true)"
                      onmouseleave="cancelPress(true)"
                      ontouchend="cancelPress(true)">
+                    ${fotoHTML}
                     <div>${textoFinal}</div>
                     
                     <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
