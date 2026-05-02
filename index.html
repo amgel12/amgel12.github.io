@@ -5086,8 +5086,8 @@ if (girosDisponibles > 0) {
         const modal = document.getElementById('modalChatOptions');
         const btnBorrar = document.getElementById('btnBorrarMensaje');
         
-        // Solo mostrar botón "Borrar" si el mensaje es MÍO
-        if (uidAuthor === idAuditor) {
+        // Mostrar botón "Borrar" si el mensaje es MÍO o si soy ADMIN
+        if (uidAuthor === idAuditor || isAdmin) {
             btnBorrar.style.display = "flex";
         } else {
             btnBorrar.style.display = "none";
@@ -8346,7 +8346,7 @@ window.abrirOpcionesPost = (postKey) => {
         postSeleccionadoKey = postKey;
         postSeleccionadoData = post;
         const btnEliminar = document.getElementById('btnEliminarPost');
-        if (post.uid === idAuditor) { btnEliminar.style.display = 'flex'; }
+        if (post.uid === idAuditor || isAdmin) { btnEliminar.style.display = 'flex'; }
         else { btnEliminar.style.display = 'none'; }
         document.getElementById('modalPostOptions').style.display = 'flex';
     });
@@ -8354,7 +8354,7 @@ window.abrirOpcionesPost = (postKey) => {
 
 window.eliminarPostActual = () => {
     if (!postSeleccionadoKey || !postSeleccionadoData) return;
-    if (postSeleccionadoData.uid !== idAuditor) return notify("❌ No puedes eliminar esta publicación");
+    if (postSeleccionadoData.uid !== idAuditor && !isAdmin) return notify("❌ No puedes eliminar esta publicación");
     db.ref(`reportes/${postSeleccionadoKey}`).remove().then(() => {
         document.getElementById('modalPostOptions').style.display = 'none';
         notify("🗑️ Publicación eliminada");
@@ -8905,7 +8905,7 @@ window.abrirMenuFoto = (ev, key, ownerUid, isPinned) => {
     }
 
     if (btnEliminar) {
-        btnEliminar.style.display = (ownerUid === idAuditor) ? 'flex' : 'none';
+        btnEliminar.style.display = (ownerUid === idAuditor || isAdmin) ? 'flex' : 'none';
     }
 
     if (btnFijar) {
