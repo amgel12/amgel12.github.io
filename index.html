@@ -12,128 +12,101 @@
      🎨 PALETA DE COLORES MODERNA & PREMIUM
      ========================================= */
   
-  .mision-card {
-  
+/* =========================================
+      🎨 MISIONES - DISEÑO LIMPIO
+      ========================================= */
+
+.mision-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
 }
 
-  .mision-card:not(.mision-completada) .mision-title,
-  .mision-card:not(.mision-completada) .mision-desc,
-  .mision-card:not(.mision-completada) .mision-reward {
-      color: #1e293b !important;
-      text-decoration: none !important;
-      opacity: 1 !important;
-  }
+.mision-card:active {
+    transform: scale(0.98);
+    background: #f8fafc;
+}
 
-  .mision-card.mision-completada .mision-title,
-  .mision-card.mision-completada .mision-desc,
-  .mision-card.mision-completada .mision-reward {
-      text-decoration: none !important;
-  }
-
-  .mision-completada {
-      opacity: 0.7;
-      background: #3b82f6;
-  }
-
-  .mision-card {
-      background: #f59e0b;
-      border-radius: 12px;
-      padding: 8px;
-      margin-bottom: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); 
-      border: 1px solid #f8fafc;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
-  }
-
-  .mision-card:active {
-      transform: scale(0.98);
-      background: #f8fafc;
-  }
-
-  .mision-info {
-      display: flex;
-      flex-direction: column;
-  }
-
-  .mision-title {
-      font-weight: 800;
-      font-size: 11px;
-      color: #0f172a;
-  }
-
-  .mision-desc {
-      font-size: 9px;
-      color: #64748b;
-      margin-top: 2px;
-  }
-
-  .mision-reward {
-      background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
-      color: #0891b2;
-      padding: 4px 8px;
-      border-radius: 50px;
-      font-size: 9px;
-      font-weight: 800;
-      box-shadow: 0 2px 5px rgba(8, 145, 178, 0.1);
-  }
-
-.mision-top {
+.mision-info {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    flex: 1;
+}
+
+.mision-title {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+}
+
+.mision-desc {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.4;
 }
 
 .mision-reward {
-    width: 90px;           /* todos iguales */
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    color: #0284c7;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
+    white-space: nowrap;
+    min-width: 90px;
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-  .mision-title {
-      font-size: 0.75rem;
-      font-weight: 800;
-      color: #0f172a;
-      margin: 0 0 4px 0;
-  }
+.mision-completada {
+    opacity: 0.6;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
 
-  .mision-desc {
-      font-size: 0.65rem;
-      color: #64748b;
-      margin: 0;
-  }
+.mision-completada .mision-title {
+    text-decoration: line-through;
+    color: #94a3b8 !important;
+}
 
-  .mision-reward {
-      background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-      color: #0284c7;
-      font-weight: 800;
-      font-size: 0.65rem;
-      padding: 4px 8px;
-      border-radius: 999px;
-      white-space: nowrap;
-  }
+.mision-completada .mision-desc {
+    color: #94a3b8 !important;
+}
 
-  .mision-btn.done {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: white;
-      box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
-  }
+.mision-btn {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    border: none;
+    padding: 10px 14px;
+    border-radius: 12px;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    transition: transform 0.2s;
+}
 
-  .mision-badge {
-      display: inline-block;
-      margin-top: 8px;
-      font-size: 0.8rem;
-      color: #16a34a;
-      font-weight: 800;
-  }
+.mision-btn:active {
+    transform: scale(0.95);
+}
+
+.mision-btn.done {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
+}
 
   #giftFxLayer {
       position: fixed;
@@ -1217,70 +1190,82 @@
   /* CONFETTI */
   .confetti-piece { position: fixed; width: 10px; height: 10px; top: -10px; z-index: 99999; border-radius: 2px; animation: confettiFall linear forwards; pointer-events: none; }
   @keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
-  /* =========================================
-    ESTILO PANTALLA DE MISIONES (PREMIUM)
-   ========================================= */
+/* =========================================
+     ESTILO PANTALLA DE MISIONES (PREMIUM)
+    ========================================= */
 
-/* Esta clase se la pondremos al contenedor de misiones */
+/* Contenedor de misiones */
 .mision-screen-dark {
-    background: linear-gradient(180deg, #0B0F19 0%, #ffffff; 100%) !important;
-    padding: 20px 15px 100px 15px !important;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    padding: 25px 15px 120px 15px !important;
 }
 
-.mision-screen-dark h2, 
-.mision-screen-dark p,
-.mision-screen-dark .mision-title {
-    color: red !important;
-    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+.mision-screen-dark h2 { 
+    color: #0f172a !important; 
+    font-size: 1.8rem !important;
+    text-align: center;
+    margin-bottom: 25px !important;
+    text-shadow: none;
 }
 
-/* Tarjetas de Misión Oscuras */
+/* Tarjetas de Misión Glassmorphism */
 .mision-screen-dark .mision-card {
-    background: linear-gradient(135deg, #1e293 0%, #0f172a 100%) !important;
-    border: 1px solid #334155 !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    border-radius: 18px !important;
-    margin-bottom: 16px !important;
+    background: white !important;
+    backdrop-filter: none;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border-radius: 20px !important;
+    margin-bottom: 20px !important;
+    padding: 18px !important;
     position: relative;
     overflow: hidden;
-}
-
-/* Línea de color a la izquierda de cada tarjeta */
-.mision-screen-dark .mision-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; width: 5px; height: 100%;
-    background: linear-gradient(180deg, #00ff8, #00b4d8);
-    box-shadow: 0 0 10px rgba(0, 255, 135, 0.5);
-}
-
-/* Texto de descripción */
-.mision-screen-dark .mision-desc {
-    color: blue !important;
-}
-
-/* Botón de Puntos con efecto NEÓN */
-.mision-screen-dark .mision-reward {
-    background: linear-gradient(90deg, #00ff87, #00b4d8) !important;
-    color: blue !important;
-    font-weight: 900 !important;
-    box-shadow: 0 0 15px rgba(0, 255, 135, 0.4);
-    border-radius: 50px !important;
-    padding: 8px 16px !important;
-    font-size: 14px !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .mision-screen-dark .mision-card:active {
-    background: #1e293b !important;
-    transform: scale(0.98);
-}
-.mision-title {
-    color: #a55; /* verde más elegante */
-    font-weight: 700;
+    transform: scale(0.98) !important;
 }
 
-.mision-desc {
-    color: rgba(255,255,255,0.6);
+/* Línea de color a la izquierda */
+.mision-screen-dark .mision-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 8px; height: 100%;
+    background: linear-gradient(180deg, #6366f1, #4f46e5);
+    box-shadow: none;
+    border-radius: 20px 0 0 20px;
+}
+
+/* Título de misión */
+.mision-screen-dark .mision-title {
+    color: #0f172a !important;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 6px !important;
+}
+
+/* Descripción */
+.mision-screen-dark .mision-desc {
+    color: #64748b !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+}
+
+/* Badge de puntos */
+.mision-screen-dark .mision-reward {
+    background: linear-gradient(90deg, #e0f2fe, #bae6fd) !important;
+    color: #0284c7 !important;
+    font-weight: 900 !important;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
+    border-radius: 50px !important;
+    padding: 8px 16px !important;
+    font-size: 0.9rem !important;
+    min-width: 90px;
+    text-align: center;
+}
+
+.mision-screen-dark .mision-card:active {
+    transform: scale(0.98) !important;
 }
 #modalLesson {
     background: rgba(0,0,0,0.55);
@@ -2073,20 +2058,36 @@ Cerrar
     </div>
 </div>
 <div id="modalFotoDetalle" class="modal-overlay" style="z-index:29000; background:black; align-items:center; justify-content:center; display:none;">
-  <div class="modal-content" style="width:100%; height:100%; max-width:100%; max-height:100%; background:black; padding:0; display:flex; flex-direction:column; border-radius:0;">
-
-    <div style="position:absolute; top:15px; left:15px; z-index:10;">
+  <div id="galeriaContainer" style="width:100%; height:100%; position:relative; overflow:hidden;">
+    
+    <!-- BOTÓN CERRAR -->
+    <div style="position:absolute; top:15px; left:15px; z-index:20;">
       <button onclick="cerrarFotoDetalle()" style="background:rgba(0,0,0,0.5); color:white; border:none; width:40px; height:40px; border-radius:50%; font-size:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer;">
         ✕
       </button>
     </div>
 
-    <div style="flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;">
+    <!-- CONTADOR DE FOTOS -->
+    <div style="position:absolute; top:20px; left:50%; transform:translateX(-50%); z-index:20; background:rgba(0,0,0,0.6); color:white; padding:5px 15px; border-radius:20px; font-size:0.8rem; font-weight:600;">
+      <span id="fotoContador">1 / 1</span>
+    </div>
+
+    <!-- IMAGEN ACTUAL -->
+    <div id="galeriaSlide" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; transition:transform 0.3s ease;" ontouchstart="touchStart(event)" ontouchmove="touchMove(event)" ontouchend="touchEnd()">
       <img id="detalleFotoImg" src="" style="width:100%; height:auto; max-height:100%; object-fit:contain;">
     </div>
 
-    <div style="background:rgba(0,0,0,0.9); padding:15px 20px; display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid rgba(255,255,255,0.1);">
+    <!-- BOTONES LATERALES (OPCIONALES) -->
+    <button onclick="galeriaAnterior()" id="btnGaleriaAnt" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.2); border:none; color:white; width:40px; height:40px; border-radius:50%; font-size:1.2rem; cursor:pointer; backdrop-filter:blur(5px); z-index:10;">
+      ‹
+    </button>
+    <button onclick="galeriaSiguiente()" id="btnGaleriaSig" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.2); border:none; color:white; width:40px; height:40px; border-radius:50%; font-size:1.2rem; cursor:pointer; backdrop-filter:blur(5px); z-index:10;">
+      ›
+    </button>
 
+    <!-- BARRA INFERIOR -->
+    <div style="position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.9); padding:15px 20px; display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid rgba(255,255,255,0.1);">
+      
       <div class="action-icon" id="btnLikeFoto" style="flex-direction:row; gap:8px;">
         <i class="far fa-heart" style="font-size:1.8rem;"></i>
         <span style="font-size:1.2rem;">0</span>
@@ -2104,6 +2105,10 @@ Cerrar
       <button onclick="abrirMenuFoto(event, currentPhotoKey, currentPhotoOwner, false)" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:10px 15px; border-radius:20px;">
         ⋮
       </button>
+    </div>
+
+    <!-- INDICADORES (PUNTOS) -->
+    <div id="galeriaIndicadores" style="position:absolute; bottom:80px; left:0; width:100%; display:flex; justify-content:center; gap:5px; z-index:10;">
     </div>
 
   </div>
@@ -2872,6 +2877,11 @@ style="display:none;">
     <button id="btnGuardarPaypal" class="btn-blue"
       style="margin-top:12px; background:#0070ba; width:90%; border-radius:10px;">
       Guardar y continuar 💸
+    </button>
+
+    <button onclick="document.getElementById('modalPaypal').style.display='none'"
+      style="background:none; border:2px solid #94a3b8; color:#94a3b8; padding:10px 20px; border-radius:50px; font-size:0.85rem; font-weight:600; cursor:pointer; width:90%; margin-top:8px;">
+      ⏭️ Omitir por ahora
     </button>
 
     <p style="font-size:0.7rem; color:#94a3b8; margin-top:10px;">
@@ -6570,6 +6580,8 @@ window.cerrarModalFoto = () => {
 let fotoSeleccionadaKey = null;
 let fotoSeleccionadaData = null;
 let pressTimerFoto;
+let galeriaFotosArray = [];
+let galeriaIndexActual = 0;
 
 // ==========================================
 // 🖼️ CARGAR GALERÍA (ORDEN: FIJADOS -> NUEVOS)
@@ -6593,6 +6605,9 @@ function cargarGaleriaComunidad() {
             fotos.push({ k: child.key, ...child.val() });
         });
 
+        // 2.1 Guardar array global para galería deslizable
+        galeriaFotosArray = fotos;
+
         // 3. ORDENAMIENTO MAESTRO
         // Prioridad 1: Pinned (Fijados)
         // Prioridad 2: Fecha (Más reciente arriba)
@@ -6610,7 +6625,7 @@ function cargarGaleriaComunidad() {
 
         // 4. GENERAR HTML
         let html = "";
-        fotos.forEach(f => {
+        fotos.forEach((f, index) => {
             const imagenSrc = f.foto || "";
             const nombre = f.autor || "Anónimo";
             const esFijado = f.pinned ? '<div style="position:absolute; top:8px; right:8px; background:rgba(251, 191, 36, 0.9); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); font-size:0.8rem;">📌</div>' : '';
@@ -6626,7 +6641,7 @@ function cargarGaleriaComunidad() {
                  ontouchstart="iniciarPresionFoto('${f.k}', '${f.uid}', '${f.pinned}')"
                  onmouseup="cancelarPresionFoto()"
                  ontouchend="cancelarPresionFoto()"
-                 onclick="abrirFotoDetalle('${f.k}', '${f.uid}', '${nombre}', '${imagenSrc}')">
+                 onclick="abrirGaleriaFotos(${index})">
                 
                 <div style="position:relative;">
                     ${esFijado}
@@ -7728,31 +7743,69 @@ window.validarCodigoAmigo = () => {
 let currentPhotoKey = null;
 let currentPhotoOwner = null;
 
-window.abrirFotoDetalle = (key, ownerUid, ownerName, url) => {
-    currentPhotoKey = key;
-    currentPhotoOwner = ownerUid;
-    const modal = document.getElementById('modalFotoDetalle');
+// --- GALERÍA DESLIZABLE ---
+let touchStartX = 0;
+let touchEndX = 0;
+
+window.abrirGaleriaFotos = (index) => {
+    galeriaIndexActual = index;
+    mostrarFotoGaleria();
+    document.getElementById('modalFotoDetalle').style.display = 'flex';
+};
+
+function mostrarFotoGaleria() {
+    const foto = galeriaFotosArray[galeriaIndexActual];
+    if (!foto) return;
+
+    currentPhotoKey = foto.k;
+    currentPhotoOwner = foto.uid;
+
     const img = document.getElementById('detalleFotoImg');
     const btnLike = document.getElementById('btnLikeFoto');
     const btnSaludar = document.getElementById('btnSaludarFoto');
     const btnShare = document.getElementById('btnShareFoto');
-    img.src = url;
-    if (ownerUid === idAuditor) {
-        btnSaludar.style.display = 'none'; 
+    const contador = document.getElementById('fotoContador');
+    const btnAnt = document.getElementById('btnGaleriaAnt');
+    const btnSig = document.getElementById('btnGaleriaSig');
+    const indicadores = document.getElementById('galeriaIndicadores');
+
+    img.src = foto.foto || "";
+    
+    // Contador
+    contador.textContent = `${galeriaIndexActual + 1} / ${galeriaFotosArray.length}`;
+    
+    // Botones visibilidad
+    btnAnt.style.display = galeriaIndexActual > 0 ? 'flex' : 'none';
+    btnSig.style.display = galeriaIndexActual < galeriaFotosArray.length - 1 ? 'flex' : 'none';
+    
+    // Indicadores
+    let indHtml = "";
+    galeriaFotosArray.forEach((_, i) => {
+        indHtml += `<div style="width:8px; height:8px; border-radius:50%; background:${i === galeriaIndexActual ? 'white' : 'rgba(255,255,255,0.3)'};"></div>`;
+    });
+    indicadores.innerHTML = indHtml;
+
+    const nombre = foto.autor || "Anónimo";
+    
+    if (foto.uid === idAuditor) {
+        btnSaludar.style.display = 'none';
     } else {
         btnSaludar.style.display = 'flex';
         btnSaludar.onclick = () => {
             cerrarFotoDetalle();
-            abrirChatPrivado(ownerUid, ownerName);
+            abrirChatPrivado(foto.uid, nombre);
         };
     }
+    
     if(btnShare) {
         btnShare.onclick = () => {
-            abrirModalCompartir(key, "📸 Foto de " + ownerName, 'foto');
+            abrirModalCompartir(foto.k, "📸 Foto de " + nombre, 'foto');
         };
     }
-    btnLike.onclick = () => likePhoto(key, ownerUid, btnLike);
-    db.ref(`galeria_comunidad/${key}`).once('value', snap => {
+    
+    btnLike.onclick = () => likePhoto(foto.k, foto.uid, btnLike);
+    
+    db.ref(`galeria_comunidad/${foto.k}`).once('value', snap => {
         const data = snap.val() || {};
         const likes = data.likes || {};
         const count = data.vCount || 0;
@@ -7766,7 +7819,87 @@ window.abrirFotoDetalle = (key, ownerUid, ownerName, url) => {
             icon.style.color = 'white';
         }
     });
-    modal.style.display = 'flex';
+}
+
+window.touchStart = (e) => {
+    touchStartX = e.touches[0].clientX;
+};
+
+window.touchMove = (e) => {
+    touchEndX = e.touches[0].clientX;
+};
+
+window.touchEnd = () => {
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) { // Umbral de deslizamiento
+        if (diff > 0) {
+            galeriaSiguiente();
+        } else {
+            galeriaAnterior();
+        }
+    }
+};
+
+window.galeriaAnterior = () => {
+    if (galeriaIndexActual > 0) {
+        galeriaIndexActual--;
+        mostrarFotoGaleria();
+    }
+};
+
+window.galeriaSiguiente = () => {
+    if (galeriaIndexActual < galeriaFotosArray.length - 1) {
+        galeriaIndexActual++;
+        mostrarFotoGaleria();
+    }
+};
+
+window.abrirFotoDetalle = (key, ownerUid, ownerName, url) => {
+    // Encontrar el índice de la foto en el array
+    const index = galeriaFotosArray.findIndex(f => f.k === key);
+    if (index !== -1) {
+        abrirGaleriaFotos(index);
+    } else {
+        // Fallback si no está en el array
+        currentPhotoKey = key;
+        currentPhotoOwner = ownerUid;
+        const modal = document.getElementById('modalFotoDetalle');
+        const img = document.getElementById('detalleFotoImg');
+        const btnLike = document.getElementById('btnLikeFoto');
+        const btnSaludar = document.getElementById('btnSaludarFoto');
+        const btnShare = document.getElementById('btnShareFoto');
+        img.src = url;
+        if (ownerUid === idAuditor) {
+            btnSaludar.style.display = 'none'; 
+        } else {
+            btnSaludar.style.display = 'flex';
+            btnSaludar.onclick = () => {
+                cerrarFotoDetalle();
+                abrirChatPrivado(ownerUid, ownerName);
+            };
+        }
+        if(btnShare) {
+            btnShare.onclick = () => {
+                abrirModalCompartir(key, "📸 Foto de " + ownerName, 'foto');
+            };
+        }
+        btnLike.onclick = () => likePhoto(key, ownerUid, btnLike);
+        db.ref(`galeria_comunidad/${key}`).once('value', snap => {
+            const data = snap.val() || {};
+            const likes = data.likes || {};
+            const count = data.vCount || 0;
+            btnLike.querySelector('span').textContent = count;
+            const icon = btnLike.querySelector('i');
+            if (likes[idAuditor]) {
+                icon.className = 'fas fa-heart liked';
+                icon.style.color = '#e11d48';
+            } else {
+                icon.className = 'far fa-heart';
+                icon.style.color = 'white';
+            }
+        });
+        modal.style.display = 'flex';
+    }
 };
 
 window.cerrarFotoDetalle = () => {
@@ -8460,16 +8593,16 @@ window.validarLeccionIngles = function () {
 };
 
 const misionesAprender = [
+    { id: 'm10', titulo: 'Escuchar Música', descripcion: 'Escucha 2 min en Spotify', recompensa: 3 },
+    { id: 'm6', titulo: 'Descarga aplicación', descripcion: 'Descarga la app en Google Play', recompensa: 6 },
     { id: 'm1', titulo: 'Leer 2 páginas web', descripcion: 'Lee contenido dentro de la app', recompensa: 5 },
-    { id: 'm2', titulo: 'Ver 3 videos', descripcion: 'Mira videos del feed', recompensa: 5 },
-    { id: 'm3', titulo: 'Publicar post', descripcion: 'Haz una publicación', recompensa: 10 },
     { id: 'm4', titulo: 'Subir foto', descripcion: 'Comparte una imagen', recompensa: 8 },
+    { id: 'm11', titulo: 'Subir videos', descripcion: 'Publica un video en el feed', recompensa: 12 },
     { id: 'm5', titulo: 'Compartir app', descripcion: 'Invita a un amigo', recompensa: 6 },
-   { id: 'm6', titulo: 'Descarga aplicación', descripcion: 'Descarga la app en Google Play', recompensa: 6 },
     { id: 'm7', titulo: 'Aprender inglés', descripcion: 'Completa una lección', recompensa: 10 },
+    { id: 'm9', titulo: 'Recompensas', descripcion: 'Mira un anuncio y prueba tu suerte', recompensa: 50 },
+    { id: 'm2', titulo: 'Ver 3 videos', descripcion: 'Mira videos del feed', recompensa: 5 },
     { id: 'm8', titulo: 'Jugar Snake', descripcion: 'Juega dentro de la app', recompensa: 7 },
- { id: 'm9', titulo: 'recompensa', descripcion: 'Mira un anuncio y prueba tu suerte', recompensa: 50 },
-  { id: 'm10', titulo: 'Escuchar Música', descripcion: 'Escucha 2 min en Spotify', recompensa: 3 },
 ];
 
 function renderizarMisionesAprender() {
@@ -8534,6 +8667,7 @@ function ejecutarMision(id) {
         } else { notify("Tu dispositivo no permite compartir"); }
         return;
     }
+    if (id === 'm11') { notify("🎬 Sube un video"); localStorage.setItem('mision_m11_activa', '1'); goToScreen(2, true); setTimeout(() => { subirVideo(); }, 400); return; }
     if (id === 'm6') {
     notify("📥 Abriendo Google Play Store...");
     // Abre el link de descarga
