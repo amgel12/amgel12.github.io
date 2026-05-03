@@ -3054,6 +3054,7 @@ Cerrar
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 
     <script>
     console.log("🔥 JS PRINCIPAL CARGADO");
@@ -4350,19 +4351,39 @@ window.manejarAuth = () => {
             const user = userCredential.user;
             console.log("[v0] Login success");
             notify("Bienvenido de nuevo");
+            alert("LOGIN EXITOSO - UID: " + user.uid);
 
             // SOLICITAR TOKEN DESPUÉS DE ENTRAR
-            const messaging = firebase.messaging();
-            messaging.getToken({ vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8' })
-              .then((currentToken) => {
-                if (currentToken) {
-                  firebase.database().ref('Users/' + user.uid).update({
-                    fcmToken: currentToken
-                  });
-                }
-              }).catch((err) => {
-                console.log('Error al obtener token:', err);
-              });
+            alert("LOGIN OK - UID: " + user.uid);
+            try {
+              if (typeof Notification === 'undefined') {
+                alert("ERROR: Notification API no disponible (WebView antigua)");
+                return;
+              }
+              if (!('serviceWorker' in navigator)) {
+                alert("ERROR: Service Workers NO soportados en esta WebView. Usa FCM nativo en Android.");
+                return;
+              }
+              if (typeof firebase === 'undefined' || !firebase.messaging) {
+                alert("ERROR: SDK de Messaging no cargado");
+                return;
+              }
+              alert("Soporte OK, pidiendo token...");
+              const messaging = firebase.messaging();
+              messaging.getToken({ vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8' })
+                .then((currentToken) => {
+                  alert("Token recibido: " + (currentToken ? "SÍ" : "NO"));
+                  if (currentToken) {
+                    return firebase.database().ref('Users/' + user.uid).update({ fcmToken: currentToken })
+                      .then(() => alert("Guardado en DB OK"));
+                  } else {
+                    alert("Permiso denegado o sin token");
+                  }
+                })
+                .catch((err) => alert("Error getToken: " + (err.message || err)));
+            } catch(e) {
+              alert("Error síncrono: " + e.message);
+            }
         }).catch(err => {
             console.log("[v0] Login error:", err.message);
             notify("Error: " + err.message);
