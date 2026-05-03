@@ -1842,9 +1842,18 @@ Cerrar
             <div></div>
             <div class="d-btn" onclick="inputGame(0, -1)">⬆️</div>
             <div></div>
-            <div class="d-btn" onclick="inputGame(-1, 0)">⬅️</div>
+
+            <div class="d-btn" onclick="inputGame(-1, 0)"
+                onmousedown="startBreakoutMove(-1)" onmouseup="stopBreakoutMove()" onmouseleave="stopBreakoutMove()"
+                ontouchstart="startBreakoutMove(-1)" ontouchend="stopBreakoutMove()">⬅️</div>
+            <div></div>
+            <div class="d-btn" onclick="inputGame(1, 0)"
+                onmousedown="startBreakoutMove(1)" onmouseup="stopBreakoutMove()" onmouseleave="stopBreakoutMove()"
+                ontouchstart="startBreakoutMove(1)" ontouchend="stopBreakoutMove()">➡️</div>
+
+            <div></div>
             <div class="d-btn" onclick="inputGame(0, 1)">⬇️</div>
-            <div class="d-btn" onclick="inputGame(1, 0)">➡️</div>
+            <div></div>
         </div>
     </div>
 <div id="modalSoporte" class="modal-overlay">
@@ -2544,7 +2553,7 @@ style="display:none;">
             <div class="task-status">ᐳ</div>
         </div>
 
-        <div id="taskGameRace" class="task-row" onclick="irMision('race')">
+        <div id="taskGameRace" class="task-row" onclick="irMision('breakout')">
             <div class="task-icon">🏎️</div>
             <div class="task-info">
                 <div style="display:flex; justify-content:space-between;">
@@ -4337,9 +4346,23 @@ window.manejarAuth = () => {
     console.log("[v0] Attempting auth with Firebase...");
     
     if (isLoginMode) {
-        auth.signInWithEmailAndPassword(email, pass).then(() => {
+        auth.signInWithEmailAndPassword(email, pass).then((userCredential) => {
+            const user = userCredential.user;
             console.log("[v0] Login success");
             notify("Bienvenido de nuevo");
+
+            // SOLICITAR TOKEN DESPUÉS DE ENTRAR
+            const messaging = firebase.messaging();
+            messaging.getToken({ vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8' })
+              .then((currentToken) => {
+                if (currentToken) {
+                  firebase.database().ref('Users/' + user.uid).update({
+                    fcmToken: currentToken
+                  });
+                }
+              }).catch((err) => {
+                console.log('Error al obtener token:', err);
+              });
         }).catch(err => {
             console.log("[v0] Login error:", err.message);
             notify("Error: " + err.message);
@@ -5512,23 +5535,64 @@ setTimeout(() => notify("🎵 ¡Reproduciendo!"), 3000);
     
     // VARIABLES CARRERA
     let playerCar = { x: 1 }; // 0=Izq, 1=Centro, 2=Der
-    let obstacles = [];
-    let bullets = []; 
-    let raceSpeed = 5;
-    
-    // --- FUNCIÓN DE CONTROL UNIFICADA (INPUT) ---
+    // ==========================================
+    // 🎮 LÓGICA BREAKOUT
+    // ==========================================
+    let breakoutPaddle = { x: 125 };
+    let breakoutBall = { x: 150, y: 250, dx: 3, dy: -3 };
+    let breakoutBricks = [];
+    let breakoutScore = 0;
+    const brickRowCount = 5;
+    const brickColumnCount = 8;
+    const brickWidth = 35;
+    const brickHeight = 15;
+    const brickPadding = 3;
+    const brickOffsetTop = 30;
+    const brickOffsetLeft = 10;
+
+    function initBricks() {
+        breakoutBricks = [];
+        for (let c = 0; c < brickColumnCount; c++) {
+            breakoutBricks[c] = [];
+            for (let r = 0; r < brickRowCount; r++) {
+                breakoutBricks[c][r] = { x: 0, y: 0, status: 1 };
+            }
+        }
+    }
+
+    let breakoutMoveInterval = null;
+    let breakoutMoveSpeed = 8;
+
     window.inputGame = (x, y) => { 
         // 1. CONTROLES SNAKE
         if(activeGameMode === 'snake') { 
-            // Evitar giro de 180 grados (chocar con uno mismo)
             if((x===1 && velocity.x===-1) || (x===-1 && velocity.x===1) || (y===1 && velocity.y===-1) || (y===-1 && velocity.y===1)) return; 
             velocity={x,y}; 
         }
-        // 2. CONTROLES CARRERA
-        else if (activeGameMode === 'race') {
-            if (x === -1 && playerCar.x > 0) playerCar.x--; // Izquierda
-            else if (x === 1 && playerCar.x < 2) playerCar.x++; // Derecha
-            else if (y === -1) dispararCarrera(); // Disparar con Arriba
+        // 2. CONTROLES BREAKOUT (click simple)
+        else if (activeGameMode === 'breakout') {
+            if (x === -1 && breakoutPaddle.x > 0) breakoutPaddle.x -= 15;
+            else if (x === 1 && breakoutPaddle.x < 250) breakoutPaddle.x += 15;
+        }
+    };
+
+    // Soporte mantener presionado para Breakout
+    window.startBreakoutMove = (dir) => {
+        if (activeGameMode !== 'breakout') return;
+        stopBreakoutMove();
+        breakoutMoveInterval = setInterval(() => {
+            if (dir === -1 && breakoutPaddle.x > 0) {
+                breakoutPaddle.x = Math.max(0, breakoutPaddle.x - breakoutMoveSpeed);
+            } else if (dir === 1 && breakoutPaddle.x < 250) {
+                breakoutPaddle.x = Math.min(250, breakoutPaddle.x + breakoutMoveSpeed);
+            }
+        }, 16);
+    };
+
+    window.stopBreakoutMove = () => {
+        if (breakoutMoveInterval) {
+            clearInterval(breakoutMoveInterval);
+            breakoutMoveInterval = null;
         }
     };
     
@@ -5539,23 +5603,23 @@ setTimeout(() => notify("🎵 ¡Reproduciendo!"), 3000);
             activeGameMode = m; 
             document.getElementById('gameContainer').style.display='flex'; 
             if(m === 'snake') resetSnake(); 
-            else if(m === 'race') resetRace();
+            else if(m === 'breakout') resetBreakout();
         }, 1500); 
     };
     
-    window.cerrarJuego = () => { 
-        clearInterval(gameInterval); 
+    window.cerrarJuego = () => {
+        clearInterval(gameInterval);
+        stopBreakoutMove(); // detener movimiento continuo
         document.getElementById('gameContainer').style.display='none'; 
+        activeGameMode = null;
         
         // --- LÓGICA ANUNCIO CADA HORA ---
         const ahora = Date.now();
         const unaHora = 60 * 60 * 1000; 
         
-        if (ahora - lastGameAd > unaHora) {
+        if (ahora - lastGameAd > unaHora && idAuditor) {
             notify("⌛ Publicidad programada...");
-            if (idAuditor) {
-                db.ref(`users/${idAuditor}`).update({ lastGameAd: firebase.database.ServerValue.TIMESTAMP });
-            }
+            db.ref(`users/${idAuditor}`).update({ lastGameAd: firebase.database.ServerValue.TIMESTAMP });
             setTimeout(() => {
                 window.location.href = "go:s7";
             }, 1000);
@@ -5564,7 +5628,15 @@ setTimeout(() => notify("🎵 ¡Reproduciendo!"), 3000);
     
     window.cerrarModalGameOver = () => { 
         document.getElementById('modalGameOver').style.display='none'; 
-        cerrarJuego(); 
+        document.getElementById('gameContainer').style.display='flex';
+        // Reiniciar el último juego jugado
+        if (activeGameMode === 'snake') {
+            resetSnake();
+        } else {
+            // Por defecto reiniciar Breakout
+            activeGameMode = 'breakout';
+            resetBreakout();
+        }
     };
     
     function gameOver() {
@@ -5596,7 +5668,7 @@ setTimeout(() => notify("🎵 ¡Reproduciendo!"), 3000);
     // ==========================================
     // 🐍 LÓGICA SNAKE
     // ==========================================
-    let snakeScore = 0; // Puntos de Snake separados de Carrera
+    let snakeScore = 0; // Puntos de Snake separados de Breakout
 
     function resetSnake() {
         clearInterval(gameInterval);
@@ -5703,109 +5775,132 @@ function dibujarSnake() {
     });
 }
 
-    // 🏎️ LÓGICA CARRERA (CON DISPAROS)
     // ==========================================
-    function dispararCarrera() {
-    bullets.push({ x: playerCar.x, y: 240 });
-    
-    // 🔥 SONIDO DE DISPARO (Antes tenías 'click', cámbialo por 'shoot')
-    try { window.playSound('shoot'); } catch(e){} 
-}
-    
-    function resetRace() {
-        playerCar = { x: 1 };
-        obstacles = [];
-        bullets = [];
-        score = 0;
-        raceSpeed = 12;
+    // 🎮 LÓGICA BREAKOUT
+    // ==========================================
+    function resetBreakout() {
+        breakoutPaddle = { x: 125 };
+        breakoutBall = { x: 150, y: 250, dx: 3, dy: -3 };
+        breakoutScore = 0;
+        initBricks();
+        
+        const info = document.getElementById('gameInfoText');
+        if (info) info.textContent = "PUNTOS: 0";
+        
         if(gameInterval) clearInterval(gameInterval);
-        gameInterval = setInterval(updateRace, 50);
-    }
-    
-    function updateRace() {
-        // FONDO Y CARRETERA
-        ctx.fillStyle = '#334155'; ctx.fillRect(0, 0, 300, 300);
-        ctx.strokeStyle = '#fff'; ctx.setLineDash([10, 10]);
-        ctx.beginPath(); ctx.moveTo(100, 0); ctx.lineTo(100, 300); ctx.moveTo(200, 0); ctx.lineTo(200, 300); ctx.stroke();
-    
-        // GENERAR OBSTÁCULOS
-        if (Math.random() < 0.05) { 
-            let lane = Math.floor(Math.random() * 3);
-            obstacles.push({ x: lane, y: -20 });
-        }
-    
-        // MOVER Y DIBUJAR BALAS
-        ctx.fillStyle = '#facc15'; 
-        for (let i = 0; i < bullets.length; i++) {
-            let b = bullets[i];
-            b.y -= 15;
-            ctx.fillRect(b.x * 100 + 45, b.y, 10, 10); 
-            if (b.y < 0) { bullets.splice(i, 1); i--; }
-        }
-    
-        // MOVER ENEMIGOS
-        for (let i = 0; i < obstacles.length; i++) {
-            let obs = obstacles[i];
-            let enemigoMuerto = false;
-            obs.y += raceSpeed;
-    
-            // COLISIÓN BALA VS ENEMIGO
-            for (let j = 0; j < bullets.length; j++) {
-                let b = bullets[j];
-                if (b.x === obs.x && b.y < (obs.y + 50) && b.y > obs.y) {
-                    bullets.splice(j, 1); 
-                    enemigoMuerto = true;
-                    score += 5; 
-                    try { window.playSound('boom'); } catch(e){} 
-                    break;
-                }
-            }
-    
-            if (enemigoMuerto) {
-                obstacles.splice(i, 1); i--;
-                document.getElementById('gameInfoText').textContent = "PUNTOS: " + score;
-                continue; 
-            }
-    
-            // DIBUJAR ENEMIGO
-            ctx.fillStyle = '#ef4444'; ctx.fillRect(obs.x * 100 + 35, obs.y, 30, 50);
-    
-        // COLISIÓN JUGADOR (GAME OVER)
-            if (obs.y > 230 && obs.y < 280 && obs.x === playerCar.x) return gameOverRace();
-        }
-        
-        // LIMPIAR Y PUNTOS POR ESQUIVAR
-        if (obstacles.length > 0 && obstacles[0].y > 300) {
-            obstacles.shift();
-            score += 10;
-            document.getElementById('gameInfoText').textContent = "PUNTOS: " + score;
-            if(score % 100 === 0) raceSpeed += 0.5;
-        }
-        
-        // DIBUJAR JUGADOR
-        ctx.fillStyle = '#10b981'; ctx.fillRect(playerCar.x * 100 + 35, 250, 30, 50);
-        ctx.fillStyle = 'black'; // Ruedas
-        ctx.fillRect(playerCar.x * 100 + 30, 255, 5, 10); ctx.fillRect(playerCar.x * 100 + 65, 255, 5, 10);
-        ctx.fillRect(playerCar.x * 100 + 30, 285, 5, 10); ctx.fillRect(playerCar.x * 100 + 65, 285, 5, 10);
+        gameInterval = setInterval(updateBreakout, 20);
     }
 
-    // =========================================
-    // 🏎️ GAME OVER CARRERA (CON PUNTOS)
-    // =========================================
-    function gameOverRace() {
+    function updateBreakout() {
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Fondo
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, 300, 300);
+        
+        // Dibujar ladrillos
+        for (let c = 0; c < brickColumnCount; c++) {
+            for (let r = 0; r < brickRowCount; r++) {
+                if (breakoutBricks[c][r].status === 1) {
+                    const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+                    const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+                    breakoutBricks[c][r].x = brickX;
+                    breakoutBricks[c][r].y = brickY;
+                    
+                    ctx.fillStyle = `hsl(${r * 60}, 70%, 50%)`;
+                    ctx.fillRect(brickX, brickY, brickWidth, brickHeight);
+                }
+            }
+        }
+        
+        // Dibujar pelota
+        ctx.beginPath();
+        ctx.arc(breakoutBall.x, breakoutBall.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#ef4444';
+        ctx.fill();
+        ctx.closePath();
+        
+        // Dibujar paleta
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(breakoutPaddle.x, 280, 50, 10);
+        
+        // Mover pelota
+        breakoutBall.x += breakoutBall.dx;
+        breakoutBall.y += breakoutBall.dy;
+        
+        // Colisión con paredes
+        if (breakoutBall.x + breakoutBall.dx > 294 || breakoutBall.x + breakoutBall.dx < 6) {
+            breakoutBall.dx = -breakoutBall.dx;
+        }
+        if (breakoutBall.y + breakoutBall.dy < 6) {
+            breakoutBall.dy = -breakoutBall.dy;
+        }
+        
+        // Game over si la pelota cae
+        if (breakoutBall.y > 290) {
+            return gameOverBreakout();
+        }
+        
+        // Colisión con paleta (bounding box)
+        const bLeft = breakoutBall.x - 6;
+        const bRight = breakoutBall.x + 6;
+        const bTop = breakoutBall.y - 6;
+        const bBottom = breakoutBall.y + 6;
+        const pLeft = breakoutPaddle.x;
+        const pRight = breakoutPaddle.x + 50;
+        const pTop = 280;
+        const pBottom = 290;
+
+        if (bRight > pLeft && bLeft < pRight && bBottom > pTop && bTop < pBottom) {
+            breakoutBall.dy = -Math.abs(breakoutBall.dy);
+            breakoutBall.y = pTop - 7; // sacar la pelota justo encima de la barra
+        }
+        
+        // Colisión con ladrillos
+        for (let c = 0; c < brickColumnCount; c++) {
+            for (let r = 0; r < brickRowCount; r++) {
+                const b = breakoutBricks[c][r];
+                if (b.status === 1) {
+                    if (breakoutBall.x > b.x && breakoutBall.x < b.x + brickWidth &&
+                        breakoutBall.y > b.y && breakoutBall.y < b.y + brickHeight) {
+                        breakoutBall.dy = -breakoutBall.dy;
+                        b.status = 0;
+                        breakoutScore += 10;
+                        const info = document.getElementById('gameInfoText');
+                        if (info) info.textContent = "PUNTOS: " + breakoutScore;
+                        try { window.playSound('snake'); } catch(e){}
+                    }
+                }
+            }
+        }
+        
+        // Verificar si ganó
+        if (breakoutScore >= brickRowCount * brickColumnCount * 10) {
+            return gameOverBreakout();
+        }
+    }
+
+    function gameOverBreakout() {
         clearInterval(gameInterval);
         
-        const gain = score * 0.01; // 1 punto en juego = 0.01 PTS
+        const gain = breakoutScore * 0.01;
         
         if (gain > 0 && idAuditor) {
             db.ref(`users/${idAuditor}`).update({
                 earnings: firebase.database.ServerValue.increment(gain),
                 snakeTotal: firebase.database.ServerValue.increment(gain)
             });
-            registrarHistorial("Juego Carrera", gain);
+            registrarHistorial("Juego Breakout", gain);
             
             if(window.checarProgresoDiario) window.checarProgresoDiario();
         }
+        
+        const hoy = new Date().toISOString().split('T')[0];
+        db.ref(`users/${idAuditor}`).update({
+            gameMinutesToday: firebase.database.ServerValue.increment(5),
+            lastGameDate: hoy
+        });
         
         document.getElementById('scoreWonDisplay').textContent = "+" + gain.toFixed(2);
         document.getElementById('scoreOldBalance').textContent = (currentEarnings).toFixed(2);
@@ -5814,70 +5909,9 @@ function dibujarSnake() {
         window.playSound('gameover');
     }
     
-    // LIChess Anti-Crash
-    window.abrirLichessConAd = () => {
-        const adTrigger = document.createElement('iframe');
-        adTrigger.style.display = 'none'; adTrigger.src = 'go:interstitial';
-        document.body.appendChild(adTrigger);
-        setTimeout(() => { document.body.removeChild(adTrigger); }, 500);
-        setTimeout(() => { window.open('https://lichess.org/', '_blank'); }, 1000);
-    };
-    
-    // Función para actualizar visualmente los corazones (Necesaria para que no falle el script)
-    function actualizarVisualVidas(cantidad) {
-        if(cantidad <= 0) notify("💔 0 Vidas");
-    }
-    
-    window.recargarVidasConAnuncio = () => {
-        // 1. Primero te damos las vidas en la base de datos
-        db.ref(`users/${idAuditor}`).update({ hearts: 5 });
-
-        // 2. Cerramos el modal y avisamos
-        document.getElementById('modalNoVidas').style.display = 'none';
-        notify("❤️ ¡Vidas recargadas!");
-        try { window.playSound('win'); } catch(e){}
-
-        // 3. Lanzamos el anuncio con go:s7
-        setTimeout(() => {
-            window.location.href = 'go:s7'; 
-        }, 500);
-    };
-    // --- FUNCIÓN PARA ABRIR TOP 4 ---
-    window.abrirRanking = () => {
-        document.getElementById('modalRanking').style.display = 'flex';
-        const lista = document.getElementById('listaRanking');
-        
-        db.ref('users').orderByChild('earnings').limitToLast(4).once('value').then(snap => {
-            let users = [];
-            snap.forEach(child => users.push({ k: child.key, ...child.val() }));
-            users.reverse(); 
-
-            let html = "";
-            const medallas = ["🥇", "🥈", "🥉", "🏅"];
-            const colores = ["#fbbf24", "#e2e8f0", "#b45309", "#64748b"]; 
-
-            users.forEach((u, index) => {
-                const nombre = u.myInviteKey || "Anónimo";
-                const pts = parseFloat(u.earnings || 0).toFixed(2);
-                const esYo = (u.k === idAuditor);
-                
-                const estiloFondo = esYo ? "background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981;" : "background: rgba(255,255,255,0.05); border-bottom: 1px solid #334155;";
-                
-                html += `
-                <div style="display:flex; align-items:center; padding: 12px; border-radius: 12px; ${estiloFondo}">
-                    <div style="font-size: 1.5rem; width: 40px; text-align:center;">${medallas[index]}</div>
-                    <div style="width: 45px; height: 45px; border-radius: 50%; background-image: url('${getUserProfilePhoto(u.k)}'); background-size: cover; margin: 0 15px; border: 2px solid ${colores[index]};"></div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 700; color: white; font-size: 0.95rem;">${nombre} ${esYo ? '<span style="font-size:0.6rem; background:#10b981; padding:2px 5px; border-radius:4px;">TÚ</span>' : ''}</div>
-                        <div style="font-size: 0.75rem; color: #94a3b8;">Nivel ${u.englishLevel || 1}</div>
-                    </div>
-                    <div style="font-weight: 800; color: #fbbf24; font-size: 1rem;">${pts}</div>
-                </div>`;
-            });
-            lista.innerHTML = html;
-        });
-    };
-// ==========================================
+    // ==========================================
+    // 🐍 SNAKE GAME OVER
+    // ==========================================
 // ==========================================
 // 🔙 LÓGICA BOTÓN ATRÁS (CERRAR MODALES) - FINAL V2
 // ==========================================
@@ -8110,7 +8144,7 @@ window.irMision = (tipo) => {
     if (tipo === 'anuncio') document.getElementById('btnVerAnuncio').click();
     if (tipo === 'cine') abrirCine();
     if (tipo === 'snake') prepararJuego('snake');
-    if (tipo === 'race') prepararJuego('race');
+    if (tipo === 'breakout') prepararJuego('breakout');
     if (tipo === 'chess') abrirLichessConAd();
     if (tipo === 'damas') window.location.href = 'go:Damas';
 };
@@ -9203,8 +9237,8 @@ window.abrirJuego = () => {
                     <button onclick="prepararJuego('snake'); document.getElementById('modalJuegos').style.display='none';" style="padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; font-size: 1rem; font-weight: 700; cursor: pointer;">
                         🐍 Snake
                     </button>
-                    <button onclick="prepararJuego('race'); document.getElementById('modalJuegos').style.display='none';" style="padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; font-size: 1rem; font-weight: 700; cursor: pointer;">
-                        🏎️ Race
+                    <button onclick="prepararJuego('breakout'); document.getElementById('modalJuegos').style.display='none';" style="padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #ef4444, #dc2626); border: none; color: white; font-size: 1rem; font-weight: 700; cursor: pointer;">
+                        🧱 BREAKOUT
                     </button>
                 </div>
                 <button onclick="document.getElementById('modalJuegos').style.display='none'" style="margin-top: 15px; background: none; border: none; color: #94a3b8; cursor: pointer;">Cerrar</button>
