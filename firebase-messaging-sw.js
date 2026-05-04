@@ -9,7 +9,7 @@ firebase.initializeApp({
   projectId: "ingresos-minimos",
   storageBucket: "ingresos-minimos.firebasestorage.app",
   messagingSenderId: "104886265441",
-  appId: "1:104886265441:web:2272d88ad1129919ea6c20" 
+  appId: "1:104886265441:web:2272d88ad1129919ea6c20"
 });
 
 const messaging = firebase.messaging();
@@ -17,13 +17,13 @@ const messaging = firebase.messaging();
 // Lógica para mostrar la notificación cuando la aplicación NO está a la vista
 messaging.onBackgroundMessage((payload) => {
   console.log('[sw.js] Mensaje recibido en segundo plano:', payload);
-
+  
   const notificationTitle = payload.notification.title || "PAGOCODE";
   const notificationOptions = {
     body: payload.notification.body || "Tienes una actualización en tu cuenta",
-    // Tu enlace de Picsart/ImgBB para que el icono siempre se vea
-    icon: 'https://i.ibb.co/tprJC6Nw/Picsart-26-05-03-18-16-53-912.jpg',
-    badge: 'https://i.ibb.co/tprJC6Nw/Picsart-26-05-03-18-16-53-912.jpg'
+    // Usamos el logo que ya tienes en la raíz de tu GitHub para mayor estabilidad
+    icon: 'logo.png', 
+    badge: 'logo.png'
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
