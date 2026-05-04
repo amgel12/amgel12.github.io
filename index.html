@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
 <style>
   /* =========================================
      🎨 PALETA DE COLORES MODERNA & PREMIUM
@@ -1544,10 +1545,10 @@
     <div style="width: 100%; max-width: 320px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
         <h3 id="authTitle" style="margin-bottom: 20px; color: #1e293b;">Crear Cuenta</h3>
       <!-- En tu modal de PayPal, asegúrate de tener: -->
-<input type="email" id="emailInput" placeholder="tucorreo@gmail.com" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 15px;">
-        <input type="password" id="passInput" placeholder="Contraseña (6+ caracteres)" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 20px;">
+        <input type="email" id="email" placeholder="tucorreo@gmail.com" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 15px;">
+        <input type="password" id="pass" placeholder="Contraseña (6+ caracteres)" style="text-align: left; border: 2px solid #e2e8f0; margin-bottom: 20px;">
         
-        <button id="btnAuthAction" onclick="manejarAuth()" class="btn-blue" style="background: #0070ba; margin-bottom: 15px;">REGISTRARME</button>
+        <button id="btnAuth" onclick="manejarAuth()" class="btn-blue" style="background: #0070ba; margin-bottom: 15px;">REGISTRARME</button>
         
         <p style="font-size: 0.8rem; color: #64748b;">
             <span id="toggleText">¿Ya tienes cuenta?</span> 
@@ -4316,71 +4317,69 @@ window.toggleAuthMode = () => {
     if (toggleLink) toggleLink.textContent = isLoginMode ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?";
 };
 
-    // --- FUNCIÓN DE AUTENTICACIÓN COMPLETA ---
-window.manejarAuth = async () => {
+    window.manejarAuth = async () => {
+    const email = document.getElementById('email').value;
+    const pass = document.getElementById('pass').value;
+    const btn = document.getElementById('btnAuth');
+
+    if (!email || !pass) return notify("Completa los campos");
+
+    btn.disabled = true;
+    btn.textContent = isLoginMode ? "Entrando..." : "Registrando...";
+
     try {
-        const email = document.getElementById('emailInput').value;
-        const pass = document.getElementById('passInput').value;
-        const btn = document.getElementById('btnAuthAction');
-
-        if (!email || !pass) {
-            notify("Completa los campos");
-            return;
-        }
-
-        // 1. Bloqueo visual del botón
-        btn.disabled = true;
-        const textoOriginal = btn.textContent;
-        btn.textContent = isLoginMode ? "Entrando..." : "Registrando...";
-
         if (isLoginMode) {
-            // --- INICIO DE SESIÓN ---
+            // 1. Iniciar sesión primero
             const userCredential = await firebase.auth().signInWithEmailAndPassword(email, pass);
             const user = userCredential.user;
-            notify("Bienvenido de nuevo");
+            notify("Sesión iniciada");
 
-            // Registro de Token Seguro (No bloquea el acceso si falla)
-            try {
-                if ('serviceWorker' in navigator && typeof Notification !== 'undefined') {
-                    const registration = await navigator.serviceWorker.register('firebase-messaging-sw.js');
-                    const messaging = firebase.messaging();
-                    
-                    const currentToken = await messaging.getToken({
-                        vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8',
-                        serviceWorkerRegistration: registration
+            // 2. ARREGLO REAL: Usar el Messaging de Firebase directamente
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.register('firebase-messaging-sw.js');
+                const messaging = firebase.messaging();
+
+                // Aquí forzamos el permiso usando la librería de Firebase, no el navegador
+                await messaging.requestPermission(); 
+                
+                // Si llegamos aquí, el permiso se dio. Ahora pedimos el token.
+                const currentToken = await messaging.getToken({
+                    vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8',
+                    serviceWorkerRegistration: registration
+                });
+
+                if (currentToken) {
+                    // 3. Guardar el token en la ruta correcta (users/UID)
+                    await firebase.database().ref('users/' + user.uid).update({ 
+                        fcmToken: currentToken 
                     });
-
-                    if (currentToken) {
-                        await firebase.database().ref('users/' + user.uid).update({ fcmToken: currentToken });
-                        console.log("Token guardado");
-                    }
+                    alert("¡ÉXITO: Token generado y guardado!");
+                } else {
+                    console.warn("No se pudo generar el token");
                 }
-            } catch (tokenErr) {
-                console.log("Error de notificación ignorado: " + tokenErr.message);
             }
-
         } else {
-            // --- REGISTRO DE NUEVO USUARIO ---
-            const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, pass);
-            const user = userCredential.user;
-            const nuevoCodigo = "INV-" + user.uid.substring(0, 5).toUpperCase();
-            
-            await firebase.database().ref('users/' + user.uid).set({
+            // --- Lógica de registro (se mantiene igual) ---
+            const u = await firebase.auth().createUserWithEmailAndPassword(email, pass);
+            const nuevoCodigo = "INV-" + u.user.uid.substring(0, 5).toUpperCase();
+            await firebase.database().ref('users/' + u.user.uid).set({
                 email: email,
                 fechaRegistro: firebase.database.ServerValue.TIMESTAMP,
                 myInviteKey: nuevoCodigo,
                 earnings: 0.25
             });
-            notify("Cuenta creada exitosamente");
+            notify("Cuenta creada");
         }
     } catch (err) {
-        // En caso de error, devolvemos el botón a su estado normal
-        notify("Error: " + err.message);
-        const btn = document.getElementById('btnAuthAction');
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = isLoginMode ? "ENTRAR" : "REGISTRARME";
+        // Si el error es de permisos, al menos el usuario ya entró
+        console.error("Error detallado:", err);
+        if (err.code === 'messaging/permission-blocked') {
+            alert("Bloqueaste las notificaciones en tu celular. Desbloquealas para recibir pagos.");
+        } else {
+            notify("Error: " + err.message);
         }
+        btn.disabled = false;
+        btn.textContent = isLoginMode ? "ENTRAR" : "REGISTRARME";
     }
 };
     auth.onAuthStateChanged(user => {
