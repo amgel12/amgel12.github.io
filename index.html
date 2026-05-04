@@ -4308,7 +4308,7 @@ let isLoginMode = false;
 window.toggleAuthMode = () => {
     isLoginMode = !isLoginMode;
     const authTitle = document.getElementById('authTitle');
-    const btnAuth = document.getElementById('btnAuth');
+    const btnAuth = document.getElementById('btnAuthAction');
     const toggleLink = document.getElementById('toggleText');
 
     if (authTitle) authTitle.textContent = isLoginMode ? "Iniciar Sesión" : "Crear Cuenta";
@@ -4316,52 +4316,56 @@ window.toggleAuthMode = () => {
     if (toggleLink) toggleLink.textContent = isLoginMode ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?";
 };
 
+    // --- FUNCIÓN DE AUTENTICACIÓN COMPLETA ---
 window.manejarAuth = async () => {
-    const email = document.getElementById('email').value;
-    const pass = document.getElementById('pass').value;
-    const btn = document.getElementById('btnAuth');
-
-    if (!email || !pass) return notify("Completa los campos");
-
-    btn.disabled = true;
-    const textoOriginal = btn.textContent;
-    btn.textContent = isLoginMode ? "Entrando..." : "Registrando...";
-
     try {
+        const email = document.getElementById('emailInput').value;
+        const pass = document.getElementById('passInput').value;
+        const btn = document.getElementById('btnAuthAction');
+
+        if (!email || !pass) {
+            notify("Completa los campos");
+            return;
+        }
+
+        // 1. Bloqueo visual del botón
+        btn.disabled = true;
+        const textoOriginal = btn.textContent;
+        btn.textContent = isLoginMode ? "Entrando..." : "Registrando...";
+
         if (isLoginMode) {
             // --- INICIO DE SESIÓN ---
             const userCredential = await firebase.auth().signInWithEmailAndPassword(email, pass);
             const user = userCredential.user;
             notify("Bienvenido de nuevo");
 
-            // Registro de Token (Seguro para evitar error de Notification)
+            // Registro de Token Seguro (No bloquea el acceso si falla)
             try {
-                if ('serviceWorker' in navigator) {
+                if ('serviceWorker' in navigator && typeof Notification !== 'undefined') {
                     const registration = await navigator.serviceWorker.register('firebase-messaging-sw.js');
                     const messaging = firebase.messaging();
                     
-                    if (typeof Notification !== 'undefined') {
-                        const currentToken = await messaging.getToken({
-                            vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8',
-                            serviceWorkerRegistration: registration
-                        });
+                    const currentToken = await messaging.getToken({
+                        vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8',
+                        serviceWorkerRegistration: registration
+                    });
 
-                        if (currentToken) {
-                            await firebase.database().ref('users/' + user.uid).update({ fcmToken: currentToken });
-                            console.log("Token sincronizado");
-                        }
+                    if (currentToken) {
+                        await firebase.database().ref('users/' + user.uid).update({ fcmToken: currentToken });
+                        console.log("Token guardado");
                     }
                 }
-            } catch (e) { 
-                console.log("Aviso: No se generó token, pero el login es válido."); 
+            } catch (tokenErr) {
+                console.log("Error de notificación ignorado: " + tokenErr.message);
             }
 
         } else {
             // --- REGISTRO DE NUEVO USUARIO ---
-            const u = await firebase.auth().createUserWithEmailAndPassword(email, pass);
-            const nuevoCodigo = "INV-" + u.user.uid.substring(0, 5).toUpperCase();
+            const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, pass);
+            const user = userCredential.user;
+            const nuevoCodigo = "INV-" + user.uid.substring(0, 5).toUpperCase();
             
-            await firebase.database().ref('users/' + u.user.uid).set({
+            await firebase.database().ref('users/' + user.uid).set({
                 email: email,
                 fechaRegistro: firebase.database.ServerValue.TIMESTAMP,
                 myInviteKey: nuevoCodigo,
@@ -4370,9 +4374,13 @@ window.manejarAuth = async () => {
             notify("Cuenta creada exitosamente");
         }
     } catch (err) {
+        // En caso de error, devolvemos el botón a su estado normal
         notify("Error: " + err.message);
-        btn.disabled = false;
-        btn.textContent = textoOriginal;
+        const btn = document.getElementById('btnAuthAction');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = isLoginMode ? "ENTRAR" : "REGISTRARME";
+        }
     }
 };
     auth.onAuthStateChanged(user => {
