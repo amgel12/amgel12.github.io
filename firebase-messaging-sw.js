@@ -1,7 +1,9 @@
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// Configuración oficial de tu proyecto: ingresos-minimos
+ 
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+
+// Configuración de tu proyecto
 firebase.initializeApp({
   apiKey: "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A",
   authDomain: "ingresos-minimos.firebaseapp.com",
@@ -14,17 +16,19 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Lógica para mostrar la notificación cuando la aplicación NO está a la vista
+// Mostrar notificación cuando la app está en segundo plano
 messaging.onBackgroundMessage((payload) => {
-  console.log('[sw.js] Mensaje recibido en segundo plano:', payload);
+  console.log('[sw.js] Mensaje recibido:', payload);
   
-  const notificationTitle = payload.notification.title || "PAGOCODE";
+  const notificationTitle = payload.notification?.title || "PAGOCODE";
   const notificationOptions = {
-    body: payload.notification.body || "Tienes una actualización en tu cuenta",
-    // Usamos el logo que ya tienes en la raíz de tu GitHub para mayor estabilidad
-    icon: 'logo.png', 
+    body: payload.notification?.body || "Tienes una actualización",
+    icon: 'logo.png',
     badge: 'logo.png'
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
+ 
+
+
