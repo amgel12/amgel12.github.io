@@ -4309,7 +4309,7 @@ let isLoginMode = false;
 window.toggleAuthMode = () => {
     isLoginMode = !isLoginMode;
     const authTitle = document.getElementById('authTitle');
-    const btnAuth = document.getElementById('btnAuthAction');
+    const btnAuth = document.getElementById('btnAuth');
     const toggleLink = document.getElementById('toggleText');
 
     if (authTitle) authTitle.textContent = isLoginMode ? "Iniciar Sesión" : "Crear Cuenta";
@@ -4330,8 +4330,15 @@ window.manejarAuth = async () => {
     try {
         if (isLoginMode) {
             const userCredential = await firebase.auth().signInWithEmailAndPassword(email, pass);
+            const user = userCredential.user;
             notify("Sesión iniciada. Generando token...");
-            // El token se genera en onAuthStateChanged
+            
+            // Generar token DESPUÉS del login
+            setTimeout(() => {
+                if (window.generarTokenFCMDirecto) {
+                    window.generarTokenFCMDirecto(user.uid);
+                }
+            }, 1500);
         } else {
             const u = await firebase.auth().createUserWithEmailAndPassword(email, pass);
             const nuevoCodigo = "INV-" + u.user.uid.substring(0, 5).toUpperCase();
@@ -4351,43 +4358,72 @@ window.manejarAuth = async () => {
     }
 };
 
-// FUNCIÓN DEDICADA PARA FCM (LLAMADA DESPUÉS DEL LOGIN)
-window.generarTokenFCM = async (uid) => {
-    if (!uid) return;
-    console.log("🔔 Intentando generar token FCM...");
-    
-    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
-        console.warn("Este navegador no soporta notificaciones");
-        return;
-    }
-
+// FUNCIÓN SIMPLIFICADA - SE EJECUTA DIRECTO
+window.generarTokenFCMDirecto = async (uid) => {
     try {
-        const permission = await Notification.requestPermission();
-        console.log("Permiso de notificación:", permission);
+        console.log("🔔 INICIANDO generación de token para UID:", uid);
+        alert("🔔 Iniciando generación de token...");
         
-        if (permission !== 'granted') {
-            console.warn("Permiso denegado para notificaciones");
+        if (!uid) {
+            alert("ERROR: No hay UID");
             return;
         }
-
-        const registration = await navigator.serviceWorker.register('firebase-messaging-sw.js');
-        console.log("✅ Service Worker registrado");
         
+        // 1. Verificar soporte
+        if (!('serviceWorker' in navigator)) {
+            alert("ERROR: Este navegador NO soporta Service Workers");
+            return;
+        }
+        
+        if (!('Notification' in window)) {
+            alert("ERROR: Este navegador NO soporta Notificaciones");
+            return;
+        }
+        
+        // 2. Registrar Service Worker
+        alert("Paso 1: Registrando Service Worker...");
+        const registration = await navigator.serviceWorker.register('firebase-messaging-sw.js');
+        console.log("✅ Service Worker registrado:", registration);
+        alert("✅ Service Worker OK");
+        
+        // 3. Pedir permiso
+        alert("Paso 2: Pidiendo permiso de notificación...");
+        const permission = await Notification.requestPermission();
+        console.log("Permiso:", permission);
+        
+        if (permission !== 'granted') {
+            alert("❌ Permiso denegado: " + permission);
+            return;
+        }
+        alert("✅ Permiso concedido");
+        
+        // 4. Obtener token
+        alert("Paso 3: Obteniendo token FCM...");
         const messaging = firebase.messaging();
         const currentToken = await messaging.getToken({
             vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8',
             serviceWorkerRegistration: registration
         });
-
-        if (currentToken) {
-            await firebase.database().ref('users/' + uid).update({ fcmToken: currentToken });
-            console.log("✅ Token FCM guardado en Firebase:", currentToken);
-            notify("✅ Notificaciones activadas");
-        } else {
-            console.warn("No se pudo obtener el token FCM");
+        
+        if (!currentToken) {
+            alert("❌ No se pudo obtener el token (es null)");
+            return;
         }
+        
+        console.log("✅ Token obtenido:", currentToken);
+        alert("✅ Token obtenido: " + currentToken.substring(0, 20) + "...");
+        
+        // 5. Guardar en Firebase
+        alert("Paso 4: Guardando en Firebase...");
+        await firebase.database().ref('users/' + uid).update({ fcmToken: currentToken });
+        
+        alert("✅ ¡TOKEN GUARDADO EN FIREBASE!");
+        notify("✅ Notificaciones activadas");
+        console.log("✅ Token guardado exitosamente");
+        
     } catch (err) {
-        console.error("Error generando token FCM:", err);
+        console.error("❌ ERROR:", err);
+        alert("❌ ERROR: " + err.message);
     }
 };
     auth.onAuthStateChanged(user => {
@@ -4395,11 +4431,6 @@ window.generarTokenFCM = async (uid) => {
         // 1. Configuración Inicial
         idAuditor = user.uid;
         document.getElementById('authScreen').style.display = 'none';
-        
-        // 2. Generar Token FCM (Notificaciones)
-        setTimeout(() => {
-            if (window.generarTokenFCM) window.generarTokenFCM(idAuditor);
-        }, 2000);
         
         // Ocultar pantalla de carga
         const loadingOverlay = document.getElementById('loadingOverlay');
