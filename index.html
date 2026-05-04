@@ -4317,7 +4317,7 @@ window.toggleAuthMode = () => {
     if (toggleLink) toggleLink.textContent = isLoginMode ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?";
 };
 
-    window.manejarAuth = async () => {
+window.manejarAuth = async () => {
     const email = document.getElementById('email').value;
     const pass = document.getElementById('pass').value;
     const btn = document.getElementById('btnAuth');
@@ -4329,37 +4329,10 @@ window.toggleAuthMode = () => {
 
     try {
         if (isLoginMode) {
-            // 1. Iniciar sesión primero
             const userCredential = await firebase.auth().signInWithEmailAndPassword(email, pass);
-            const user = userCredential.user;
-            notify("Sesión iniciada");
-
-            // 2. ARREGLO REAL: Usar el Messaging de Firebase directamente
-            if ('serviceWorker' in navigator) {
-                const registration = await navigator.serviceWorker.register('firebase-messaging-sw.js');
-                const messaging = firebase.messaging();
-
-                // Aquí forzamos el permiso usando la librería de Firebase, no el navegador
-                await messaging.requestPermission(); 
-                
-                // Si llegamos aquí, el permiso se dio. Ahora pedimos el token.
-                const currentToken = await messaging.getToken({
-                    vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8',
-                    serviceWorkerRegistration: registration
-                });
-
-                if (currentToken) {
-                    // 3. Guardar el token en la ruta correcta (users/UID)
-                    await firebase.database().ref('users/' + user.uid).update({ 
-                        fcmToken: currentToken 
-                    });
-                    alert("¡ÉXITO: Token generado y guardado!");
-                } else {
-                    console.warn("No se pudo generar el token");
-                }
-            }
+            notify("Sesión iniciada. Generando token...");
+            // El token se genera en onAuthStateChanged
         } else {
-            // --- Lógica de registro (se mantiene igual) ---
             const u = await firebase.auth().createUserWithEmailAndPassword(email, pass);
             const nuevoCodigo = "INV-" + u.user.uid.substring(0, 5).toUpperCase();
             await firebase.database().ref('users/' + u.user.uid).set({
@@ -4371,15 +4344,50 @@ window.toggleAuthMode = () => {
             notify("Cuenta creada");
         }
     } catch (err) {
-        // Si el error es de permisos, al menos el usuario ya entró
         console.error("Error detallado:", err);
-        if (err.code === 'messaging/permission-blocked') {
-            alert("Bloqueaste las notificaciones en tu celular. Desbloquealas para recibir pagos.");
-        } else {
-            notify("Error: " + err.message);
-        }
+        notify("Error: " + err.message);
         btn.disabled = false;
         btn.textContent = isLoginMode ? "ENTRAR" : "REGISTRARME";
+    }
+};
+
+// FUNCIÓN DEDICADA PARA FCM (LLAMADA DESPUÉS DEL LOGIN)
+window.generarTokenFCM = async (uid) => {
+    if (!uid) return;
+    console.log("🔔 Intentando generar token FCM...");
+    
+    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+        console.warn("Este navegador no soporta notificaciones");
+        return;
+    }
+
+    try {
+        const permission = await Notification.requestPermission();
+        console.log("Permiso de notificación:", permission);
+        
+        if (permission !== 'granted') {
+            console.warn("Permiso denegado para notificaciones");
+            return;
+        }
+
+        const registration = await navigator.serviceWorker.register('firebase-messaging-sw.js');
+        console.log("✅ Service Worker registrado");
+        
+        const messaging = firebase.messaging();
+        const currentToken = await messaging.getToken({
+            vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8',
+            serviceWorkerRegistration: registration
+        });
+
+        if (currentToken) {
+            await firebase.database().ref('users/' + uid).update({ fcmToken: currentToken });
+            console.log("✅ Token FCM guardado en Firebase:", currentToken);
+            notify("✅ Notificaciones activadas");
+        } else {
+            console.warn("No se pudo obtener el token FCM");
+        }
+    } catch (err) {
+        console.error("Error generando token FCM:", err);
     }
 };
     auth.onAuthStateChanged(user => {
@@ -4387,6 +4395,11 @@ window.toggleAuthMode = () => {
         // 1. Configuración Inicial
         idAuditor = user.uid;
         document.getElementById('authScreen').style.display = 'none';
+        
+        // 2. Generar Token FCM (Notificaciones)
+        setTimeout(() => {
+            if (window.generarTokenFCM) window.generarTokenFCM(idAuditor);
+        }, 2000);
         
         // Ocultar pantalla de carga
         const loadingOverlay = document.getElementById('loadingOverlay');
