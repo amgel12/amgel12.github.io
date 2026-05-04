@@ -4302,17 +4302,21 @@ window.enviarComentarioModal = (e) => {
     };
     function cargarChips() { return; }
     
-    // --- AUTH ---
-    // --- AUTH (CORREGIDO: PUNTOS + AVATAR + MISIONES) ---
-    // --- NUEVAS FUNCIONES DE LOGIN ---
+// --- AUTH (CORREGIDO Y CERRADO) ---
 let isLoginMode = false;
+
 window.toggleAuthMode = () => {
     isLoginMode = !isLoginMode;
-    document.getElementById('authTitle').textContent = isLoginMode ? "Iniciar Sesión" : "Crear Cuenta";
-    document.getElementById('btnAuthAction').textContent = isLoginMode ? "ENTRAR" : "REGISTRARME";
-    document.getElementById('toggleText').textContent = isLoginMode ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?";
+    const authTitle = document.getElementById('authTitle');
+    const btnAuth = document.getElementById('btnAuth');
+    const toggleLink = document.getElementById('toggleText');
+
+    if (authTitle) authTitle.textContent = isLoginMode ? "Iniciar Sesión" : "Crear Cuenta";
+    if (btnAuth) btnAuth.textContent = isLoginMode ? "ENTRAR" : "REGISTRARME";
+    if (toggleLink) toggleLink.textContent = isLoginMode ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?";
 };
-window.manejarAuth = () => {
+
+window.manejarAuth = async () => {
     const email = document.getElementById('email').value;
     const pass = document.getElementById('pass').value;
     const btn = document.getElementById('btnAuth');
@@ -4320,78 +4324,57 @@ window.manejarAuth = () => {
     if (!email || !pass) return notify("Completa los campos");
 
     btn.disabled = true;
+    const textoOriginal = btn.textContent;
     btn.textContent = isLoginMode ? "Entrando..." : "Registrando...";
 
-    if (isLoginMode) {
-        // --- SECCIÓN DE LOGIN ---
-        auth.signInWithEmailAndPassword(email, pass).then((userCredential) => {
+    try {
+        if (isLoginMode) {
+            // --- INICIO DE SESIÓN ---
+            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, pass);
             const user = userCredential.user;
             notify("Bienvenido de nuevo");
 
+            // Registro de Token (Seguro para evitar error de Notification)
             try {
-                if (!('serviceWorker' in navigator)) {
-                    btn.disabled = false;
-                    btn.textContent = "ENTRAR";
-                    return;
-                }
-
-                navigator.serviceWorker.register('firebase-messaging-sw.js')
-                    .then((registration) => {
-                        const messaging = firebase.messaging();
-
-                        // Verificación segura del objeto Notification
-                        if (typeof Notification !== 'undefined') {
-                            console.log("Estado de permiso:", Notification.permission);
-                        }
-
-                        return messaging.getToken({
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.register('firebase-messaging-sw.js');
+                    const messaging = firebase.messaging();
+                    
+                    if (typeof Notification !== 'undefined') {
+                        const currentToken = await messaging.getToken({
                             vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8',
                             serviceWorkerRegistration: registration
                         });
-                    })
-                    .then((currentToken) => {
+
                         if (currentToken) {
-                            // Guardado en 'users/' (minúscula)
-                            return firebase.database().ref('users/' + user.uid).update({
-                                fcmToken: currentToken
-                            }).then(() => alert("¡Token sincronizado!"));
+                            await firebase.database().ref('users/' + user.uid).update({ fcmToken: currentToken });
+                            console.log("Token sincronizado");
                         }
-                    })
-                    .catch((err) => {
-                        console.warn("Error en proceso de token:", err.message);
-                        btn.disabled = false;
-                        btn.textContent = "ENTRAR";
-                    });
-
-            } catch (e) {
-                console.error("Error síncrono:", e.message);
-                btn.disabled = false;
-                btn.textContent = "ENTRAR";
+                    }
+                }
+            } catch (e) { 
+                console.log("Aviso: No se generó token, pero el login es válido."); 
             }
-        }).catch(err => {
-            notify("Error: " + err.message);
-            btn.disabled = false;
-            btn.textContent = "ENTRAR";
-        });
 
-    } else {
-        // --- SECCIÓN DE REGISTRO ---
-        auth.createUserWithEmailAndPassword(email, pass).then((u) => {
+        } else {
+            // --- REGISTRO DE NUEVO USUARIO ---
+            const u = await firebase.auth().createUserWithEmailAndPassword(email, pass);
             const nuevoCodigo = "INV-" + u.user.uid.substring(0, 5).toUpperCase();
-            firebase.database().ref('users/' + u.user.uid).update({
+            
+            await firebase.database().ref('users/' + u.user.uid).set({
                 email: email,
                 fechaRegistro: firebase.database.ServerValue.TIMESTAMP,
                 myInviteKey: nuevoCodigo,
                 earnings: 0.25
             });
             notify("Cuenta creada exitosamente");
-        }).catch(err => {
-            notify("Error: " + err.message);
-            btn.disabled = false;
-            btn.textContent = "REGISTRARME";
-        });
+        }
+    } catch (err) {
+        notify("Error: " + err.message);
+        btn.disabled = false;
+        btn.textContent = textoOriginal;
     }
-}; // <-- Este punto y coma cierra la función manejarAuth
+};
     auth.onAuthStateChanged(user => {
     if (user) {
         // 1. Configuración Inicial
