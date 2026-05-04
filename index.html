@@ -5405,10 +5405,17 @@ function detectarYEnvarMenciones(txt, type) {
             }, 500);
         }
     };
-    window.solicitarPermisoNotificaciones = () => { if(Notification.permission !== "granted") Notification.requestPermission(); else notify("Activas"); };
-    
-    // YOUTUBE SEARCH
-    // --- NUEVA BÚSQUEDA DE YOUTUBE CON PREVIEW ---
+    window.solicitarPermisoNotificaciones = () => {
+    if (!("Notification" in window)) {
+        console.log("Este navegador no soporta notificaciones.");
+        return;
+    }
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+    } else {
+        notify("Activas");
+    }
+};
     const YOUTUBE_API_KEY = "AIzaSyAqswfC8HsBown7vyWtOfrWc-lbf4HFsbM"; // Tu API Key actual
 
 // ==========================================
