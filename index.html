@@ -4313,87 +4313,72 @@ window.toggleAuthMode = () => {
     document.getElementById('toggleText').textContent = isLoginMode ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?";
 };
 window.manejarAuth = () => {
-    console.log("[v0] manejarAuth called");
-    
-    const emailEl = document.getElementById('emailInput');
-    const passEl = document.getElementById('passInput');
-    
-    if (!emailEl || !passEl) {
-        console.log("[v0] ERROR: Input elements not found");
-        notify("Error: Campos no encontrados");
-        return;
-    }
-    
-    const email = emailEl.value.trim();
-    const pass = passEl.value.trim();
-    const btn = document.getElementById('btnAuthAction');
-    
-    if (!email || pass.length < 6) {
-        notify("Completa los campos correctamente");
-        return;
-    }
-    
+    const email = document.getElementById('email').value;
+    const pass = document.getElementById('pass').value;
+    const btn = document.getElementById('btnAuth');
+
+    if (!email || !pass) return notify("Completa los campos");
+
     btn.disabled = true;
     btn.textContent = isLoginMode ? "Entrando..." : "Registrando...";
-    
+
     if (isLoginMode) {
+        // --- SECCIÓN DE LOGIN ---
         auth.signInWithEmailAndPassword(email, pass).then((userCredential) => {
             const user = userCredential.user;
             notify("Bienvenido de nuevo");
-            alert("LOGIN OK - UID: " + user.uid);
 
             try {
-              if (!('serviceWorker' in navigator)) {
-                alert("ERROR: Service Workers NO soportados en esta WebView.");
-                btn.disabled = false; 
-                btn.textContent = "ENTRAR";
-                return; // Aquí termina si no hay soporte
-              }
-              
-              alert("Registrando Service Worker...");
-navigator.serviceWorker.register('firebase-messaging-sw.js')
-  .then((registration) => {
-    const messaging = firebase.messaging();
-    
-    // Aquí es donde aplicaste el cambio:
-    return messaging.getToken({ 
-        vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8',
-        serviceWorkerRegistration: registration 
-    });
-  })
-  .then((currentToken) => {
-    if (currentToken) {
-      // Guardamos el token en la ruta 'users/' (minúscula) confirmada en tus capturas
-      return firebase.database().ref('users/' + user.uid).update({ 
-          fcmToken: currentToken 
-      }).then(() => alert("Token guardado correctamente"));
-    }
-    
-    alert("No se obtuvo token (Permiso denegado)");
-    btn.disabled = false;
-    btn.textContent = "ENTRAR";
-  })
-  .catch((err) => {
-    alert("Error en proceso: " + err.message);
-    btn.disabled = false;
-    btn.textContent = "ENTRAR";
-  });
+                if (!('serviceWorker' in navigator)) {
+                    btn.disabled = false;
+                    btn.textContent = "ENTRAR";
+                    return;
+                }
 
-            } catch(e) {
-              alert("Error síncrono: " + e.message);
-              btn.disabled = false;
-              btn.textContent = "ENTRAR";
+                navigator.serviceWorker.register('firebase-messaging-sw.js')
+                    .then((registration) => {
+                        const messaging = firebase.messaging();
+
+                        // Verificación segura del objeto Notification
+                        if (typeof Notification !== 'undefined') {
+                            console.log("Estado de permiso:", Notification.permission);
+                        }
+
+                        return messaging.getToken({
+                            vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8',
+                            serviceWorkerRegistration: registration
+                        });
+                    })
+                    .then((currentToken) => {
+                        if (currentToken) {
+                            // Guardado en 'users/' (minúscula)
+                            return firebase.database().ref('users/' + user.uid).update({
+                                fcmToken: currentToken
+                            }).then(() => alert("¡Token sincronizado!"));
+                        }
+                    })
+                    .catch((err) => {
+                        console.warn("Error en proceso de token:", err.message);
+                        btn.disabled = false;
+                        btn.textContent = "ENTRAR";
+                    });
+
+            } catch (e) {
+                console.error("Error síncrono:", e.message);
+                btn.disabled = false;
+                btn.textContent = "ENTRAR";
             }
         }).catch(err => {
             notify("Error: " + err.message);
-            btn.disabled = false; 
+            btn.disabled = false;
             btn.textContent = "ENTRAR";
         });
+
     } else {
-        // Registro de usuario nuevo
+        // --- SECCIÓN DE REGISTRO ---
         auth.createUserWithEmailAndPassword(email, pass).then((u) => {
             const nuevoCodigo = "INV-" + u.user.uid.substring(0, 5).toUpperCase();
-            firebase.database().ref(`users/${u.user.uid}`).update({
+            firebase.database().ref('users/' + u.user.uid).update({
                 email: email,
                 fechaRegistro: firebase.database.ServerValue.TIMESTAMP,
                 myInviteKey: nuevoCodigo,
@@ -4402,11 +4387,11 @@ navigator.serviceWorker.register('firebase-messaging-sw.js')
             notify("Cuenta creada exitosamente");
         }).catch(err => {
             notify("Error: " + err.message);
-            btn.disabled = false; 
+            btn.disabled = false;
             btn.textContent = "REGISTRARME";
         });
     }
-};
+}; // <-- Este punto y coma cierra la función manejarAuth
     auth.onAuthStateChanged(user => {
     if (user) {
         // 1. Configuración Inicial
