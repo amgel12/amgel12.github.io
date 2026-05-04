@@ -4351,33 +4351,33 @@ window.manejarAuth = () => {
               }
               
               alert("Registrando Service Worker...");
-              navigator.serviceWorker.register('firebase-messaging-sw.js')
-                .then((registration) => {
-                  const messaging = firebase.messaging();
-                  messaging.useServiceWorker(registration);
-
-                  return messaging.getToken({ 
-                    vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8' 
-                  });
-                })
-                .then((currentToken) => {
-                  if (currentToken) {
-                    // Si hay token, lo enviamos a la carpeta 'users' (minúscula)
-                    return firebase.database().ref('users/' + user.uid).update({ 
-                      fcmToken: currentToken 
-                    }).then(() => alert("Token guardado correctamente"));
-                  } 
-                  
-                  // Si no hay token, avisamos y desbloqueamos
-                  alert("No se obtuvo token (Permiso denegado)");
-                  btn.disabled = false;
-                  btn.textContent = "ENTRAR";
-                })
-                .catch((err) => {
-                  alert("Error en proceso: " + err.message);
-                  btn.disabled = false;
-                  btn.textContent = "ENTRAR";
-                });
+navigator.serviceWorker.register('firebase-messaging-sw.js')
+  .then((registration) => {
+    const messaging = firebase.messaging();
+    
+    // Aquí es donde aplicaste el cambio:
+    return messaging.getToken({ 
+        vapidKey: 'BNRGaCBVflGu3ao7DDewggZHqIvoyCkgGBMUaaYPFrCNUEG-Vn3vgpj3Qtr5miJws_RGHlbmxwF8SB9XhQXYju8',
+        serviceWorkerRegistration: registration 
+    });
+  })
+  .then((currentToken) => {
+    if (currentToken) {
+      // Guardamos el token en la ruta 'users/' (minúscula) confirmada en tus capturas
+      return firebase.database().ref('users/' + user.uid).update({ 
+          fcmToken: currentToken 
+      }).then(() => alert("Token guardado correctamente"));
+    }
+    
+    alert("No se obtuvo token (Permiso denegado)");
+    btn.disabled = false;
+    btn.textContent = "ENTRAR";
+  })
+  .catch((err) => {
+    alert("Error en proceso: " + err.message);
+    btn.disabled = false;
+    btn.textContent = "ENTRAR";
+  });
 
             } catch(e) {
               alert("Error síncrono: " + e.message);
