@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>PAGOCODE FEED</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body, html { 
+            width: 100%; height: 100%; 
+            background: black; 
+            font-family: 'Poppins', sans-serif; 
+            overflow: hidden;
+        }
+
+        /* Contenedor Principal Scroll */
+        #muroReportes {
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+        }
+        #muroReportes::-webkit-scrollbar { display: none; }
+
+        /* Tarjeta de Video (TikTok Style) */
+        .social-card {
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            background: black;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .card-media {
+            flex: 1;
+            position: relative;
+            background: black;
+        }
+
+        .vid-frame, .vid-poster {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+        }
+
+        /* UI sobre el video */
+        .card-header {
+            position: absolute; top: 0; left: 0; width: 100%;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+            z-index: 10; padding: 40px 15px 30px;
+        }
+
+        .user-row { display: flex; align-items: center; gap: 12px; }
+        .card-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; background-size: cover; }
+        .card-username { color: white; font-weight: 700; font-size: 0.95rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+        .card-text-content {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            padding: 20px 80px 40px 20px;
+            color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+            z-index: 10; pointer-events: none;
+        }
+
+        /* Acciones Derecha */
+        .card-actions {
+            position: absolute; bottom: 100px; right: 12px;
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+            z-index: 30;
+        }
+
+        .action-icon {
+            color: white; font-size: 1.8rem;
+            display: flex; flex-direction: column; align-items: center;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            cursor: pointer; background: none; border: none;
+        }
+        .action-icon span { font-size: 0.75rem; font-weight: 700; margin-top: 4px; }
+        .liked { color: #e11d48 !important; }
+
+        /* Botón de sonido flotante */
+        .btn-sonido-flotante {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 50; background: rgba(0,0,0,0.6); padding: 15px; border-radius: 50px;
+            color: white; border: 1px solid rgba(255,255,255,0.3); text-align: center;
+        }
+
+        /* Notificación Toast */
+        #toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
+            border-radius: 20px; font-size: 0.8rem; z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="muroReportes" onscroll="checkScrollVideos()"></div>
+    <div id="toast"></div>
+
+<script>
+    // --- 1. CONFIGURACIÓN FIREBASE (Copia la tuya aquí) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A",
+        authDomain: "ingresos-minimos.firebaseapp.com",
+        databaseURL: "https://ingresos-minimos-default-rtdb.firebaseio.com",
+        projectId: "ingresos-minimos",
+        storageBucket: "ingresos-minimos.firebasestorage.app",
+        messagingSenderId: "104886265441",
+        appId: "1:104886265441:web:2272d88ad1129919ea6c20"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // --- 2. VARIABLES DE ESTADO ---
+    // Obtenemos el UID de la URL (ej: feed.html?uid=XXXX)
+    const urlParams = new URLSearchParams(window.location.search);
+    const idAuditor = urlParams.get('uid');
+    let videoActualId = null;
+    let audioActivado = false;
+    let feedRef = null;
+
+    function notify(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg; t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    // --- 3. LÓGICA DE CARGA ---
+    function cargarMuro() {
+        const container = document.getElementById('muroReportes');
+        feedRef = db.ref('reportes').orderByChild('fecha').limitToLast(30);
+
+        feedRef.on('child_added', snap => {
+            const post = { k: snap.key, ...snap.val() };
+            if (document.getElementById(`post-${post.k}`)) return;
+
+            const div = document.createElement('div');
+            div.innerHTML = construirHTML(post);
+            container.insertBefore(div.firstElementChild, container.firstChild);
+            
+            setTimeout(checkScrollVideos, 500);
+        });
+    }
+
+    function construirHTML(post) {
+        const ytId = getYouTubeID(post.musica);
+        const avatar = `https://i.pravatar.cc/150?u=${post.uid}`;
+        const iLiked = (post.likes && idAuditor && post.likes[idAuditor]);
+
+        return `
+        <div id="post-${post.k}" class="social-card">
+            <div class="card-header">
+                <div class="user-row">
+                    <div class="card-avatar" style="background-image:url('${avatar}')"></div>
+                    <span class="card-username">${post.autorClave || 'Usuario'}</span>
+                </div>
+            </div>
+
+            <div class="card-media smart-video-container" id="vid-cont-${post.k}" data-yt="${ytId}">
+                <div class="vid-poster">
+                    <img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;opacity:0.5;">
+                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-size:3rem;">
+                        <i class="fas fa-play"></i>
+                    </div>
+                </div>
+                <div class="vid-frame"></div>
+            </div>
+
+            <div class="card-text-content">
+                <p style="font-weight:bold;margin-bottom:5px;">${post.texto || ''}</p>
+                <p style="font-size:0.8rem;opacity:0.8;">🎵 Sonido original - PAGOCODE</p>
+            </div>
+
+            <div class="card-actions">
+                <button class="action-icon" onclick="likePost('${post.k}', '${post.uid}', this)">
+                    <i class="fas fa-heart ${iLiked ? 'liked' : ''}"></i>
+                    <span>${post.vCount || 0}</span>
+                </button>
+                <button class="action-icon" onclick="abrirComentarios('${post.k}')">
+                    <i class="fas fa-comment-dots"></i>
+                    <span>${post.comentarios ? Object.keys(post.comentarios).length : 0}</span>
+                </button>
+                <button class="action-icon" onclick="compartir('${ytId}')">
+                    <i class="fas fa-share"></i>
+                    <span>Share</span>
+                </button>
+            </div>
+        </div>`;
+    }
+
+    // --- 4. REPRODUCTOR (EL FIX DEL ERROR 153) ---
+    function checkScrollVideos() {
+        const container = document.getElementById('muroReportes');
+        const videos = document.querySelectorAll('.smart-video-container');
+        const centro = container.scrollTop + (window.innerHeight / 2);
+
+        videos.forEach(v => {
+            const rect = v.getBoundingClientRect();
+            const vCentro = rect.top + (rect.height / 2);
+
+            if (Math.abs(vCentro - (window.innerHeight/2)) < 200) {
+                const id = v.id;
+                if (videoActualId !== id) {
+                    // Detener anterior
+                    if (videoActualId) {
+                        const ant = document.getElementById(videoActualId);
+                        ant.querySelector('.vid-frame').innerHTML = "";
+                        ant.querySelector('.vid-poster').style.display = "block";
+                    }
+
+                    // Iniciar nuevo
+                    videoActualId = id;
+                    const ytId = v.getAttribute('data-yt');
+                    v.querySelector('.vid-poster').style.display = "none";
+                    
+                    // ORIGIN ES LA CLAVE AQUÍ:
+                    const origin = window.location.origin;
+
+                    v.querySelector('.vid-frame').innerHTML = `
+                        <iframe width="100%" height="100%"
+                            src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${origin}&mute=${audioActivado ? 0 : 1}"
+                            frameborder="0" allow="autoplay; encrypted-media" style="object-fit:cover;">
+                        </iframe>`;
+
+                    if (!audioActivado) {
+                        const btn = document.createElement('div');
+                        btn.className = 'btn-sonido-flotante';
+                        btn.innerHTML = '<i class="fas fa-volume-mute"></i><br><small>Toca para sonido</small>';
+                        btn.onclick = () => { audioActivado = true; checkScrollVideos(); };
+                        v.appendChild(btn);
+                    }
+                }
+            }
+        });
+    }
+
+    function getYouTubeID(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    window.likePost = (key, owner, btn) => {
+        if (!idAuditor) return notify("Inicia sesión en la app");
+        const ref = db.ref(`reportes/${key}/likes/${idAuditor}`);
+        ref.once('value', s => {
+            if (s.exists()) {
+                ref.remove();
+                db.ref(`reportes/${key}/vCount`).transaction(c => (c || 0) - 1);
+            } else {
+                ref.set(true);
+                db.ref(`reportes/${key}/vCount`).transaction(c => (c || 0) + 1);
+                notify("❤️ Like enviado");
+            }
+        });
+    };
+
+    window.compartir = (id) => {
+        const url = `https://youtu.be/${id}`;
+        if (navigator.share) {
+            navigator.share({ title: 'PAGOCODE', url: url });
+        } else {
+            prompt("Copia el link:", url);
+        }
+    };
+
+    window.onload = cargarMuro;
+</script>
+</body>
+</html>
