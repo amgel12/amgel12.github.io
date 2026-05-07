@@ -12,104 +12,65 @@
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body, html { 
-            width: 100%; height: 100%; 
-            background: black; 
-            font-family: 'Poppins', sans-serif; 
-            overflow: hidden;
-        }
+        body, html { width: 100%; height: 100%; background: black; font-family: 'Poppins', sans-serif; overflow: hidden; }
 
-        /* Contenedor Principal Scroll */
         #muroReportes {
-            height: 100vh;
-            overflow-y: scroll;
-            scroll-snap-type: y mandatory;
-            scroll-behavior: smooth;
-            scrollbar-width: none;
+            height: 100vh; overflow-y: scroll;
+            scroll-snap-type: y mandatory; scrollbar-width: none;
         }
         #muroReportes::-webkit-scrollbar { display: none; }
 
-        /* Tarjeta de Video (TikTok Style) */
         .social-card {
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-            scroll-snap-align: start;
-            scroll-snap-stop: always;
-            background: black;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            height: 100vh; width: 100vw;
+            position: relative; scroll-snap-align: start;
+            scroll-snap-stop: always; background: black;
         }
 
-        .card-media {
-            flex: 1;
-            position: relative;
-            background: black;
+        .card-media { position: absolute; inset: 0; z-index: 1; }
+        .vid-frame { width: 100%; height: 100%; }
+
+        /* UI OVERLAY */
+        .card-overlay {
+            position: absolute; inset: 0; z-index: 10;
+            pointer-events: none; display: flex; flex-direction: column;
+            justify-content: flex-end; padding: 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 40%);
         }
 
-        .vid-frame, .vid-poster {
-            position: absolute; inset: 0; width: 100%; height: 100%;
-        }
-
-        /* UI sobre el video */
-        .card-header {
-            position: absolute; top: 0; left: 0; width: 100%;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
-            z-index: 10; padding: 40px 15px 30px;
-        }
-
-        .user-row { display: flex; align-items: center; gap: 12px; }
-        .card-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; background-size: cover; }
-        .card-username { color: white; font-weight: 700; font-size: 0.95rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-
-        .card-text-content {
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            padding: 20px 80px 40px 20px;
-            color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
-            z-index: 10; pointer-events: none;
-        }
-
-        /* Acciones Derecha */
+        .user-info { pointer-events: auto; margin-bottom: 60px; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        
         .card-actions {
-            position: absolute; bottom: 100px; right: 12px;
-            display: flex; flex-direction: column; align-items: center; gap: 20px;
-            z-index: 30;
+            position: absolute; bottom: 120px; right: 15px;
+            display: flex; flex-direction: column; gap: 22px; z-index: 20;
         }
 
-        .action-icon {
-            color: white; font-size: 1.8rem;
-            display: flex; flex-direction: column; align-items: center;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            cursor: pointer; background: none; border: none;
+        .action-btn {
+            background: none; border: none; color: white;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            cursor: pointer; font-size: 1.8rem; transition: transform 0.2s;
         }
-        .action-icon span { font-size: 0.75rem; font-weight: 700; margin-top: 4px; }
-        .liked { color: #e11d48 !important; }
+        .action-btn:active { transform: scale(0.8); }
+        .action-btn span { font-size: 0.75rem; font-weight: 800; text-shadow: 0 2px 5px black; }
+        
+        /* Corazón Rojo */
+        .liked { color: #ef4444 !important; }
 
-        /* Botón de sonido flotante */
-        .btn-sonido-flotante {
+        /* Botón Sonido Central */
+        .unmute-box {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 50; background: rgba(0,0,0,0.6); padding: 15px; border-radius: 50px;
-            color: white; border: 1px solid rgba(255,255,255,0.3); text-align: center;
-        }
-
-        /* Notificación Toast */
-        #toast {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
-            border-radius: 20px; font-size: 0.8rem; z-index: 1000;
-            display: none;
+            z-index: 100; pointer-events: auto;
+            background: rgba(0,0,0,0.6); padding: 20px; border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.5); color: white;
+            display: flex; flex-direction: column; align-items: center; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <div id="muroReportes" onscroll="checkScrollVideos()"></div>
-    <div id="toast"></div>
+    <div id="muroReportes"></div>
 
 <script>
-    // --- 1. CONFIGURACIÓN FIREBASE (Copia la tuya aquí) ---
+    // 1. CONFIGURACIÓN
     const firebaseConfig = {
         apiKey: "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A",
         authDomain: "ingresos-minimos.firebaseapp.com",
@@ -122,128 +83,116 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // --- 2. VARIABLES DE ESTADO ---
-    // Obtenemos el UID de la URL (ej: feed.html?uid=XXXX)
     const urlParams = new URLSearchParams(window.location.search);
-    const idAuditor = urlParams.get('uid');
-    let videoActualId = null;
+    const idAuditor = urlParams.get('uid'); // Recibido desde la APK
     let audioActivado = false;
-    let feedRef = null;
+    let videoActual = null;
 
-    function notify(msg) {
-        const t = document.getElementById('toast');
-        t.textContent = msg; t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 3000);
-    }
-
-    // --- 3. LÓGICA DE CARGA ---
+    // 2. CARGAR MURO
     function cargarMuro() {
         const container = document.getElementById('muroReportes');
-        feedRef = db.ref('reportes').orderByChild('fecha').limitToLast(30);
+        db.ref('reportes').orderByChild('fecha').limitToLast(25).on('value', snap => {
+            if(!snap.exists()) return;
+            container.innerHTML = "";
+            let posts = [];
+            snap.forEach(child => { posts.push({key: child.key, ...child.val()}); });
+            posts.reverse().forEach(post => {
+                const div = document.createElement('div');
+                div.className = 'social-card';
+                div.id = post.key;
+                div.setAttribute('data-yt', getYouTubeID(post.musica));
+                
+                const isLiked = post.likes && idAuditor && post.likes[idAuditor];
+                const numComments = post.comentarios ? Object.keys(post.comentarios).length : 0;
 
-        feedRef.on('child_added', snap => {
-            const post = { k: snap.key, ...snap.val() };
-            if (document.getElementById(`post-${post.k}`)) return;
-
-            const div = document.createElement('div');
-            div.innerHTML = construirHTML(post);
-            container.insertBefore(div.firstElementChild, container.firstChild);
-            
-            setTimeout(checkScrollVideos, 500);
+                div.innerHTML = `
+                    <div class="card-media"><div class="vid-frame"></div></div>
+                    <div class="card-overlay">
+                        <div class="user-info">
+                            <h4 style="font-weight:800;">@${post.autorClave || 'Usuario'}</h4>
+                            <p>${post.texto || ''}</p>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="action-btn" onclick="toggleLike('${post.key}', '${post.uid}')">
+                            <i class="fas fa-heart ${isLiked ? 'liked' : ''}"></i>
+                            <span>${post.vCount || 0}</span>
+                        </button>
+                        <button class="action-btn" onclick="abrirComentariosApp('${post.key}')">
+                            <i class="fas fa-comment-dots"></i>
+                            <span>${numComments}</span>
+                        </button>
+                        <button class="action-btn" onclick="compartir('${getYouTubeID(post.musica)}')">
+                            <i class="fas fa-share"></i>
+                            <span>Share</span>
+                        </button>
+                    </div>
+                    ${!audioActivado ? `
+                    <div class="unmute-box" onclick="activarAudioGlobal()">
+                        <i class="fas fa-volume-mute" style="font-size:2rem;"></i>
+                        <small style="margin-top:5px; font-weight:bold;">SONIDO</small>
+                    </div>` : ''}
+                `;
+                container.appendChild(div);
+            });
+            observarVideos();
         });
     }
 
-    function construirHTML(post) {
-        const ytId = getYouTubeID(post.musica);
-        const avatar = `https://i.pravatar.cc/150?u=${post.uid}`;
-        const iLiked = (post.likes && idAuditor && post.likes[idAuditor]);
+    // 3. LÓGICA DE LIKES
+    window.toggleLike = (postKey, ownerUid) => {
+        if (!idAuditor) return alert("Inicia sesión");
+        const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
+        const countRef = db.ref(`reportes/${postKey}/vCount`);
 
-        return `
-        <div id="post-${post.k}" class="social-card">
-            <div class="card-header">
-                <div class="user-row">
-                    <div class="card-avatar" style="background-image:url('${avatar}')"></div>
-                    <span class="card-username">${post.autorClave || 'Usuario'}</span>
-                </div>
-            </div>
-
-            <div class="card-media smart-video-container" id="vid-cont-${post.k}" data-yt="${ytId}">
-                <div class="vid-poster">
-                    <img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;opacity:0.5;">
-                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-size:3rem;">
-                        <i class="fas fa-play"></i>
-                    </div>
-                </div>
-                <div class="vid-frame"></div>
-            </div>
-
-            <div class="card-text-content">
-                <p style="font-weight:bold;margin-bottom:5px;">${post.texto || ''}</p>
-                <p style="font-size:0.8rem;opacity:0.8;">🎵 Sonido original - PAGOCODE</p>
-            </div>
-
-            <div class="card-actions">
-                <button class="action-icon" onclick="likePost('${post.k}', '${post.uid}', this)">
-                    <i class="fas fa-heart ${iLiked ? 'liked' : ''}"></i>
-                    <span>${post.vCount || 0}</span>
-                </button>
-                <button class="action-icon" onclick="abrirComentarios('${post.k}')">
-                    <i class="fas fa-comment-dots"></i>
-                    <span>${post.comentarios ? Object.keys(post.comentarios).length : 0}</span>
-                </button>
-                <button class="action-icon" onclick="compartir('${ytId}')">
-                    <i class="fas fa-share"></i>
-                    <span>Share</span>
-                </button>
-            </div>
-        </div>`;
-    }
-
-    // --- 4. REPRODUCTOR (EL FIX DEL ERROR 153) ---
-    function checkScrollVideos() {
-        const container = document.getElementById('muroReportes');
-        const videos = document.querySelectorAll('.smart-video-container');
-        const centro = container.scrollTop + (window.innerHeight / 2);
-
-        videos.forEach(v => {
-            const rect = v.getBoundingClientRect();
-            const vCentro = rect.top + (rect.height / 2);
-
-            if (Math.abs(vCentro - (window.innerHeight/2)) < 200) {
-                const id = v.id;
-                if (videoActualId !== id) {
-                    // Detener anterior
-                    if (videoActualId) {
-                        const ant = document.getElementById(videoActualId);
-                        ant.querySelector('.vid-frame').innerHTML = "";
-                        ant.querySelector('.vid-poster').style.display = "block";
-                    }
-
-                    // Iniciar nuevo
-                    videoActualId = id;
-                    const ytId = v.getAttribute('data-yt');
-                    v.querySelector('.vid-poster').style.display = "none";
-                    
-                    // ORIGIN ES LA CLAVE AQUÍ:
-                    const origin = window.location.origin;
-
-                    v.querySelector('.vid-frame').innerHTML = `
-                        <iframe width="100%" height="100%"
-                            src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${origin}&mute=${audioActivado ? 0 : 1}"
-                            frameborder="0" allow="autoplay; encrypted-media" style="object-fit:cover;">
-                        </iframe>`;
-
-                    if (!audioActivado) {
-                        const btn = document.createElement('div');
-                        btn.className = 'btn-sonido-flotante';
-                        btn.innerHTML = '<i class="fas fa-volume-mute"></i><br><small>Toca para sonido</small>';
-                        btn.onclick = () => { audioActivado = true; checkScrollVideos(); };
-                        v.appendChild(btn);
-                    }
-                }
+        ref.once('value', s => {
+            if (s.exists()) {
+                ref.remove();
+                countRef.transaction(c => (c || 0) - 1);
+            } else {
+                ref.set(true);
+                countRef.transaction(c => (c || 0) + 1);
+                // Enviar señal de sonido a la APK (opcional)
+                window.parent.postMessage({type: 'playSelect'}, '*');
             }
         });
+    };
+
+    // 4. LÓGICA COMENTARIOS (PUENTE HACIA APK)
+    window.abrirComentariosApp = (postKey) => {
+        // Enviamos un mensaje a la APK para que abra su modal nativo
+        window.parent.postMessage({type: 'openComments', key: postKey}, '*');
+    };
+
+    // 5. REPRODUCTOR
+    function observarVideos() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) reproducirVideo(entry.target);
+            });
+        }, { threshold: 0.7 });
+        document.querySelectorAll('.social-card').forEach(card => observer.observe(card));
     }
+
+    function reproducirVideo(card) {
+        if (videoActual === card.id) return;
+        if (videoActual) {
+            const ant = document.getElementById(videoActual);
+            if(ant) ant.querySelector('.vid-frame').innerHTML = "";
+        }
+        videoActual = card.id;
+        const ytId = card.getAttribute('data-yt');
+        card.querySelector('.vid-frame').innerHTML = `
+            <iframe width="100%" height="100%" 
+                src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=https://localhost&mute=${audioActivado ? 0 : 1}" 
+                frameborder="0" allow="autoplay; encrypted-media">
+            </iframe>`;
+    }
+
+    window.activarAudioGlobal = () => {
+        audioActivado = true;
+        cargarMuro(); // Recarga para aplicar sonido
+    };
 
     function getYouTubeID(url) {
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -251,29 +200,7 @@
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
-    window.likePost = (key, owner, btn) => {
-        if (!idAuditor) return notify("Inicia sesión en la app");
-        const ref = db.ref(`reportes/${key}/likes/${idAuditor}`);
-        ref.once('value', s => {
-            if (s.exists()) {
-                ref.remove();
-                db.ref(`reportes/${key}/vCount`).transaction(c => (c || 0) - 1);
-            } else {
-                ref.set(true);
-                db.ref(`reportes/${key}/vCount`).transaction(c => (c || 0) + 1);
-                notify("❤️ Like enviado");
-            }
-        });
-    };
-
-    window.compartir = (id) => {
-        const url = `https://youtu.be/${id}`;
-        if (navigator.share) {
-            navigator.share({ title: 'PAGOCODE', url: url });
-        } else {
-            prompt("Copia el link:", url);
-        }
-    };
+    window.compartir = (id) => { window.open("https://youtu.be/"+id, "_blank"); };
 
     window.onload = cargarMuro;
 </script>
