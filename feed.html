@@ -128,58 +128,75 @@
     let videoActualId = null;
 
     function cargarMuro() {
-        const container = document.getElementById('muroReportes');
+    const container = document.getElementById('muroReportes');
+    
+    // CAMBIO A .on('value'): Escucha en tiempo real. 
+    // Si alguien publica, aparece inmediatamente.
+    db.ref('reportes').limitToLast(25).on('value', snap => {
+        if(!snap.exists()) {
+            container.innerHTML = "<div style='color:white;text-align:center;padding-top:50px;'>No hay videos aún</div>";
+            return;
+        }
+
+        container.innerHTML = "";
+        let posts = [];
         
-        // CORRECCIÓN: Quitamos el orderByChild fecha para asegurar que carguen todos aunque la fecha esté mal
-        db.ref('reportes').limitToLast(25).once('value', snap => {
-            if(!snap.exists()) return;
-            container.innerHTML = "";
-            let posts = [];
-            snap.forEach(child => { posts.push({key: child.key, ...child.val()}); });
-            
-            posts.reverse().forEach(post => {
-                const ytId = getYouTubeID(post.musica);
-                if(!ytId) return; // Si el link está mal, salta al siguiente
-
-                const div = document.createElement('div');
-                div.className = 'social-card';
-                div.id = post.key;
-                div.setAttribute('data-yt', ytId);
-                
-                const isLiked = post.likes && idAuditor && post.likes[idAuditor];
-                const numComments = post.comentarios ? Object.keys(post.comentarios).length : 0;
-
-                div.innerHTML = `
-                    <div class="card-media"><div class="vid-frame"></div></div>
-                    <div class="card-overlay">
-                        <div class="user-info">
-                            <h4>@${post.autorClave || 'Usuario'}</h4>
-                            <p>${post.texto || ''}</p>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="action-btn" onclick="toggleLike('${post.key}')">
-                            <i class="fas fa-heart ${isLiked ? 'liked' : ''}"></i>
-                            <span id="l-count-${post.key}">${post.vCount || 0}</span>
-                        </button>
-                        <button class="action-btn" onclick="abrirComentariosApp('${post.key}')">
-                            <i class="fas fa-comment-dots"></i>
-                            <span>${numComments}</span>
-                        </button>
-                    </div>
-                    ${!audioActivado ? `
-                    <div class="unmute-box" onclick="activarAudioGlobal()">
-                        <i class="fas fa-play" style="font-size:2.5rem; margin-left:8px;"></i>
-                        <small style="margin-top:8px; font-weight:800; letter-spacing:1px;">VER FEED</small>
-                    </div>` : ''}
-                `;
-                container.appendChild(div);
-            });
-            
-            iniciarObservador();
+        // Extraemos los datos
+        snap.forEach(child => { 
+            posts.push({key: child.key, ...child.val()}); 
         });
-    }
+        
+        // Los invertimos para que el más nuevo salga arriba (TikTok Style)
+        posts.reverse().forEach(post => {
+            // Limpiamos el link de espacios en blanco
+            const urlLimpia = post.musica ? post.musica.trim() : "";
+            const ytId = getYouTubeID(urlLimpia);
+            
+            // Si el link de YouTube es inválido, registramos el error y saltamos
+            if(!ytId) {
+                console.warn("Post omitido por link inválido:", post.key, post.musica);
+                return; 
+            }
 
+            const div = document.createElement('div');
+            div.className = 'social-card';
+            div.id = post.key;
+            div.setAttribute('data-yt', ytId);
+            
+            const isLiked = post.likes && idAuditor && post.likes[idAuditor];
+            const numComments = post.comentarios ? Object.keys(post.comentarios).length : 0;
+
+            div.innerHTML = `
+                <div class="card-media"><div class="vid-frame"></div></div>
+                <div class="card-overlay">
+                    <div class="user-info">
+                        <h4>@${post.autorClave || 'Usuario'}</h4>
+                        <p>${post.texto || ''}</p>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="action-btn" onclick="toggleLike('${post.key}')">
+                        <i class="fas fa-heart ${isLiked ? 'liked' : ''}"></i>
+                        <span id="l-count-${post.key}">${post.vCount || 0}</span>
+                    </button>
+                    <button class="action-btn" onclick="abrirComentariosApp('${post.key}')">
+                        <i class="fas fa-comment-dots"></i>
+                        <span>${numComments}</span>
+                    </button>
+                </div>
+                ${!audioActivado ? `
+                <div class="unmute-box" onclick="activarAudioGlobal()">
+                    <i class="fas fa-play" style="font-size:2.5rem; margin-left:8px;"></i>
+                    <small style="margin-top:8px; font-weight:800; letter-spacing:1px;">VER FEED</small>
+                </div>` : ''}
+            `;
+            container.appendChild(div);
+        });
+        
+        // Volvemos a activar el observador para los nuevos elementos
+        iniciarObservador();
+    });
+}
     function iniciarObservador() {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -247,11 +264,11 @@
 
     // CORRECCIÓN: Nueva función que soporta SHORTS y links normales
     function getYouTubeID(url) {
-        if (!url) return null;
-        const regExp = /^.*((youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/))([^#&?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[3].length === 11) ? match[3] : null;
-    }
+    if (!url) return null;
+    const regExp = /^.*((youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/))([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[3].length === 11) ? match[3] : null;
+}
 
     window.onload = cargarMuro;
 </script>
