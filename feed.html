@@ -6,109 +6,34 @@
     <title>PAGOCODE PREMIUM FEED</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
         body, html { width: 100%; height: 100%; background: #000; font-family: 'Poppins', sans-serif; overflow: hidden; }
-
-        #muroReportes {
-            height: 100vh;
-            overflow-y: scroll;
-            scroll-snap-type: y mandatory;
-            scrollbar-width: none;
-            background: #000;
-        }
+        #muroReportes { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; background: #000; }
         #muroReportes::-webkit-scrollbar { display: none; }
-
-        .social-card {
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-            scroll-snap-align: start;
-            scroll-snap-stop: always;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
+        .social-card { height: 100vh; width: 100vw; position: relative; scroll-snap-align: start; scroll-snap-stop: always; background: #000; display: flex; align-items: center; justify-content: center; }
         .card-media { position: absolute; inset: 0; z-index: 1; }
         .vid-frame { width: 100%; height: 100%; pointer-events: none; }
-
-        .card-overlay {
-            position: absolute;
-            inset: 0;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 20px;
-            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 40%, rgba(0,0,0,0.3) 100%);
-            pointer-events: none;
-        }
-
+        .card-overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 40%, rgba(0,0,0,0.3) 100%); pointer-events: none; }
         .user-info { pointer-events: auto; margin-bottom: 60px; color: #fff; max-width: 80%; }
         .user-info h4 { font-size: 1rem; font-weight: 800; margin-bottom: 5px; color: #3b82f6; }
         .user-info p { font-size: 0.9rem; line-height: 1.3; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-
-        /* --- POSICIÓN DE BOTONES --- */
-        .card-actions {
-            position: absolute;
-            bottom: 340px; /* <--- Ya está subido como pediste */
-            right: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 22px;
-            z-index: 30;
-            pointer-events: auto;
-        }
-
-        .action-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            font-size: 1.9rem;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-            transition: transform 0.2s;
-        }
+        .card-actions { position: absolute; bottom: 340px; right: 12px; display: flex; flex-direction: column; align-items: center; gap: 22px; z-index: 30; pointer-events: auto; }
+        .action-btn { background: none; border: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-size: 1.9rem; text-shadow: 0 2px 8px rgba(0,0,0,0.8); transition: transform 0.2s; }
         .action-btn:active { transform: scale(0.8); }
         .action-btn span { font-size: 0.75rem; font-weight: 800; }
         .liked { color: #ef4444 !important; animation: pop 0.3s ease; }
         @keyframes pop { 0% {transform: scale(1);} 50% {transform: scale(1.4);} 100% {transform: scale(1);} }
-
-        .unmute-box {
-            position: absolute;
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 100;
-            background: rgba(0,0,0,0.6);
-            padding: 20px;
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.4);
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            pointer-events: auto;
-            backdrop-filter: blur(4px);
-        }
+        .unmute-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background: rgba(0,0,0,0.6); padding: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); color: #fff; display: flex; flex-direction: column; align-items: center; cursor: pointer; pointer-events: auto; backdrop-filter: blur(4px); }
+        .nuevo-badge { position: absolute; top: 80px; right: 12px; z-index: 40; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; animation: pulse 1.5s ease infinite; pointer-events: none; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
-
     <div id="muroReportes"></div>
-
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A",
@@ -123,110 +48,131 @@
     const db = firebase.database();
 
     const urlParams = new URLSearchParams(window.location.search);
-    const idAuditor = urlParams.get('uid'); 
+    const idAuditor = urlParams.get('uid');
     let audioActivado = false;
     let videoActualId = null;
+    let observerFeed = null;
+    let primerCarga = true;
+    let timeoutOrden = null;
 
-    function cargarMuro() {
-    const container = document.getElementById('muroReportes');
-    
-    // CAMBIO A .on('value'): Escucha en tiempo real. 
-    // Si alguien publica, aparece inmediatamente.
-    db.ref('reportes').limitToLast(25).on('value', snap => {
-        if(!snap.exists()) {
-            container.innerHTML = "<div style='color:white;text-align:center;padding-top:50px;'>No hay videos aún</div>";
-            return;
-        }
+    function getYouTubeID(url) {
+        if (!url) return null;
+        const m = url.match(/^.*((youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/))([^#&?]*).*/);
+        return (m && m[3].length === 11) ? m[3] : null;
+    }
 
-        container.innerHTML = "";
-        let posts = [];
-        
-        // Extraemos los datos
-        snap.forEach(child => { 
-            posts.push({key: child.key, ...child.val()}); 
-        });
-        
-        // Los invertimos para que el más nuevo salga arriba (TikTok Style)
-        posts.reverse().forEach(post => {
-            // Limpiamos el link de espacios en blanco
-            const urlLimpia = post.musica ? post.musica.trim() : "";
-            const ytId = getYouTubeID(urlLimpia);
-            
-            // Si el link de YouTube es inválido, registramos el error y saltamos
-            if(!ytId) {
-                console.warn("Post omitido por link inválido:", post.key, post.musica);
-                return; 
-            }
-
-            const div = document.createElement('div');
-            div.className = 'social-card';
-            div.id = post.key;
-            div.setAttribute('data-yt', ytId);
-            
-            const isLiked = post.likes && idAuditor && post.likes[idAuditor];
-            const numComments = post.comentarios ? Object.keys(post.comentarios).length : 0;
-
-            div.innerHTML = `
-                <div class="card-media"><div class="vid-frame"></div></div>
-                <div class="card-overlay">
-                    <div class="user-info">
-                        <h4>@${post.autorClave || 'Usuario'}</h4>
-                        <p>${post.texto || ''}</p>
-                    </div>
+    function crearCard(post, ytId) {
+        const card = document.createElement('div');
+        card.className = 'social-card';
+        card.id = post.key;
+        card.setAttribute('data-yt', ytId);
+        card.setAttribute('data-uid', post.uid || '');
+        const isLiked = post.likes && idAuditor && post.likes[idAuditor];
+        const numComments = post.comentarios ? Object.keys(post.comentarios).length : 0;
+        card.innerHTML = `
+            <div class="card-media"><div class="vid-frame"></div></div>
+            <div class="card-overlay">
+                <div class="user-info">
+                    <h4>@${post.autorClave || 'Usuario'}</h4>
+                    <p>${post.texto || ''}</p>
                 </div>
-                <div class="card-actions">
-                    <button class="action-btn" onclick="toggleLike('${post.key}')">
-                        <i class="fas fa-heart ${isLiked ? 'liked' : ''}"></i>
-                        <span id="l-count-${post.key}">${post.vCount || 0}</span>
-                    </button>
-                    <button class="action-btn" onclick="abrirComentariosApp('${post.key}')">
-                        <i class="fas fa-comment-dots"></i>
-                        <span>${numComments}</span>
-                    </button>
-                </div>
-                ${!audioActivado ? `
-                <div class="unmute-box" onclick="activarAudioGlobal()">
-                    <i class="fas fa-play" style="font-size:2.5rem; margin-left:8px;"></i>
-                    <small style="margin-top:8px; font-weight:800; letter-spacing:1px;">VER FEED</small>
-                </div>` : ''}
-            `;
-            container.appendChild(div);
-        });
-        
-        // Volvemos a activar el observador para los nuevos elementos
-        iniciarObservador();
-    });
-}
+            </div>
+            <div class="card-actions">
+                <button class="action-btn" onclick="toggleLike('${post.key}')">
+                    <i class="fas fa-heart ${isLiked ? 'liked' : ''}"></i>
+                    <span id="l-count-${post.key}">${post.vCount || 0}</span>
+                </button>
+                <button class="action-btn" onclick="abrirComentariosApp('${post.key}')">
+                    <i class="fas fa-comment-dots"></i>
+                    <span>${numComments}</span>
+                </button>
+            </div>
+            ${!audioActivado ? `
+            <div class="unmute-box" onclick="activarAudioGlobal()">
+                <i class="fas fa-play" style="font-size:2.5rem; margin-left:8px;"></i>
+                <small style="margin-top:8px; font-weight:800; letter-spacing:1px;">VER FEED</small>
+            </div>` : ''}
+        `;
+        return card;
+    }
+
     function iniciarObservador() {
-        const observer = new IntersectionObserver((entries) => {
+        if (observerFeed) observerFeed.disconnect();
+        observerFeed = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    reproducirVideo(entry.target);
-                }
+                if (entry.isIntersecting) reproducirVideo(entry.target);
             });
         }, { threshold: 0.6 });
+        document.querySelectorAll('.social-card').forEach(c => observerFeed.observe(c));
+    }
 
-        document.querySelectorAll('.social-card').forEach(card => observer.observe(card));
+    function ordenarCards() {
+        const container = document.getElementById('muroReportes');
+        const cards = Array.from(container.querySelectorAll('.social-card'));
+        cards.sort((a, b) => {
+            const fa = parseInt(a.getAttribute('data-fecha')) || 0;
+            const fb = parseInt(b.getAttribute('data-fecha')) || 0;
+            return fb - fa;
+        });
+        cards.forEach(c => container.appendChild(c));
+    }
+
+    function cargarMuro() {
+        const container = document.getElementById('muroReportes');
+        db.ref('reportes').limitToLast(25).on('value', snap => {
+            if (!snap.exists()) {
+                container.innerHTML = "<div style='color:white;text-align:center;padding-top:50vh;'>No hay videos aún</div>";
+                return;
+            }
+            const postsMap = {};
+            snap.forEach(child => { postsMap[child.key] = {key: child.key, ...child.val()}; });
+            const latestKeys = new Set(Object.keys(postsMap));
+            container.querySelectorAll('.social-card').forEach(el => {
+                if (!latestKeys.has(el.id) && el.id !== videoActualId) el.remove();
+            });
+            let huboNuevos = false;
+            snap.forEach(child => {
+                if (document.getElementById(child.key)) return;
+                const post = {key: child.key, ...child.val()};
+                const ytId = getYouTubeID(post.musica);
+                if (!ytId) return;
+                const card = crearCard(post, ytId);
+                card.setAttribute('data-fecha', post.fecha || 0);
+                if (primerCarga) { container.appendChild(card); }
+                else {
+                    card.insertAdjacentHTML('beforeend', '<div class="nuevo-badge">NUEVO</div>');
+                    container.insertBefore(card, container.firstChild);
+                }
+                huboNuevos = true;
+            });
+            if (!huboNuevos && primerCarga) ordenarCards();
+            while (container.children.length > 25) {
+                const last = container.lastChild;
+                if (last.id === videoActualId) break;
+                last.remove();
+            }
+            iniciarObservador();
+            if (primerCarga) {
+                primerCarga = false;
+                clearTimeout(timeoutOrden);
+                timeoutOrden = setTimeout(ordenarCards, 300);
+            }
+        });
     }
 
     function reproducirVideo(card) {
         if (videoActualId === card.id) return;
-        
         if (videoActualId) {
             const ant = document.getElementById(videoActualId);
-            if(ant) ant.querySelector('.vid-frame').innerHTML = "";
+            if (ant) ant.querySelector('.vid-frame').innerHTML = "";
         }
-
         videoActualId = card.id;
         const ytId = card.getAttribute('data-yt');
         const frame = card.querySelector('.vid-frame');
-        
         const muteState = audioActivado ? 0 : 1;
-        const origin = window.location.origin;
-
         frame.innerHTML = `
-            <iframe width="100%" height="100%" 
-                src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${origin}&mute=${muteState}&playlist=${ytId}&loop=1" 
+            <iframe width="100%" height="100%"
+                src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}&mute=${muteState}&playlist=${ytId}&loop=1"
                 frameborder="0" allow="autoplay; encrypted-media">
             </iframe>`;
     }
@@ -235,17 +181,15 @@
         audioActivado = true;
         document.querySelectorAll('.unmute-box').forEach(el => el.remove());
         const actual = document.getElementById(videoActualId);
-        if(actual) {
-            videoActualId = null; 
-            reproducirVideo(actual);
-        }
+        if (actual) { videoActualId = null; reproducirVideo(actual); }
     };
 
     window.toggleLike = (postKey) => {
         if (!idAuditor) return;
+        const card = document.getElementById(postKey);
+        const ownerUid = card ? card.getAttribute('data-uid') : null;
         const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
         const countRef = db.ref(`reportes/${postKey}/vCount`);
-        
         ref.once('value', s => {
             if (s.exists()) {
                 ref.remove();
@@ -254,8 +198,19 @@
                 ref.set(true);
                 countRef.transaction(c => (c || 0) + 1);
                 window.parent.postMessage({type: 'playSelect'}, '*');
+                if (ownerUid && ownerUid !== idAuditor) {
+                    window.parent.postMessage({type: 'doLike', postKey: postKey, ownerUid: ownerUid}, '*');
+                }
             }
         });
+        const icon = document.querySelector(`#${postKey} .fa-heart`);
+        const count = document.getElementById(`l-count-${postKey}`);
+        if (icon) {
+            icon.classList.toggle('liked');
+            const liked = icon.classList.contains('liked');
+            icon.style.color = liked ? '#ef4444' : 'white';
+            if (count) count.textContent = Math.max(0, (parseInt(count.textContent) || 0) + (liked ? 1 : -1));
+        }
     };
 
     window.abrirComentariosApp = (postKey) => {
