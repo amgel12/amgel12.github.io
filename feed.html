@@ -16,7 +16,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
         body, html { width: 100%; height: 100%; background: #000; font-family: 'Poppins', sans-serif; overflow: hidden; }
 
-        /* Contenedor Principal Scroll TikTok */
         #muroReportes {
             height: 100vh;
             overflow-y: scroll;
@@ -26,7 +25,6 @@
         }
         #muroReportes::-webkit-scrollbar { display: none; }
 
-        /* Tarjeta de Video Full Screen */
         .social-card {
             height: 100vh;
             width: 100vw;
@@ -39,15 +37,9 @@
             justify-content: center;
         }
 
-        .card-media {
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-        }
-
+        .card-media { position: absolute; inset: 0; z-index: 1; }
         .vid-frame { width: 100%; height: 100%; pointer-events: none; }
 
-        /* Capa de información y botones */
         .card-overlay {
             position: absolute;
             inset: 0;
@@ -64,19 +56,18 @@
         .user-info h4 { font-size: 1rem; font-weight: 800; margin-bottom: 5px; color: #3b82f6; }
         .user-info p { font-size: 0.9rem; line-height: 1.3; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
 
-        /* Botones de acción derecha */
-/* Busca esta sección en tu <style> */
-.card-actions {
-    position: absolute;
-    bottom: 340px; /* <--- CAMBIA ESTE VALOR (estaba en 110px) */
-    right: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 22px;
-    z-index: 30;
-    pointer-events: auto;
-}
+        /* --- POSICIÓN DE BOTONES --- */
+        .card-actions {
+            position: absolute;
+            bottom: 340px; /* <--- Ya está subido como pediste */
+            right: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 22px;
+            z-index: 30;
+            pointer-events: auto;
+        }
 
         .action-btn {
             background: none;
@@ -93,11 +84,9 @@
         }
         .action-btn:active { transform: scale(0.8); }
         .action-btn span { font-size: 0.75rem; font-weight: 800; }
-        
         .liked { color: #ef4444 !important; animation: pop 0.3s ease; }
         @keyframes pop { 0% {transform: scale(1);} 50% {transform: scale(1.4);} 100% {transform: scale(1);} }
 
-        /* Botón de sonido central (Regla de oro de Chrome/Android) */
         .unmute-box {
             position: absolute;
             top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -121,7 +110,6 @@
     <div id="muroReportes"></div>
 
 <script>
-    // --- 1. CONFIGURACIÓN FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A",
         authDomain: "ingresos-minimos.firebaseapp.com",
@@ -134,27 +122,24 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Variables de control
     const urlParams = new URLSearchParams(window.location.search);
     const idAuditor = urlParams.get('uid'); 
     let audioActivado = false;
     let videoActualId = null;
 
-    // --- 2. CARGAR CONTENIDO ---
     function cargarMuro() {
         const container = document.getElementById('muroReportes');
         
-        // Consultar los últimos 25 reportes
-        db.ref('reportes').orderByChild('fecha').limitToLast(25).once('value', snap => {
+        // CORRECCIÓN: Quitamos el orderByChild fecha para asegurar que carguen todos aunque la fecha esté mal
+        db.ref('reportes').limitToLast(25).once('value', snap => {
             if(!snap.exists()) return;
             container.innerHTML = "";
             let posts = [];
             snap.forEach(child => { posts.push({key: child.key, ...child.val()}); });
             
-            // Los invertimos para que el más nuevo salga primero
             posts.reverse().forEach(post => {
                 const ytId = getYouTubeID(post.musica);
-                if(!ytId) return;
+                if(!ytId) return; // Si el link está mal, salta al siguiente
 
                 const div = document.createElement('div');
                 div.className = 'social-card';
@@ -195,7 +180,6 @@
         });
     }
 
-    // --- 3. GESTIÓN DE VIDEO (FIX ERROR 153) ---
     function iniciarObservador() {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -211,7 +195,6 @@
     function reproducirVideo(card) {
         if (videoActualId === card.id) return;
         
-        // Limpiar el que estaba antes
         if (videoActualId) {
             const ant = document.getElementById(videoActualId);
             if(ant) ant.querySelector('.vid-frame').innerHTML = "";
@@ -221,9 +204,8 @@
         const ytId = card.getAttribute('data-yt');
         const frame = card.querySelector('.vid-frame');
         
-        // IMPORTANTE: enablejsapi=1 y origin=https://localhost eliminan el Error 153 en APKs
         const muteState = audioActivado ? 0 : 1;
-        const origin = "https://localhost";
+        const origin = window.location.origin;
 
         frame.innerHTML = `
             <iframe width="100%" height="100%" 
@@ -234,23 +216,19 @@
 
     window.activarAudioGlobal = () => {
         audioActivado = true;
-        // Eliminar todos los botones de "Ver Feed"
         document.querySelectorAll('.unmute-box').forEach(el => el.remove());
-        // Recargar el video actual para que empiece con sonido
         const actual = document.getElementById(videoActualId);
         if(actual) {
-            videoActualId = null; // reset para forzar recarga
+            videoActualId = null; 
             reproducirVideo(actual);
         }
     };
 
-    // --- 4. FUNCIONES SOCIALES ---
     window.toggleLike = (postKey) => {
         if (!idAuditor) return;
         const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
         const countRef = db.ref(`reportes/${postKey}/vCount`);
-        const icon = document.querySelector(`#post-${postKey} .fa-heart`);
-
+        
         ref.once('value', s => {
             if (s.exists()) {
                 ref.remove();
@@ -258,25 +236,23 @@
             } else {
                 ref.set(true);
                 countRef.transaction(c => (c || 0) + 1);
-                // Notificar sonido a la APK
                 window.parent.postMessage({type: 'playSelect'}, '*');
             }
         });
     };
 
     window.abrirComentariosApp = (postKey) => {
-        // Enviar mensaje a la APK para que abra su modal nativo de comentarios
         window.parent.postMessage({type: 'openComments', key: postKey}, '*');
     };
 
-    // --- 5. HELPERS ---
+    // CORRECCIÓN: Nueva función que soporta SHORTS y links normales
     function getYouTubeID(url) {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        if (!url) return null;
+        const regExp = /^.*((youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/))([^#&?]*).*/;
         const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
+        return (match && match[3].length === 11) ? match[3] : null;
     }
 
-    // Inicio
     window.onload = cargarMuro;
 </script>
 </body>
