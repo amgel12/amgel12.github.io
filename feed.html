@@ -76,9 +76,7 @@
         const container = document.getElementById('muroReportes');
         prepararObservador();
 
-        // LA CLAVE: child_added es instantáneo para nuevos registros
         db.ref('reportes').limitToLast(15).on('child_added', snap => {
-            // Quitar loader si es el primer video
             const loader = document.querySelector('.loader');
             if(loader) loader.remove();
 
@@ -88,7 +86,7 @@
             if (!ytId || document.getElementById(post.key)) return;
 
             const card = crearCard(post, ytId);
-            container.prepend(card); // Poner lo nuevo ARRIBA
+            container.prepend(card); 
             observerFeed.observe(card);
         });
 
@@ -126,11 +124,10 @@
             ${!audioActivado ? `
             <div class="unmute-box" onclick="activarAudioGlobal()">
                 <i class="fas fa-play" style="font-size:2.5rem; margin-left:8px;"></i>
-                <small style="margin-top:8px; font-weight:800; letter-spacing:1px;">VER FEED</small>
+                <small style="margin-top:8px; font-weight:800; letter-spacing:1px;">TOCA PARA SONIDO</small>
             </div>` : ''}
         `;
 
-        // Listeners en tiempo real para esta card
         db.ref(`reportes/${post.key}/vCount`).on('value', s => {
             document.getElementById(`l-count-${post.key}`).textContent = s.val() || 0;
         });
@@ -163,10 +160,11 @@
         const frame = card.querySelector('.vid-frame');
         const muteState = audioActivado ? 0 : 1;
         
+        // 🔥 CORREGIDO: La URL de YouTube ahora está completa
         frame.innerHTML = `
             <iframe width="100%" height="100%"
                 src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}&mute=${muteState}&playlist=${ytId}&loop=1"
-                frameborder="0" allow="autoplay; encrypted-media">
+                frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen>
             </iframe>`;
     }
 
@@ -203,7 +201,7 @@
 
     window.onload = cargarMuro;
 
-    // --- RECIBIR ORDEN DE SALTO DESDE INDEX.HTML ---
+    // --- ESCUCHAR ÓRDENES DESDE LA APP PRINCIPAL ---
     window.addEventListener('message', function(event) {
         if (event.data.type === 'scroll_to_post') {
             const targetId = event.data.postId;
@@ -211,22 +209,15 @@
             const container = document.getElementById('muroReportes');
 
             if (vid && container) {
-                // Desactivamos el imán del scroll para poder movernos libremente
                 container.style.scrollSnapType = "none";
-                
-                // Nos deslizamos al video exacto
                 vid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                // Efecto visual de resaltado (Borde azul)
                 vid.style.transition = "0.5s";
                 vid.style.outline = "6px solid #3b82f6";
                 vid.style.outlineOffset = "-6px";
-
-                // Reactivamos el imán del scroll después del movimiento
                 setTimeout(() => {
                     container.style.scrollSnapType = "y mandatory";
                     vid.style.outline = "none";
-                }, 2000);
+                }, 2500);
             }
         }
     });
