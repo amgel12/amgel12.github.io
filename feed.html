@@ -103,6 +103,10 @@
         card.setAttribute('data-yt', ytId);
         card.setAttribute('data-uid', post.uid || '');
         
+        // 🔥 PASO 1: Verificar el Like ANTES de crear el HTML
+        const isLikedInitial = post.likes && idAuditor && post.likes[idAuditor];
+        const numComments = post.comentarios ? Object.keys(post.comentarios).length : 0;
+
         card.innerHTML = `
             <div class="card-media"><div class="vid-frame"></div></div>
             <div class="card-overlay">
@@ -113,12 +117,13 @@
             </div>
             <div class="card-actions">
                 <button class="action-btn" onclick="toggleLike('${post.key}', '${post.uid}')">
-                    <i class="fas fa-heart" id="heart-${post.key}"></i>
-                    <span id="l-count-${post.key}">0</span>
+                    <!-- 🔥 PASO 2: Aplicar la clase 'liked' directamente si ya tiene like -->
+                    <i class="fas fa-heart ${isLikedInitial ? 'liked' : ''}" id="heart-${post.key}"></i>
+                    <span id="l-count-${post.key}">${post.vCount || 0}</span>
                 </button>
                 <button class="action-btn" onclick="abrirComentariosApp('${post.key}')">
                     <i class="fas fa-comment-dots"></i>
-                    <span id="c-count-${post.key}">0</span>
+                    <span id="c-count-${post.key}">${numComments}</span>
                 </button>
             </div>
             ${!audioActivado ? `
@@ -128,10 +133,15 @@
             </div>` : ''}
         `;
 
+        // --- LISTENERS PARA ACTUALIZACIONES EN VIVO (LIKES DE OTROS) ---
+        
+        // Actualizar contador de likes
         db.ref(`reportes/${post.key}/vCount`).on('value', s => {
-            document.getElementById(`l-count-${post.key}`).textContent = s.val() || 0;
+            const el = document.getElementById(`l-count-${post.key}`);
+            if(el) el.textContent = s.val() || 0;
         });
 
+        // Actualizar color del corazón (por si el usuario da like desde otro dispositivo o borra)
         db.ref(`reportes/${post.key}/likes/${idAuditor}`).on('value', s => {
             const heart = document.getElementById(`heart-${post.key}`);
             if (heart) {
@@ -140,13 +150,14 @@
             }
         });
 
+        // Actualizar contador de comentarios
         db.ref(`reportes/${post.key}/comentarios`).on('value', s => {
-            document.getElementById(`c-count-${post.key}`).textContent = s.numChildren() || 0;
+            const el = document.getElementById(`c-count-${post.key}`);
+            if(el) el.textContent = s.numChildren() || 0;
         });
 
         return card;
     }
-
     function reproducirVideo(card) {
         if (videoActualId === card.id) return;
         
