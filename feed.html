@@ -202,6 +202,34 @@
     };
 
     window.onload = cargarMuro;
+
+    // --- RECIBIR ORDEN DE SALTO DESDE INDEX.HTML ---
+    window.addEventListener('message', function(event) {
+        if (event.data.type === 'scroll_to_post') {
+            const targetId = event.data.postId;
+            const vid = document.getElementById(targetId);
+            const container = document.getElementById('muroReportes');
+
+            if (vid && container) {
+                // Desactivamos el imán del scroll para poder movernos libremente
+                container.style.scrollSnapType = "none";
+                
+                // Nos deslizamos al video exacto
+                vid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Efecto visual de resaltado (Borde azul)
+                vid.style.transition = "0.5s";
+                vid.style.outline = "6px solid #3b82f6";
+                vid.style.outlineOffset = "-6px";
+
+                // Reactivamos el imán del scroll después del movimiento
+                setTimeout(() => {
+                    container.style.scrollSnapType = "y mandatory";
+                    vid.style.outline = "none";
+                }, 2000);
+            }
+        }
+    });
 </script>
 </body>
 </html>
