@@ -6,7 +6,6 @@
     <title>PAGOCODE PREMIUM FEED</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Scripts de Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -29,19 +28,15 @@
         .liked { color: #ef4444 !important; animation: pop 0.3s ease; }
         @keyframes pop { 0% {transform: scale(1);} 50% {transform: scale(1.4);} 100% {transform: scale(1);} }
         .unmute-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background: rgba(0,0,0,0.6); padding: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); color: #fff; display: flex; flex-direction: column; align-items: center; cursor: pointer; pointer-events: auto; backdrop-filter: blur(4px); }
-        .nuevo-badge { position: absolute; top: 80px; right: 12px; z-index: 40; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; animation: pulse 1.5s ease infinite; pointer-events: none; }
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-        /* Loader */
-        .loader { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; z-index: 200; }
+        .loader { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; z-index: 200; text-align: center; }
     </style>
 </head>
 <body>
     <div id="muroReportes">
-        <div class="loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br>Cargando Feed...</div>
+        <div class="loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Cargando Feed...</div>
     </div>
 
 <script>
-    // Configuración Firebase (Asegúrate que sea la misma que en index.html)
     const firebaseConfig = {
         apiKey: "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A",
         authDomain: "ingresos-minimos.firebaseapp.com",
@@ -52,26 +47,55 @@
         appId: "1:104886265441:web:2272d88ad1129919ea6c20"
     };
     
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Obtener UID de la URL (?uid=...)
     const urlParams = new URLSearchParams(window.location.search);
     const idAuditor = urlParams.get('uid');
     
     let audioActivado = false;
     let videoActualId = null;
     let observerFeed = null;
-    let primerCarga = true;
 
-    // ✅ FUNCIÓN EXTRAER ID YOUTUBE (Corregida para Shorts y links normales)
     function getYouTubeID(url) {
         if (!url) return null;
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
         const match = url.match(regExp);
         return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    function prepararObservador() {
+        observerFeed = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) reproducirVideo(entry.target);
+            });
+        }, { threshold: 0.6 });
+    }
+
+    function cargarMuro() {
+        const container = document.getElementById('muroReportes');
+        prepararObservador();
+
+        // LA CLAVE: child_added es instantáneo para nuevos registros
+        db.ref('reportes').limitToLast(15).on('child_added', snap => {
+            // Quitar loader si es el primer video
+            const loader = document.querySelector('.loader');
+            if(loader) loader.remove();
+
+            const post = { key: snap.key, ...snap.val() };
+            const ytId = getYouTubeID(post.musica);
+            
+            if (!ytId || document.getElementById(post.key)) return;
+
+            const card = crearCard(post, ytId);
+            container.prepend(card); // Poner lo nuevo ARRIBA
+            observerFeed.observe(card);
+        });
+
+        db.ref('reportes').on('child_removed', snap => {
+            const el = document.getElementById(snap.key);
+            if (el) el.remove();
+        });
     }
 
     function crearCard(post, ytId) {
@@ -80,9 +104,6 @@
         card.id = post.key;
         card.setAttribute('data-yt', ytId);
         card.setAttribute('data-uid', post.uid || '');
-        
-        const isLiked = post.likes && idAuditor && post.likes[idAuditor];
-        const numComments = post.comentarios ? Object.keys(post.comentarios).length : 0;
         
         card.innerHTML = `
             <div class="card-media"><div class="vid-frame"></div></div>
@@ -94,200 +115,92 @@
             </div>
             <div class="card-actions">
                 <button class="action-btn" onclick="toggleLike('${post.key}', '${post.uid}')">
-                    <i class="fas fa-heart ${isLiked ? 'liked' : ''}"></i>
-                    <span id="l-count-${post.key}">${post.vCount || 0}</span>
+                    <i class="fas fa-heart" id="heart-${post.key}"></i>
+                    <span id="l-count-${post.key}">0</span>
                 </button>
                 <button class="action-btn" onclick="abrirComentariosApp('${post.key}')">
                     <i class="fas fa-comment-dots"></i>
-                    <span>${numComments}</span>
+                    <span id="c-count-${post.key}">0</span>
                 </button>
             </div>
             ${!audioActivado ? `
             <div class="unmute-box" onclick="activarAudioGlobal()">
                 <i class="fas fa-play" style="font-size:2.5rem; margin-left:8px;"></i>
-                <small style="margin-top:8px; font-weight:800; letter-spacing:1px;">TOCA PARA SONIDO</small>
+                <small style="margin-top:8px; font-weight:800; letter-spacing:1px;">VER FEED</small>
             </div>` : ''}
         `;
+
+        // Listeners en tiempo real para esta card
+        db.ref(`reportes/${post.key}/vCount`).on('value', s => {
+            document.getElementById(`l-count-${post.key}`).textContent = s.val() || 0;
+        });
+
+        db.ref(`reportes/${post.key}/likes/${idAuditor}`).on('value', s => {
+            const heart = document.getElementById(`heart-${post.key}`);
+            if (heart) {
+                if (s.exists()) heart.classList.add('liked');
+                else heart.classList.remove('liked');
+            }
+        });
+
+        db.ref(`reportes/${post.key}/comentarios`).on('value', s => {
+            document.getElementById(`c-count-${post.key}`).textContent = s.numChildren() || 0;
+        });
+
         return card;
     }
 
-    function iniciarObservador() {
-        if (observerFeed) observerFeed.disconnect();
-        observerFeed = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    reproducirVideo(entry.target);
-                }
-            });
-        }, { threshold: 0.6 }); // Se activa cuando el 60% del video es visible
-        
-        document.querySelectorAll('.social-card').forEach(c => observerFeed.observe(c));
-    }
-
-    function cargarMuro() {
-        const container = document.getElementById('muroReportes');
-        // Limpiar loader inicial si existe
-        const loader = container.querySelector('.loader');
-        if(loader) loader.style.display = 'none';
-
-        db.ref('reportes').limitToLast(25).on('value', snap => {
-            if (!snap.exists()) {
-                container.innerHTML = "<div style='color:white;text-align:center;padding-top:50vh;'>No hay videos aún</div>";
-                return;
-            }
-
-            const postsMap = {};
-            snap.forEach(child => { postsMap[child.key] = {key: child.key, ...child.val()}; });
-            
-            // Eliminar cards que ya no existen en BD (opcional, para limpieza)
-            const latestKeys = new Set(Object.keys(postsMap));
-            container.querySelectorAll('.social-card').forEach(el => {
-                if (!latestKeys.has(el.id) && el.id !== videoActualId) el.remove();
-            });
-
-            let huboNuevos = false;
-            snap.forEach(child => {
-                if (document.getElementById(child.key)) return; // Ya existe
-                
-                const post = {key: child.key, ...child.val()};
-                const ytId = getYouTubeID(post.musica);
-                
-                if (!ytId) return; // Saltar si no es video válido
-
-                const card = crearCard(post, ytId);
-                
-                if (primerCarga) { 
-                    container.appendChild(card); 
-                } else {
-                    // Efecto "NUEVO" para posts recientes
-                    const badge = document.createElement('div');
-                    badge.className = 'nuevo-badge';
-                    badge.textContent = 'NUEVO';
-                    card.appendChild(badge);
-                    container.insertBefore(card, container.firstChild);
-                }
-                huboNuevos = true;
-            });
-
-            // Ordenar solo en la primera carga
-            if (primerCarga && !huboNuevos) {
-                const cards = Array.from(container.querySelectorAll('.social-card'));
-                cards.sort((a, b) => {
-                    const fa = postsMap[a.id]?.fecha || 0;
-                    const fb = postsMap[b.id]?.fecha || 0;
-                    return fb - fa; // Más reciente primero
-                });
-                cards.forEach(c => container.appendChild(c));
-            }
-
-            // Limitar cantidad de DOM elements para rendimiento
-            while (container.children.length > 30) {
-                const last = container.lastChild;
-                if (last.id === videoActualId) break; // No borrar el que se está viendo
-                last.remove();
-            }
-
-            iniciarObservador();
-            primerCarga = false;
-        });
-    }
-
     function reproducirVideo(card) {
-        if (videoActualId === card.id) return; // Ya se está reproduciendo
+        if (videoActualId === card.id) return;
         
-        // Pausar anterior
         if (videoActualId) {
             const ant = document.getElementById(videoActualId);
-            if (ant) {
-                const frame = ant.querySelector('.vid-frame');
-                if(frame) frame.innerHTML = ""; // Destruir iframe para parar audio
-                // Opcional: Mostrar poster de nuevo si lo tuvieras
-            }
+            if (ant) ant.querySelector('.vid-frame').innerHTML = "";
         }
 
         videoActualId = card.id;
         const ytId = card.getAttribute('data-yt');
         const frame = card.querySelector('.vid-frame');
-        
-        if (!frame || !ytId) return;
-
         const muteState = audioActivado ? 0 : 1;
         
-        // Inyectar iframe con autoplay
         frame.innerHTML = `
             <iframe width="100%" height="100%"
                 src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}&mute=${muteState}&playlist=${ytId}&loop=1"
-                frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen>
+                frameborder="0" allow="autoplay; encrypted-media">
             </iframe>`;
     }
 
     window.activarAudioGlobal = () => {
         audioActivado = true;
         document.querySelectorAll('.unmute-box').forEach(el => el.remove());
-        // Reiniciar video actual sin mute
         const actual = document.getElementById(videoActualId);
-        if (actual) { 
-            videoActualId = null; 
-            reproducirVideo(actual); 
-        }
+        if (actual) { videoActualId = null; reproducirVideo(actual); }
     };
 
     window.toggleLike = (postKey, ownerUid) => {
-        if (!idAuditor) {
-            alert("Debes iniciar sesión para dar like");
-            return;
-        }
+        if (!idAuditor) return;
         const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
         const countRef = db.ref(`reportes/${postKey}/vCount`);
         
         ref.once('value', s => {
             if (s.exists()) {
-                // Quitar like
                 ref.remove();
                 countRef.transaction(c => (c || 0) - 1);
             } else {
-                // Dar like
                 ref.set(true);
                 countRef.transaction(c => (c || 0) + 1);
-                
-                // Notificar al dueño (vía postMessage a la app padre si existe)
+                window.parent.postMessage({type: 'playSelect'}, '*');
                 if (window.parent && ownerUid && ownerUid !== idAuditor) {
-                    window.parent.postMessage({
-                        type: 'doLike', 
-                        postKey: postKey, 
-                        ownerUid: ownerUid
-                    }, '*');
+                    window.parent.postMessage({type: 'doLike', postKey: postKey, ownerUid: ownerUid}, '*');
                 }
             }
         });
-
-        // Actualización visual inmediata (Optimista)
-        const icon = document.querySelector(`#${postKey} .fa-heart`);
-        const countSpan = document.getElementById(`l-count-${postKey}`);
-        
-        if (icon) {
-            const isLiked = !icon.classList.contains('liked');
-            if (isLiked) {
-                icon.classList.add('liked');
-                icon.style.color = '#ef4444';
-                if(countSpan) countSpan.textContent = (parseInt(countSpan.textContent)||0) + 1;
-            } else {
-                icon.classList.remove('liked');
-                icon.style.color = 'white';
-                if(countSpan) countSpan.textContent = Math.max(0, (parseInt(countSpan.textContent)||0) - 1);
-            }
-        }
     };
 
     window.abrirComentariosApp = (postKey) => {
-        if (window.parent) {
-            window.parent.postMessage({type: 'openComments', key: postKey}, '*');
-        } else {
-            alert("Abriendo comentarios para: " + postKey);
-        }
+        if (window.parent) window.parent.postMessage({type: 'openComments', key: postKey}, '*');
     };
 
-    // Iniciar al cargar
     window.onload = cargarMuro;
 </script>
 </body>
