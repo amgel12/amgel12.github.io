@@ -189,24 +189,40 @@
     };
 
     window.toggleLike = (postKey, ownerUid) => {
-        if (!idAuditor || idAuditor === "anon") return alert("Inicia sesión");
-        const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
-        const countRef = db.ref(`reportes/${postKey}/vCount`);
-        ref.once('value', s => {
-            if (s.exists()) {
-                ref.remove();
-                countRef.transaction(c => (c || 0) - 1);
-            } else {
-                ref.set(true);
-                countRef.transaction(c => (c || 0) + 1);
-                window.parent.postMessage({type: 'playSelect'}, '*');
-                if (window.parent && ownerUid && ownerUid !== idAuditor) {
-                    window.parent.postMessage({type: 'doLike', postKey: postKey, ownerUid: ownerUid}, '*');
-                }
-            }
-        });
-    };
+    if (!idAuditor || idAuditor === "anon") return alert("Inicia sesión");
+    
+    const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
+    const countRef = db.ref(`reportes/${postKey}/vCount`);
 
+    // 🔥 EFECTO VISUAL INMEDIATO (Antes de ir a Firebase)
+    const icon = document.getElementById(`heart-${postKey}`);
+    const countSpan = document.getElementById(`l-count-${postKey}`);
+    
+    ref.once('value', s => {
+        if (s.exists()) {
+            // QUITAR LIKE
+            ref.remove();
+            countRef.transaction(c => (c || 0) - 1);
+            if(icon) icon.classList.remove('liked'); // Se pone blanco
+        } else {
+            // DAR LIKE
+            ref.set(true);
+            countRef.transaction(c => (c || 0) + 1);
+            if(icon) icon.classList.add('liked'); // Se pone rojo
+            
+            window.parent.postMessage({type: 'playSelect'}, '*');
+            
+            // 🔥 SI EL DUEÑO EXISTE, AVISAR AL INDEX.HTML
+            if (window.parent && ownerUid && ownerUid !== idAuditor) {
+                window.parent.postMessage({
+                    type: 'doLike', 
+                    postKey: postKey, 
+                    ownerUid: ownerUid
+                }, '*');
+            }
+        }
+    });
+};
     window.abrirComentariosApp = (postKey) => {
         if (window.parent) window.parent.postMessage({type: 'openComments', key: postKey}, '*');
     };
