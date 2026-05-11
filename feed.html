@@ -82,14 +82,18 @@
 
             const post = { key: snap.key, ...snap.val() };
             
-            // Determinamos si es un link de Cloudflare o ID de YouTube
-            let mediaId = post.musica.includes('workers.dev') ? post.musica : getYouTubeID(post.musica);
+            let mediaLink = post.musica.includes('workers.dev') ? post.musica : getYouTubeID(post.musica);
             
-            if (!mediaId || document.getElementById(post.key)) return;
+            if (!mediaLink || document.getElementById(post.key)) return;
 
-            const card = crearCard(post, mediaId);
+            const card = crearCard(post, mediaLink);
             container.prepend(card); 
             observerFeed.observe(card);
+        });
+
+        db.ref('reportes').on('child_removed', snap => {
+            const el = document.getElementById(snap.key);
+            if (el) el.remove();
         });
     }
 
@@ -127,7 +131,6 @@
             </div>` : ''}
         `;
 
-        // Listeners en tiempo real para esta card
         db.ref(`reportes/${post.key}/vCount`).on('value', s => {
             const el = document.getElementById(`l-count-${post.key}`);
             if(el) el.textContent = s.val() || 0;
@@ -162,15 +165,13 @@
         const frame = card.querySelector('.vid-frame');
         
         if (linkMedia.includes('workers.dev')) {
-            // VIDEO PROPIO
             frame.innerHTML = `
                 <video width="100%" height="100%" autoplay loop playsinline 
                     ${audioActivado ? '' : 'muted'} 
-                    style="object-fit: cover; background: #000;">
+                    style="object-fit: cover; background: #000; width:100%; height:100%;">
                     <source src="${linkMedia}" type="video/mp4">
                 </video>`;
         } else {
-            // YOUTUBE
             const muteState = audioActivado ? 0 : 1;
             frame.innerHTML = `
                 <iframe width="100%" height="100%"
@@ -191,7 +192,6 @@
         if (!idAuditor) return;
         const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
         const countRef = db.ref(`reportes/${postKey}/vCount`);
-        
         ref.once('value', s => {
             if (s.exists()) {
                 ref.remove();
