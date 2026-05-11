@@ -81,7 +81,6 @@
             if(loader) loader.remove();
 
             const post = { key: snap.key, ...snap.val() };
-            
             let mediaLink = post.musica.includes('workers.dev') ? post.musica : getYouTubeID(post.musica);
             
             if (!mediaLink || document.getElementById(post.key)) return;
@@ -131,6 +130,7 @@
             </div>` : ''}
         `;
 
+        // LISTENERS EN TIEMPO REAL
         db.ref(`reportes/${post.key}/vCount`).on('value', s => {
             const el = document.getElementById(`l-count-${post.key}`);
             if(el) el.textContent = s.val() || 0;
@@ -144,9 +144,9 @@
             }
         });
 
-        db.ref(`reportes/${post.key}/comentarios`).on('value', s => {
+        db.ref(`reportes/${post.key}/comentarios`).on('value', snap => {
             const el = document.getElementById(`c-count-${post.key}`);
-            if(el) el.textContent = s.numChildren() || 0;
+            if (el) el.textContent = snap.numChildren() || 0;
         });
 
         return card;
@@ -165,19 +165,10 @@
         const frame = card.querySelector('.vid-frame');
         
         if (linkMedia.includes('workers.dev')) {
-            frame.innerHTML = `
-                <video width="100%" height="100%" autoplay loop playsinline 
-                    ${audioActivado ? '' : 'muted'} 
-                    style="object-fit: cover; background: #000; width:100%; height:100%;">
-                    <source src="${linkMedia}" type="video/mp4">
-                </video>`;
+            frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit: cover; background: #000; width:100%; height:100%;"><source src="${linkMedia}" type="video/mp4"></video>`;
         } else {
             const muteState = audioActivado ? 0 : 1;
-            frame.innerHTML = `
-                <iframe width="100%" height="100%"
-                    src="https://www.youtube.com/embed/${linkMedia}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}&mute=${muteState}&playlist=${linkMedia}&loop=1"
-                    frameborder="0" allow="autoplay; encrypted-media">
-                </iframe>`;
+            frame.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${linkMedia}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}&mute=${muteState}&playlist=${linkMedia}&loop=1" frameborder="0" allow="autoplay; encrypted-media"></iframe>`;
         }
     }
 
@@ -211,7 +202,6 @@
         if (window.parent) window.parent.postMessage({type: 'openComments', key: postKey}, '*');
     };
 
-    // --- ESCUCHAR ÓRDENES DE SALTO (NOTIFICACIONES) ---
     window.addEventListener('message', function(event) {
         if (event.data.type === 'scroll_to_post') {
             const targetId = event.data.postId;
