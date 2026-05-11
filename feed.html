@@ -157,7 +157,8 @@
 
         db.ref(`reportes/${key}/comentarios`).on('value', snap => {
             const el = document.getElementById(`c-count-${key}`);
-            if (el) el.textContent = snap.numChildren() || 0;
+            const count = snap.val() ? Object.keys(snap.val()).length : 0;
+            if (el) el.textContent = count;
         });
 
         return card;
