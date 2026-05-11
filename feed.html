@@ -81,31 +81,26 @@
             if(loader) loader.remove();
 
             const post = { key: snap.key, ...snap.val() };
-            const ytId = getYouTubeID(post.musica);
             
-            if (!ytId || document.getElementById(post.key)) return;
+            // Determinamos si es un link de Cloudflare o ID de YouTube
+            let mediaId = post.musica.includes('workers.dev') ? post.musica : getYouTubeID(post.musica);
+            
+            if (!mediaId || document.getElementById(post.key)) return;
 
-            const card = crearCard(post, ytId);
+            const card = crearCard(post, mediaId);
             container.prepend(card); 
             observerFeed.observe(card);
         });
-
-        db.ref('reportes').on('child_removed', snap => {
-            const el = document.getElementById(snap.key);
-            if (el) el.remove();
-        });
     }
 
-    function crearCard(post, ytId) {
+    function crearCard(post, mediaId) {
         const card = document.createElement('div');
         card.className = 'social-card';
         card.id = post.key;
-        card.setAttribute('data-yt', ytId);
+        card.setAttribute('data-media', mediaId);
         card.setAttribute('data-uid', post.uid || '');
         
-        // 🔥 PASO 1: Verificar el Like ANTES de crear el HTML
         const isLikedInitial = post.likes && idAuditor && post.likes[idAuditor];
-        const numComments = post.comentarios ? Object.keys(post.comentarios).length : 0;
 
         card.innerHTML = `
             <div class="card-media"><div class="vid-frame"></div></div>
@@ -117,13 +112,12 @@
             </div>
             <div class="card-actions">
                 <button class="action-btn" onclick="toggleLike('${post.key}', '${post.uid}')">
-                    <!-- 🔥 PASO 2: Aplicar la clase 'liked' directamente si ya tiene like -->
                     <i class="fas fa-heart ${isLikedInitial ? 'liked' : ''}" id="heart-${post.key}"></i>
                     <span id="l-count-${post.key}">${post.vCount || 0}</span>
                 </button>
                 <button class="action-btn" onclick="abrirComentariosApp('${post.key}')">
                     <i class="fas fa-comment-dots"></i>
-                    <span id="c-count-${post.key}">${numComments}</span>
+                    <span id="c-count-${post.key}">0</span>
                 </button>
             </div>
             ${!audioActivado ? `
@@ -133,15 +127,12 @@
             </div>` : ''}
         `;
 
-        // --- LISTENERS PARA ACTUALIZACIONES EN VIVO (LIKES DE OTROS) ---
-        
-        // Actualizar contador de likes
+        // Listeners en tiempo real para esta card
         db.ref(`reportes/${post.key}/vCount`).on('value', s => {
             const el = document.getElementById(`l-count-${post.key}`);
             if(el) el.textContent = s.val() || 0;
         });
 
-        // Actualizar color del corazón (por si el usuario da like desde otro dispositivo o borra)
         db.ref(`reportes/${post.key}/likes/${idAuditor}`).on('value', s => {
             const heart = document.getElementById(`heart-${post.key}`);
             if (heart) {
@@ -150,7 +141,6 @@
             }
         });
 
-        // Actualizar contador de comentarios
         db.ref(`reportes/${post.key}/comentarios`).on('value', s => {
             const el = document.getElementById(`c-count-${post.key}`);
             if(el) el.textContent = s.numChildren() || 0;
@@ -158,6 +148,7 @@
 
         return card;
     }
+
     function reproducirVideo(card) {
         if (videoActualId === card.id) return;
         
@@ -167,16 +158,26 @@
         }
 
         videoActualId = card.id;
-        const ytId = card.getAttribute('data-yt');
+        const linkMedia = card.getAttribute('data-media'); 
         const frame = card.querySelector('.vid-frame');
-        const muteState = audioActivado ? 0 : 1;
         
-        // 🔥 CORREGIDO: La URL de YouTube ahora está completa
-        frame.innerHTML = `
-            <iframe width="100%" height="100%"
-                src="https://www.youtube.com/embed/${ytId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}&mute=${muteState}&playlist=${ytId}&loop=1"
-                frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen>
-            </iframe>`;
+        if (linkMedia.includes('workers.dev')) {
+            // VIDEO PROPIO
+            frame.innerHTML = `
+                <video width="100%" height="100%" autoplay loop playsinline 
+                    ${audioActivado ? '' : 'muted'} 
+                    style="object-fit: cover; background: #000;">
+                    <source src="${linkMedia}" type="video/mp4">
+                </video>`;
+        } else {
+            // YOUTUBE
+            const muteState = audioActivado ? 0 : 1;
+            frame.innerHTML = `
+                <iframe width="100%" height="100%"
+                    src="https://www.youtube.com/embed/${linkMedia}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}&mute=${muteState}&playlist=${linkMedia}&loop=1"
+                    frameborder="0" allow="autoplay; encrypted-media">
+                </iframe>`;
+        }
     }
 
     window.activarAudioGlobal = () => {
@@ -210,15 +211,12 @@
         if (window.parent) window.parent.postMessage({type: 'openComments', key: postKey}, '*');
     };
 
-    window.onload = cargarMuro;
-
-    // --- ESCUCHAR ÓRDENES DESDE LA APP PRINCIPAL ---
+    // --- ESCUCHAR ÓRDENES DE SALTO (NOTIFICACIONES) ---
     window.addEventListener('message', function(event) {
         if (event.data.type === 'scroll_to_post') {
             const targetId = event.data.postId;
             const vid = document.getElementById(targetId);
             const container = document.getElementById('muroReportes');
-
             if (vid && container) {
                 container.style.scrollSnapType = "none";
                 vid.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -232,6 +230,8 @@
             }
         }
     });
+
+    window.onload = cargarMuro;
 </script>
 </body>
 </html>
