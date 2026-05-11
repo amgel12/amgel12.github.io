@@ -51,7 +51,7 @@
     const db = firebase.database();
 
     const urlParams = new URLSearchParams(window.location.search);
-    const idAuditor = urlParams.get('uid');
+    const idAuditor = urlParams.get('uid') || "anon";
     
     let audioActivado = false;
     let videoActualId = null;
@@ -73,21 +73,32 @@
     }
 
     function cargarMuro() {
+        console.log("Iniciando carga de videos...");
         const container = document.getElementById('muroReportes');
         prepararObservador();
 
         db.ref('reportes').limitToLast(15).on('child_added', snap => {
-            const loader = document.querySelector('.loader');
-            if(loader) loader.remove();
+            try {
+                const post = snap.val();
+                if (!post || !post.musica) return; // Seguridad: Si no hay música, saltar
 
-            const post = { key: snap.key, ...snap.val() };
-            let mediaLink = post.musica.includes('workers.dev') ? post.musica : getYouTubeID(post.musica);
-            
-            if (!mediaLink || document.getElementById(post.key)) return;
+                const loader = document.querySelector('.loader');
+                if(loader) loader.remove();
 
-            const card = crearCard(post, mediaLink);
-            container.prepend(card); 
-            observerFeed.observe(card);
+                let mediaLink = post.musica.includes('workers.dev') ? post.musica : getYouTubeID(post.musica);
+                
+                if (!mediaLink || document.getElementById(snap.key)) return;
+
+                const card = crearCard(snap.key, post, mediaLink);
+                container.prepend(card); 
+                observerFeed.observe(card);
+                console.log("Video añadido:", snap.key);
+            } catch (e) {
+                console.error("Error cargando post:", e);
+            }
+        }, error => {
+            console.error("Error de Firebase:", error);
+            alert("Error de permisos en Firebase. Revisa las reglas.");
         });
 
         db.ref('reportes').on('child_removed', snap => {
@@ -96,10 +107,10 @@
         });
     }
 
-    function crearCard(post, mediaId) {
+    function crearCard(key, post, mediaId) {
         const card = document.createElement('div');
         card.className = 'social-card';
-        card.id = post.key;
+        card.id = key;
         card.setAttribute('data-media', mediaId);
         card.setAttribute('data-uid', post.uid || '');
         
@@ -114,13 +125,13 @@
                 </div>
             </div>
             <div class="card-actions">
-                <button class="action-btn" onclick="toggleLike('${post.key}', '${post.uid}')">
-                    <i class="fas fa-heart ${isLikedInitial ? 'liked' : ''}" id="heart-${post.key}"></i>
-                    <span id="l-count-${post.key}">${post.vCount || 0}</span>
+                <button class="action-btn" onclick="toggleLike('${key}', '${post.uid}')">
+                    <i class="fas fa-heart ${isLikedInitial ? 'liked' : ''}" id="heart-${key}"></i>
+                    <span id="l-count-${key}">${post.vCount || 0}</span>
                 </button>
-                <button class="action-btn" onclick="abrirComentariosApp('${post.key}')">
+                <button class="action-btn" onclick="abrirComentariosApp('${key}')">
                     <i class="fas fa-comment-dots"></i>
-                    <span id="c-count-${post.key}">0</span>
+                    <span id="c-count-${key}">0</span>
                 </button>
             </div>
             ${!audioActivado ? `
@@ -130,22 +141,22 @@
             </div>` : ''}
         `;
 
-        // LISTENERS EN TIEMPO REAL
-        db.ref(`reportes/${post.key}/vCount`).on('value', s => {
-            const el = document.getElementById(`l-count-${post.key}`);
+        // Listeners individuales
+        db.ref(`reportes/${key}/vCount`).on('value', s => {
+            const el = document.getElementById(`l-count-${key}`);
             if(el) el.textContent = s.val() || 0;
         });
 
-        db.ref(`reportes/${post.key}/likes/${idAuditor}`).on('value', s => {
-            const heart = document.getElementById(`heart-${post.key}`);
+        db.ref(`reportes/${key}/likes/${idAuditor}`).on('value', s => {
+            const heart = document.getElementById(`heart-${key}`);
             if (heart) {
                 if (s.exists()) heart.classList.add('liked');
                 else heart.classList.remove('liked');
             }
         });
 
-        db.ref(`reportes/${post.key}/comentarios`).on('value', snap => {
-            const el = document.getElementById(`c-count-${post.key}`);
+        db.ref(`reportes/${key}/comentarios`).on('value', snap => {
+            const el = document.getElementById(`c-count-${key}`);
             if (el) el.textContent = snap.numChildren() || 0;
         });
 
@@ -154,12 +165,10 @@
 
     function reproducirVideo(card) {
         if (videoActualId === card.id) return;
-        
         if (videoActualId) {
             const ant = document.getElementById(videoActualId);
             if (ant) ant.querySelector('.vid-frame').innerHTML = "";
         }
-
         videoActualId = card.id;
         const linkMedia = card.getAttribute('data-media'); 
         const frame = card.querySelector('.vid-frame');
@@ -180,7 +189,7 @@
     };
 
     window.toggleLike = (postKey, ownerUid) => {
-        if (!idAuditor) return;
+        if (!idAuditor || idAuditor === "anon") return alert("Inicia sesión");
         const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
         const countRef = db.ref(`reportes/${postKey}/vCount`);
         ref.once('value', s => {
@@ -204,8 +213,7 @@
 
     window.addEventListener('message', function(event) {
         if (event.data.type === 'scroll_to_post') {
-            const targetId = event.data.postId;
-            const vid = document.getElementById(targetId);
+            const vid = document.getElementById(event.data.postId);
             const container = document.getElementById('muroReportes');
             if (vid && container) {
                 container.style.scrollSnapType = "none";
