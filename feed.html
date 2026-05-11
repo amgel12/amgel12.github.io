@@ -224,10 +224,15 @@
     });
 };
     window.abrirComentariosApp = (postKey) => {
-        if (window.parent) window.parent.postMessage({type: 'openComments', key: postKey}, '*');
+        const count = document.getElementById(`c-count-${postKey}`)?.textContent || '0';
+        if (window.parent) window.parent.postMessage({type: 'openComments', key: postKey, count: count}, '*');
     };
 
     window.addEventListener('message', function(event) {
+        if (event.data.type === 'updateCommentCount') {
+            const el = document.getElementById(`c-count-${event.data.key}`);
+            if (el) el.textContent = event.data.count || 0;
+        }
         if (event.data.type === 'scroll_to_post') {
             const vid = document.getElementById(event.data.postId);
             const container = document.getElementById('muroReportes');
