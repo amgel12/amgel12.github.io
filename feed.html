@@ -131,7 +131,7 @@
                 </button>
                 <button class="action-btn" onclick="abrirComentariosApp('${key}')">
                     <i class="fas fa-comment-dots"></i>
-                    <span id="c-count-${key}">0</span>
+                    <span id="c-count-${key}">${post.comentarios ? Object.keys(post.comentarios).length : 0}</span>
                 </button>
             </div>
             ${!audioActivado ? `
