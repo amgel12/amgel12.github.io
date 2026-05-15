@@ -234,6 +234,13 @@
     };
 
     window.addEventListener('message', function(event) {
+        if (event.data.type === 'stopAllVideos') {
+            if (videoActualId) {
+                const ant = document.getElementById(videoActualId);
+                if (ant) ant.querySelector('.vid-frame').innerHTML = "";
+                videoActualId = null;
+            }
+        }
         if (event.data.type === 'updateCommentCount') {
             const el = document.getElementById(`c-count-${event.data.key}`);
             if (el) el.textContent = event.data.count || 0;
