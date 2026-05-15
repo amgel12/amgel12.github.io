@@ -242,7 +242,7 @@
     };
 
     window.addEventListener('message', function(event) {
-        if (event.data.type === 'detenerVideoMuro') {
+        if (event.data.type === 'detenerVideoMuro' || event.data.type === 'stopAllVideos') {
             window.detenerVideoMuro();
         }
         if (event.data.type === 'updateCommentCount') {
