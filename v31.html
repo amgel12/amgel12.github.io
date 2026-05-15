@@ -4767,7 +4767,7 @@ function procesarPublicacionPendiente() {
                 
                 // 4. Forzar al Muro a mostrar lo nuevo
                 goToScreen(2);
-                cargarMuroReportes(); 
+                
             }).catch(e => {
                 console.error("Error al publicar misión:", e);
                 notify("Error al publicar: " + e.message);
@@ -6186,6 +6186,7 @@ if(frame) {
         notify("🎵 Canción elegida"); 
     };
     window.abrirSelectorMusica = () => {
+    detenerVideoMuro();
     document.getElementById('modalMusicSelector').style.display='flex';
     // Buscar automáticamente al abrir
     const terminos = ['Pop Latino 2025', 'Reggaeton hits', 'Bad Bunny', 'Feid 2025', 'Karol G', 'Peso Pluma'];
@@ -8944,6 +8945,10 @@ window.verFotoInternal = (key) => {
 };
 
 window.detenerVideoMuro = () => {
+    const feedIframe = document.getElementById('mainFeedIframe');
+    if (feedIframe && feedIframe.contentWindow) {
+        feedIframe.contentWindow.postMessage({type: 'stopAllVideos'}, '*');
+    }
     if (videoActualJugando) {
         const container = document.getElementById(videoActualJugando);
         if (container) {
@@ -10099,6 +10104,7 @@ function guardarPaypalNuevo() {
     mostrarToast('✅ PayPal guardado');
 
     setTimeout(() => {
+        if (typeof detenerVideoMuro === 'function') detenerVideoMuro();
         document.getElementById('modalMusicSelector').style.display = 'flex';
     }, 400);
 }
@@ -11294,7 +11300,7 @@ window.eliminarGrupo = () => {
             Duración máxima: <b style="color:#ef4444;">10 segundos</b>.
         </p>
         
-        
+        <!-- ... resto del modal ... -->
     </div>
 </div>
 <!-- 3. AL FINAL: Cerrar etiquetas HTML -->
