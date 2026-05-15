@@ -3994,15 +3994,36 @@ var englishLessons = [
     }
 ];
 
+// Variable global para la voz
+let synth = window.speechSynthesis;
+
 function speakText(text) {
-    if (!window.speechSynthesis) { console.warn('SpeechSynthesis no disponible'); return; }
-    window.speechSynthesis.cancel();
+    if (!synth) return;
+
+    // 1. Cancelamos cualquier voz que esté sonando ahorita
+    synth.cancel();
+
+    // 2. Creamos el mensaje
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    window.speechSynthesis.speak(utterance);
+    
+    // 3. Configuración obligatoria para inglés
+    utterance.lang = 'en-US'; 
+    utterance.rate = 0.9;  // Velocidad un poco más lenta para que se entienda
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    // 4. TRUCO PARA ANDROID: Esperar un momento antes de hablar
+    setTimeout(() => {
+        synth.speak(utterance);
+    }, 100);
+}
+
+// 5. TRUCO EXTRA: Precargar las voces en Android
+if (synth && synth.onvoiceschanged !== undefined) {
+    synth.onvoiceschanged = () => {
+        console.log("Voces cargadas en Android");
+        synth.getVoices(); 
+    };
 }
 
 function showQuestion() {
