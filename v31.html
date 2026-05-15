@@ -3995,7 +3995,7 @@ var englishLessons = [
 ];
 
 // Variable global para la voz
-
+let synth = window.speechSynthesis;
 
 function speakText(text) {
     if (typeof AndroidNative !== 'undefined' && AndroidNative.speakTextNative) {
