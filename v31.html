@@ -3995,27 +3995,19 @@ var englishLessons = [
 ];
 
 // Variable global para la voz
-let synth = window.speechSynthesis;
+
 
 function speakText(text) {
-    if (!synth) return;
-
-    // 1. Cancelamos cualquier voz que esté sonando ahorita
-    synth.cancel();
-
-    // 2. Creamos el mensaje
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // 3. Configuración obligatoria para inglés
-    utterance.lang = 'en-US'; 
-    utterance.rate = 0.9;  // Velocidad un poco más lenta para que se entienda
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-
-    // 4. TRUCO PARA ANDROID: Esperar un momento antes de hablar
-    setTimeout(() => {
-        synth.speak(utterance);
-    }, 100);
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.speakTextNative) {
+        console.log("Usando motor nativo");
+        AndroidNative.speakTextNative(text);
+    } else {
+        console.log("Usando motor del navegador");
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'en-US';
+        window.speechSynthesis.speak(msg);
+    }
 }
 
 // 5. TRUCO EXTRA: Precargar las voces en Android
