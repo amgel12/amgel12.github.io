@@ -10791,6 +10791,15 @@ window.otorgarMensajesPorVideo = () => {
     setTimeout(subirVideoServidor, 300);
 };
 
+window.onAdSkipped = () => {
+    const btn = document.getElementById('btnPublicarVideo');
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = "📺 Publicar (anuncio bonificado)";
+    }
+    notify("💬 Ve el anuncio completo para publicar tu video");
+};
+
 // 4. Subir a Firebase (Simulación de Storage usando Base64 o Link temporal)
 window.subirVideoServidor = () => {
     const file = document.getElementById('inputVideoArchivo').files[0];
