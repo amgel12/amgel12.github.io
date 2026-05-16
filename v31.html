@@ -1923,7 +1923,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
 
-<button onclick="
+<button style="background: #ef4444; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;" onclick="
 document.getElementById('modalInvitar').style.display='none';
 localStorage.setItem('ultimoCierreInvitar', Date.now());
 
@@ -3423,7 +3423,7 @@ Cerrar
         
         <div style="background: white; padding: 15px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
             <h3 style="margin: 0; color: #1e293b; font-size: 1.1rem;">📊 Mi Trayectoria</h3>
-            <button onclick="document.getElementById('modalHistorial').style.display='none'" style="border: none; background: none; font-size: 1.2rem; color: #64748b;">✕</button>
+            <button onclick="window.cerrarHistorial()" style="border: none; background: none; font-size: 1.2rem; color: #64748b;">✕</button>
         </div>
 
         <div style="padding: 20px; overflow-y: auto; flex: 1;">
@@ -5046,12 +5046,7 @@ window.manejarAuth = async () => {
             const labelSnake = document.getElementById('snakeWalletDisplay');
             if(labelSnake) labelSnake.textContent = ` ${parseFloat(d.snakeTotal || 0).toFixed(2)}`;
 
-            // Lealtad
-            const nivelLealtad = d.loyaltyPercent || 0;
-            const labelLealtad = document.getElementById('historialLoyaltyPercent');
-            const barraLealtad = document.getElementById('historialLoyaltyBar');
-            if (labelLealtad) labelLealtad.textContent = nivelLealtad + "%";
-            if (barraLealtad) barraLealtad.style.width = nivelLealtad + "%";
+            // Lealtad (se actualiza en tiempo real vía listener en abrirHistorial)
 
             // --- C) USUARIO (Apodo, Avatar) ---
             myCurrentKey = d.myInviteKey || "---";
@@ -8156,11 +8151,24 @@ window.cerrarChatGrupo = () => {
 };
 
 // --- FUNCIÓN ABRIR HISTORIAL CON LEALTAD ---
+window.cerrarHistorial = () => {
+    document.getElementById('modalHistorial').style.display = 'none';
+    if (window._lealtadRef && window._lealtadCallback) {
+        window._lealtadRef.off('value', window._lealtadCallback);
+        window._lealtadRef = null;
+        window._lealtadCallback = null;
+    }
+};
+
 window.abrirHistorial = () => {
     document.getElementById('modalHistorial').style.display = 'flex';
 
     if (idAuditor) {
-        db.ref(`users/${idAuditor}/loyaltyPercent`).once('value').then(snap => {
+        if (window._lealtadRef && window._lealtadCallback) {
+            window._lealtadRef.off('value', window._lealtadCallback);
+        }
+        window._lealtadRef = db.ref(`users/${idAuditor}/loyaltyPercent`);
+        window._lealtadCallback = window._lealtadRef.on('value', snap => {
             const porcentaje = snap.val() || 0;
 
             const txt = document.getElementById('historialLoyaltyPercent');
@@ -11297,7 +11305,7 @@ window.eliminarGrupo = () => {
         <h3 style="color:#10b981;">🚀 Publicar Mi Video</h3>
         <!-- 🔥 Texto actualizado -->
         <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 15px;">
-            Duración máxima: <b style="color:#ef4444;">10 segundos</b>.
+            Duración máxima: <b style="col    or:#ef4444;">10 segundos</b>.
         </p>
         
         <!-- ... resto del modal ... -->
