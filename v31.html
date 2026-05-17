@@ -8103,37 +8103,39 @@ function verificarComprasConfirmadas() {
     });
 }
 
-// 📺 OPCIÓN 2: Ver anuncio (go:s7) para 5 mensajes extra
+// 📺 OPCIÓN 2: Ver anuncio recompensado para 10 mensajes extra
 window.verAnuncioMensajes = () => {
     try { window.playSound('click'); } catch(e){}
-    notify("📺 Cargando anuncio...");
+    notify("📺 Ve el anuncio completo para ganar 10 mensajes...");
 
-    // Lanzar anuncio go:s7 vía iframe oculto (mismo patrón que el resto de la app)
-    try {
-        const adTrigger = document.createElement('iframe');
-        adTrigger.style.display = 'none';
-        adTrigger.src = 'go:s7';
-        document.body.appendChild(adTrigger);
-        setTimeout(() => {
-            try { document.body.removeChild(adTrigger); } catch(e){}
-        }, 3000);
-    } catch(err) {
-        console.log("Error al cargar anuncio: ", err);
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirVideoRecompensado) {
+        window._rewardPendingTarget = targetUserUid;
+        AndroidNative.abrirVideoRecompensado();
+    } else {
+        notify("⚠️ Anuncios no disponibles en esta versión");
     }
+};
 
-    setTimeout(() => {
-        db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).once('value', s => {
-            const data = s.val() || {};
-            const extras = data.extras || 0;
-            db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}/extras`).set(extras + BONUS_AD_MSGS)
-            .then(() => {
-                cerrarModalComprarMensajes();
-                notify(`🎁 +${BONUS_AD_MSGS} mensajes desbloqueados por ver anuncio`);
-                checkLimiteDiario(targetUserUid);
-                try { window.playSound('win'); } catch(e){}
-            });
+// Callback desde Kotlin tras ver anuncio recompensado para mensajes
+window.otorgarMensajesPorAd = () => {
+    const targetUid = window._rewardPendingTarget || targetUserUid;
+    if (!targetUid) return notify("⚠️ Error: no hay chat activo");
+
+    db.ref(`users/${idAuditor}/privados_diarios/${targetUid}`).once('value', s => {
+        const data = s.val() || {};
+        const extras = data.extras || 0;
+        db.ref(`users/${idAuditor}/privados_diarios/${targetUid}/extras`).set(extras + BONUS_AD_MSGS)
+        .then(() => {
+            cerrarModalComprarMensajes();
+            notify(`🎁 +${BONUS_AD_MSGS} mensajes desbloqueados por ver anuncio`);
+            checkLimiteDiario(targetUid);
+            try { window.playSound('win'); } catch(e){}
+        })
+        .catch(err => {
+            console.error("Error al guardar mensajes extra:", err);
+            notify("❌ Error al acreditar mensajes. Intenta de nuevo.");
         });
-    }, 1200);
+    });
 };
 
 window.cerrarChatPrivado = () => {
@@ -10801,8 +10803,13 @@ window.publicarVideoConAnuncio = () => {
     }
 };
 
-// Callback desde Kotlin tras ver el anuncio bonificado
+// Callback desde Kotlin tras ver el anuncio recompensado
 window.otorgarMensajesPorVideo = () => {
+    if (window._rewardPendingTarget) {
+        window._rewardPendingTarget = null;
+        otorgarMensajesPorAd();
+        return;
+    }
     if (window._publicarMision) {
         window._publicarMision = false;
         procesarPublicacionPendiente();
@@ -10816,12 +10823,16 @@ window.otorgarMensajesPorVideo = () => {
 };
 
 window.onAdSkipped = () => {
+    window._rewardPendingTarget = null;
     const btn = document.getElementById('btnPublicarVideo');
     if (btn) {
         btn.disabled = false;
         btn.innerHTML = "📺 Publicar (anuncio bonificado)";
     }
-    notify("💬 Ve el anuncio completo para publicar tu video");
+    if (window._adMsgBtn) {
+        window._adMsgBtn = null;
+    }
+    notify("💬 Ve el anuncio completo para recibir tu recompensa");
 };
 
 // 4. Subir a Firebase (Simulación de Storage usando Base64 o Link temporal)
