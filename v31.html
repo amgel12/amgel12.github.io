@@ -2237,10 +2237,10 @@ Cerrar
                  font-weight:800; font-size:0.95rem; display:flex; align-items:center;
                  justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(16,185,129,0.35);
                  cursor:pointer;">
-          📺 Ver anuncio — Gana 5 mensajes
+          📺 Ver anuncio — Gana 10 mensajes
         </button>
         <div style="font-size:0.7rem; color:#10b981; margin-top:6px; margin-bottom:6px;">
-          🎁 +5 mensajes gratis
+          🎁 +10 mensajes gratis
         </div>
 
         <button onclick="cerrarModalComprarMensajes()"
@@ -4880,7 +4880,7 @@ function procesarPublicacionPendiente() {
             d.className = "comment-bubble";
             d.style.borderLeft = esMio ? '3px solid #10b981' : '3px solid #0070ba';
             const nombreSeguro = (c.autor || 'Anónimo').replace(/'/g, "\\'");
-            const hora = c.timestamp ? new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+            const hora = c.timestamp ? new Date(c.timestamp).toLocaleDateString([], {day:'2-digit', month:'2-digit'}) + ' ' + new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
             d.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span class="comment-author">${escapeHtml(getDisplayName(c.uid, c.autor))}</span>
@@ -5222,6 +5222,7 @@ if (girosDisponibles > 0) {
             // Lógica Maestra (Usuarios Activos)
             iniciarMonitorDeBadges();
             cargarListaUsuariosHorizontal();
+            limpiarChatGlobal();
 
 } else {
             // MOSTRAR PANTALLA DE LOGIN
@@ -5481,21 +5482,21 @@ if (girosDisponibles > 0) {
                        <div><span class="msg-user">${escapeHtml(nombreMostrar)}</span></div>
                        ${replyHtml}
                        <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
-                       <div class="msg-time">${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-                   </div>
-                `;
+                       <div class="msg-time">${new Date(m.fecha).toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                    </div>
+                 `;
 
-               // Eventos de "Mantener presionado" y swipe en la burbuja
-               const burbuja = row.querySelector(`#msg-${msgKey}`);
-               burbuja.onmousedown = (e) => { startPress(msgKey, m.texto, m.uid, false); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
-               burbuja.ontouchstart = (e) => { startPress(msgKey, m.texto, m.uid, false); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
-               burbuja.onmouseup = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
-               burbuja.onmouseleave = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
-               burbuja.ontouchend = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
-               burbuja.ontouchmove = (e) => { handleSwipeMove(e, msgKey); };
-               burbuja.onmousemove = (e) => { if(e.buttons === 1) handleSwipeMove(e, msgKey); };
+                // Eventos de "Mantener presionado" y swipe en la burbuja
+                const burbuja = row.querySelector(`#msg-${msgKey}`);
+                burbuja.onmousedown = (e) => { startPress(msgKey, m.texto, m.uid, false); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
+                burbuja.ontouchstart = (e) => { startPress(msgKey, m.texto, m.uid, false); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
+                burbuja.onmouseup = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+                burbuja.onmouseleave = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+                burbuja.ontouchend = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+                burbuja.ontouchmove = (e) => { handleSwipeMove(e, msgKey); };
+                burbuja.onmousemove = (e) => { if(e.buttons === 1) handleSwipeMove(e, msgKey); };
 
-             list.appendChild(row);
+              list.appendChild(row);
              scrollToBottom();
 
              // Notificación de sonido si no es mío
@@ -5834,7 +5835,7 @@ if (girosDisponibles > 0) {
     // MENCIONES
     // --- FUNCIÓN PARA DETECTAR Y NOTIFICAR MENCIONES (@) ---
 function detectarYEnvarMenciones(txt, type) {
-    const regex = /@(\S+)/gi;
+    const regex = /@(\w+)/gi;
     const menciones = txt.match(regex);
     if (!menciones) return;
 
@@ -5855,14 +5856,24 @@ function detectarYEnvarMenciones(txt, type) {
                 });
             }
             if (!found) {
-                db.ref('users').orderByChild('apodo').equalTo(mencion).once('value', snap2 => {
-                    if (snap2.exists()) {
-                        snap2.forEach(userSnap => {
-                            if (userSnap.key === idAuditor) return;
-                            enviarNotificacionMencion(userSnap.key, txt);
-                        });
+                const mencionLower = mencion.toLowerCase();
+                for (const [uid, apodo] of Object.entries(apodosCache)) {
+                    if (uid === idAuditor) continue;
+                    if (apodo && apodo.toLowerCase() === mencionLower) {
+                        enviarNotificacionMencion(uid, txt);
+                        found = true;
                     }
-                });
+                }
+                if (!found) {
+                    db.ref('users').orderByChild('apodo').equalTo(mencion).once('value', snap2 => {
+                        if (snap2.exists()) {
+                            snap2.forEach(userSnap => {
+                                if (userSnap.key === idAuditor) return;
+                                enviarNotificacionMencion(userSnap.key, txt);
+                            });
+                        }
+                    });
+                }
             }
         });
     });
@@ -5871,14 +5882,30 @@ function detectarYEnvarMenciones(txt, type) {
 function enviarNotificacionMencion(targetUid, txt) {
     let resumenMensaje = txt.length > 30 ? txt.substring(0, 30) + "..." : txt;
     db.ref(`users/${targetUid}/notifications`).push({
-        from: myCurrentKey,
-        type: 'chat',
-        text: `🔴 ¡Te han mencionado!\n"${resumenMensaje}"`,
+        fromName: getMiNombre(),
+        type: 'mencion',
+        text: `🔴 Te mencionaron: "${resumenMensaje}"`,
         extra: "chat_global",
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         read: false
     });
 }
+
+window.limpiarChatGlobal = () => {
+    const unaSemana = 7 * 24 * 60 * 60 * 1000;
+    const corte = Date.now() - unaSemana;
+    db.ref('chat_global').orderByChild('fecha').endAt(corte).limitToLast(100).once('value', snap => {
+        if (!snap.exists()) return;
+        const updates = {};
+        snap.forEach(child => {
+            updates[child.key] = null;
+        });
+        db.ref('chat_global').update(updates)
+            .then(() => console.log(`🗑️ Chat global: ${Object.keys(updates).length} mensajes antiguos eliminados`))
+            .catch(e => console.error('Error limpiando chat global:', e));
+    });
+};
+setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
     
     // --- FUNCIÓN IR A NOTIFICACIÓN (CORREGIDA) ---
     window.irANotificacion = (type, extra, key, fromUid) => {
@@ -7635,7 +7662,7 @@ let privChatRef = null;
 let privUserRef = null;
 const LIMITE_DIARIO_MSGS = 10;
 const BONUS_PAYPAL_MSGS = 20; // 20 mensajes extra al comprar por PayPal
-const BONUS_AD_MSGS = 5;       // 5 mensajes extra al ver un anuncio
+const BONUS_AD_MSGS = 10;       // 10 mensajes extra al ver un anuncio
 
 // 1. ABRIR EL MODAL Y PREPARAR
 window.abrirChatPrivado = (targetUid, targetName) => {
@@ -7782,7 +7809,7 @@ function cargarMensajesPrivados() {
                     ${fotoHTML}
                     <div>${textoFinal}</div>
                     <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
-                        ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                        ${new Date(m.fecha).toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
                     </div>
                 </div>
             </div>`;
@@ -7910,6 +7937,8 @@ window.enviarMensajePrivado = () => {
     if (isAdmin) {
         db.ref(`chats_privados/${currentChatId}`).push(msgData);
 
+        detectarYEnvarMenciones(txt, "chat");
+
         db.ref(`users/${targetUserUid}/notifications`).push({
             from: myCurrentKey,
             type: 'chat_privado',
@@ -7942,6 +7971,8 @@ window.enviarMensajePrivado = () => {
         }
 
         db.ref(`chats_privados/${currentChatId}`).push(msgData);
+
+        detectarYEnvarMenciones(txt, "chat");
 
         db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).set({
             fecha: hoy,
@@ -10984,7 +11015,7 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
                     <div class="msg-user">${escapeHtml(m.autor)}</div>
                     <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
                     <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
-                        ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                        ${new Date(m.fecha).toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
                     </div>
                 </div>
             </div>`;
@@ -11013,10 +11044,14 @@ window.enviarMensajeGrupo = () => {
 
     db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push(msgData)
         .then(() => {
+            detectarYEnvarMenciones(txt, "chat");
             input.value = '';
             input.focus();
         })
         .catch(err => notify('Error al enviar: ' + err.message));
+
+    // 🔥 Detectar menciones en mensajes de grupo
+    detectarYEnvarMenciones(txt, "chat");
 };
 
 // 1. ABRIR MODAL PARA CREAR GRUPO (CON REQUISITO DE REFERIDOS)
