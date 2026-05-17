@@ -2237,10 +2237,10 @@ Cerrar
                  font-weight:800; font-size:0.95rem; display:flex; align-items:center;
                  justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(16,185,129,0.35);
                  cursor:pointer;">
-          📺 Ver anuncio — Gana 10 mensajes
+          📺 Ver anuncio — Gana 8 mensajes
         </button>
         <div style="font-size:0.7rem; color:#10b981; margin-top:6px; margin-bottom:6px;">
-          🎁 +10 mensajes gratis
+          🎁 +8 mensajes gratis
         </div>
 
         <button onclick="cerrarModalComprarMensajes()"
@@ -6803,10 +6803,13 @@ window.addEventListener('popstate', (e) => {
     // --- 1. FUNCIÓN PARA ABRIR CORREO REAL ---
     window.enviarCorreoSoporte = () => {
         const asunto = "Ayuda PAGOCODE - ID: " + (myCurrentKey || "Usuario");
-        const cuerpo = "Hola, necesito ayuda con lo siguiente:%0D%0A%0D%0A(Escribe aquí tu problema)...";
+        const cuerpo = "Hola, necesito ayuda con lo siguiente:\n\n(Escribe aquí tu problema)...";
         
-        // AQUÍ ES DONDE PONES TU CORREO REAL:
-        window.location.href = `mailto:codec3865@gmail.com?subject=${asunto}&body=${cuerpo}`;
+        if (typeof AndroidNative !== 'undefined') {
+            AndroidNative.abrirCorreo("codec3865@gmail.com", asunto, cuerpo);
+        } else {
+            window.open(`mailto:codec3865@gmail.com?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`, '_system');
+        }
     };
     // Esta función se debe llamar cuando el usuario complete una misión (Video o Publicación)
     // --- FUNCIÓN PARA SUBIR EL 1% (META: 5 MISIONES) ---
@@ -7662,7 +7665,7 @@ let privChatRef = null;
 let privUserRef = null;
 const LIMITE_DIARIO_MSGS = 10;
 const BONUS_PAYPAL_MSGS = 20; // 20 mensajes extra al comprar por PayPal
-const BONUS_AD_MSGS = 10;       // 10 mensajes extra al ver un anuncio
+const BONUS_AD_MSGS = 8;       // 8 mensajes extra al ver un anuncio
 
 // 1. ABRIR EL MODAL Y PREPARAR
 window.abrirChatPrivado = (targetUid, targetName) => {
@@ -8103,10 +8106,10 @@ function verificarComprasConfirmadas() {
     });
 }
 
-// 📺 OPCIÓN 2: Ver anuncio recompensado para 10 mensajes extra
+// 📺 OPCIÓN 2: Ver anuncio recompensado para 8 mensajes extra
 window.verAnuncioMensajes = () => {
     try { window.playSound('click'); } catch(e){}
-    notify("📺 Ve el anuncio completo para ganar 10 mensajes...");
+    notify("📺 Ve el anuncio completo para ganar 8 mensajes...");
 
     if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirVideoRecompensado) {
         window._rewardPendingTarget = targetUserUid;
