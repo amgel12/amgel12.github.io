@@ -1059,6 +1059,11 @@
        transition: none;
    }
 
+   .msg-bubble.swiping-mention {
+       transition: none;
+       box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3) !important;
+   }
+
   .msg-mine {
       align-self: flex-end;
       background: linear-gradient(135deg, #6366f1, #90ee9060);
@@ -1702,6 +1707,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Input para escribir -->
         <div style="background:white; padding:10px; border-top:1px solid #e2e8f0; display:flex; gap:8px; align-items:center; flex-shrink:0;">
+            <button onclick="abrirModalFotoGrupo()" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#10b981,#059669); border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 8px rgba(15,183,127,0.4); flex-shrink:0; cursor:pointer;">
+                📷
+            </button>
             <input type="text" id="inputGrupoMsg" placeholder="Escribe al grupo..." onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensajeGrupo();}" style="flex:1; background:#f0f2f5; border:none; padding:10px 15px; border-radius:20px; outline:none;">
             <button onclick="enviarMensajeGrupo()" class="btn-blue" style="width:40px; height:40px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">➤</button>
         </div>
@@ -2360,6 +2368,34 @@ Cerrar
             📷 Enviar Foto
         </button>
         <button onclick="cerrarModalFotoPrivada()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
+    </div>
+</div>
+<!-- MODAL SUBIR FOTO GRUPO -->
+<div id="modalFotoGrupo" class="modal-overlay" style="z-index: 30000;">
+    <div class="modal-content">
+        <h3 style="color:#10b981;">📷 Enviar Foto al Grupo</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
+            Todos los miembros del grupo verán esta foto.
+        </p>
+        
+        <div style="background:#f0fdf4; border:2px dashed #10b981; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
+            <img id="imgPreviewGrupo" style="width:100%; height:100%; object-fit:contain; display:none;">
+            <div id="placeholderUploadGrupo" style="text-align:center; color:#10b981;">
+                <i class="fas fa-camera" style="font-size:2.5rem; margin-bottom: 10px;"></i>
+                <p style="font-size:0.8rem; font-weight:bold;">Selecciona una foto</p>
+                <p style="font-size:0.65rem; opacity:0.8;">Todos la verán al instante</p>
+            </div>
+            <input type="file" id="inputFotoGrupo" accept="image/*" onchange="procesarFotoGrupo()" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+        </div>
+
+        <div style="font-size:0.65rem; color:#ef4444; margin-bottom:15px; background: #fef2f2; padding: 8px; border-radius: 8px;">
+            ⚠️ Prohibido contenido +18 o violento. Serás baneado.
+        </div>
+        
+        <button id="btnEnviarFotoGrupo" class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" disabled onclick="enviarFotoGrupo()">
+            📷 Enviar Foto al Grupo
+        </button>
+        <button onclick="cerrarModalFotoGrupo()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
     </div>
 </div>
 <div id="modalFotoDetalle" class="modal-overlay" style="z-index:29000; background:black; align-items:center; justify-content:center; display:none;">
@@ -5675,13 +5711,31 @@ if (girosDisponibles > 0) {
             const burbuja = document.getElementById(`msg-${msgKey}`);
             if (burbuja) {
                 burbuja.classList.add('swiping');
-                const translateX = Math.max(0, Math.min(deltaX, 100));
-                burbuja.style.transform = `translateX(${translateX}px)`;
 
-                // Cambiar apariencia cuando se desliza suficiente
-                if (translateX > 50) {
-                    burbuja.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
-                    burbuja.style.borderLeft = '4px solid #6366f1';
+                if (deltaX > 0) {
+                    // Swipe derecha → Responder
+                    const translateX = Math.min(deltaX, 100);
+                    burbuja.style.transform = `translateX(${translateX}px)`;
+                    burbuja.classList.remove('swiping-mention');
+                    if (translateX > 50) {
+                        burbuja.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
+                        burbuja.style.borderLeft = '4px solid #6366f1';
+                        burbuja.style.borderRight = '';
+                    }
+                } else {
+                    // Swipe izquierda → Mencionar
+                    const translateX = Math.max(deltaX, -100);
+                    burbuja.style.transform = `translateX(${translateX}px)`;
+                    burbuja.classList.add('swiping-mention');
+                    if (translateX < -50) {
+                        burbuja.style.boxShadow = '0 4px 15px rgba(251, 191, 36, 0.4)';
+                        burbuja.style.borderRight = '4px solid #fbbf24';
+                        burbuja.style.borderLeft = '';
+                    } else {
+                        burbuja.style.boxShadow = '';
+                        burbuja.style.borderRight = '';
+                        burbuja.style.borderLeft = '';
+                    }
                 }
             }
         }
@@ -5696,13 +5750,22 @@ if (girosDisponibles > 0) {
         const burbuja = document.getElementById(`msg-${msgKey}`);
         if (burbuja) {
             burbuja.classList.remove('swiping');
+            burbuja.classList.remove('swiping-mention');
             burbuja.style.transform = '';
             burbuja.style.background = '';
+            burbuja.style.borderLeft = '';
+            burbuja.style.borderRight = '';
         }
         
-        // Si se deslizó más de 60px a la derecha, responder
+        // Swipe derecha > 60px → Responder
         if (deltaX > 60) {
             responderMensaje(msgKey, text, author, uid);
+        }
+        // Swipe izquierda < -60px → Mencionar
+        else if (deltaX < -60) {
+            if (typeof window.mencionarEnChatGlobal === 'function') {
+                window.mencionarEnChatGlobal(author);
+            }
         }
         
         isSwiping = false;
@@ -5744,6 +5807,17 @@ if (girosDisponibles > 0) {
         window.replyToMsgUid = null;
         
         input.placeholder = 'Escribe...';
+    };
+
+    window.mencionarEnChatGlobal = (nombre) => {
+        const input = document.getElementById('inputChatMsg');
+        if (!input) return;
+        const texto = input.value;
+        const cursor = input.selectionStart || 0;
+        const mencion = "@" + nombre + " ";
+        input.value = texto.slice(0, cursor) + mencion + texto.slice(cursor);
+        input.focus();
+        if (navigator.vibrate) navigator.vibrate(30);
     };
 
     window.scrollToMessage = (msgKey) => {
@@ -7654,6 +7728,127 @@ window.mostrarFotoPrivada = (el) => {
     
     modal.style.display = 'flex';
 };
+
+// ==========================================
+// 📷 FOTO EN CHAT GRUPO
+// ==========================================
+let fotoGrupoBase64 = "";
+
+window.abrirModalFotoGrupo = () => {
+    if (!currentGrupoId) return notify("No hay grupo activo");
+    document.getElementById('modalFotoGrupo').style.display = 'flex';
+    document.getElementById('imgPreviewGrupo').style.display = 'none';
+    document.getElementById('placeholderUploadGrupo').style.display = 'block';
+    document.getElementById('btnEnviarFotoGrupo').disabled = true;
+    document.getElementById('btnEnviarFotoGrupo').innerHTML = '📷 Enviar Foto al Grupo';
+    fotoGrupoBase64 = "";
+};
+
+window.cerrarModalFotoGrupo = () => {
+    document.getElementById('modalFotoGrupo').style.display = 'none';
+    document.getElementById('inputFotoGrupo').value = "";
+    fotoGrupoBase64 = "";
+};
+
+window.procesarFotoGrupo = () => {
+    const file = document.getElementById('inputFotoGrupo').files[0];
+    if (!file) return;
+
+    document.getElementById('placeholderUploadGrupo').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 600;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            fotoGrupoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+
+            document.getElementById('imgPreviewGrupo').src = fotoGrupoBase64;
+            document.getElementById('imgPreviewGrupo').style.display = 'block';
+            document.getElementById('placeholderUploadGrupo').style.display = 'none';
+
+            const btn = document.getElementById('btnEnviarFotoGrupo');
+            btn.disabled = false;
+            btn.innerHTML = '📷 Enviar Foto al Grupo';
+            btn.style.opacity = "1";
+        };
+    };
+    reader.readAsDataURL(file);
+};
+
+window.enviarFotoGrupo = () => {
+    if (!fotoGrupoBase64) return notify("Elige una foto primero");
+    if (!currentGrupoId) return notify("Grupo no activo");
+
+    const btn = document.getElementById('btnEnviarFotoGrupo');
+    btn.disabled = true;
+    btn.innerHTML = 'Enviando...';
+
+    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
+
+    db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push({
+        uid: idAuditor,
+        autor: miNombre,
+        texto: "📷 Foto",
+        foto: fotoGrupoBase64,
+        esFoto: true,
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        cerrarModalFotoGrupo();
+        notify("✅ Foto enviada al grupo");
+        try { window.playSound('win'); } catch(e){}
+    }).catch(err => {
+        notify("Error: " + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '📷 Enviar Foto al Grupo';
+    });
+};
+
+window.mostrarFotoGrupo = (el) => {
+    const fotoSrc = el.getAttribute('data-foto');
+    if (!fotoSrc) return;
+
+    let modal = document.getElementById('modalVerFotoGrupo');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalVerFotoGrupo';
+        modal.style.cssText = `
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 31000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        `;
+        modal.onclick = () => modal.style.display = 'none';
+        document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+        <img src="${fotoSrc}" style="max-width:95%; max-height:90vh; object-fit:contain; border-radius:12px; box-shadow:0 4px 30px rgba(0,0,0,0.5);">
+        <button onclick="document.getElementById('modalVerFotoGrupo').style.display='none'" style="
+            position:absolute; top:15px; right:15px;
+            background:rgba(255,255,255,0.2); color:white; border:none;
+            width:40px; height:40px; border-radius:50%; font-size:1.5rem;
+            display:flex; align-items:center; justify-content:center; cursor:pointer;">
+            ✕
+        </button>
+    `;
+
+    modal.style.display = 'flex';
+};
+
 // ==========================================
 // 🔒 LÓGICA DE CHAT PRIVADO (1 vs 1)
 // ==========================================
@@ -11005,6 +11200,16 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
             const esMio = m.uid === idAuditor;
             const avatar = getUserProfilePhoto(m.uid);
             const textoEscapado = escapeHtml(m.texto).replace(/"/g, '&quot;');
+            const fotoEscapada = m.foto ? m.foto.replace(/"/g, '&quot;') : '';
+            
+            let fotoHTML = '';
+            if (m.esFoto && m.foto) {
+                fotoHTML = `
+                    <div style="margin:8px 0; cursor:pointer;" onclick="mostrarFotoGrupo(this)" data-foto="${fotoEscapada}">
+                        <img src="${m.foto}" style="max-width:200px; max-height:200px; border-radius:12px; object-fit:cover; box-shadow:0 2px 8px rgba(0,0,0,0.15);" loading="lazy">
+                    </div>
+                `;
+            }
             
             html += `
             <div class="chat-row ${esMio ? 'mine' : 'other'}">
@@ -11013,13 +11218,15 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
                      data-msg-key="${s.key}"
                      data-msg-text="${textoEscapado}"
                      data-msg-uid="${m.uid}"
-                     onmousedown="startPressFromElement(this, false)"
-                     onmouseup="cancelPress(false)"
-                     onmouseleave="cancelPress(false)"
-                     ontouchstart="startPressFromElement(this, false)"
-                     ontouchend="cancelPress(false)"
-                     ontouchmove="cancelPress(false)">
+                     data-msg-author="${escapeHtml(m.autor)}"
+                     onmousedown="startPressFromElement(this, false); handleGroupSwipeStart(event, '${s.key}')"
+                     onmouseup="cancelPress(false); handleGroupSwipeEnd(event, '${s.key}')"
+                     onmouseleave="cancelPress(false); handleGroupSwipeEnd(event, '${s.key}')"
+                     ontouchstart="startPressFromElement(this, false); handleGroupSwipeStart(event, '${s.key}')"
+                     ontouchend="cancelPress(false); handleGroupSwipeEnd(event, '${s.key}')"
+                     ontouchmove="handleGroupSwipeMove(event, '${s.key}')">
                     <div class="msg-user">${escapeHtml(m.autor)}</div>
+                    ${fotoHTML}
                     <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
                     <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
                         ${new Date(m.fecha).toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
@@ -11032,6 +11239,103 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
         setTimeout(() => list.scrollTop = list.scrollHeight, 100);
     });
 }
+
+// --- SWIPE PARA MENCIONAR (CHAT GRUPO) ---
+let grpSwipeStartX = 0;
+let grpSwipeStartY = 0;
+let grpSwipeMsgKey = null;
+let grpIsSwiping = false;
+
+window.handleGroupSwipeStart = (e, msgKey) => {
+    const touch = e.touches ? e.touches[0] : e;
+    grpSwipeStartX = touch.clientX;
+    grpSwipeStartY = touch.clientY;
+    grpSwipeMsgKey = msgKey;
+    grpIsSwiping = true;
+};
+
+window.handleGroupSwipeMove = (e, msgKey) => {
+    if (!grpIsSwiping || grpSwipeMsgKey !== msgKey) return;
+    const touch = e.touches ? e.touches[0] : e;
+    const deltaX = touch.clientX - grpSwipeStartX;
+    const deltaY = Math.abs(touch.clientY - grpSwipeStartY);
+
+    if (deltaY > 30) {
+        grpIsSwiping = false;
+        cancelPress(false);
+        return;
+    }
+
+    if (Math.abs(deltaX) > 10) {
+        e.preventDefault();
+        cancelPress(false);
+        const burbuja = document.getElementById(`grp-msg-${msgKey}`);
+        if (burbuja) {
+            burbuja.classList.add('swiping');
+            if (deltaX > 0) {
+                const translateX = Math.min(deltaX, 100);
+                burbuja.style.transform = `translateX(${translateX}px)`;
+                burbuja.classList.remove('swiping-mention');
+                if (translateX > 50) {
+                    burbuja.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
+                    burbuja.style.borderLeft = '4px solid #6366f1';
+                    burbuja.style.borderRight = '';
+                }
+            } else {
+                const translateX = Math.max(deltaX, -100);
+                burbuja.style.transform = `translateX(${translateX}px)`;
+                burbuja.classList.add('swiping-mention');
+                if (translateX < -50) {
+                    burbuja.style.boxShadow = '0 4px 15px rgba(251, 191, 36, 0.4)';
+                    burbuja.style.borderRight = '4px solid #fbbf24';
+                    burbuja.style.borderLeft = '';
+                } else {
+                    burbuja.style.boxShadow = '';
+                    burbuja.style.borderRight = '';
+                    burbuja.style.borderLeft = '';
+                }
+            }
+        }
+    }
+};
+
+window.handleGroupSwipeEnd = (e, msgKey) => {
+    if (!grpIsSwiping || grpSwipeMsgKey !== msgKey) return;
+    grpIsSwiping = false;
+
+    const touch = e.changedTouches ? e.changedTouches[0] : e;
+    const deltaX = touch.clientX - grpSwipeStartX;
+
+    const burbuja = document.getElementById(`grp-msg-${msgKey}`);
+    if (burbuja) {
+        burbuja.classList.remove('swiping');
+        burbuja.classList.remove('swiping-mention');
+        burbuja.style.transform = '';
+        burbuja.style.background = '';
+        burbuja.style.borderLeft = '';
+        burbuja.style.borderRight = '';
+    }
+
+    if (Math.abs(deltaX) > 60) {
+        const author = burbuja ? burbuja.dataset.msgAuthor : '';
+        if (author && typeof window.mencionarEnChatGrupo === 'function') {
+            window.mencionarEnChatGrupo(author);
+        }
+    }
+
+    grpSwipeMsgKey = null;
+};
+
+window.mencionarEnChatGrupo = (nombre) => {
+    const input = document.getElementById('inputGrupoMsg');
+    if (!input) return;
+    const texto = input.value;
+    const cursor = input.selectionStart || 0;
+    const mencion = "@" + nombre + " ";
+    input.value = texto.slice(0, cursor) + mencion + texto.slice(cursor);
+    input.focus();
+    if (navigator.vibrate) navigator.vibrate(30);
+};
 
 // ENVIAR MENSAJE AL GRUPO
 window.enviarMensajeGrupo = () => {
@@ -11365,3 +11669,4 @@ window.eliminarGrupo = () => {
 <!-- 3. AL FINAL: Cerrar etiquetas HTML -->
 </body>
 </html>
+ 
