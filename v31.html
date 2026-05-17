@@ -7954,13 +7954,9 @@ window.enviarMensajePrivado = () => {
         return;
     }
 
-    // USUARIO NORMAL: Verificar límite diario (por destinatario)
-    Promise.all([
-        db.ref(`users/${idAuditor}/privados_diarios/extras`).once('value'),
-        db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).once('value')
-    ]).then(([sExtras, sChat]) => {
-        const extras = sExtras.val() || 0;
+    db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).once('value', sChat => {
         const chatData = sChat.val() || {};
+        const extras = chatData.extras || 0;
         const hoy = new Date().toISOString().split('T')[0];
         let conteo = (chatData.fecha === hoy) ? (chatData.count || 0) : 0;
         const totalDisponible = LIMITE_DIARIO_MSGS + extras;
@@ -7974,7 +7970,7 @@ window.enviarMensajePrivado = () => {
 
         detectarYEnvarMenciones(txt, "chat");
 
-        db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).set({
+        db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).update({
             fecha: hoy,
             count: conteo + 1
         });
@@ -8008,12 +8004,9 @@ function checkLimiteDiario(uid) {
         return;
     }
 
-    Promise.all([
-        db.ref(`users/${idAuditor}/privados_diarios/extras`).once('value'),
-        db.ref(`users/${idAuditor}/privados_diarios/${targetUid}`).once('value')
-    ]).then(([sExtras, sChat]) => {
-        const extras = sExtras.val() || 0;
+    db.ref(`users/${idAuditor}/privados_diarios/${targetUid}`).once('value', sChat => {
         const chatData = sChat.val() || {};
+        const extras = chatData.extras || 0;
         const hoy = new Date().toISOString().split('T')[0];
         let conteo = (chatData.fecha === hoy) ? (chatData.count || 0) : 0;
         const total = LIMITE_DIARIO_MSGS + extras;
@@ -8128,11 +8121,11 @@ window.verAnuncioMensajes = () => {
         console.log("Error al cargar anuncio: ", err);
     }
 
-    // Acreditar los 5 mensajes extra después del anuncio
     setTimeout(() => {
-        db.ref(`users/${idAuditor}/privados_diarios/extras`).once('value', s => {
-            const extras = s.val() || 0;
-            db.ref(`users/${idAuditor}/privados_diarios/extras`).set(extras + BONUS_AD_MSGS)
+        db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).once('value', s => {
+            const data = s.val() || {};
+            const extras = data.extras || 0;
+            db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}/extras`).set(extras + BONUS_AD_MSGS)
             .then(() => {
                 cerrarModalComprarMensajes();
                 notify(`🎁 +${BONUS_AD_MSGS} mensajes desbloqueados por ver anuncio`);
