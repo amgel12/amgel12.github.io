@@ -3247,96 +3247,25 @@ style="display:none;">
 <!-- PANTALLA 3: MENSAJES -->
 <div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #f8fafc; padding-bottom: 65px;">
     
-    <!-- CONTENEDOR QUE VAMOS A OCULTAR AL ESCRIBIR -->
-    <div id="areaSuperiorMensajes" style="flex-shrink: 0; transition: all 0.3s ease;">
-        
-        <!-- Header con Título y Campana -->
+    <div id="areaSuperiorMensajes" style="flex-shrink: 0;">
+        <!-- Título y Campana -->
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 20px 5px; background: white;">
             <h2 style="margin:0; font-size: 1.5rem; font-weight: 800; color: #1e293b;">Mensajes</h2>
             <div class="noti-icon-box" onclick="abrirNotificaciones()">
                 <i class="fas fa-bell"></i>
                 <div id="badgeNotisMensajes" class="noti-badge">0</div>
             </div>
-            </div>
-            </div>
-    <!-- 1. LISTA HORIZONTAL CON BOTÓN DE PENSAMIENTO -->
-<div class="stories-container" style="background: white; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; flex-shrink: 0;">
-
-    <div class="stories-title" style="padding: 10px 15px 5px; color: #64748b; font-size: 0.75rem;">
-        Conectados reciente
-    </div>
-
-    <div style="
-    display:flex;
-    gap:10px;
-    padding:10px 15px 0 15px;
-    overflow-x:auto;
-    scrollbar-width:none;
-    scroll-behavior:smooth;
-    align-items:flex-start;
-    ">
-
-        <!-- Botón pensamiento -->
-        <div style="
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:flex-start;
-        min-width:75px;
-        flex-shrink:0;
-        ">
-
-            <button onclick="document.getElementById('modalPensamiento').style.display='flex'; document.getElementById('inputPensamiento').focus();"
-
-            style="
-            width:50px;
-            height: 60px;
-            border-radius:20px;
-            border:2px dashed #8b5cf6;
-            background:#faf5ff;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:1.8rem;
-            cursor:pointer;
-            transition:all 0.2s;
-            ">
-                💭
-            </button>
-
-            <div style="
-            margin-top:6px;
-            font-size:0.8rem;
-            color:#64748b;
-            height:32px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            ">
-                Pensar
-            </div>
-
         </div>
-
-        <!-- Lista de usuarios -->
-        <div id="listaUsuariosHorizontal" style="
-        display:flex;
-        gap:15px;
-        overflow-x:auto;
-        scrollbar-width:none;
-        scroll-behavior:smooth;
-        flex:1;
-        padding-bottom:10px;
-        ">
-
-            <div style="padding:10px; font-size:0.8rem; color:#94a3b8;">
-                Cargando...
-            </div>
-
-        </div>
-
+<!-- 1. LISTA HORIZONTAL (Espacio real para las nubes) -->
+<div class="stories-container" style="background: white; border-bottom: 1px solid #e2e8f0; padding: 10px 0; flex-shrink: 0; overflow: visible !important;">
+    <div class="stories-title" style="padding: 5px 15px 0; color: #64748b; font-size: 0.75rem; font-weight: bold;">Conectados reciente</div>
+    
+    <!-- 🔥 AJUSTE VITAL: padding-top: 50px -->
+    <div id="listaUsuariosHorizontal" 
+         style="display:flex; gap:18px; padding: 50px 15px 15px; overflow-x:auto; overflow-y:visible !important; scrollbar-width:none; align-items: flex-start; position: relative;">
+        <!-- Usuarios... -->
     </div>
-
+</div>
 </div>
     <!-- 2. PESTAÑAS -->
 <div class="chat-tabs-container" style="flex-shrink: 0;">
@@ -8743,117 +8672,119 @@ function cargarListaUsuariosHorizontal() {
     const contenedor = document.getElementById('listaUsuariosHorizontal');
     if (!contenedor) return;
 
-    db.ref('users').orderByChild('lastSeen').limitToLast(30).on('value', snap => {
-        listaUsuariosCacheReal = [];
-        const ahora = Date.now();
+    // Radar 1: Usuarios (para ver quién está conectado)
+    db.ref('users').orderByChild('lastSeen').limitToLast(25).on('value', snapUsers => {
         
-        snap.forEach(child => {
-            const u = child.val();
-            if (child.key !== idAuditor) {
-                const tiempo = u.lastSeen || 0;
-                const minutos = Math.floor((ahora - tiempo) / 60000);
-                const esOnline = minutos < 2;
+        // Radar 2: 🔥 Pensamientos Públicos (Sincronización total)
+        db.ref('pensamientos').on('value', snapNubes => {
+            const nubesData = snapNubes.val() || {};
+            listaUsuariosCacheReal = [];
+            const ahora = Date.now();
+
+            snapUsers.forEach(child => {
+                const u = child.val();
+                const uid = child.key;
                 
-                // Mostrar apodo si existe, sino mostrar código INV
-                const nombreMostrar = u.apodo || (u.myInviteKey ? (u.myInviteKey.split('-')[1] || "User") : "User");
-                
-                // 🔥 ACTUALIZAR CACHE DE FOTO EN TIEMPO REAL
-                if (u.fotoPerfil) {
-                    cacheFotosPerfil[child.key] = u.fotoPerfil;
+                // Buscamos si este usuario tiene una nube en el nodo público
+                // Si la nube tiene más de 24 horas, no la mostramos para que no se llene de basura
+                const nube = nubesData[uid];
+                let pensamientoFinal = "";
+                if (nube && (ahora - nube.timestamp < 86400000)) {
+                    pensamientoFinal = nube.texto;
                 }
-                
+
                 listaUsuariosCacheReal.push({
-                    key: child.key,
-                    nombre: nombreMostrar,
-                    avatar: getUserProfilePhoto(child.key),
-                    online: esOnline,
-                    rawTime: tiempo
+                    key: uid,
+                    nombre: u.apodo || u.myInviteKey || "User",
+                    avatar: u.fotoPerfil || getAvatarUrl(uid),
+                    online: (ahora - (u.lastSeen || 0) < 120000),
+                    rawTime: u.lastSeen || 0,
+                    pensamiento: pensamientoFinal // 👈 Ahora es 100% público
                 });
-            }
-        });
+            });
 
-        listaUsuariosCacheReal.sort((a, b) => {
-             const msgA = mapaMensajesSinLeer[a.key] || 0;
-             const msgB = mapaMensajesSinLeer[b.key] || 0;
-             if (msgA > 0 && msgB === 0) return -1;
-             if (msgB > 0 && msgA === 0) return 1;
-             if (a.online && !b.online) return -1;
-             if (!a.online && b.online) return 1;
-             return b.rawTime - a.rawTime;
-        });
+            // Ordenamos: Los que escribieron pensamientos nuevos aparecen de PRIMERO
+            listaUsuariosCacheReal.sort((a, b) => {
+                if (a.pensamiento && !b.pensamiento) return -1;
+                if (!a.pensamiento && b.pensamiento) return 1;
+                return b.rawTime - a.rawTime;
+            });
 
-        renderizarUsuariosHorizontal();
+            renderizarUsuariosHorizontal();
+        });
     });
 }
-
-// ==========================================
-// 3. RENDERIZAR USUARIOS (CON HORA DE CONEXIÓN)
-// ==========================================
 function renderizarUsuariosHorizontal() {
     const contenedor = document.getElementById('listaUsuariosHorizontal');
     if (!contenedor) return;
 
-    if (listaUsuariosCacheReal.length === 0) {
-        contenedor.innerHTML = '<div style="padding:10px; font-size:0.8rem; color:#94a3b8;">Esperando usuarios...</div>';
-        return;
-    }
-
-    let html = "";
-    const ahora = Date.now(); // Hora actual para calcular
+    // 1. BOTÓN PENSAR (Diseño compacto)
+    let html = `
+    <div class="story-item" style="min-width: 70px; flex-shrink: 0; text-align: center; margin-top: 35px;">
+        <div onclick="document.getElementById('modalPensamiento').style.display='flex'; document.getElementById('inputPensamiento').focus();" 
+             style="width: 55px; height: 55px; border-radius: 20px; border: 2.5px dashed #8b5cf6; background: #faf5ff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; margin: 0 auto;">
+            💭
+        </div>
+        <div style="margin-top: 6px; font-size: 0.7rem; color: #8b5cf6; font-weight: 800;">Pensar</div>
+    </div>`;
 
     listaUsuariosCacheReal.forEach(user => {
-        const numMensajes = mapaMensajesSinLeer[user.key] || 0;
-
-        let tiempoTexto = "";
-        let colorTiempo = "#94a3b8";
-        
-        const msDiff = ahora - user.rawTime;
-        const minDiff = Math.floor(msDiff / 60000);
-
-        if (minDiff < 2) {
-            tiempoTexto = "Online";
-            colorTiempo = "#10b981";
-        } else if (minDiff < 60) {
-            tiempoTexto = minDiff + " min";
-        } else if (minDiff < 1440) {
-            tiempoTexto = Math.floor(minDiff / 60) + " h";
-        } else {
-            tiempoTexto = Math.floor(minDiff / 1440) + " d";
+        // --- ☁️ NUBE DE PENSAMIENTO ---
+        let nubeHtml = "";
+        if (user.pensamiento && user.pensamiento.trim() !== "") {
+            nubeHtml = `
+            <div style="position: absolute; top: -42px; left: 50%; transform: translateX(-50%); 
+                        background: #8b5cf6; color: white; padding: 5px 12px; border-radius: 15px; 
+                        font-size: 0.62rem; font-weight: 800; white-space: nowrap; 
+                        box-shadow: 0 4px 12px rgba(139,92,246,0.4); z-index: 999;
+                        max-width: 95px; overflow: hidden; text-overflow: ellipsis; animation: bounce 2s infinite;">
+                ${escapeHtml(user.pensamiento)}
+                <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+                            width: 0; height: 0; border-left: 6px solid transparent; 
+                            border-right: 6px solid transparent; border-top: 6px solid #8b5cf6;"></div>
+            </div>`;
         }
 
-        const badgeHtml = numMensajes > 0 
-             ? `<div style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; display:flex; align-items:center; justify-content:center; border:2px solid white; font-weight:800; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index:10; animation: popIn 0.3s;">${numMensajes}</div>` 
-             : '';
+        // Tiempos y Colores
+        const ahora = Date.now();
+        let tiempoTexto = window.formatTimeAgo ? window.formatTimeAgo(user.rawTime) : "Reciente";
+        let colorTiempo = (ahora - user.rawTime < 120000) ? "#10b981" : "#94a3b8";
+        let bordeColor = user.online ? '#10b981' : '#e2e8f0';
 
-        let bordeColor = '#e2e8f0'; 
-        if (user.online) bordeColor = '#10b981';
-        if (numMensajes > 0) bordeColor = '#ef4444';
-
-        const dotClass = user.online ? "dot-online" : "dot-offline";
-
-        const userKey = user.key;
-        const userName = user.nombre.replace(/'/g, "\\'");
-        
+        // --- 2. CÍRCULO DEL USUARIO (Con foto real) ---
         html += `
-        <div class="story-item" style="min-width: 65px; position:relative;" onclick="abrirChatPrivado('${userKey}', '${userName}')">
-            <div class="story-avatar-box" style="border-color: ${bordeColor}; position:relative; transition:0.3s;">
-                <div class="story-img" style="background-image:url('${user.avatar}')"></div>
-                <div class="story-dot ${dotClass}"></div>
-                ${badgeHtml}
-                ${user.online ? `<button onclick="event.stopPropagation(); abrirRegaloPrivadoTarget('${userKey}', '${userName}')" style="position:absolute; bottom:-2px; left:-2px; width:22px; height:22px; border-radius:50%; background: linear-gradient(135deg, #a855f7, #8b5cf6); border:2px solid white; font-size:0.7rem; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 2px 5px rgba(168,85,247,0.5); z-index:20;" title="Enviar puntos">🎁</button>` : ''}
+        <div class="story-item" style="min-width: 70px; position:relative; margin-top: 35px;" onclick="abrirChatPrivado('${user.key}', '${user.nombre.replace(/'/g, "\\'")}')">
+            
+            ${nubeHtml} 
+
+            <div class="story-avatar-box" style="border-width: 3px; border-color: ${bordeColor}; position:relative; width:58px; height:58px; margin: 0 auto; transition: 0.3s;">
+                <!-- Usamos user.avatar que trae la foto fresca de la DB -->
+                <div class="story-img" style="background-image:url('${user.avatar}'); background-size: cover; background-position: center;"></div>
+                
+                ${user.online ? `<div class="story-dot dot-online" style="border: 2px solid white; z-index: 10;"></div>` : ''}
             </div>
             
-            <div class="story-name" style="font-weight:${numMensajes>0?'800':'normal'}; color:${numMensajes>0?'#1e293b':'#334155'}; margin-bottom: 0;">
-                ${user.nombre}
-            </div>
-            
-            <div style="font-size: 0.6rem; color: ${colorTiempo}; font-weight: 600; margin-top: -2px;">
-                ${tiempoTexto}
-            </div>
+            <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">${user.key === idAuditor ? 'Tú' : user.nombre}</div>
+            <div style="font-size: 0.55rem; color: ${colorTiempo}; font-weight: 800; margin-top:-2px;">${tiempoTexto}</div>
         </div>`;
     });
+
     contenedor.innerHTML = html;
 }
+window.formatTimeAgo = (timestamp) => {
+    if (!timestamp) return "Reciente";
+    const ahora = Date.now();
+    const diff = ahora - timestamp;
+    const segundos = Math.floor(diff / 1000);
+    const minutos = Math.floor(segundos / 60);
+    const horas = Math.floor(minutos / 60);
+    const dias = Math.floor(horas / 24);
+    
+    if (minutos < 1) return 'Online';
+    if (minutos < 60) return minutos + ' min';
+    if (horas < 24) return horas + ' h';
+    return dias + ' d';
+};
 // ==========================================
 // 🚀 ABRIR MODAL INVITAR (CON CONTADOR REAL)
 // ==========================================
@@ -11060,92 +10991,68 @@ window.seleccionarTipoPublicacion = (tipo) => {
 
 // 💭 FUNCIONES PARA PENSAMIENTOS PÚBLICOS
 window.publicarPensamiento = () => {
-    if (!idAuditor) return notify("Inicia sesión");
-    
+    if (!idAuditor) return notify("❌ Inicia sesión");
     const texto = document.getElementById('inputPensamiento').value.trim();
+    if (!texto) return notify("📝 Escribe algo");
+
     const btn = document.getElementById('btnPublicarPensamiento');
-    
-    if (!texto) return notify("📝 Escribe tu pensamiento");
-    if (texto.length > 280) return notify("❌ Máximo 280 caracteres");
-    
     btn.disabled = true;
-    btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Publicando...";
+
+    // 🔥 USAMOS EL NODO "pensamientos" DE TUS REGLAS
+    const timestamp = firebase.database.ServerValue.TIMESTAMP;
     
-    db.ref(`users/${idAuditor}`).once('value', userSnap => {
-        const usuario = userSnap.val() || {};
-        const timestamp = Date.now();
-        const pensamiento = {
-            uid: idAuditor,
-            autor: usuario.apodo || (usuario.myInviteKey ? usuario.myInviteKey.split('-')[1] : 'Usuario'),
-            avatar: usuario.fotoPerfil || '',
-            texto: texto,
-            timestamp: timestamp,
-            likes: 0
-        };
-        
-        // Guardar en Firebase
-        db.ref(`pensamientos/${timestamp}`).set(pensamiento)
-            .then(() => {
-                notify("✨ ¡Pensamiento publicado!");
-                document.getElementById('inputPensamiento').value = '';
-                document.getElementById('contadorPensamiento').textContent = '0';
-                document.getElementById('modalPensamiento').style.display = 'none';
-                btn.disabled = false;
-                btn.innerHTML = "✨ Publicar Pensamiento";
-                
-                // Recargar pensamientos
-                cargarPensamientosPublicos();
-            })
-            .catch(err => {
-                notify("❌ Error: " + err.message);
-                btn.disabled = false;
-                btn.innerHTML = "✨ Publicar Pensamiento";
-            });
+    const actualizaciones = {};
+    // Lo guardamos en el nodo global para que sea PÚBLICO
+    actualizaciones[`pensamientos/${idAuditor}`] = {
+        texto: texto,
+        autor: document.getElementById('profKey').textContent || "Usuario",
+        timestamp: timestamp
+    };
+    // Actualizamos tu 'lastSeen' para que brinques al principio de la lista de todos
+    actualizaciones[`users/${idAuditor}/lastSeen`] = timestamp;
+
+    db.ref().update(actualizaciones).then(() => {
+        notify("✨ Pensamiento publicado para todos");
+        document.getElementById('inputPensamiento').value = '';
+        document.getElementById('modalPensamiento').style.display = 'none';
+        btn.disabled = false;
     });
 };
-
 // Cargar pensamientos públicos (opcional - para futuro)
 window.cargarPensamientosPublicos = () => {
-    // Esta función puede usarse para cargar pensamientos en una sección futura
-    // Por ahora solo mantiene la sincronización en tiempo real
-    db.ref('pensamientos').orderByChild('timestamp').limitToLast(20).on('value', snap => {
-        window.pensamientosCache = [];
+    const feedContainer = document.getElementById('pensamientosPublicosFeed');
+    if(!feedContainer) return;
+
+    db.ref('pensamientos').orderByChild('timestamp').limitToLast(15).on('value', snap => {
+        let html = "";
+
+        if (!snap.exists()) {
+            feedContainer.innerHTML = "<div style='color:#94a3b8; font-size:0.7rem;'>Nadie ha pensado nada hoy... ✨</div>";
+            return;
+        }
+
         snap.forEach(child => {
-            window.pensamientosCache.unshift({id: child.key, ...child.val()});
+            const p = child.val();
+            const avatar = getUserProfilePhoto(p.uid);
+            const nombre = p.autor || "Usuario";
+            const textoCorto = p.texto.length > 40 ? p.texto.substring(0, 37) + "..." : p.texto;
+
+            // Diseño de Burbuja Horizontal "Premium"
+            html = `
+            <div onclick="mostrarPerfilUsuario('${p.uid}', '${nombre}')" style="min-width: 140px; max-width: 140px; background: #faf5ff; border-radius: 18px; padding: 10px; border: 1.5px solid #e9d5ff; flex-shrink: 0; position: relative; box-shadow: 0 2px 8px rgba(139,92,246,0.05);">
+                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                    <img src="${avatar}" style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #8b5cf6;">
+                    <span style="font-size: 0.65rem; font-weight: 800; color: #7c3aed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${nombre}</span>
+                </div>
+                <div style="font-size: 0.75rem; color: #475569; line-height: 1.2; font-style: italic; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                    "${escapeHtml(p.texto)}"
+                </div>
+            </div>` + html;
         });
+
+        feedContainer.innerHTML = html;
     });
 };
-
-// Función auxiliar para mostrar tiempo relativo
-window.formatTimeAgo = (timestamp) => {
-    const ahora = Date.now();
-    const diff = ahora - timestamp;
-    const segundos = Math.floor(diff / 1000);
-    const minutos = Math.floor(segundos / 60);
-    const horas = Math.floor(minutos / 60);
-    const dias = Math.floor(horas / 24);
-    
-    if (minutos < 1) return 'Ahora';
-    if (minutos < 60) return minutos + ' min';
-    if (horas < 24) return horas + ' h';
-    return dias + ' d';
-};
-
-// Contador de caracteres en tiempo real
-document.addEventListener('DOMContentLoaded', function() {
-    const textarea = document.getElementById('inputPensamiento');
-    if (textarea) {
-        textarea.addEventListener('input', function() {
-            const contador = document.getElementById('contadorPensamiento');
-            if (contador) {
-                contador.textContent = this.value.length;
-            }
-        });
-    }
-    // Cargar pensamientos al iniciar
-    setTimeout(cargarPensamientosPublicos, 1000);
-});
-
 window.grabarVideoCamara = () => {
     document.getElementById('modalOpcionVideoPropio').style.display = 'none';
     if (typeof AndroidNative !== 'undefined' && AndroidNative.openVideoCamera) {
@@ -11948,12 +11855,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
 
             <!-- OPCIÓN PENSAMIENTO PÚBLICO -->
-            <button onclick="seleccionarTipoPublicacion('pensamiento')" 
-                style="width: 100%; padding: 9px; border: 1px solid #8b5cf6; background: #faf5ff; border-radius: 9px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                <span style="font-size: 1rem;">💭</span>
-                <div style="text-align: left;">
-                    <div style="font-weight: 400; color: #8b5cf6; font-size: 1rem;"> </div>
-                    <div style="font-size: 0.45rem; color: #64748b;"> que estas pensado ? </div>
+
                 </div>
             </button>
 
