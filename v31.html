@@ -5097,8 +5097,52 @@ window.manejarAuth = async () => {
 
         // 2. Inicializar cachés y heartbeat
         setTimeout(() => { if(typeof cachearUsuarios === "function") cachearUsuarios(); }, 1000);
-        setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 10000);
+        setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 10000
         
+        );
+        // --- 🔔 RADAR DE MENSAJES Y NOTIFICACIONES ---
+        db.ref(`users/${idAuditor}/notifications`).on('value', snap => {
+            window.mapaMensajesSinLeer = {}; 
+            let totalMensajesNuevos = 0;
+
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    const n = child.val();
+                    // Contamos chats privados no leídos
+                    if (n.type === 'chat_privado' && n.read === false) {
+                        const emisorUid = n.extra;
+                        if (emisorUid) {
+                            window.mapaMensajesSinLeer[emisorUid] = (window.mapaMensajesSinLeer[emisorUid] || 0) + 1;
+                            totalMensajesNuevos++;
+                        }
+                    }
+                });
+            }
+
+            // 1. Número rojo en el menú de abajo (Pestaña Mensajes)
+            const badgeMenu = document.getElementById('msgBadge');
+            if (badgeMenu) {
+                if (totalMensajesNuevos > 0) {
+                    badgeMenu.style.display = 'flex';
+                    badgeMenu.textContent = totalMensajesNuevos > 99 ? '99+' : totalMensajesNuevos;
+                    document.getElementById('nav3')?.querySelector('.nav-icon')?.classList.add('nav-jumping');
+                } else {
+                    badgeMenu.style.display = 'none';
+                    document.getElementById('nav3')?.querySelector('.nav-icon')?.classList.remove('nav-jumping');
+                }
+            }
+
+            // 2. Sincronizar campanas (arriba y pestaña mensajes)
+            const b1 = document.getElementById('badgeNotis');
+            const b2 = document.getElementById('badgeNotisMensajes');
+            if (b1) { b1.textContent = totalMensajesNuevos; b1.classList.toggle('active', totalMensajesNuevos > 0); }
+            if (b2) { b2.textContent = totalMensajesNuevos; b2.classList.toggle('active', totalMensajesNuevos > 0); }
+
+            // 3. 🔥 RE-DIBUJAR LA LISTA PARA QUE SALGAN LOS GLOBITOS ROJOS
+            if (typeof renderizarUsuariosHorizontal === 'function') {
+                renderizarUsuariosHorizontal();
+            }
+        });
         // 3. Verificar compras confirmadas pendientes de acreditar
         verificarComprasConfirmadas();
         
@@ -8714,58 +8758,92 @@ function cargarListaUsuariosHorizontal() {
         });
     });
 }
+// ==========================================
+// 3. RENDERIZAR USUARIOS (CON NUBES Y BADGES ROJOS)
+// ==========================================
 function renderizarUsuariosHorizontal() {
     const contenedor = document.getElementById('listaUsuariosHorizontal');
     if (!contenedor) return;
 
-    // 1. BOTÓN PENSAR (Diseño compacto)
+    // --- 1. BOTÓN "PENSAR" (Siempre de primero) ---
     let html = `
-    <div class="story-item" style="min-width: 70px; flex-shrink: 0; text-align: center; margin-top: 35px;">
+    <div class="story-item" style="min-width: 75px; flex-shrink: 0; text-align: center; margin-top: 35px;">
         <div onclick="document.getElementById('modalPensamiento').style.display='flex'; document.getElementById('inputPensamiento').focus();" 
              style="width: 55px; height: 55px; border-radius: 20px; border: 2.5px dashed #8b5cf6; background: #faf5ff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; margin: 0 auto;">
             💭
         </div>
-        <div style="margin-top: 6px; font-size: 0.7rem; color: #8b5cf6; font-weight: 800;">Pensar</div>
+        <div style="margin-top: 6px; font-size: 0.75rem; color: #8b5cf6; font-weight: 800;">Pensar</div>
     </div>`;
 
+    // Si no hay usuarios, mostramos solo el botón pensar
+    if (!listaUsuariosCacheReal || listaUsuariosCacheReal.length === 0) {
+        contenedor.innerHTML = html;
+        return;
+    }
+
+    const ahora = Date.now();
+
     listaUsuariosCacheReal.forEach(user => {
-        // --- ☁️ NUBE DE PENSAMIENTO ---
+        const esMio = (user.key === idAuditor);
+        
+        // --- 🔴 LÓGICA DEL BADGE ROJO (MENSAJES NO LEÍDOS) ---
+        // Buscamos en el mapa si este usuario tiene mensajes para nosotros
+        const numMensajes = window.mapaMensajesSinLeer ? (window.mapaMensajesSinLeer[user.key] || 0) : 0;
+        
+        const badgeHtml = numMensajes > 0 
+             ? `<div style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; 
+                           border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; 
+                           display:flex; align-items:center; justify-content:center; 
+                           border:2px solid white; font-weight:800; z-index:110; 
+                           animation: popIn 0.3s;">${numMensajes}</div>` 
+             : '';
+
+        // --- ☁️ LÓGICA DE LA NUBE DE PENSAMIENTO ---
         let nubeHtml = "";
         if (user.pensamiento && user.pensamiento.trim() !== "") {
             nubeHtml = `
             <div style="position: absolute; top: -42px; left: 50%; transform: translateX(-50%); 
-                        background: #8b5cf6; color: white; padding: 5px 12px; border-radius: 15px; 
+                        background: ${esMio ? '#6366f1' : '#8b5cf6'}; color: white; padding: 5px 12px; border-radius: 15px; 
                         font-size: 0.62rem; font-weight: 800; white-space: nowrap; 
-                        box-shadow: 0 4px 12px rgba(139,92,246,0.4); z-index: 999;
+                        box-shadow: 0 4px 12px rgba(99,102,241,0.4); z-index: 100;
                         max-width: 95px; overflow: hidden; text-overflow: ellipsis; animation: bounce 2s infinite;">
                 ${escapeHtml(user.pensamiento)}
                 <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
                             width: 0; height: 0; border-left: 6px solid transparent; 
-                            border-right: 6px solid transparent; border-top: 6px solid #8b5cf6;"></div>
+                            border-right: 6px solid transparent; border-top: 6px solid ${esMio ? '#6366f1' : '#8b5cf6'};"></div>
             </div>`;
         }
 
-        // Tiempos y Colores
-        const ahora = Date.now();
-        let tiempoTexto = window.formatTimeAgo ? window.formatTimeAgo(user.rawTime) : "Reciente";
-        let colorTiempo = (ahora - user.rawTime < 120000) ? "#10b981" : "#94a3b8";
-        let bordeColor = user.online ? '#10b981' : '#e2e8f0';
+        // Tiempos y Colores de borde
+        let tiempoTexto = esMio ? "Online" : (window.formatTimeAgo ? window.formatTimeAgo(user.rawTime) : "Reciente");
+        let colorTiempo = (esMio || ahora - user.rawTime < 120000) ? "#10b981" : "#94a3b8";
+        
+        // El borde se pone rojo si hay mensajes, verde si esta online, o gris normal
+        let bordeColor = numMensajes > 0 ? '#ef4444' : (user.online ? '#10b981' : '#e2e8f0');
 
-        // --- 2. CÍRCULO DEL USUARIO (Con foto real) ---
+        // --- 2. CONSTRUIR CADA ITEM DE LA LISTA ---
         html += `
-        <div class="story-item" style="min-width: 70px; position:relative; margin-top: 35px;" onclick="abrirChatPrivado('${user.key}', '${user.nombre.replace(/'/g, "\\'")}')">
+        <div class="story-item" style="min-width: 70px; position:relative; margin-top: 35px;" 
+             onclick="${esMio ? '' : `abrirChatPrivado('${user.key}', '${user.nombre.replace(/'/g, "\\'")}')`}">
             
-            ${nubeHtml} 
+            ${nubeHtml} <!-- Nube flotante -->
 
             <div class="story-avatar-box" style="border-width: 3px; border-color: ${bordeColor}; position:relative; width:58px; height:58px; margin: 0 auto; transition: 0.3s;">
-                <!-- Usamos user.avatar que trae la foto fresca de la DB -->
+                
                 <div class="story-img" style="background-image:url('${user.avatar}'); background-size: cover; background-position: center;"></div>
+                
+                ${badgeHtml} <!-- Círculo rojo de mensajes -->
                 
                 ${user.online ? `<div class="story-dot dot-online" style="border: 2px solid white; z-index: 10;"></div>` : ''}
             </div>
             
-            <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">${user.key === idAuditor ? 'Tú' : user.nombre}</div>
-            <div style="font-size: 0.55rem; color: ${colorTiempo}; font-weight: 800; margin-top:-2px;">${tiempoTexto}</div>
+            <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">
+                ${esMio ? 'Tú' : user.nombre}
+            </div>
+            
+            <div style="font-size: 0.55rem; color: ${colorTiempo}; font-weight: 800; margin-top:-2px;">
+                ${tiempoTexto}
+            </div>
         </div>`;
     });
 
