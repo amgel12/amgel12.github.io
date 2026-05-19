@@ -630,7 +630,7 @@
       padding: 8px 14px; border-radius: 50px;
       font-size: 11px; font-weight: 700; cursor: pointer;
   }
-  .stories-container { background: transparent; padding: 1px 0 15px 0; margin-bottom: 15px; }
+  .stories-container { background: transparent; padding: 15px 0 15px 0; margin-bottom: 5px; }
   .stories-title { padding: 0 15px 10px; font-size: 0.85rem; font-weight: 700; color: #64748b; }
   
   .stories-scroll {
@@ -1059,11 +1059,6 @@
        transition: none;
    }
 
-   .msg-bubble.swiping-mention {
-       transition: none;
-       box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3) !important;
-   }
-
   .msg-mine {
       align-self: flex-end;
       background: linear-gradient(135deg, #6366f1, #90ee9060);
@@ -1121,16 +1116,8 @@
   .ic-purple { color: #8b5cf6; }
   .ic-gray { color: #64748b; }
 
-.pensamientos-wrapper { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    justify-content: flex-start; /* Cambiado de center a flex-start */
-    height: auto; /* Cambiado de 80% a auto */
-    text-align: center; 
-    padding: 10px; /* Reducido de 30px */
-    margin-top: 10px; /* Agregado para controlar la posición */
-}
+  .pensamientos-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80%; text-align: center; padding: 30px; }
+
 
 
 #muroFotosGrid {
@@ -1715,9 +1702,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Input para escribir -->
         <div style="background:white; padding:10px; border-top:1px solid #e2e8f0; display:flex; gap:8px; align-items:center; flex-shrink:0;">
-            <button onclick="abrirModalFotoGrupo()" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#10b981,#059669); border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 8px rgba(15,183,127,0.4); flex-shrink:0; cursor:pointer;">
-                📷
-            </button>
             <input type="text" id="inputGrupoMsg" placeholder="Escribe al grupo..." onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensajeGrupo();}" style="flex:1; background:#f0f2f5; border:none; padding:10px 15px; border-radius:20px; outline:none;">
             <button onclick="enviarMensajeGrupo()" class="btn-blue" style="width:40px; height:40px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">➤</button>
         </div>
@@ -2253,10 +2237,10 @@ Cerrar
                  font-weight:800; font-size:0.95rem; display:flex; align-items:center;
                  justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(16,185,129,0.35);
                  cursor:pointer;">
-          📺 Ver anuncio — Gana 8 mensajes
+          📺 Ver anuncio — Gana 10 mensajes
         </button>
         <div style="font-size:0.7rem; color:#10b981; margin-top:6px; margin-bottom:6px;">
-          🎁 +8 mensajes gratis
+          🎁 +10 mensajes gratis
         </div>
 
         <button onclick="cerrarModalComprarMensajes()"
@@ -2376,34 +2360,6 @@ Cerrar
             📷 Enviar Foto
         </button>
         <button onclick="cerrarModalFotoPrivada()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
-    </div>
-</div>
-<!-- MODAL SUBIR FOTO GRUPO -->
-<div id="modalFotoGrupo" class="modal-overlay" style="z-index: 30000;">
-    <div class="modal-content">
-        <h3 style="color:#10b981;">📷 Enviar Foto al Grupo</h3>
-        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
-            Todos los miembros del grupo verán esta foto.
-        </p>
-        
-        <div style="background:#f0fdf4; border:2px dashed #10b981; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
-            <img id="imgPreviewGrupo" style="width:100%; height:100%; object-fit:contain; display:none;">
-            <div id="placeholderUploadGrupo" style="text-align:center; color:#10b981;">
-                <i class="fas fa-camera" style="font-size:2.5rem; margin-bottom: 10px;"></i>
-                <p style="font-size:0.8rem; font-weight:bold;">Selecciona una foto</p>
-                <p style="font-size:0.65rem; opacity:0.8;">Todos la verán al instante</p>
-            </div>
-            <input type="file" id="inputFotoGrupo" accept="image/*" onchange="procesarFotoGrupo()" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
-        </div>
-
-        <div style="font-size:0.65rem; color:#ef4444; margin-bottom:15px; background: #fef2f2; padding: 8px; border-radius: 8px;">
-            ⚠️ Prohibido contenido +18 o violento. Serás baneado.
-        </div>
-        
-        <button id="btnEnviarFotoGrupo" class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" disabled onclick="enviarFotoGrupo()">
-            📷 Enviar Foto al Grupo
-        </button>
-        <button onclick="cerrarModalFotoGrupo()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
     </div>
 </div>
 <div id="modalFotoDetalle" class="modal-overlay" style="z-index:29000; background:black; align-items:center; justify-content:center; display:none;">
@@ -3244,35 +3200,23 @@ style="display:none;">
         </div>
     </div>
 </div>
-<!-- PANTALLA 3: MENSAJES -->
-<div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #f8fafc; padding-bottom: 65px;">
+
+<div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #e5e5f7; padding-bottom: 65px;">
+    <div style="height: 25px; flex-shrink: 0; background:white;"></div>
     
-    <div id="areaSuperiorMensajes" style="flex-shrink: 0;">
-        <!-- Título y Campana -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 20px 5px; background: white;">
-            <h2 style="margin:0; font-size: 1.5rem; font-weight: 800; color: #1e293b;">Mensajes</h2>
-            <div class="noti-icon-box" onclick="abrirNotificaciones()">
-                <i class="fas fa-bell"></i>
-                <div id="badgeNotisMensajes" class="noti-badge">0</div>
-            </div>
+    <!-- 1. LISTA HORIZONTAL -->
+    <div class="stories-container" style="background: white; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; flex-shrink: 0;">
+        <div class="stories-title" style="padding: 10px 15px 5px; color: #64748b; font-size: 0.75rem;">Conectados reciente</div>
+        <div id="listaUsuariosHorizontal" class="stories-scroll" style="padding-bottom: 10px;">
+            <div style="padding:10px; font-size:0.8rem; color:#94a3b8;">Cargando...</div>
         </div>
-<!-- 1. LISTA HORIZONTAL (Espacio real para las nubes) -->
-<div class="stories-container" style="background: white; border-bottom: 1px solid #e2e8f0; padding: 10px 0; flex-shrink: 0; overflow: visible !important;">
-    <div class="stories-title" style="padding: 5px 15px 0; color: #64748b; font-size: 0.75rem; font-weight: bold;">Conectados reciente</div>
-    
-    <!-- 🔥 AJUSTE VITAL: padding-top: 50px -->
-    <div id="listaUsuariosHorizontal" 
-         style="display:flex; gap:18px; padding: 50px 15px 15px; overflow-x:auto; overflow-y:visible !important; scrollbar-width:none; align-items: flex-start; position: relative;">
-        <!-- Usuarios... -->
     </div>
-</div>
-</div>
+
     <!-- 2. PESTAÑAS -->
-<div class="chat-tabs-container" style="flex-shrink: 0;">
-    <button id="tabGlobalBtn" class="chat-tab-btn active" onclick="cambiarPestanaChat('global')">🌍 Global</button>
-    <button id="tabMensajesBtn" class="chat-tab-btn" onclick="cambiarPestanaChat('mensajes')">💬 Mensajes</button>
-    <button id="tabGruposBtn" class="chat-tab-btn" onclick="cambiarPestanaChat('grupos')">👥 Grupos</button>
-</div>
+    <div class="chat-tabs-container" style="flex-shrink: 0;">
+        <button id="tabGlobalBtn" class="chat-tab-btn active" onclick="cambiarPestanaChat('global')">🌍 Global</button>
+        <button id="tabGruposBtn" class="chat-tab-btn" onclick="cambiarPestanaChat('grupos')">👥 Grupos</button>
+    </div>
 
     <!-- 3. CONTENEDOR GLOBAL -->
     <div id="chatListContainer" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
@@ -3300,13 +3244,7 @@ style="display:none;">
                <button onclick="enviarTexto()" class="btn-blue" style="width: 40px; height: 40px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: #0070ba; color: white; border: none; margin-left: 10px;">➤</button>
         </div>
     </div>
-<div id="mensajesPrivadosContainer" style="flex: 1; overflow-y: auto; padding: 15px; display: none; background: #f8fafc;">
-    <div style="text-align:center; padding:40px; color:#94a3b8;">
-        <i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i>
-        <div style="margin-top:15px;">Cargando conversaciones...</div>
-    </div>
 
-</div>
     <!-- 4. CONTENEDOR GRUPOS -->
     <div id="gruposListContainer" style="flex: 1; overflow-y: auto; padding: 15px; display: none; background: #f8fafc;">
         
@@ -3316,7 +3254,6 @@ style="display:none;">
         <div id="listaDeGrupos"></div>
     </div>
 </div>
-
 
    <div class="screen">
     <div style="height: 60px;"></div>
@@ -3672,26 +3609,12 @@ function showFCMNotification(title, body) {
         console.log(`🔔 ${title}: ${body}`);
     }
     
-    // 1. Obtener los dos badges (el principal y el de la pantalla mensajes)
     const badge = document.getElementById('badgeNotis');
-    const badgeMensajes = document.getElementById('badgeNotisMensajes'); // El nuevo
-    
     if (badge) {
         let count = parseInt(badge.textContent) || 0;
-        let nuevoCount = count + 1;
-
-        // Actualizar campana principal
-        badge.textContent = nuevoCount;
+        badge.textContent = count + 1;
         badge.classList.add('active');
         badge.parentElement?.classList.add('bell-jump');
-
-        // 2. Sincronizar con la campana de la pantalla de mensajes
-        if (badgeMensajes) {
-            badgeMensajes.textContent = nuevoCount;
-            badgeMensajes.classList.add('active');
-            // También hacemos que brinque la segunda campana
-            badgeMensajes.parentElement?.classList.add('bell-jump');
-        }
     }
     
     if (navigator.vibrate) {
@@ -4213,10 +4136,9 @@ function registrarHistorial(motivo, puntos) {
 let currentScreen = 2;
 
 window.goToScreen = (index, userAction = false) => {
-    // 1. Limpiar timers de fotos
     clearTimeout(pressTimerFoto);
     clearTimeout(pressTimerFotoDetalle);
-    
+    // 🛡️ SEGURIDAD
     if (index === 2 && !idAuditor) {
         notify("⏳ Cargando perfil...");
         return;
@@ -4226,23 +4148,6 @@ window.goToScreen = (index, userAction = false) => {
         if (window.cerrarModalLecturaMision) window.cerrarModalLecturaMision();
         if (window.cerrarModalMusicaMision) window.cerrarModalMusicaMision();
     }
-
-    // --- LÓGICA DE HEADER DINÁMICO ---
-    const mainHeader = document.querySelector('.header-fixed');
-    if (mainHeader) {
-        if (index === 3) {
-            mainHeader.style.display = 'none';
-        } else {
-            mainHeader.style.display = 'flex';
-        }
-    }
-
-    // --- 🔥 TRUCO PARA EL SCROLL (Añade esto aquí) ---
-    const todasLasScreens = document.querySelectorAll('.screen');
-    if (todasLasScreens[index]) {
-        todasLasScreens[index].scrollTop = 0; // Esto sube la pantalla al inicio
-    }
-    // -------------------------------------------------
 
     if (userAction && index === 2 && currentScreen === 2) {
         const iframe = document.getElementById('mainFeedIframe');
@@ -4256,7 +4161,6 @@ window.goToScreen = (index, userAction = false) => {
     if (userAction && index !== 2) {
         window.history.pushState({ screen: index }, "");
     }
-
     if (document.activeElement) document.activeElement.blur();
 
     currentScreen = index;
@@ -4267,15 +4171,22 @@ window.goToScreen = (index, userAction = false) => {
     const btnActivo = document.getElementById(`nav${index}`);
     if (btnActivo) btnActivo.classList.add('active');
 
+    if (index === 0 && typeof renderizarMisionesAprender === "function") {
+        renderizarMisionesAprender();
+    }
+
     const screens = document.querySelectorAll('.screen');
     screens.forEach((screen, i) => {
         screen.style.pointerEvents = (i === index) ? "auto" : "none";
     });
 
     const container = document.getElementById('muroReportes');
+
     if (index === 2) {
+        // --- ENTRANDO AL FEED ---
         if (container) {
             container.style.display = "block";
+            // Solo creamos el iframe si no existe actualmente
             if (!document.getElementById('mainFeedIframe')) {
                 container.innerHTML = `<iframe id="mainFeedIframe" 
                     src="https://amgel12.github.io/feed.html?uid=${idAuditor}" 
@@ -4285,9 +4196,11 @@ window.goToScreen = (index, userAction = false) => {
             }
         }
     } else {
+        // --- SALIENDO DEL FEED ---
         detenerProgresoVideo();
         if (container) {
             container.style.display = "none";
+            // 🔥 IMPORTANTE: Vaciamos el contenedor para MATAR el proceso del video y el sonido
             container.innerHTML = ""; 
         }
     }
@@ -4295,20 +4208,12 @@ window.goToScreen = (index, userAction = false) => {
     const fabBtn = document.getElementById('fabPublicar');
     if (fabBtn) {
         fabBtn.style.display = (index === 2) ? 'flex' : 'none';
+        fabBtn.style.zIndex = "10001";
     }
 
     if (index === 3) {
-        const badgeMsg = document.getElementById('msgBadge');
-        if (badgeMsg) badgeMsg.style.display = 'none';
-        
-        setTimeout(() => {
-            if (typeof scrollToBottom === 'function') scrollToBottom();
-            if (typeof cargarChatsPrivadosNoLeidos === 'function') cargarChatsPrivadosNoLeidos();
-        }, 200);
-    }
-    
-    if (index === 0 && typeof renderizarMisionesAprender === "function") {
-        renderizarMisionesAprender();
+        document.getElementById('msgBadge').style.display = 'none';
+        setTimeout(scrollToBottom, 200);
     }
 };
 // --- FUNCIONES PARA BARRA DE PROGRESO DE VIDEOS ---
@@ -5097,52 +5002,8 @@ window.manejarAuth = async () => {
 
         // 2. Inicializar cachés y heartbeat
         setTimeout(() => { if(typeof cachearUsuarios === "function") cachearUsuarios(); }, 1000);
-        setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 10000
+        setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 10000);
         
-        );
-        // --- 🔔 RADAR DE MENSAJES Y NOTIFICACIONES ---
-        db.ref(`users/${idAuditor}/notifications`).on('value', snap => {
-            window.mapaMensajesSinLeer = {}; 
-            let totalMensajesNuevos = 0;
-
-            if (snap.exists()) {
-                snap.forEach(child => {
-                    const n = child.val();
-                    // Contamos chats privados no leídos
-                    if (n.type === 'chat_privado' && n.read === false) {
-                        const emisorUid = n.extra;
-                        if (emisorUid) {
-                            window.mapaMensajesSinLeer[emisorUid] = (window.mapaMensajesSinLeer[emisorUid] || 0) + 1;
-                            totalMensajesNuevos++;
-                        }
-                    }
-                });
-            }
-
-            // 1. Número rojo en el menú de abajo (Pestaña Mensajes)
-            const badgeMenu = document.getElementById('msgBadge');
-            if (badgeMenu) {
-                if (totalMensajesNuevos > 0) {
-                    badgeMenu.style.display = 'flex';
-                    badgeMenu.textContent = totalMensajesNuevos > 99 ? '99+' : totalMensajesNuevos;
-                    document.getElementById('nav3')?.querySelector('.nav-icon')?.classList.add('nav-jumping');
-                } else {
-                    badgeMenu.style.display = 'none';
-                    document.getElementById('nav3')?.querySelector('.nav-icon')?.classList.remove('nav-jumping');
-                }
-            }
-
-            // 2. Sincronizar campanas (arriba y pestaña mensajes)
-            const b1 = document.getElementById('badgeNotis');
-            const b2 = document.getElementById('badgeNotisMensajes');
-            if (b1) { b1.textContent = totalMensajesNuevos; b1.classList.toggle('active', totalMensajesNuevos > 0); }
-            if (b2) { b2.textContent = totalMensajesNuevos; b2.classList.toggle('active', totalMensajesNuevos > 0); }
-
-            // 3. 🔥 RE-DIBUJAR LA LISTA PARA QUE SALGAN LOS GLOBITOS ROJOS
-            if (typeof renderizarUsuariosHorizontal === 'function') {
-                renderizarUsuariosHorizontal();
-            }
-        });
         // 3. Verificar compras confirmadas pendientes de acreditar
         verificarComprasConfirmadas();
         
@@ -5361,7 +5222,6 @@ if (girosDisponibles > 0) {
             // Lógica Maestra (Usuarios Activos)
             iniciarMonitorDeBadges();
             cargarListaUsuariosHorizontal();
-            cargarPensamientosPublicos();
             limpiarChatGlobal();
 
 } else {
@@ -5815,31 +5675,13 @@ if (girosDisponibles > 0) {
             const burbuja = document.getElementById(`msg-${msgKey}`);
             if (burbuja) {
                 burbuja.classList.add('swiping');
+                const translateX = Math.max(0, Math.min(deltaX, 100));
+                burbuja.style.transform = `translateX(${translateX}px)`;
 
-                if (deltaX > 0) {
-                    // Swipe derecha → Responder
-                    const translateX = Math.min(deltaX, 100);
-                    burbuja.style.transform = `translateX(${translateX}px)`;
-                    burbuja.classList.remove('swiping-mention');
-                    if (translateX > 50) {
-                        burbuja.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
-                        burbuja.style.borderLeft = '4px solid #6366f1';
-                        burbuja.style.borderRight = '';
-                    }
-                } else {
-                    // Swipe izquierda → Mencionar
-                    const translateX = Math.max(deltaX, -100);
-                    burbuja.style.transform = `translateX(${translateX}px)`;
-                    burbuja.classList.add('swiping-mention');
-                    if (translateX < -50) {
-                        burbuja.style.boxShadow = '0 4px 15px rgba(251, 191, 36, 0.4)';
-                        burbuja.style.borderRight = '4px solid #fbbf24';
-                        burbuja.style.borderLeft = '';
-                    } else {
-                        burbuja.style.boxShadow = '';
-                        burbuja.style.borderRight = '';
-                        burbuja.style.borderLeft = '';
-                    }
+                // Cambiar apariencia cuando se desliza suficiente
+                if (translateX > 50) {
+                    burbuja.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
+                    burbuja.style.borderLeft = '4px solid #6366f1';
                 }
             }
         }
@@ -5854,22 +5696,13 @@ if (girosDisponibles > 0) {
         const burbuja = document.getElementById(`msg-${msgKey}`);
         if (burbuja) {
             burbuja.classList.remove('swiping');
-            burbuja.classList.remove('swiping-mention');
             burbuja.style.transform = '';
             burbuja.style.background = '';
-            burbuja.style.borderLeft = '';
-            burbuja.style.borderRight = '';
         }
         
-        // Swipe derecha > 60px → Responder
+        // Si se deslizó más de 60px a la derecha, responder
         if (deltaX > 60) {
             responderMensaje(msgKey, text, author, uid);
-        }
-        // Swipe izquierda < -60px → Mencionar
-        else if (deltaX < -60) {
-            if (typeof window.mencionarEnChatGlobal === 'function') {
-                window.mencionarEnChatGlobal(author);
-            }
         }
         
         isSwiping = false;
@@ -5911,17 +5744,6 @@ if (girosDisponibles > 0) {
         window.replyToMsgUid = null;
         
         input.placeholder = 'Escribe...';
-    };
-
-    window.mencionarEnChatGlobal = (nombre) => {
-        const input = document.getElementById('inputChatMsg');
-        if (!input) return;
-        const texto = input.value;
-        const cursor = input.selectionStart || 0;
-        const mencion = "@" + nombre + " ";
-        input.value = texto.slice(0, cursor) + mencion + texto.slice(cursor);
-        input.focus();
-        if (navigator.vibrate) navigator.vibrate(30);
     };
 
     window.scrollToMessage = (msgKey) => {
@@ -6251,83 +6073,87 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             }, 500);
         }
     };
-   // CORRECCIÓN LÍNEA 6254
-const MI_PLAYLIST_ID = "PLF2EBFlMAzJ9YCa9wpFpYpu5k8_WmTRT8"; 
+    
+    const YOUTUBE_API_KEY = "AIzaSyAqswfC8HsBown7vyWtOfrWc-lbf4HFsbM"; // Tu API Key actual
 
-// CORRECCIÓN LÍNEA 6255
-const YOUTUBE_API_KEY = "AIzaSyAqswfC8HsBown7vyWtOfrWc-lbf4HFsbM";
+// ==========================================
+// 🔍 BUSCAR YOUTUBE (VERSIÓN SEGURA)
+// ==========================================
+// ==========================================
+// 🔍 BUSCAR YOUTUBE (VERSIÓN CORREGIDA FINAL)
+// ==========================================
 window.buscarEnYouTubeAPI = () => {
-    const q = document.getElementById('inputSearchMusic').value.trim().toLowerCase();
-    const loader = document.getElementById('ytLoader');
-    const resultsList = document.getElementById('musicResultsList');
-
-    // 1. Mostrar cargador y limpiar lista
-    loader.style.display = 'block';
-    resultsList.innerHTML = "";
-
-    // 2. TUS DATOS REALES
-    const MI_PLAYLIST_ID = "PLF2EBFlMAzJ9YCa9wpFpYpu5k8_WmTRT8"; 
-    const API_KEY = "AIzaSyAqswfC8HsBown7vyWtOfrWc-lbf4HFsbM"; 
-
-    // 3. LLAMADA A LA PLAYLIST
-    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${MI_PLAYLIST_ID}&key=${API_KEY}`;
-
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            loader.style.display = 'none';
-
-            if (data.error) {
-                resultsList.innerHTML = `<div style="color:red; text-align:center; padding:20px;">Error: ${data.error.message}</div>`;
+     const q = document.getElementById('inputSearchMusic').value.trim();
+     if(!q) return;
+     
+     stopPreview();
+     document.getElementById('ytLoader').style.display='block';
+     document.getElementById('musicResultsList').innerHTML = "";
+     
+     // Usamos tu API Key
+     fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q)}&key=${YOUTUBE_API_KEY}`)
+        .then(r => r.json())
+        .then(d => {
+             document.getElementById('ytLoader').style.display='none';
+             
+             let h = `<div style="padding:10px; text-align:center; border-bottom:1px solid #f1f5f9;">
+                        <button onclick="volverATendencias()" style="background:none; border:none; color:#0070ba; font-weight:bold; cursor:pointer; font-size:0.9rem;">
+                            ⬅ Volver a Tendencias
+                        </button>
+                     </div>`;
+            
+            if(!d.items || d.items.length === 0) {
+                document.getElementById('musicResultsList').innerHTML = h + "<div style='text-align:center;padding:20px;'>No se encontraron resultados.</div>";
                 return;
             }
-
-            let html = "";
-            let encontrados = 0;
-
-            data.items.forEach(item => {
-                const title = item.snippet.title;
-                const vidId = item.snippet.resourceId.videoId;
-                const thumb = item.snippet.thumbnails.medium ? item.snippet.thumbnails.medium.url : item.snippet.thumbnails.default.url;
-
-                // 🔥 LÓGICA DE FILTRO INTELIGENTE:
-                // Si el buscador está vacío, muestra TODO.
-                // Si el buscador tiene texto, solo muestra si el título coincide.
-                if (q !== "" && !title.toLowerCase().includes(q)) {
-                    return; // Salta esta canción
-                }
-
-                encontrados++;
-                const titleSafe = title.replace(/'/g, "").replace(/"/g, "");
-
-                html += `
-                <div class="music-item" style="display:flex; align-items:center; padding:12px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                    <div onclick="previewMusic('${vidId}')" style="position:relative; width:70px; height:70px; margin-right:15px; flex-shrink:0; cursor:pointer;">
-                        <img src="${thumb}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
-                        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); border-radius:12px;">
+            d.items.forEach(i => {
+                 const rawTitle = i.snippet.title;
+                 const thumb = i.snippet.thumbnails.medium ? i.snippet.thumbnails.medium.url : i.snippet.thumbnails.default.url;
+                 const vidId = i.id.videoId;
+                 
+                 // 🛡️ LIMPIEZA: Quitamos comillas para evitar errores
+                 const titleSafe = rawTitle.replace(/'/g, "").replace(/"/g, "");
+                 
+                 h += `
+                <div class="music-item" style="display:flex; align-items:center; padding:10px; border-bottom:1px solid #f1f5f9;">
+                    <div onclick="previewMusic('${vidId}')" style="position:relative; width:100px; height:56px; margin-right:15px; cursor:pointer; flex-shrink:0;">
+                        <img src="${thumb}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); border-radius:8px;">
                              <i class="fas fa-play" style="color:white; font-size:1.2rem;"></i>
                         </div>
                     </div>
-                    <div style="flex:1; overflow:hidden;">
-                        <div style="font-size:0.85rem; font-weight:bold; color:white; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${titleSafe}</div>
-                        <button class="btn-blue" style="width:auto; padding:6px 15px; font-size:0.75rem; margin-top:8px; background:#6366f1; border-radius:10px;" 
-                                onclick="seleccionarVideo('${vidId}', '${titleSafe}')">✅ Elegir esta</button>
-                    </div>
+<div style="flex:1; overflow:hidden;">
+    <div style="font-size:0.8rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; color:#334155;">${titleSafe}</div>
+    
+    <div style="display:flex; flex-direction:column; gap:6px;">
+        <button class="btn-blue" style="width:100%; padding:6px 12px; font-size:0.75rem; height:auto; background:#0070ba; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="escucharCancion('${vidId}', this)">
+            <i class="fas fa-play" style="font-size:0.7rem;"></i> Escuchar
+        </button>
+        <button class="btn-blue" style="width:100%; padding:6px 12px; font-size:0.75rem; height:auto; background:#10b981;" onclick="seleccionarVideo('${vidId}', '${titleSafe}', this)">
+            ✅ Elegir
+        </button>
+    </div>
+    
+    <!-- BARRAS DE REPRODUCCIÓN -->
+    <div id="barras-${vidId}" style="display:none; align-items:center; gap:6px; margin-top:6px;">
+        <div style="display:flex; gap:3px; align-items:flex-end; height:14px;">
+            <div style="width:3px; background:#1db954; border-radius:2px; animation:musicBar 0.8s ease infinite; height:8px;"></div>
+            <div style="width:3px; background:#1db954; border-radius:2px; animation:musicBar 0.8s ease infinite 0.2s; height:14px;"></div>
+            <div style="width:3px; background:#1db954; border-radius:2px; animation:musicBar 0.8s ease infinite 0.4s; height:10px;"></div>
+            <div style="width:3px; background:#1db954; border-radius:2px; animation:musicBar 0.8s ease infinite 0.1s; height:12px;"></div>
+            <div style="width:3px; background:#1db954; border-radius:2px; animation:musicBar 0.8s ease infinite 0.3s; height:6px;"></div>
+        </div>
+        <span style="font-size:0.65rem; color:#1db954; font-weight:700;">Reproduciendo...</span>
+    </div>
+</div>
                 </div>`;
-            });
-
-            if (encontrados === 0) {
-                resultsList.innerHTML = `<div style="color:#94a3b8; text-align:center; padding:20px;">
-                    No hay canciones con "${q}" en tu lista.<br>
-                    <button onclick="document.getElementById('inputSearchMusic').value=''; buscarEnYouTubeAPI();" style="color:#6366f1; background:none; border:none; text-decoration:underline; margin-top:10px;">Ver toda mi lista</button>
-                </div>`;
-            } else {
-                resultsList.innerHTML = html;
-            }
-        })
-        .catch(err => {
-            loader.style.display = 'none';
-            resultsList.innerHTML = "Error de conexión: " + err;
+             });
+             
+             document.getElementById('musicResultsList').innerHTML = h;
+         })
+        .catch(e => {
+            document.getElementById('ytLoader').style.display='none';
+            document.getElementById('musicResultsList').innerHTML = `<div style='text-align:center;padding:20px;'>Error: ${e.message}</div>`;
         });
 };
  window.previewMusic = (id) => {
@@ -6977,13 +6803,10 @@ window.addEventListener('popstate', (e) => {
     // --- 1. FUNCIÓN PARA ABRIR CORREO REAL ---
     window.enviarCorreoSoporte = () => {
         const asunto = "Ayuda PAGOCODE - ID: " + (myCurrentKey || "Usuario");
-        const cuerpo = "Hola, necesito ayuda con lo siguiente:\n\n(Escribe aquí tu problema)...";
+        const cuerpo = "Hola, necesito ayuda con lo siguiente:%0D%0A%0D%0A(Escribe aquí tu problema)...";
         
-        if (typeof AndroidNative !== 'undefined') {
-            AndroidNative.abrirCorreo("codec3865@gmail.com", asunto, cuerpo);
-        } else {
-            window.open(`mailto:codec3865@gmail.com?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`, '_system');
-        }
+        // AQUÍ ES DONDE PONES TU CORREO REAL:
+        window.location.href = `mailto:codec3865@gmail.com?subject=${asunto}&body=${cuerpo}`;
     };
     // Esta función se debe llamar cuando el usuario complete una misión (Video o Publicación)
     // --- FUNCIÓN PARA SUBIR EL 1% (META: 5 MISIONES) ---
@@ -7828,127 +7651,6 @@ window.mostrarFotoPrivada = (el) => {
     
     modal.style.display = 'flex';
 };
-
-// ==========================================
-// 📷 FOTO EN CHAT GRUPO
-// ==========================================
-let fotoGrupoBase64 = "";
-
-window.abrirModalFotoGrupo = () => {
-    if (!currentGrupoId) return notify("No hay grupo activo");
-    document.getElementById('modalFotoGrupo').style.display = 'flex';
-    document.getElementById('imgPreviewGrupo').style.display = 'none';
-    document.getElementById('placeholderUploadGrupo').style.display = 'block';
-    document.getElementById('btnEnviarFotoGrupo').disabled = true;
-    document.getElementById('btnEnviarFotoGrupo').innerHTML = '📷 Enviar Foto al Grupo';
-    fotoGrupoBase64 = "";
-};
-
-window.cerrarModalFotoGrupo = () => {
-    document.getElementById('modalFotoGrupo').style.display = 'none';
-    document.getElementById('inputFotoGrupo').value = "";
-    fotoGrupoBase64 = "";
-};
-
-window.procesarFotoGrupo = () => {
-    const file = document.getElementById('inputFotoGrupo').files[0];
-    if (!file) return;
-
-    document.getElementById('placeholderUploadGrupo').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const img = new Image();
-        img.src = e.target.result;
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 600;
-            const scaleSize = MAX_WIDTH / img.width;
-            canvas.width = MAX_WIDTH;
-            canvas.height = img.height * scaleSize;
-
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-            fotoGrupoBase64 = canvas.toDataURL('image/jpeg', 0.6);
-
-            document.getElementById('imgPreviewGrupo').src = fotoGrupoBase64;
-            document.getElementById('imgPreviewGrupo').style.display = 'block';
-            document.getElementById('placeholderUploadGrupo').style.display = 'none';
-
-            const btn = document.getElementById('btnEnviarFotoGrupo');
-            btn.disabled = false;
-            btn.innerHTML = '📷 Enviar Foto al Grupo';
-            btn.style.opacity = "1";
-        };
-    };
-    reader.readAsDataURL(file);
-};
-
-window.enviarFotoGrupo = () => {
-    if (!fotoGrupoBase64) return notify("Elige una foto primero");
-    if (!currentGrupoId) return notify("Grupo no activo");
-
-    const btn = document.getElementById('btnEnviarFotoGrupo');
-    btn.disabled = true;
-    btn.innerHTML = 'Enviando...';
-
-    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
-
-    db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push({
-        uid: idAuditor,
-        autor: miNombre,
-        texto: "📷 Foto",
-        foto: fotoGrupoBase64,
-        esFoto: true,
-        fecha: firebase.database.ServerValue.TIMESTAMP
-    }).then(() => {
-        cerrarModalFotoGrupo();
-        notify("✅ Foto enviada al grupo");
-        try { window.playSound('win'); } catch(e){}
-    }).catch(err => {
-        notify("Error: " + err.message);
-        btn.disabled = false;
-        btn.innerHTML = '📷 Enviar Foto al Grupo';
-    });
-};
-
-window.mostrarFotoGrupo = (el) => {
-    const fotoSrc = el.getAttribute('data-foto');
-    if (!fotoSrc) return;
-
-    let modal = document.getElementById('modalVerFotoGrupo');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'modalVerFotoGrupo';
-        modal.style.cssText = `
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.95);
-            z-index: 31000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        `;
-        modal.onclick = () => modal.style.display = 'none';
-        document.body.appendChild(modal);
-    }
-
-    modal.innerHTML = `
-        <img src="${fotoSrc}" style="max-width:95%; max-height:90vh; object-fit:contain; border-radius:12px; box-shadow:0 4px 30px rgba(0,0,0,0.5);">
-        <button onclick="document.getElementById('modalVerFotoGrupo').style.display='none'" style="
-            position:absolute; top:15px; right:15px;
-            background:rgba(255,255,255,0.2); color:white; border:none;
-            width:40px; height:40px; border-radius:50%; font-size:1.5rem;
-            display:flex; align-items:center; justify-content:center; cursor:pointer;">
-            ✕
-        </button>
-    `;
-
-    modal.style.display = 'flex';
-};
-
 // ==========================================
 // 🔒 LÓGICA DE CHAT PRIVADO (1 vs 1)
 // ==========================================
@@ -7960,7 +7662,7 @@ let privChatRef = null;
 let privUserRef = null;
 const LIMITE_DIARIO_MSGS = 10;
 const BONUS_PAYPAL_MSGS = 20; // 20 mensajes extra al comprar por PayPal
-const BONUS_AD_MSGS = 8;       // 8 mensajes extra al ver un anuncio
+const BONUS_AD_MSGS = 10;       // 10 mensajes extra al ver un anuncio
 
 // 1. ABRIR EL MODAL Y PREPARAR
 window.abrirChatPrivado = (targetUid, targetName) => {
@@ -8252,9 +7954,13 @@ window.enviarMensajePrivado = () => {
         return;
     }
 
-    db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).once('value', sChat => {
+    // USUARIO NORMAL: Verificar límite diario (por destinatario)
+    Promise.all([
+        db.ref(`users/${idAuditor}/privados_diarios/extras`).once('value'),
+        db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).once('value')
+    ]).then(([sExtras, sChat]) => {
+        const extras = sExtras.val() || 0;
         const chatData = sChat.val() || {};
-        const extras = chatData.extras || 0;
         const hoy = new Date().toISOString().split('T')[0];
         let conteo = (chatData.fecha === hoy) ? (chatData.count || 0) : 0;
         const totalDisponible = LIMITE_DIARIO_MSGS + extras;
@@ -8268,7 +7974,7 @@ window.enviarMensajePrivado = () => {
 
         detectarYEnvarMenciones(txt, "chat");
 
-        db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).update({
+        db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).set({
             fecha: hoy,
             count: conteo + 1
         });
@@ -8302,9 +8008,12 @@ function checkLimiteDiario(uid) {
         return;
     }
 
-    db.ref(`users/${idAuditor}/privados_diarios/${targetUid}`).once('value', sChat => {
+    Promise.all([
+        db.ref(`users/${idAuditor}/privados_diarios/extras`).once('value'),
+        db.ref(`users/${idAuditor}/privados_diarios/${targetUid}`).once('value')
+    ]).then(([sExtras, sChat]) => {
+        const extras = sExtras.val() || 0;
         const chatData = sChat.val() || {};
-        const extras = chatData.extras || 0;
         const hoy = new Date().toISOString().split('T')[0];
         let conteo = (chatData.fecha === hoy) ? (chatData.count || 0) : 0;
         const total = LIMITE_DIARIO_MSGS + extras;
@@ -8401,39 +8110,37 @@ function verificarComprasConfirmadas() {
     });
 }
 
-// 📺 OPCIÓN 2: Ver anuncio recompensado para 8 mensajes extra
+// 📺 OPCIÓN 2: Ver anuncio (go:s7) para 5 mensajes extra
 window.verAnuncioMensajes = () => {
     try { window.playSound('click'); } catch(e){}
-    notify("📺 Ve el anuncio completo para ganar 8 mensajes...");
+    notify("📺 Cargando anuncio...");
 
-    if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirVideoRecompensado) {
-        window._rewardPendingTarget = targetUserUid;
-        AndroidNative.abrirVideoRecompensado();
-    } else {
-        notify("⚠️ Anuncios no disponibles en esta versión");
+    // Lanzar anuncio go:s7 vía iframe oculto (mismo patrón que el resto de la app)
+    try {
+        const adTrigger = document.createElement('iframe');
+        adTrigger.style.display = 'none';
+        adTrigger.src = 'go:s7';
+        document.body.appendChild(adTrigger);
+        setTimeout(() => {
+            try { document.body.removeChild(adTrigger); } catch(e){}
+        }, 3000);
+    } catch(err) {
+        console.log("Error al cargar anuncio: ", err);
     }
-};
 
-// Callback desde Kotlin tras ver anuncio recompensado para mensajes
-window.otorgarMensajesPorAd = () => {
-    const targetUid = window._rewardPendingTarget || targetUserUid;
-    if (!targetUid) return notify("⚠️ Error: no hay chat activo");
-
-    db.ref(`users/${idAuditor}/privados_diarios/${targetUid}`).once('value', s => {
-        const data = s.val() || {};
-        const extras = data.extras || 0;
-        db.ref(`users/${idAuditor}/privados_diarios/${targetUid}/extras`).set(extras + BONUS_AD_MSGS)
-        .then(() => {
-            cerrarModalComprarMensajes();
-            notify(`🎁 +${BONUS_AD_MSGS} mensajes desbloqueados por ver anuncio`);
-            checkLimiteDiario(targetUid);
-            try { window.playSound('win'); } catch(e){}
-        })
-        .catch(err => {
-            console.error("Error al guardar mensajes extra:", err);
-            notify("❌ Error al acreditar mensajes. Intenta de nuevo.");
+    // Acreditar los 5 mensajes extra después del anuncio
+    setTimeout(() => {
+        db.ref(`users/${idAuditor}/privados_diarios/extras`).once('value', s => {
+            const extras = s.val() || 0;
+            db.ref(`users/${idAuditor}/privados_diarios/extras`).set(extras + BONUS_AD_MSGS)
+            .then(() => {
+                cerrarModalComprarMensajes();
+                notify(`🎁 +${BONUS_AD_MSGS} mensajes desbloqueados por ver anuncio`);
+                checkLimiteDiario(targetUserUid);
+                try { window.playSound('win'); } catch(e){}
+            });
         });
-    });
+    }, 1200);
 };
 
 window.cerrarChatPrivado = () => {
@@ -8712,153 +8419,117 @@ function cargarListaUsuariosHorizontal() {
     const contenedor = document.getElementById('listaUsuariosHorizontal');
     if (!contenedor) return;
 
-    // Radar 1: Usuarios (para ver quién está conectado)
-    db.ref('users').orderByChild('lastSeen').limitToLast(25).on('value', snapUsers => {
+    db.ref('users').orderByChild('lastSeen').limitToLast(30).on('value', snap => {
+        listaUsuariosCacheReal = [];
+        const ahora = Date.now();
         
-        // Radar 2: 🔥 Pensamientos Públicos (Sincronización total)
-        db.ref('pensamientos').on('value', snapNubes => {
-            const nubesData = snapNubes.val() || {};
-            listaUsuariosCacheReal = [];
-            const ahora = Date.now();
-
-            snapUsers.forEach(child => {
-                const u = child.val();
-                const uid = child.key;
+        snap.forEach(child => {
+            const u = child.val();
+            if (child.key !== idAuditor) {
+                const tiempo = u.lastSeen || 0;
+                const minutos = Math.floor((ahora - tiempo) / 60000);
+                const esOnline = minutos < 2;
                 
-                // Buscamos si este usuario tiene una nube en el nodo público
-                // Si la nube tiene más de 24 horas, no la mostramos para que no se llene de basura
-                const nube = nubesData[uid];
-                let pensamientoFinal = "";
-                if (nube && (ahora - nube.timestamp < 86400000)) {
-                    pensamientoFinal = nube.texto;
+                // Mostrar apodo si existe, sino mostrar código INV
+                const nombreMostrar = u.apodo || (u.myInviteKey ? (u.myInviteKey.split('-')[1] || "User") : "User");
+                
+                // 🔥 ACTUALIZAR CACHE DE FOTO EN TIEMPO REAL
+                if (u.fotoPerfil) {
+                    cacheFotosPerfil[child.key] = u.fotoPerfil;
                 }
-
+                
                 listaUsuariosCacheReal.push({
-                    key: uid,
-                    nombre: u.apodo || u.myInviteKey || "User",
-                    avatar: u.fotoPerfil || getAvatarUrl(uid),
-                    online: (ahora - (u.lastSeen || 0) < 120000),
-                    rawTime: u.lastSeen || 0,
-                    pensamiento: pensamientoFinal // 👈 Ahora es 100% público
+                    key: child.key,
+                    nombre: nombreMostrar,
+                    avatar: getUserProfilePhoto(child.key),
+                    online: esOnline,
+                    rawTime: tiempo
                 });
-            });
-
-            // Ordenamos: Los que escribieron pensamientos nuevos aparecen de PRIMERO
-            listaUsuariosCacheReal.sort((a, b) => {
-                if (a.pensamiento && !b.pensamiento) return -1;
-                if (!a.pensamiento && b.pensamiento) return 1;
-                return b.rawTime - a.rawTime;
-            });
-
-            renderizarUsuariosHorizontal();
+            }
         });
+
+        listaUsuariosCacheReal.sort((a, b) => {
+             const msgA = mapaMensajesSinLeer[a.key] || 0;
+             const msgB = mapaMensajesSinLeer[b.key] || 0;
+             if (msgA > 0 && msgB === 0) return -1;
+             if (msgB > 0 && msgA === 0) return 1;
+             if (a.online && !b.online) return -1;
+             if (!a.online && b.online) return 1;
+             return b.rawTime - a.rawTime;
+        });
+
+        renderizarUsuariosHorizontal();
     });
 }
+
 // ==========================================
-// 3. RENDERIZAR USUARIOS (CON NUBES Y BADGES ROJOS)
+// 3. RENDERIZAR USUARIOS (CON HORA DE CONEXIÓN)
 // ==========================================
 function renderizarUsuariosHorizontal() {
     const contenedor = document.getElementById('listaUsuariosHorizontal');
     if (!contenedor) return;
 
-    // --- 1. BOTÓN "PENSAR" (Siempre de primero) ---
-    let html = `
-    <div class="story-item" style="min-width: 75px; flex-shrink: 0; text-align: center; margin-top: 35px;">
-        <div onclick="document.getElementById('modalPensamiento').style.display='flex'; document.getElementById('inputPensamiento').focus();" 
-             style="width: 55px; height: 55px; border-radius: 20px; border: 2.5px dashed #8b5cf6; background: #faf5ff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; margin: 0 auto;">
-            💭
-        </div>
-        <div style="margin-top: 6px; font-size: 0.75rem; color: #8b5cf6; font-weight: 800;">Pensar</div>
-    </div>`;
-
-    // Si no hay usuarios, mostramos solo el botón pensar
-    if (!listaUsuariosCacheReal || listaUsuariosCacheReal.length === 0) {
-        contenedor.innerHTML = html;
+    if (listaUsuariosCacheReal.length === 0) {
+        contenedor.innerHTML = '<div style="padding:10px; font-size:0.8rem; color:#94a3b8;">Esperando usuarios...</div>';
         return;
     }
 
-    const ahora = Date.now();
+    let html = "";
+    const ahora = Date.now(); // Hora actual para calcular
 
     listaUsuariosCacheReal.forEach(user => {
-        const esMio = (user.key === idAuditor);
-        
-        // --- 🔴 LÓGICA DEL BADGE ROJO (MENSAJES NO LEÍDOS) ---
-        // Buscamos en el mapa si este usuario tiene mensajes para nosotros
-        const numMensajes = window.mapaMensajesSinLeer ? (window.mapaMensajesSinLeer[user.key] || 0) : 0;
-        
-        const badgeHtml = numMensajes > 0 
-             ? `<div style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; 
-                           border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; 
-                           display:flex; align-items:center; justify-content:center; 
-                           border:2px solid white; font-weight:800; z-index:110; 
-                           animation: popIn 0.3s;">${numMensajes}</div>` 
-             : '';
+        const numMensajes = mapaMensajesSinLeer[user.key] || 0;
 
-        // --- ☁️ LÓGICA DE LA NUBE DE PENSAMIENTO ---
-        let nubeHtml = "";
-        if (user.pensamiento && user.pensamiento.trim() !== "") {
-            nubeHtml = `
-            <div style="position: absolute; top: -42px; left: 50%; transform: translateX(-50%); 
-                        background: ${esMio ? '#6366f1' : '#8b5cf6'}; color: white; padding: 5px 12px; border-radius: 15px; 
-                        font-size: 0.62rem; font-weight: 800; white-space: nowrap; 
-                        box-shadow: 0 4px 12px rgba(99,102,241,0.4); z-index: 100;
-                        max-width: 95px; overflow: hidden; text-overflow: ellipsis; animation: bounce 2s infinite;">
-                ${escapeHtml(user.pensamiento)}
-                <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
-                            width: 0; height: 0; border-left: 6px solid transparent; 
-                            border-right: 6px solid transparent; border-top: 6px solid ${esMio ? '#6366f1' : '#8b5cf6'};"></div>
-            </div>`;
+        let tiempoTexto = "";
+        let colorTiempo = "#94a3b8";
+        
+        const msDiff = ahora - user.rawTime;
+        const minDiff = Math.floor(msDiff / 60000);
+
+        if (minDiff < 2) {
+            tiempoTexto = "Online";
+            colorTiempo = "#10b981";
+        } else if (minDiff < 60) {
+            tiempoTexto = minDiff + " min";
+        } else if (minDiff < 1440) {
+            tiempoTexto = Math.floor(minDiff / 60) + " h";
+        } else {
+            tiempoTexto = Math.floor(minDiff / 1440) + " d";
         }
 
-        // Tiempos y Colores de borde
-        let tiempoTexto = esMio ? "Online" : (window.formatTimeAgo ? window.formatTimeAgo(user.rawTime) : "Reciente");
-        let colorTiempo = (esMio || ahora - user.rawTime < 120000) ? "#10b981" : "#94a3b8";
+        const badgeHtml = numMensajes > 0 
+             ? `<div style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; display:flex; align-items:center; justify-content:center; border:2px solid white; font-weight:800; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index:10; animation: popIn 0.3s;">${numMensajes}</div>` 
+             : '';
+
+        let bordeColor = '#e2e8f0'; 
+        if (user.online) bordeColor = '#10b981';
+        if (numMensajes > 0) bordeColor = '#ef4444';
+
+        const dotClass = user.online ? "dot-online" : "dot-offline";
+
+        const userKey = user.key;
+        const userName = user.nombre.replace(/'/g, "\\'");
         
-        // El borde se pone rojo si hay mensajes, verde si esta online, o gris normal
-        let bordeColor = numMensajes > 0 ? '#ef4444' : (user.online ? '#10b981' : '#e2e8f0');
-
-        // --- 2. CONSTRUIR CADA ITEM DE LA LISTA ---
         html += `
-        <div class="story-item" style="min-width: 70px; position:relative; margin-top: 35px;" 
-             onclick="${esMio ? '' : `abrirChatPrivado('${user.key}', '${user.nombre.replace(/'/g, "\\'")}')`}">
-            
-            ${nubeHtml} <!-- Nube flotante -->
-
-            <div class="story-avatar-box" style="border-width: 3px; border-color: ${bordeColor}; position:relative; width:58px; height:58px; margin: 0 auto; transition: 0.3s;">
-                
-                <div class="story-img" style="background-image:url('${user.avatar}'); background-size: cover; background-position: center;"></div>
-                
-                ${badgeHtml} <!-- Círculo rojo de mensajes -->
-                
-                ${user.online ? `<div class="story-dot dot-online" style="border: 2px solid white; z-index: 10;"></div>` : ''}
+        <div class="story-item" style="min-width: 65px; position:relative;" onclick="abrirChatPrivado('${userKey}', '${userName}')">
+            <div class="story-avatar-box" style="border-color: ${bordeColor}; position:relative; transition:0.3s;">
+                <div class="story-img" style="background-image:url('${user.avatar}')"></div>
+                <div class="story-dot ${dotClass}"></div>
+                ${badgeHtml}
+                ${user.online ? `<button onclick="event.stopPropagation(); abrirRegaloPrivadoTarget('${userKey}', '${userName}')" style="position:absolute; bottom:-2px; left:-2px; width:22px; height:22px; border-radius:50%; background: linear-gradient(135deg, #a855f7, #8b5cf6); border:2px solid white; font-size:0.7rem; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 2px 5px rgba(168,85,247,0.5); z-index:20;" title="Enviar puntos">🎁</button>` : ''}
             </div>
             
-            <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">
-                ${esMio ? 'Tú' : user.nombre}
+            <div class="story-name" style="font-weight:${numMensajes>0?'800':'normal'}; color:${numMensajes>0?'#1e293b':'#334155'}; margin-bottom: 0;">
+                ${user.nombre}
             </div>
             
-            <div style="font-size: 0.55rem; color: ${colorTiempo}; font-weight: 800; margin-top:-2px;">
+            <div style="font-size: 0.6rem; color: ${colorTiempo}; font-weight: 600; margin-top: -2px;">
                 ${tiempoTexto}
             </div>
         </div>`;
     });
-
     contenedor.innerHTML = html;
 }
-window.formatTimeAgo = (timestamp) => {
-    if (!timestamp) return "Reciente";
-    const ahora = Date.now();
-    const diff = ahora - timestamp;
-    const segundos = Math.floor(diff / 1000);
-    const minutos = Math.floor(segundos / 60);
-    const horas = Math.floor(minutos / 60);
-    const dias = Math.floor(horas / 24);
-    
-    if (minutos < 1) return 'Online';
-    if (minutos < 60) return minutos + ' min';
-    if (horas < 24) return horas + ' h';
-    return dias + ' d';
-};
 // ==========================================
 // 🚀 ABRIR MODAL INVITAR (CON CONTADOR REAL)
 // ==========================================
@@ -11056,77 +10727,9 @@ window.seleccionarTipoPublicacion = (tipo) => {
             }
             document.getElementById('modalOpcionVideoPropio').style.display = 'flex';
         });
-    } else if (tipo === 'pensamiento') {
-        if (!idAuditor) return notify("Inicia sesión");
-        document.getElementById('modalPensamiento').style.display = 'flex';
-        document.getElementById('inputPensamiento').focus();
     }
 };
 
-// 💭 FUNCIONES PARA PENSAMIENTOS PÚBLICOS
-window.publicarPensamiento = () => {
-    if (!idAuditor) return notify("❌ Inicia sesión");
-    const texto = document.getElementById('inputPensamiento').value.trim();
-    if (!texto) return notify("📝 Escribe algo");
-
-    const btn = document.getElementById('btnPublicarPensamiento');
-    btn.disabled = true;
-
-    // 🔥 USAMOS EL NODO "pensamientos" DE TUS REGLAS
-    const timestamp = firebase.database.ServerValue.TIMESTAMP;
-    
-    const actualizaciones = {};
-    // Lo guardamos en el nodo global para que sea PÚBLICO
-    actualizaciones[`pensamientos/${idAuditor}`] = {
-        texto: texto,
-        autor: document.getElementById('profKey').textContent || "Usuario",
-        timestamp: timestamp
-    };
-    // Actualizamos tu 'lastSeen' para que brinques al principio de la lista de todos
-    actualizaciones[`users/${idAuditor}/lastSeen`] = timestamp;
-
-    db.ref().update(actualizaciones).then(() => {
-        notify("✨ Pensamiento publicado para todos");
-        document.getElementById('inputPensamiento').value = '';
-        document.getElementById('modalPensamiento').style.display = 'none';
-        btn.disabled = false;
-    });
-};
-// Cargar pensamientos públicos (opcional - para futuro)
-window.cargarPensamientosPublicos = () => {
-    const feedContainer = document.getElementById('pensamientosPublicosFeed');
-    if(!feedContainer) return;
-
-    db.ref('pensamientos').orderByChild('timestamp').limitToLast(15).on('value', snap => {
-        let html = "";
-
-        if (!snap.exists()) {
-            feedContainer.innerHTML = "<div style='color:#94a3b8; font-size:0.7rem;'>Nadie ha pensado nada hoy... ✨</div>";
-            return;
-        }
-
-        snap.forEach(child => {
-            const p = child.val();
-            const avatar = getUserProfilePhoto(p.uid);
-            const nombre = p.autor || "Usuario";
-            const textoCorto = p.texto.length > 40 ? p.texto.substring(0, 37) + "..." : p.texto;
-
-            // Diseño de Burbuja Horizontal "Premium"
-            html = `
-            <div onclick="mostrarPerfilUsuario('${p.uid}', '${nombre}')" style="min-width: 140px; max-width: 140px; background: #faf5ff; border-radius: 18px; padding: 10px; border: 1.5px solid #e9d5ff; flex-shrink: 0; position: relative; box-shadow: 0 2px 8px rgba(139,92,246,0.05);">
-                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                    <img src="${avatar}" style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #8b5cf6;">
-                    <span style="font-size: 0.65rem; font-weight: 800; color: #7c3aed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${nombre}</span>
-                </div>
-                <div style="font-size: 0.75rem; color: #475569; line-height: 1.2; font-style: italic; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                    "${escapeHtml(p.texto)}"
-                </div>
-            </div>` + html;
-        });
-
-        feedContainer.innerHTML = html;
-    });
-};
 window.grabarVideoCamara = () => {
     document.getElementById('modalOpcionVideoPropio').style.display = 'none';
     if (typeof AndroidNative !== 'undefined' && AndroidNative.openVideoCamera) {
@@ -11205,13 +10808,8 @@ window.publicarVideoConAnuncio = () => {
     }
 };
 
-// Callback desde Kotlin tras ver el anuncio recompensado
+// Callback desde Kotlin tras ver el anuncio bonificado
 window.otorgarMensajesPorVideo = () => {
-    if (window._rewardPendingTarget) {
-        window._rewardPendingTarget = null;
-        otorgarMensajesPorAd();
-        return;
-    }
     if (window._publicarMision) {
         window._publicarMision = false;
         procesarPublicacionPendiente();
@@ -11225,16 +10823,12 @@ window.otorgarMensajesPorVideo = () => {
 };
 
 window.onAdSkipped = () => {
-    window._rewardPendingTarget = null;
     const btn = document.getElementById('btnPublicarVideo');
     if (btn) {
         btn.disabled = false;
         btn.innerHTML = "📺 Publicar (anuncio bonificado)";
     }
-    if (window._adMsgBtn) {
-        window._adMsgBtn = null;
-    }
-    notify("💬 Ve el anuncio completo para recibir tu recompensa");
+    notify("💬 Ve el anuncio completo para publicar tu video");
 };
 
 // 4. Subir a Firebase (Simulación de Storage usando Base64 o Link temporal)
@@ -11316,45 +10910,28 @@ window.onCompraMensajesExitosa = (cantidadMensajes) => {
 };
 window.cambiarPestanaChat = (pestana) => {
     const btnGlobal = document.getElementById('tabGlobalBtn');
-    const btnMensajes = document.getElementById('tabMensajesBtn');
     const btnGrupos = document.getElementById('tabGruposBtn');
-    
     const contGlobal = document.getElementById('chatListContainer');
-    const contMensajes = document.getElementById('mensajesPrivadosContainer');
     const contGrupos = document.getElementById('gruposListContainer');
 
-    // 1. Ocultar todos los contenedores
-    if(contGlobal) contGlobal.style.display = 'none';
-    if(contMensajes) contMensajes.style.display = 'none';
-    if(contGrupos) contGrupos.style.display = 'none';
-
-    // 2. Quitar clase active de todos los botones
-    if(btnGlobal) btnGlobal.classList.remove('active');
-    if(btnMensajes) btnMensajes.classList.remove('active');
-    if(btnGrupos) btnGrupos.classList.remove('active');
-
-    // 3. Activar el seleccionado
     if (pestana === 'global') {
-        if(btnGlobal) btnGlobal.classList.add('active');
-        if(contGlobal) contGlobal.style.display = 'flex';
-        setTimeout(() => scrollToBottom(), 100);
-    } 
-    else if (pestana === 'mensajes') {
-        if(btnMensajes) btnMensajes.classList.add('active');
-        if(contMensajes) contMensajes.style.display = 'block';
+        // Mostrar Global
+        btnGlobal.classList.add('active');
+        btnGrupos.classList.remove('active');
+        contGlobal.style.display = 'flex';
+        contGrupos.style.display = 'none';
+        scrollToBottom(); 
+    } else {
+        // Mostrar Grupos
+        btnGrupos.classList.add('active');
+        btnGlobal.classList.remove('active');
+        contGrupos.style.display = 'block';
+        contGlobal.style.display = 'none';
         
-        // 🔥 ESTA ES LA LÍNEA QUE CARGA LOS CHATS
-        if(typeof cargarChatsPrivadosNoLeidos === "function") {
-            cargarChatsPrivadosNoLeidos();
-        } else {
-            console.error("❌ Error: La función cargarChatsPrivadosNoLeidos no existe");
-            contMensajes.innerHTML = '<div style="padding:20px; text-align:center; color:red;">Error: Función de carga no encontrada.</div>';
+        // 🔥 EL TRUCO: Forzamos a que descargue los grupos cada vez que tocas la pestaña
+        if(typeof cargarListaDeGrupos === "function") {
+            cargarListaDeGrupos();
         }
-    } 
-    else { // grupos
-        if(btnGrupos) btnGrupos.classList.add('active');
-        if(contGrupos) contGrupos.style.display = 'block';
-        if(typeof cargarListaDeGrupos === "function") cargarListaDeGrupos();
     }
 };
 // Funciones vacías para que no te dé error al tocar los botones de ejemplo
@@ -11421,16 +10998,6 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
             const esMio = m.uid === idAuditor;
             const avatar = getUserProfilePhoto(m.uid);
             const textoEscapado = escapeHtml(m.texto).replace(/"/g, '&quot;');
-            const fotoEscapada = m.foto ? m.foto.replace(/"/g, '&quot;') : '';
-            
-            let fotoHTML = '';
-            if (m.esFoto && m.foto) {
-                fotoHTML = `
-                    <div style="margin:8px 0; cursor:pointer;" onclick="mostrarFotoGrupo(this)" data-foto="${fotoEscapada}">
-                        <img src="${m.foto}" style="max-width:200px; max-height:200px; border-radius:12px; object-fit:cover; box-shadow:0 2px 8px rgba(0,0,0,0.15);" loading="lazy">
-                    </div>
-                `;
-            }
             
             html += `
             <div class="chat-row ${esMio ? 'mine' : 'other'}">
@@ -11439,15 +11006,13 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
                      data-msg-key="${s.key}"
                      data-msg-text="${textoEscapado}"
                      data-msg-uid="${m.uid}"
-                     data-msg-author="${escapeHtml(m.autor)}"
-                     onmousedown="startPressFromElement(this, false); handleGroupSwipeStart(event, '${s.key}')"
-                     onmouseup="cancelPress(false); handleGroupSwipeEnd(event, '${s.key}')"
-                     onmouseleave="cancelPress(false); handleGroupSwipeEnd(event, '${s.key}')"
-                     ontouchstart="startPressFromElement(this, false); handleGroupSwipeStart(event, '${s.key}')"
-                     ontouchend="cancelPress(false); handleGroupSwipeEnd(event, '${s.key}')"
-                     ontouchmove="handleGroupSwipeMove(event, '${s.key}')">
+                     onmousedown="startPressFromElement(this, false)"
+                     onmouseup="cancelPress(false)"
+                     onmouseleave="cancelPress(false)"
+                     ontouchstart="startPressFromElement(this, false)"
+                     ontouchend="cancelPress(false)"
+                     ontouchmove="cancelPress(false)">
                     <div class="msg-user">${escapeHtml(m.autor)}</div>
-                    ${fotoHTML}
                     <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
                     <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
                         ${new Date(m.fecha).toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
@@ -11460,103 +11025,6 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
         setTimeout(() => list.scrollTop = list.scrollHeight, 100);
     });
 }
-
-// --- SWIPE PARA MENCIONAR (CHAT GRUPO) ---
-let grpSwipeStartX = 0;
-let grpSwipeStartY = 0;
-let grpSwipeMsgKey = null;
-let grpIsSwiping = false;
-
-window.handleGroupSwipeStart = (e, msgKey) => {
-    const touch = e.touches ? e.touches[0] : e;
-    grpSwipeStartX = touch.clientX;
-    grpSwipeStartY = touch.clientY;
-    grpSwipeMsgKey = msgKey;
-    grpIsSwiping = true;
-};
-
-window.handleGroupSwipeMove = (e, msgKey) => {
-    if (!grpIsSwiping || grpSwipeMsgKey !== msgKey) return;
-    const touch = e.touches ? e.touches[0] : e;
-    const deltaX = touch.clientX - grpSwipeStartX;
-    const deltaY = Math.abs(touch.clientY - grpSwipeStartY);
-
-    if (deltaY > 30) {
-        grpIsSwiping = false;
-        cancelPress(false);
-        return;
-    }
-
-    if (Math.abs(deltaX) > 10) {
-        e.preventDefault();
-        cancelPress(false);
-        const burbuja = document.getElementById(`grp-msg-${msgKey}`);
-        if (burbuja) {
-            burbuja.classList.add('swiping');
-            if (deltaX > 0) {
-                const translateX = Math.min(deltaX, 100);
-                burbuja.style.transform = `translateX(${translateX}px)`;
-                burbuja.classList.remove('swiping-mention');
-                if (translateX > 50) {
-                    burbuja.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
-                    burbuja.style.borderLeft = '4px solid #6366f1';
-                    burbuja.style.borderRight = '';
-                }
-            } else {
-                const translateX = Math.max(deltaX, -100);
-                burbuja.style.transform = `translateX(${translateX}px)`;
-                burbuja.classList.add('swiping-mention');
-                if (translateX < -50) {
-                    burbuja.style.boxShadow = '0 4px 15px rgba(251, 191, 36, 0.4)';
-                    burbuja.style.borderRight = '4px solid #fbbf24';
-                    burbuja.style.borderLeft = '';
-                } else {
-                    burbuja.style.boxShadow = '';
-                    burbuja.style.borderRight = '';
-                    burbuja.style.borderLeft = '';
-                }
-            }
-        }
-    }
-};
-
-window.handleGroupSwipeEnd = (e, msgKey) => {
-    if (!grpIsSwiping || grpSwipeMsgKey !== msgKey) return;
-    grpIsSwiping = false;
-
-    const touch = e.changedTouches ? e.changedTouches[0] : e;
-    const deltaX = touch.clientX - grpSwipeStartX;
-
-    const burbuja = document.getElementById(`grp-msg-${msgKey}`);
-    if (burbuja) {
-        burbuja.classList.remove('swiping');
-        burbuja.classList.remove('swiping-mention');
-        burbuja.style.transform = '';
-        burbuja.style.background = '';
-        burbuja.style.borderLeft = '';
-        burbuja.style.borderRight = '';
-    }
-
-    if (Math.abs(deltaX) > 60) {
-        const author = burbuja ? burbuja.dataset.msgAuthor : '';
-        if (author && typeof window.mencionarEnChatGrupo === 'function') {
-            window.mencionarEnChatGrupo(author);
-        }
-    }
-
-    grpSwipeMsgKey = null;
-};
-
-window.mencionarEnChatGrupo = (nombre) => {
-    const input = document.getElementById('inputGrupoMsg');
-    if (!input) return;
-    const texto = input.value;
-    const cursor = input.selectionStart || 0;
-    const mencion = "@" + nombre + " ";
-    input.value = texto.slice(0, cursor) + mencion + texto.slice(cursor);
-    input.focus();
-    if (navigator.vibrate) navigator.vibrate(30);
-};
 
 // ENVIAR MENSAJE AL GRUPO
 window.enviarMensajeGrupo = () => {
@@ -11778,127 +11246,6 @@ window.eliminarGrupo = () => {
         })
         .catch(err => notify('❌ Error: ' + err.message));
 };
-// Función para cargar chats privados en la pestaña Mensajes
-window.cargarChatsPrivadosNoLeidos = () => {
-    const container = document.getElementById('mensajesPrivadosContainer');
-    if (!container || !idAuditor) return;
-    
-    // Mostrar spinner
-    container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i><div style="margin-top:15px;">Buscando chats...</div></div>';
-
-    db.ref('chats_privados').once('value', snap => {
-        if (!snap.exists()) {
-            container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-comments" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i><div>No tienes conversaciones aún.</div></div>';
-            return;
-        }
-
-        let chats = [];
-        snap.forEach(chatSnap => {
-            const chatId = chatSnap.key;
-            const partes = chatId.split('_');
-            
-            // Verificar si soy participante del chat
-            if (partes.includes(idAuditor)) {
-                const otroUid = partes[0] === idAuditor ? partes[1] : partes[0];
-                let ultimoMsg = null;
-                let mensajesNoLeidos = 0;
-
-                // Recorrer mensajes para encontrar el último y contar no leídos
-                chatSnap.forEach(msgSnap => {
-                    const msg = msgSnap.val();
-                    // Actualizar último mensaje
-                    if (!ultimoMsg || (msg.fecha && msg.fecha > (ultimoMsg.fecha || 0))) {
-                        ultimoMsg = msg;
-                    }
-                    // Contar no leídos (mensajes del otro usuario)
-                    if (msg.uid !== idAuditor && !msg.leido) {
-                        mensajesNoLeidos++;
-                    }
-                });
-
-                if (ultimoMsg) {
-                    chats.push({ otroUid, ultimoMsg, mensajesNoLeidos });
-                }
-            }
-        });
-
-        // Ordenar: Primero los que tienen mensajes sin leer, luego por fecha
-        chats.sort((a, b) => {
-            if (a.mensajesNoLeidos > 0 && b.mensajesNoLeidos === 0) return -1;
-            if (b.mensajesNoLeidos > 0 && a.mensajesNoLeidos === 0) return 1;
-            return (b.ultimoMsg.fecha || 0) - (a.ultimoMsg.fecha || 0);
-        });
-
-        if (chats.length === 0) {
-            container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-check-circle" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i><div>¡Todo al día! No hay mensajes nuevos.</div></div>';
-            return;
-        }
-
-        // Generar HTML
-        let html = '';
-        chats.forEach(chat => {
-            const msg = chat.ultimoMsg;
-            const uid = chat.otroUid;
-            const diffMin = Math.floor((Date.now() - (msg.fecha || Date.now())) / 60000);
-            const tiempo = diffMin < 1 ? 'Ahora' : diffMin < 60 ? `${diffMin} min` : `${Math.floor(diffMin/60)} h`;
-            let texto = msg.texto || (msg.esFoto ? '📷 Foto' : '...');
-            if (texto.length > 40) texto = texto.substring(0, 40) + '...';
-
-            // Indicador de no leído (Badge rojo y borde)
-            const bordeNoLeidos = chat.mensajesNoLeidos > 0 ? 'border-left: 4px solid #ef4444; background: #fff5f5;' : '';
-            const badgeHtml = chat.mensajesNoLeidos > 0 
-                ? `<div style="background:#ef4444; color:white; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:10px;">${chat.mensajesNoLeidos} nuevo(s)</div>` 
-                : '';
-
-            html += `
-                <div onclick="abrirChatPrivado('${uid}', 'Cargando...')" 
-                     style="background:white; padding:15px; border-radius:16px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); cursor:pointer; transition:0.2s; ${bordeNoLeidos}">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div style="width:50px; height:50px; border-radius:50%; background:#e2e8f0; background-size:cover; background-image:url('${getUserProfilePhoto(uid)}'); flex-shrink:0;"></div>
-                        <div style="flex:1; min-width:0;">
-                            <div id="name-chat-${uid}" style="font-weight:700; color:#1e293b; font-size:1rem;">Cargando...</div>
-                            <div style="font-size:0.85rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(texto)}</div>
-                            ${badgeHtml}
-                        </div>
-                        <div style="font-size:0.75rem; color:#94a3b8; font-weight:600;">${tiempo}</div>
-                    </div>
-                </div>`;
-        });
-
-        container.innerHTML = html;
-
-        // Cargar nombres de usuarios en segundo plano
-        chats.forEach(chat => {
-            db.ref(`users/${chat.otroUid}`).once('value', snapU => {
-                const u = snapU.val();
-                const nombre = (u && u.apodo) ? u.apodo : (u && u.myInviteKey ? u.myInviteKey : 'Usuario');
-                const el = document.getElementById(`name-chat-${chat.otroUid}`);
-                if (el) el.textContent = nombre;
-            });
-        });
-    });
-};
-// --- FUNCIÓN PARA DAR ESPACIO AL CHAT ---
-document.addEventListener('DOMContentLoaded', () => {
-    const areaSuperior = document.getElementById('areaSuperiorMensajes');
-    const inputChat = document.getElementById('inputChatMsg');
-
-    if (inputChat && areaSuperior) {
-        // Al tocar el input para escribir
-        inputChat.addEventListener('focus', () => {
-            areaSuperior.style.display = 'none'; // Escondemos lo de arriba
-            setTimeout(scrollToBottom, 100); // Bajamos el chat para ver lo último
-        });
-
-        // Al salir del input o cerrar teclado
-        inputChat.addEventListener('blur', () => {
-            // Esperamos un poquito para que no sea brusco
-            setTimeout(() => {
-                areaSuperior.style.display = 'block'; // Mostramos de nuevo
-            }, 100);
-        });
-    }
-});
 </script>
 <!-- 📱 MENÚ DE OPCIONES AL TOCAR + -->
 <div id="modalMenuPublicar" class="modal-overlay" style="z-index: 40000; align-items: flex-end; display: none;">
@@ -11925,11 +11272,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="text-align: left;">
                     <div style="font-weight: 800; color: #10b981; font-size: 1rem;">Video Propio</div>
                     <div style="font-size: 0.75rem; color: #64748b;">Graba o sube desde tu galería</div>
-                </div>
-            </button>
-
-            <!-- OPCIÓN PENSAMIENTO PÚBLICO -->
-
                 </div>
             </button>
 
@@ -12013,26 +11355,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <!-- ... resto del modal ... -->
     </div>
 </div>
-<!-- 💭 MODAL PARA COMPARTIR PENSAMIENTO PÚBLICO -->
-<div id="modalPensamiento" class="modal-overlay" style="z-index: 42000;">
-    <div class="modal-content" style="max-width: 350px;">
-        <h3 style="color:#8b5cf6; margin-bottom: 10px;">💭 Pensamiento Público</h3>
-        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Comparte lo que piensas con todos</p>
-        
-        <textarea id="inputPensamiento" placeholder="¿En qué estás pensando?" rows="5" maxlength="160" style="text-align: left; font-size: 0.9rem; resize: vertical; max-height: 75px;"></textarea>
-        
-        <div style="font-size: 0.7rem; color: #94a3b8; margin: 10px 0;">
-            <span id="contadorPensamiento">0</span> / 280 caracteres
-        </div>
-        
-        <button id="btnPublicarPensamiento" onclick="publicarPensamiento()" class="btn-blue" style="background: linear-gradient(135deg, #8b5cf6, #a855f7); width: 100%; margin-bottom: 10px;">
-            ✨ Publicar Pensamiento
-        </button>
-        <button onclick="document.getElementById('modalPensamiento').style.display='none'" style="background:none; border:none; color:#94a3b8; width: 100%; cursor:pointer; padding: 10px;">Cancelar</button>
-    </div>
-</div>
-
 <!-- 3. AL FINAL: Cerrar etiquetas HTML -->
 </body>
 </html>
- 
