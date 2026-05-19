@@ -57,11 +57,17 @@
     let videoActualId = null;
     let observerFeed = null;
 
+    // Detectores de ID
     function getYouTubeID(url) {
         if (!url) return null;
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
         const match = url.match(regExp);
         return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    function getStreamableID(url) {
+        if (!url || !url.includes('streamable.com')) return null;
+        return url.split('/').pop();
     }
 
     function prepararObservador() {
@@ -73,45 +79,46 @@
     }
 
     function cargarMuro() {
-        console.log("Iniciando carga de videos...");
         const container = document.getElementById('muroReportes');
         prepararObservador();
 
-        db.ref('reportes').limitToLast(15).on('child_added', snap => {
+        db.ref('reportes').limitToLast(20).on('child_added', snap => {
             try {
                 const post = snap.val();
-                if (!post || !post.musica) return; // Seguridad: Si no hay música, saltar
+                if (!post || !post.musica) return;
 
                 const loader = document.querySelector('.loader');
                 if(loader) loader.remove();
 
-                let mediaLink = post.musica.includes('workers.dev') ? post.musica : getYouTubeID(post.musica);
+                let mediaLink = "";
+                let type = "youtube";
+
+                if (post.musica.includes('workers.dev')) {
+                    mediaLink = post.musica;
+                    type = "direct";
+                } else if (post.musica.includes('streamable.com')) {
+                    mediaLink = getStreamableID(post.musica);
+                    type = "streamable";
+                } else {
+                    mediaLink = getYouTubeID(post.musica);
+                    type = "youtube";
+                }
                 
                 if (!mediaLink || document.getElementById(snap.key)) return;
 
-                const card = crearCard(snap.key, post, mediaLink);
+                const card = crearCard(snap.key, post, mediaLink, type);
                 container.prepend(card); 
                 observerFeed.observe(card);
-                console.log("Video añadido:", snap.key);
-            } catch (e) {
-                console.error("Error cargando post:", e);
-            }
-        }, error => {
-            console.error("Error de Firebase:", error);
-            alert("Error de permisos en Firebase. Revisa las reglas.");
-        });
-
-        db.ref('reportes').on('child_removed', snap => {
-            const el = document.getElementById(snap.key);
-            if (el) el.remove();
+            } catch (e) { console.error(e); }
         });
     }
 
-    function crearCard(key, post, mediaId) {
+    function crearCard(key, post, mediaId, type) {
         const card = document.createElement('div');
         card.className = 'social-card';
         card.id = key;
         card.setAttribute('data-media', mediaId);
+        card.setAttribute('data-type', type);
         card.setAttribute('data-uid', post.uid || '');
         
         const isLikedInitial = post.likes && idAuditor && post.likes[idAuditor];
@@ -141,7 +148,7 @@
             </div>` : ''}
         `;
 
-        // Listeners individuales
+        // Listeners tiempo real
         db.ref(`reportes/${key}/vCount`).on('value', s => {
             const el = document.getElementById(`l-count-${key}`);
             if(el) el.textContent = s.val() || 0;
@@ -155,12 +162,6 @@
             }
         });
 
-        db.ref(`reportes/${key}/comentarios`).on('value', snap => {
-            const el = document.getElementById(`c-count-${key}`);
-            const count = snap.val() ? Object.keys(snap.val()).length : 0;
-            if (el) el.textContent = count;
-        });
-
         return card;
     }
 
@@ -171,30 +172,26 @@
             if (ant) ant.querySelector('.vid-frame').innerHTML = "";
         }
         videoActualId = card.id;
-        const linkMedia = card.getAttribute('data-media'); 
+        const mediaId = card.getAttribute('data-media');
+        const type = card.getAttribute('data-type');
         const frame = card.querySelector('.vid-frame');
 
-        if (window.parent) {
-            window.parent.postMessage({type: 'startVideoProgress', videoId: linkMedia}, '*');
-        }
+        window.parent.postMessage({type: 'startVideoProgress', videoId: mediaId}, '*');
         
-        if (linkMedia.includes('workers.dev')) {
-            frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit: cover; background: #000; width:100%; height:100%;"><source src="${linkMedia}" type="video/mp4"></video>`;
-        } else {
+        if (type === 'direct') {
+            frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit: cover; background: #000;"><source src="${mediaId}" type="video/mp4"></video>`;
+        } 
+        else if (type === 'streamable') {
+            // 🔥 REPRODUCTOR STREAMABLE
+            frame.innerHTML = `<iframe src="https://streamable.com/e/${mediaId}?autoplay=1&muted=${audioActivado ? 0 : 1}" frameborder="0" width="100%" height="100%" allow="autoplay" style="position:absolute;left:0;top:0;width:100%;height:100%;"></iframe>`;
+        }
+        else {
+            // YOUTUBE CON ORIGIN FIJO
             const muteState = audioActivado ? 0 : 1;
-            // 🔥 TRUCO: Forzamos el ORIGIN y el WIDGET_REFERRER para saltar bloqueos de dominio
-            const origin = "https://amgel12.github.io"; 
-            
-            frame.innerHTML = `<iframe 
-                width="100%" 
-                height="100%" 
-                src="https://www.youtube.com/embed/${linkMedia}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${origin}&widget_referrer=${origin}&mute=${muteState}&playlist=${linkMedia}&loop=1" 
-                frameborder="0" 
-                allow="autoplay; encrypted-media; picture-in-picture" 
-                allowfullscreen 
-                style="width:100%; height:100%; object-fit:cover;"></iframe>`;
+            frame.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${mediaId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=https://amgel12.github.io&mute=${muteState}&playlist=${mediaId}&loop=1" frameborder="0" allow="autoplay; encrypted-media"></iframe>`;
         }
     }
+
     window.activarAudioGlobal = () => {
         audioActivado = true;
         document.querySelectorAll('.unmute-box').forEach(el => el.remove());
@@ -203,77 +200,27 @@
     };
 
     window.toggleLike = (postKey, ownerUid) => {
-    if (!idAuditor || idAuditor === "anon") return alert("Inicia sesión");
-    
-    const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
-    const countRef = db.ref(`reportes/${postKey}/vCount`);
-
-    // 🔥 EFECTO VISUAL INMEDIATO (Antes de ir a Firebase)
-    const icon = document.getElementById(`heart-${postKey}`);
-    const countSpan = document.getElementById(`l-count-${postKey}`);
-    
-    ref.once('value', s => {
-        if (s.exists()) {
-            // QUITAR LIKE
-            ref.remove();
-            countRef.transaction(c => (c || 0) - 1);
-            if(icon) icon.classList.remove('liked'); // Se pone blanco
-        } else {
-            // DAR LIKE
-            ref.set(true);
-            countRef.transaction(c => (c || 0) + 1);
-            if(icon) icon.classList.add('liked'); // Se pone rojo
-            
-            window.parent.postMessage({type: 'playSelect'}, '*');
-            
-            // 🔥 SI EL DUEÑO EXISTE, AVISAR AL INDEX.HTML
-            if (window.parent && ownerUid && ownerUid !== idAuditor) {
-                window.parent.postMessage({
-                    type: 'doLike', 
-                    postKey: postKey, 
-                    ownerUid: ownerUid
-                }, '*');
+        if (!idAuditor || idAuditor === "anon") return alert("Inicia sesión");
+        const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
+        const countRef = db.ref(`reportes/${postKey}/vCount`);
+        ref.once('value', s => {
+            if (s.exists()) {
+                ref.remove();
+                countRef.transaction(c => (c || 0) - 1);
+            } else {
+                ref.set(true);
+                countRef.transaction(c => (c || 0) + 1);
+                window.parent.postMessage({type: 'playSelect'}, '*');
+                if (window.parent && ownerUid && ownerUid !== idAuditor) {
+                    window.parent.postMessage({type: 'doLike', postKey: postKey, ownerUid: ownerUid}, '*');
+                }
             }
-        }
-    });
-};
+        });
+    };
+
     window.abrirComentariosApp = (postKey) => {
-        const count = document.getElementById(`c-count-${postKey}`)?.textContent || '0';
-        if (window.parent) window.parent.postMessage({type: 'openComments', key: postKey, count: count}, '*');
+        if (window.parent) window.parent.postMessage({type: 'openComments', key: postKey}, '*');
     };
-
-    window.detenerVideoMuro = function() {
-        if (videoActualId) {
-            const ant = document.getElementById(videoActualId);
-            if (ant) ant.querySelector('.vid-frame').innerHTML = "";
-            videoActualId = null;
-        }
-    };
-
-    window.addEventListener('message', function(event) {
-        if (event.data.type === 'detenerVideoMuro' || event.data.type === 'stopAllVideos') {
-            window.detenerVideoMuro();
-        }
-        if (event.data.type === 'updateCommentCount') {
-            const el = document.getElementById(`c-count-${event.data.key}`);
-            if (el) el.textContent = event.data.count || 0;
-        }
-        if (event.data.type === 'scroll_to_post') {
-            const vid = document.getElementById(event.data.postId);
-            const container = document.getElementById('muroReportes');
-            if (vid && container) {
-                container.style.scrollSnapType = "none";
-                vid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                vid.style.transition = "0.5s";
-                vid.style.outline = "6px solid #3b82f6";
-                vid.style.outlineOffset = "-6px";
-                setTimeout(() => {
-                    container.style.scrollSnapType = "y mandatory";
-                    vid.style.outline = "none";
-                }, 2500);
-            }
-        }
-    });
 
     window.onload = cargarMuro;
 </script>
