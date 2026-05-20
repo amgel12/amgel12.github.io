@@ -4,13 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>PAGOCODE PREMIUM FEED</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- FIX 1: preconnect para reducir latencia DNS/TLS en las primeras peticiones -->
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://ingresos-minimos-default-rtdb.firebaseio.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://www.youtube.com">
+    <link rel="dns-prefetch" href="https://img.youtube.com">
+
+    <!-- FIX 2: Fuentes con media trick — no bloquean el render -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap"></noscript>
+
+    <!-- FIX 3: Font Awesome no bloquea el render -->
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+
+    <!-- FIX 4: Firebase — solo app + database (auth no se usa en el feed) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <!-- YouTube IFrame API: nos avisa EXACTAMENTE cuando el video empieza a reproducirse -->
-    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <!-- FIX 5: YouTube IFrame API con defer — no bloquea el render ni la ejecución -->
+    <script defer src="https://www.youtube.com/iframe_api"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
         body, html { width: 100%; height: 100%; background: #000; font-family: 'Poppins', sans-serif; overflow: hidden; }
@@ -18,33 +35,21 @@
         #muroReportes::-webkit-scrollbar { display: none; }
         .social-card { height: 100vh; width: 100vw; position: relative; scroll-snap-align: start; scroll-snap-stop: always; background: #000; display: flex; align-items: center; justify-content: center; }
 
-        /* Video iframe — z-index bajo, debajo del thumb */
         .card-media { position: absolute; inset: 0; z-index: 1; }
         .vid-frame { width: 100%; height: 100%; pointer-events: none; position: relative; overflow: hidden; }
 
-        /* Thumbnail — siempre encima del iframe hasta que el video reproduce */
         .card-thumb {
-            position: absolute;
-            inset: 0;
-            z-index: 5;
-            background-size: cover;
-            background-position: center;
-            background-color: #111;
-            pointer-events: none;
+            position: absolute; inset: 0; z-index: 5;
+            background-size: cover; background-position: center;
+            background-color: #111; pointer-events: none;
             transition: opacity 0.6s ease;
         }
         .card-thumb.playing { opacity: 0; }
 
-        /* Spinner de carga centrado sobre el thumbnail */
         .card-spinner {
-            position: absolute;
-            bottom: 50%;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 6;
-            color: rgba(255,255,255,0.75);
-            font-size: 2rem;
-            pointer-events: none;
+            position: absolute; bottom: 50%; left: 50%;
+            transform: translateX(-50%); z-index: 6;
+            color: rgba(255,255,255,0.75); font-size: 2rem; pointer-events: none;
         }
         .card-spinner.oculto { display: none; }
 
@@ -90,7 +95,6 @@
     let observerFeed = null;
     let ytApiReady = false;
 
-    // YouTube IFrame API callback global — se llama cuando la API está lista
     window.onYouTubeIframeAPIReady = function() {
         ytApiReady = true;
     };
@@ -120,16 +124,13 @@
         if (type === 'dailymotion') return `https://www.dailymotion.com/thumbnail/video/${mediaId}`;
         if (type === 'streamable')  return `https://thumbs.streamable.com/${mediaId}.jpg`;
         if (type === 'imgur') {
-            // mediaId es la URL completa; extraer ID sin extensión para obtener el .jpg
             const base = mediaId.replace(/\.(mp4|gifv|gif|webm)$/i, '');
             const imgId = base.split('/').pop();
             return `https://i.imgur.com/${imgId}.jpg`;
         }
-        // catbox y direct mp4 — sin thumbnail disponible
         return '';
     }
 
-    // Muestra el thumbnail (ej: al cambiar de card)
     function mostrarThumb(key) {
         const thumb = document.getElementById(`thumb-${key}`);
         const spin = document.getElementById(`spin-${key}`);
@@ -137,11 +138,10 @@
         if (spin) spin.classList.remove('oculto');
     }
 
-    // Oculta el thumbnail (cuando el video confirma que está reproduciéndose)
     function ocultarThumb(key) {
         const thumb = document.getElementById(`thumb-${key}`);
         const spin = document.getElementById(`spin-${key}`);
-        if (thumb) thumb.classList.add('playing'); // CSS transition de 0.6s
+        if (thumb) thumb.classList.add('playing');
         if (spin) spin.classList.add('oculto');
     }
 
@@ -156,7 +156,6 @@
         }, { threshold: 0.3 });
     }
 
-    // Precarga silenciosa de la siguiente card
     function precargarSiguiente(cardActual) {
         const container = document.getElementById('muroReportes');
         const cards = Array.from(container.querySelectorAll('.social-card'));
@@ -171,9 +170,7 @@
         const type = siguiente.getAttribute('data-type');
         const key = siguiente.id;
 
-        // Solo precargar iframes de plataformas externas
         if (type === 'youtube') {
-            // Precargar YouTube: se precarga muted para que el browser permita autoplay
             const divId = `ytpre-${key}`;
             const div = document.createElement('div');
             div.id = divId;
@@ -214,10 +211,10 @@
         const container = document.getElementById('muroReportes');
         prepararObservador();
 
+        // FIX 6: reducido de 8000ms a 4000ms
         const loaderTimeout = setTimeout(() => {
             quitarLoader();
             if (!container.querySelector('.social-card')) {
-                // Usar elemento separado con data-empty-state para poder eliminarlo si llegan videos después
                 const emptyEl = document.createElement('div');
                 emptyEl.setAttribute('data-empty-state', '1');
                 emptyEl.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:rgba(255,255,255,0.6);pointer-events:auto;z-index:200;';
@@ -227,13 +224,12 @@
                     <button class="retry-btn" onclick="location.reload()">Reintentar</button>`;
                 container.appendChild(emptyEl);
             }
-        }, 8000);
+        }, 4000);
 
         db.ref('reportes').limitToLast(20).on('child_added', snap => {
             try {
                 clearTimeout(loaderTimeout);
                 quitarLoader();
-                // Eliminar el div "Sin videos" si llegó tarde y ya estaba visible
                 container.querySelectorAll('[data-empty-state]').forEach(e => e.remove());
 
                 const post = snap.val();
@@ -243,23 +239,17 @@
                 let type = "youtube";
 
                 if (post.musica.includes('catbox.moe')) {
-                    mediaLink = post.musica;      // URL directa .mp4
-                    type = "catbox";
+                    mediaLink = post.musica; type = "catbox";
                 } else if (post.musica.includes('imgur.com')) {
-                    mediaLink = post.musica;      // URL directa .mp4 / .gifv
-                    type = "imgur";
+                    mediaLink = post.musica; type = "imgur";
                 } else if (post.musica.includes('workers.dev')) {
-                    mediaLink = post.musica;
-                    type = "direct";
+                    mediaLink = post.musica; type = "direct";
                 } else if (post.musica.includes('streamable.com')) {
-                    mediaLink = getStreamableID(post.musica);
-                    type = "streamable";
+                    mediaLink = getStreamableID(post.musica); type = "streamable";
                 } else if (post.musica.includes('dai.ly') || post.musica.includes('dailymotion.com')) {
-                    mediaLink = getDailymotionID(post.musica);
-                    type = "dailymotion";
+                    mediaLink = getDailymotionID(post.musica); type = "dailymotion";
                 } else {
-                    mediaLink = getYouTubeID(post.musica);
-                    type = "youtube";
+                    mediaLink = getYouTubeID(post.musica); type = "youtube";
                 }
 
                 if (!mediaLink || document.getElementById(snap.key)) return;
@@ -269,12 +259,13 @@
                 observerFeed.observe(card);
 
                 clearTimeout(window._feedLoadTimer);
+                // FIX 7: reducido de 600ms a 150ms para reproducir el primer video más rápido
                 window._feedLoadTimer = setTimeout(() => {
                     const primerCard = container.querySelector('.social-card');
                     if (primerCard && !videoActualId) {
                         reproducirVideo(primerCard);
                     }
-                }, 600);
+                }, 150);
 
             } catch (e) {
                 console.error("Error cargando post:", e);
@@ -351,12 +342,11 @@
     function reproducirVideo(card) {
         if (videoActualId === card.id) return;
 
-        // Limpiar card anterior
         if (videoActualId) {
             const ant = document.getElementById(videoActualId);
             if (ant) {
                 ant.querySelector('.vid-frame').innerHTML = "";
-                mostrarThumb(videoActualId); // restaurar thumb para cuando vuelva
+                mostrarThumb(videoActualId);
             }
         }
 
@@ -366,25 +356,21 @@
         const frame = card.querySelector('.vid-frame');
         const key = card.id;
 
-        // Asegurarse que el thumbnail sea visible mientras carga
         mostrarThumb(key);
-
         window.parent.postMessage({ type: 'startVideoProgress', videoId: mediaId }, '*');
 
-        // ── Video directo (workers.dev, catbox.moe, imgur .mp4/.gifv) ────────────
         if (type === 'direct' || type === 'catbox' || type === 'imgur') {
             const src = type === 'imgur'
-                ? mediaId.replace(/\.gifv$/i, '.mp4')   // .gifv → .mp4
+                ? mediaId.replace(/\.gifv$/i, '.mp4')
                 : mediaId;
             frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit:cover;background:#000;display:block;"><source src="${src}" type="video/mp4"></video>`;
             const video = frame.querySelector('video');
             if (video) {
                 video.addEventListener('playing', () => ocultarThumb(key), { once: true });
-                setTimeout(() => ocultarThumb(key), 5000); // fallback 5s
+                setTimeout(() => ocultarThumb(key), 5000);
             }
 
         } else if (type === 'streamable') {
-            // Streamable no tiene API — el thumbnail cubre mientras carga, fade a 4s
             if (frame.getAttribute('data-precargado')) {
                 ocultarThumb(key);
             } else {
@@ -401,8 +387,7 @@
             }
 
         } else {
-            // YouTube — usamos IFrame API para detectar exactamente cuándo reproduce
-            frame.innerHTML = ''; // limpiar precarga anterior si la hay
+            frame.innerHTML = '';
             const divId = `yt-${key}-${Date.now()}`;
             const div = document.createElement('div');
             div.id = divId;
@@ -416,21 +401,14 @@
                     setTimeout(crearPlayer, 150);
                     return;
                 }
-                // Si ya no es el video actual (usuario hizo swipe rápido), no crear player
                 if (videoActualId !== key) return;
 
                 new window.YT.Player(divId, {
                     videoId: mediaId,
                     playerVars: {
-                        autoplay: 1,
-                        controls: 0,
-                        mute: muteParam,
-                        loop: 1,
-                        playlist: mediaId,
-                        rel: 0,
-                        modestbranding: 1,
-                        playsinline: 1,
-                        iv_load_policy: 3
+                        autoplay: 1, controls: 0, mute: muteParam,
+                        loop: 1, playlist: mediaId, rel: 0,
+                        modestbranding: 1, playsinline: 1, iv_load_policy: 3
                     },
                     events: {
                         onReady: (e) => {
@@ -438,18 +416,13 @@
                             e.target.playVideo();
                         },
                         onStateChange: (e) => {
-                            // Ocultar thumbnail solo cuando el video REALMENTE está reproduciendo
                             if (e.data === window.YT.PlayerState.PLAYING) {
                                 ocultarThumb(key);
                             }
-                            // Si vuelve a buffering/paused, NO mostrar negro — el thumb ya está en z-index bajo
                         },
                         onError: () => {
-                            // Error de YouTube — dejar el thumbnail visible
                             const spin = document.getElementById(`spin-${key}`);
-                            if (spin) {
-                                spin.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
-                            }
+                            if (spin) spin.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
                         }
                     }
                 });
@@ -464,17 +437,8 @@
         document.querySelectorAll('.unmute-box').forEach(el => el.remove());
         const actual = document.getElementById(videoActualId);
         if (actual) {
-            // Para YouTube, intentar unmute en el player existente
-            const frame = actual.querySelector('.vid-frame');
-            const ytDiv = frame ? frame.querySelector('[id^="yt-"]') : null;
-            if (ytDiv && ytDiv.contentWindow) {
-                // Recargar con audio
-                videoActualId = null;
-                reproducirVideo(actual);
-            } else {
-                videoActualId = null;
-                reproducirVideo(actual);
-            }
+            videoActualId = null;
+            reproducirVideo(actual);
         }
     };
 
@@ -501,7 +465,9 @@
         if (window.parent) window.parent.postMessage({ type: 'openComments', key: postKey }, '*');
     };
 
-    window.onload = cargarMuro;
+    // FIX 8: llamada directa — no espera window.onload
+    // El script está al final del body, el DOM ya está listo
+    cargarMuro();
 </script>
 </body>
 </html>
