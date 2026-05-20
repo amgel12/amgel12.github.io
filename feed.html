@@ -210,12 +210,15 @@
         const loaderTimeout = setTimeout(() => {
             quitarLoader();
             if (!container.querySelector('.social-card')) {
-                container.innerHTML = `
-                    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:rgba(255,255,255,0.6);pointer-events:auto;">
-                        <i class="fas fa-video-slash" style="font-size:2.5rem;margin-bottom:12px;display:block;"></i>
-                        Sin videos disponibles<br>
-                        <button class="retry-btn" onclick="location.reload()">Reintentar</button>
-                    </div>`;
+                // Usar elemento separado con data-empty-state para poder eliminarlo si llegan videos después
+                const emptyEl = document.createElement('div');
+                emptyEl.setAttribute('data-empty-state', '1');
+                emptyEl.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:rgba(255,255,255,0.6);pointer-events:auto;z-index:200;';
+                emptyEl.innerHTML = `
+                    <i class="fas fa-video-slash" style="font-size:2.5rem;margin-bottom:12px;display:block;"></i>
+                    Sin videos disponibles<br>
+                    <button class="retry-btn" onclick="location.reload()">Reintentar</button>`;
+                container.appendChild(emptyEl);
             }
         }, 8000);
 
@@ -223,6 +226,8 @@
             try {
                 clearTimeout(loaderTimeout);
                 quitarLoader();
+                // Eliminar el div "Sin videos" si llegó tarde y ya estaba visible
+                container.querySelectorAll('[data-empty-state]').forEach(e => e.remove());
 
                 const post = snap.val();
                 if (!post || !post.musica) return;
@@ -484,4 +489,3 @@
 </script>
 </body>
 </html>
-
