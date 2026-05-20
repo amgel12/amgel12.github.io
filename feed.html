@@ -16,10 +16,7 @@
         #muroReportes::-webkit-scrollbar { display: none; }
         .social-card { height: 100vh; width: 100vw; position: relative; scroll-snap-align: start; scroll-snap-stop: always; background: #000; display: flex; align-items: center; justify-content: center; }
         .card-media { position: absolute; inset: 0; z-index: 1; }
-
-        /* FIX 3: position:relative para que los iframes position:absolute queden contenidos */
         .vid-frame { width: 100%; height: 100%; pointer-events: none; position: relative; overflow: hidden; }
-
         .card-overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 40%, rgba(0,0,0,0.3) 100%); pointer-events: none; }
         .user-info { pointer-events: auto; margin-bottom: 60px; color: #fff; max-width: 80%; }
         .user-info h4 { font-size: 1rem; font-weight: 800; margin-bottom: 5px; color: #3b82f6; }
@@ -32,6 +29,8 @@
         @keyframes pop { 0% {transform: scale(1);} 50% {transform: scale(1.4);} 100% {transform: scale(1);} }
         .unmute-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background: rgba(0,0,0,0.6); padding: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); color: #fff; display: flex; flex-direction: column; align-items: center; cursor: pointer; pointer-events: auto; backdrop-filter: blur(4px); }
         .loader { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; z-index: 200; text-align: center; }
+        .empty-feed { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.5); text-align: center; font-size: 1rem; z-index: 200; }
+        .retry-btn { margin-top: 20px; background: #3b82f6; color: white; border: none; padding: 12px 28px; border-radius: 50px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: 'Poppins', sans-serif; }
     </style>
 </head>
 <body>
@@ -60,8 +59,6 @@
     let videoActualId = null;
     let observerFeed = null;
 
-    // --- DETECTORES DE ID ---
-
     function getYouTubeID(url) {
         if (!url) return null;
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
@@ -74,11 +71,9 @@
         return url.split('/').pop();
     }
 
-    // FIX 1: Nueva función para extraer ID de Dailymotion
     function getDailymotionID(url) {
         if (!url) return null;
         if (!url.includes('dai.ly') && !url.includes('dailymotion.com')) return null;
-        // Soporta: dai.ly/xyz, dailymotion.com/video/xyz, dailymotion.com/embed/video/xyz
         const match = url.match(/(?:dai\.ly|dailymotion\.com\/(?:video|embed\/video))\/([a-zA-Z0-9]+)/);
         return match ? match[1] : null;
     }
@@ -91,17 +86,51 @@
         }, { threshold: 0.6 });
     }
 
+    function quitarLoader() {
+        const loader = document.querySelector('.loader');
+        if (loader) loader.remove();
+    }
+
     function cargarMuro() {
         const container = document.getElementById('muroReportes');
         prepararObservador();
 
+        // FIX A: Fallback — quita el loader tras 6s aunque Firebase no responda
+        const loaderTimeout = setTimeout(() => {
+            quitarLoader();
+            if (!container.querySelector('.social-card')) {
+                container.innerHTML = `
+                    <div class="empty-feed">
+                        <i class="fas fa-video-slash" style="font-size:2.5rem; margin-bottom:12px; display:block;"></i>
+                        Sin videos disponibles<br>
+                        <button class="retry-btn" onclick="location.reload()">Reintentar</button>
+                    </div>`;
+            }
+        }, 6000);
+
+        // FIX B: Si la DB está vacía, quita el loader de inmediato
+        db.ref('reportes').limitToLast(20).once('value', snap => {
+            if (!snap.exists()) {
+                clearTimeout(loaderTimeout);
+                quitarLoader();
+                container.innerHTML = `
+                    <div class="empty-feed">
+                        <i class="fas fa-video-slash" style="font-size:2.5rem; margin-bottom:12px; display:block;"></i>
+                        Sin videos aún 📭<br>
+                        <button class="retry-btn" onclick="location.reload()">Reintentar</button>
+                    </div>`;
+            }
+        });
+
         db.ref('reportes').limitToLast(20).on('child_added', snap => {
             try {
+                // FIX C: Quitar loader en cuanto llega el PRIMER evento,
+                // ANTES del check de musica (bug original: el return impedía quitarlo)
+                clearTimeout(loaderTimeout);
+                quitarLoader();
+
                 const post = snap.val();
                 if (!post || !post.musica) return;
-
-                const loader = document.querySelector('.loader');
-                if (loader) loader.remove();
 
                 let mediaLink = "";
                 let type = "youtube";
@@ -112,7 +141,6 @@
                 } else if (post.musica.includes('streamable.com')) {
                     mediaLink = getStreamableID(post.musica);
                     type = "streamable";
-                // FIX 1: Soporte Dailymotion (antes estas URLs caían a YouTube → ID nulo → card nunca creada)
                 } else if (post.musica.includes('dai.ly') || post.musica.includes('dailymotion.com')) {
                     mediaLink = getDailymotionID(post.musica);
                     type = "dailymotion";
@@ -127,8 +155,8 @@
                 container.prepend(card);
                 observerFeed.observe(card);
 
-                // FIX 4: Disparar video manualmente para la card visible al terminar de cargar
-                // (el IntersectionObserver puede perderse la card final por el prepend rápido)
+                // FIX D: Disparar video en la primera card visible
+                // (el IntersectionObserver puede perderse el prepend rápido)
                 clearTimeout(window._feedLoadTimer);
                 window._feedLoadTimer = setTimeout(() => {
                     const primerCard = container.querySelector('.social-card');
@@ -137,7 +165,15 @@
                     }
                 }, 600);
 
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error("Error cargando post:", e);
+                quitarLoader();
+            }
+        });
+
+        db.ref('reportes').on('child_removed', snap => {
+            const el = document.getElementById(snap.key);
+            if (el) el.remove();
         });
     }
 
@@ -176,7 +212,6 @@
             </div>` : ''}
         `;
 
-        // Listeners tiempo real
         db.ref(`reportes/${key}/vCount`).on('value', s => {
             const el = document.getElementById(`l-count-${key}`);
             if (el) el.textContent = s.val() || 0;
@@ -208,17 +243,12 @@
 
         if (type === 'direct') {
             frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit:cover; background:#000; display:block;"><source src="${mediaId}" type="video/mp4"></video>`;
-        }
-        else if (type === 'streamable') {
+        } else if (type === 'streamable') {
             frame.innerHTML = `<iframe src="https://streamable.com/e/${mediaId}?autoplay=1&muted=${audioActivado ? 0 : 1}" frameborder="0" allow="autoplay; encrypted-media" style="position:absolute; left:0; top:0; width:100%; height:100%; border:none;"></iframe>`;
-        }
-        // FIX 1: Reproductor Dailymotion
-        else if (type === 'dailymotion') {
+        } else if (type === 'dailymotion') {
             const muteState = audioActivado ? 0 : 1;
             frame.innerHTML = `<iframe src="https://www.dailymotion.com/embed/video/${mediaId}?autoplay=1&mute=${muteState}&ui-start-screen-info=0&sharing-enable=0" frameborder="0" allow="autoplay; fullscreen; encrypted-media" style="position:absolute; left:0; top:0; width:100%; height:100%; border:none;"></iframe>`;
-        }
-        else {
-            // FIX 2: Origin dinámico en lugar del hardcoded 'amgel12.github.io'
+        } else {
             const muteState = audioActivado ? 0 : 1;
             const origin = encodeURIComponent(window.location.origin || 'https://localhost');
             frame.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${mediaId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${origin}&mute=${muteState}&playlist=${mediaId}&loop=1" frameborder="0" allow="autoplay; encrypted-media" style="width:100%; height:100%; border:none; display:block;"></iframe>`;
