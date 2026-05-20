@@ -1096,6 +1096,8 @@
 
   @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
   @keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
+  @keyframes floatCloud { 0%, 100% { transform: translateX(-50%) translateY(0px); } 50% { transform: translateX(-50%) translateY(-4px); } }
+  @keyframes floatCloudCard { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-3px); } }
 
   /* PERFIL */
   .profile-header { padding: 35px 20px; background: transparent; text-align: center; }
@@ -1820,13 +1822,32 @@ function cargarMuro() {
     const container = document.getElementById('muroReportes');
     prepararObservador();
 
+    function quitarLoader() {
+        const loader = document.querySelector('.loader');
+        if (loader) loader.remove();
+    }
+
+    // FIX 3: Fallback — quitar el loader tras 6s aunque no haya posts
+    const loaderTimeout = setTimeout(quitarLoader, 6000);
+
+    // FIX 4: Manejar el caso en que la base de datos esté vacía
+    db.ref('reportes').limitToLast(15).once('value', snap => {
+        if (!snap.exists()) {
+            clearTimeout(loaderTimeout);
+            quitarLoader();
+            container.innerHTML = `<div style="color:white;text-align:center;padding:40px;font-size:1rem;opacity:0.6;">Sin videos aún 📭</div>`;
+        }
+    });
+
     db.ref('reportes').limitToLast(15).on('child_added', snap => {
         try {
-            const post = snap.val();
-            if (!post || !post.musica) return;
+            // FIX 1: Quitar el loader en cuanto llega cualquier evento, ANTES del check de musica
+            clearTimeout(loaderTimeout);
+            quitarLoader();
 
-            const loader = document.querySelector('.loader');
-            if(loader) loader.remove();
+            const post = snap.val();
+            // FIX 2: Ahora el return no bloquea la eliminación del loader
+            if (!post || !post.musica) return;
 
             let mediaLink = "";
             let type = "youtube"; // Por defecto
@@ -1840,7 +1861,7 @@ function cargarMuro() {
                 mediaLink = getStreamableID(post.musica);
                 type = "streamable";
             }
-            // 🔥 AQUÍ ESTÁ LO NUEVO PARA DAILYMOTION
+            // FIX: Reproductor Dailymotion
             else if (post.musica.includes('dai.ly') || post.musica.includes('dailymotion.com')) {
                 mediaLink = getDailymotionID(post.musica);
                 type = "dailymotion";
@@ -1857,6 +1878,7 @@ function cargarMuro() {
             observerFeed.observe(card);
         } catch (e) {
             console.error("Error cargando post:", e);
+            quitarLoader();
         }
     });
 
@@ -9145,16 +9167,23 @@ function renderizarUsuariosHorizontal() {
         // --- ☁️ LÓGICA DE LA NUBE DE PENSAMIENTO ---
         let nubeHtml = "";
         if (user.pensamiento && user.pensamiento.trim() !== "") {
+            const c = esMio ? '#6366f1' : '#8b5cf6';
             nubeHtml = `
-            <div style="position: absolute; top: -42px; left: 50%; transform: translateX(-50%); 
-                        background: ${esMio ? '#6366f1' : '#8b5cf6'}; color: white; padding: 5px 12px; border-radius: 15px; 
-                        font-size: 0.62rem; font-weight: 800; white-space: nowrap; 
-                        box-shadow: 0 4px 12px rgba(99,102,241,0.4); z-index: 100;
-                        max-width: 95px; overflow: hidden; text-overflow: ellipsis; animation: bounce 2s infinite;">
-                ${escapeHtml(user.pensamiento)}
-                <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
-                            width: 0; height: 0; border-left: 6px solid transparent; 
-                            border-right: 6px solid transparent; border-top: 6px solid ${esMio ? '#6366f1' : '#8b5cf6'};"></div>
+            <div style="position:absolute; top:-58px; left:50%; transform:translateX(-50%); z-index:100; animation: floatCloud 3s ease-in-out infinite; pointer-events:none;">
+                <!-- Burbuja nube -->
+                <div style="background:${c}; color:white; padding:5px 10px; border-radius:20px;
+                            font-size:0.6rem; font-weight:800; white-space:nowrap;
+                            max-width:95px; overflow:hidden; text-overflow:ellipsis;
+                            box-shadow:0 4px 14px rgba(99,102,241,0.45); text-align:center;
+                            border:2px solid rgba(255,255,255,0.25);">
+                    ${escapeHtml(user.pensamiento)}
+                </div>
+                <!-- Puntitos de pensamiento (estilo cómic) -->
+                <div style="display:flex; justify-content:center; align-items:flex-end; gap:2px; margin-top:2px; padding-left:6px;">
+                    <div style="width:6px;height:6px;border-radius:50%;background:${c};opacity:0.9;"></div>
+                    <div style="width:4px;height:4px;border-radius:50%;background:${c};opacity:0.7;margin-bottom:-1px;"></div>
+                    <div style="width:2px;height:2px;border-radius:50%;background:${c};opacity:0.5;margin-bottom:-3px;"></div>
+                </div>
             </div>`;
         }
 
@@ -11457,17 +11486,32 @@ window.cargarPensamientosPublicos = () => {
             const p = child.val();
             const avatar = getUserProfilePhoto(p.uid);
             const nombre = p.autor || "Usuario";
-            const textoCorto = p.texto.length > 40 ? p.texto.substring(0, 37) + "..." : p.texto;
+            const textoCorto = p.texto.length > 55 ? p.texto.substring(0, 52) + "..." : p.texto;
 
-            // Diseño de Burbuja Horizontal "Premium"
             html = `
-            <div onclick="mostrarPerfilUsuario('${p.uid}', '${nombre}')" style="min-width: 140px; max-width: 140px; background: #faf5ff; border-radius: 18px; padding: 10px; border: 1.5px solid #e9d5ff; flex-shrink: 0; position: relative; box-shadow: 0 2px 8px rgba(139,92,246,0.05);">
-                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                    <img src="${avatar}" style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #8b5cf6;">
-                    <span style="font-size: 0.65rem; font-weight: 800; color: #7c3aed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${nombre}</span>
+            <div onclick="mostrarPerfilUsuario('${p.uid}', '${nombre}')"
+                 style="min-width:130px; max-width:130px; flex-shrink:0; text-align:center; position:relative; padding-top:8px;">
+
+                <!-- ☁️ NUBE DE PENSAMIENTO (burbuja + puntitos estilo cómic) -->
+                <div style="animation: floatCloudCard 3s ease-in-out infinite;">
+                    <div style="background:#8b5cf6; color:white; padding:7px 10px; border-radius:18px;
+                                font-size:0.68rem; font-style:italic; line-height:1.3; font-weight:600;
+                                box-shadow:0 4px 14px rgba(139,92,246,0.35); text-align:left;
+                                border:1.5px solid rgba(255,255,255,0.2); position:relative;">
+                        "${escapeHtml(textoCorto)}"
+                    </div>
+                    <!-- Puntitos de nube hacia el usuario -->
+                    <div style="display:flex; align-items:flex-start; gap:2px; padding-left:18px; margin-top:2px;">
+                        <div style="width:6px;height:6px;border-radius:50%;background:#8b5cf6;opacity:0.9;"></div>
+                        <div style="width:4px;height:4px;border-radius:50%;background:#8b5cf6;opacity:0.7;margin-top:2px;"></div>
+                        <div style="width:2px;height:2px;border-radius:50%;background:#8b5cf6;opacity:0.5;margin-top:4px;"></div>
+                    </div>
                 </div>
-                <div style="font-size: 0.75rem; color: #475569; line-height: 1.2; font-style: italic; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                    "${escapeHtml(p.texto)}"
+
+                <!-- Avatar + Nombre -->
+                <div style="display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:2px;">
+                    <img src="${avatar}" style="width:30px; height:30px; border-radius:50%; border:2px solid #8b5cf6; box-shadow:0 2px 6px rgba(139,92,246,0.3);">
+                    <span style="font-size:0.62rem; font-weight:800; color:#7c3aed; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">${nombre}</span>
                 </div>
             </div>` + html;
         });
