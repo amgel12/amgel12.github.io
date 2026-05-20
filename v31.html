@@ -4663,12 +4663,15 @@ function iniciarProgresoVideo(ytId) {
     fill.style.background = 'linear-gradient(90deg, #10b981, #059669)';
     
     videoProgressInterval = setInterval(() => {
-        if (videoActualJugando && videoWatchId === ytId) {
+        // Solo verificar que seguimos en el mismo video — no depende de videoActualJugando
+        // (videoActualJugando se pone null al cambiar de tab pero el usuario puede volver)
+        if (videoWatchId === ytId) {
             videoWatchSeconds++;
             actualizarBarraProgreso();
             if (videoWatchSeconds >= VIDEO_REWARD_SECONDS) {
                 otorgarPuntosVideo(ytId);
                 clearInterval(videoProgressInterval);
+                videoProgressInterval = null;
             }
         }
     }, 1000);
@@ -4690,10 +4693,13 @@ function actualizarBarraProgreso() {
 }
 
 function otorgarPuntosVideo(ytId) {
-    const yaGanado = localStorage.getItem('v2_' + ytId);
+    // Clave con fecha: permite ganar puntos del mismo video UNA VEZ POR DÍA
+    const hoy = new Date().toISOString().split('T')[0];
+    const claveHoy = 'v2_' + hoy + '_' + ytId;
+    const yaGanado = localStorage.getItem(claveHoy);
     if (yaGanado) return;
 
-    localStorage.setItem('v2_' + ytId, '1');
+    localStorage.setItem(claveHoy, '1');
 
     // Sumar puntos en Firebase
     if (idAuditor) {
