@@ -1,1 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>PAGOCODE PREMIUM FEED</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <!-- YouTube IFrame API: nos avisa EXACTAMENTE cuando el video empieza a reproducirse -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body, html { width: 100%; height: 100%; background: #000; font-family: 'Poppins', sans-serif; overflow: hidden; }
+        #muroReportes { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; background: #000; }
+        #muroReportes::-webkit-scrollbar { display: none; }
+        .social-card { height: 100vh; width: 100vw; position: relative; scroll-snap-align: start; scroll-snap-stop: always; background: #000; display: flex; align-items: center; justify-content: center; }
+
+        /* Video iframe — z-index bajo, debajo del thumb */
+        .card-media { position: absolute; inset: 0; z-index: 1; }
+        .vid-frame { width: 100%; height: 100%; pointer-events: none; position: relative; overflow: hidden; }
+
+        /* Thumbnail — siempre encima del iframe hasta que el video reproduce */
+        .card-thumb {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            background-size: cover;
+            background-position: center;
+            background-color: #111;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+        }
+        .card-thumb.playing { opacity: 0; }
+
+        /* Spinner de carga centrado sobre el thumbnail */
+        .card-spinner {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 6;
+            color: rgba(255,255,255,0.75);
+            font-size: 2rem;
+            pointer-events: none;
+        }
+        .card-spinner.oculto { display: none; }
+
+        .card-overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 40%, rgba(0,0,0,0.3) 100%); pointer-events: none; }
+        .user-info { pointer-events: auto; margin-bottom: 60px; color: #fff; max-width: 80%; }
+        .user-info h4 { font-size: 1rem; font-weight: 800; margin-bottom: 5px; color: #3b82f6; }
+        .user-info p { font-size: 0.9rem; line-height: 1.3; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+        .card-actions { position: absolute; bottom: 300px; right: 12px; display: flex; flex-direction: column; align-items: center; gap: 22px; z-index: 30; pointer-events: auto; }
+        .action-btn { background: none; border: none; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-size: 1.9rem; text-shadow: 0 2px 8px rgba(0,0,0,0.8); transition: transform 0.2s; }
+        .action-btn:active { transform: scale(0.8); }
+        .action-btn span { font-size: 0.75rem; font-weight: 800; }
+        .liked { color: #ef4444 !important; animation: pop 0.3s ease; }
+        @keyframes pop { 0%{transform:scale(1);}50%{transform:scale(1.4);}100%{transform:scale(1);} }
+        .unmute-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background: rgba(0,0,0,0.6); padding: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); color: #fff; display: flex; flex-direction: column; align-items: center; cursor: pointer; pointer-events: auto; backdrop-filter: blur(4px); }
+        .loader { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; z-index: 200; text-align: center; }
+        .retry-btn { margin-top: 20px; background: #3b82f6; color: white; border: none; padding: 12px 28px; border-radius: 50px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: 'Poppins', sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="muroReportes">
+        <div class="loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Cargando Feed...</div>
+    </div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A",
+        authDomain: "ingresos-minimos.firebaseapp.com",
+        databaseURL: "https://ingresos-minimos-default-rtdb.firebaseio.com",
+        projectId: "ingresos-minimos",
+        storageBucket: "ingresos-minimos.firebasestorage.app",
+        messagingSenderId: "104886265441",
+        appId: "1:104886265441:web:2272d88ad1129919ea6c20"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const idAuditor = urlParams.get('uid') || "anon";
+
+    let audioActivado = false;
+    let videoActualId = null;
+    let observerFeed = null;
+    let ytApiReady = false;
+
+    // YouTube IFrame API callback global — se llama cuando la API está lista
+    window.onYouTubeIframeAPIReady = function() {
+        ytApiReady = true;
+    };
+
+    function getYouTubeID(url) {
+        if (!url) return null;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    function getStreamableID(url) {
+        if (!url || !url.includes('streamable.com')) return null;
+        return url.split('/').pop();
+    }
+
+    function getDailymotionID(url) {
+        if (!url) return null;
+        if (!url.includes('dai.ly') && !url.includes('dailymotion.com')) return null;
+        const match = url.match(/(?:dai\.ly|dailymotion\.com\/(?:video|embed\/video))\/([a-zA-Z0-9]+)/);
+        return match ? match[1] : null;
+    }
+
+    function getThumbnailUrl(mediaId, type, fotoPortada) {
+        if (fotoPortada) return fotoPortada;
+        if (type === 'youtube') return `https://img.youtube.com/vi/${mediaId}/hqdefault.jpg`;
+        if (type === 'dailymotion') return `https://www.dailymotion.com/thumbnail/video/${mediaId}`;
+        if (type === 'streamable') return `https://thumbs.streamable.com/${mediaId}.jpg`;
+        return '';
+    }
+
+    // Muestra el thumbnail (ej: al cambiar de card)
+    function mostrarThumb(key) {
+        const thumb = document.getElementById(`thumb-${key}`);
+        const spin = document.getElementById(`spin-${key}`);
+        if (thumb) { thumb.style.opacity = '1'; thumb.classList.remove('playing'); }
+        if (spin) spin.classList.remove('oculto');
+    }
+
+    // Oculta el thumbnail (cuando el video confirma que está reproduciéndose)
+    function ocultarThumb(key) {
+        const thumb = document.getElementById(`thumb-${key}`);
+        const spin = document.getElementById(`spin-${key}`);
+        if (thumb) thumb.classList.add('playing'); // CSS transition de 0.6s
+        if (spin) spin.classList.add('oculto');
+    }
+
+    function prepararObservador() {
+        observerFeed = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    reproducirVideo(entry.target);
+                    precargarSiguiente(entry.target);
+                }
+            });
+        }, { threshold: 0.3 });
+    }
+
+    // Precarga silenciosa de la siguiente card
+    function precargarSiguiente(cardActual) {
+        const container = document.getElementById('muroReportes');
+        const cards = Array.from(container.querySelectorAll('.social-card'));
+        const idx = cards.indexOf(cardActual);
+        const siguiente = cards[idx + 1];
+        if (!siguiente) return;
+
+        const frame = siguiente.querySelector('.vid-frame');
+        if (!frame || frame.innerHTML.trim() !== '') return;
+
+        const mediaId = siguiente.getAttribute('data-media');
+        const type = siguiente.getAttribute('data-type');
+        const key = siguiente.id;
+
+        // Solo precargar iframes de plataformas externas
+        if (type === 'youtube') {
+            // Precargar YouTube: se precarga muted para que el browser permita autoplay
+            const divId = `ytpre-${key}`;
+            const div = document.createElement('div');
+            div.id = divId;
+            div.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;';
+            frame.appendChild(div);
+
+            const waitYT = () => {
+                if (ytApiReady && window.YT && window.YT.Player) {
+                    new window.YT.Player(divId, {
+                        videoId: mediaId,
+                        playerVars: { autoplay: 1, controls: 0, mute: 1, loop: 1, playlist: mediaId, rel: 0, modestbranding: 1, playsinline: 1 },
+                        events: {
+                            onStateChange: (e) => {
+                                if (e.data === window.YT.PlayerState.PLAYING) {
+                                    frame.setAttribute('data-precargado', '1');
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    setTimeout(waitYT, 200);
+                }
+            };
+            waitYT();
+        } else if (type === 'streamable') {
+            frame.innerHTML = `<iframe src="https://streamable.com/e/${mediaId}?autoplay=1&muted=1" frameborder="0" allow="autoplay; encrypted-media" style="position:absolute;left:0;top:0;width:100%;height:100%;border:none;" data-precargado="1"></iframe>`;
+        } else if (type === 'dailymotion') {
+            frame.innerHTML = `<iframe src="https://www.dailymotion.com/embed/video/${mediaId}?autoplay=1&mute=1&ui-start-screen-info=0&sharing-enable=0" frameborder="0" allow="autoplay; encrypted-media" style="position:absolute;left:0;top:0;width:100%;height:100%;border:none;" data-precargado="1"></iframe>`;
+        }
+    }
+
+    function quitarLoader() {
+        const loader = document.querySelector('.loader');
+        if (loader) loader.remove();
+    }
+
+    function cargarMuro() {
+        const container = document.getElementById('muroReportes');
+        prepararObservador();
+
+        const loaderTimeout = setTimeout(() => {
+            quitarLoader();
+            if (!container.querySelector('.social-card')) {
+                container.innerHTML = `
+                    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:rgba(255,255,255,0.6);pointer-events:auto;">
+                        <i class="fas fa-video-slash" style="font-size:2.5rem;margin-bottom:12px;display:block;"></i>
+                        Sin videos disponibles<br>
+                        <button class="retry-btn" onclick="location.reload()">Reintentar</button>
+                    </div>`;
+            }
+        }, 8000);
+
+        db.ref('reportes').limitToLast(20).on('child_added', snap => {
+            try {
+                clearTimeout(loaderTimeout);
+                quitarLoader();
+
+                const post = snap.val();
+                if (!post || !post.musica) return;
+
+                let mediaLink = "";
+                let type = "youtube";
+
+                if (post.musica.includes('workers.dev')) {
+                    mediaLink = post.musica;
+                    type = "direct";
+                } else if (post.musica.includes('streamable.com')) {
+                    mediaLink = getStreamableID(post.musica);
+                    type = "streamable";
+                } else if (post.musica.includes('dai.ly') || post.musica.includes('dailymotion.com')) {
+                    mediaLink = getDailymotionID(post.musica);
+                    type = "dailymotion";
+                } else {
+                    mediaLink = getYouTubeID(post.musica);
+                    type = "youtube";
+                }
+
+                if (!mediaLink || document.getElementById(snap.key)) return;
+
+                const card = crearCard(snap.key, post, mediaLink, type);
+                container.prepend(card);
+                observerFeed.observe(card);
+
+                clearTimeout(window._feedLoadTimer);
+                window._feedLoadTimer = setTimeout(() => {
+                    const primerCard = container.querySelector('.social-card');
+                    if (primerCard && !videoActualId) {
+                        reproducirVideo(primerCard);
+                    }
+                }, 600);
+
+            } catch (e) {
+                console.error("Error cargando post:", e);
+                quitarLoader();
+            }
+        });
+
+        db.ref('reportes').on('child_removed', snap => {
+            const el = document.getElementById(snap.key);
+            if (el) el.remove();
+        });
+    }
+
+    function crearCard(key, post, mediaId, type) {
+        const card = document.createElement('div');
+        card.className = 'social-card';
+        card.id = key;
+        card.setAttribute('data-media', mediaId);
+        card.setAttribute('data-type', type);
+        card.setAttribute('data-uid', post.uid || '');
+
+        const isLikedInitial = post.likes && idAuditor && post.likes[idAuditor];
+        const thumbUrl = getThumbnailUrl(mediaId, type, post.fotoPortada || '');
+        const thumbStyle = thumbUrl ? `background-image:url('${thumbUrl}')` : 'background-color:#111';
+
+        card.innerHTML = `
+            <div class="card-media">
+                <div class="vid-frame"></div>
+                <div class="card-thumb" style="${thumbStyle}" id="thumb-${key}">
+                    <div class="card-spinner" id="spin-${key}">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-overlay">
+                <div class="user-info">
+                    <h4>@${post.autorClave || 'Usuario'}</h4>
+                    <p>${post.texto || ''}</p>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button class="action-btn" onclick="toggleLike('${key}', '${post.uid}')">
+                    <i class="fas fa-heart ${isLikedInitial ? 'liked' : ''}" id="heart-${key}"></i>
+                    <span id="l-count-${key}">${post.vCount || 0}</span>
+                </button>
+                <button class="action-btn" onclick="abrirComentariosApp('${key}')">
+                    <i class="fas fa-comment-dots"></i>
+                    <span id="c-count-${key}">${post.comentarios ? Object.keys(post.comentarios).length : 0}</span>
+                </button>
+            </div>
+            ${!audioActivado ? `
+            <div class="unmute-box" onclick="activarAudioGlobal()">
+                <i class="fas fa-play" style="font-size:2.5rem; margin-left:8px;"></i>
+                <small style="margin-top:8px; font-weight:800; letter-spacing:1px;">TOCA PARA SONIDO</small>
+            </div>` : ''}
+        `;
+
+        db.ref(`reportes/${key}/vCount`).on('value', s => {
+            const el = document.getElementById(`l-count-${key}`);
+            if (el) el.textContent = s.val() || 0;
+        });
+
+        db.ref(`reportes/${key}/likes/${idAuditor}`).on('value', s => {
+            const heart = document.getElementById(`heart-${key}`);
+            if (heart) {
+                if (s.exists()) heart.classList.add('liked');
+                else heart.classList.remove('liked');
+            }
+        });
+
+        return card;
+    }
+
+    function reproducirVideo(card) {
+        if (videoActualId === card.id) return;
+
+        // Limpiar card anterior
+        if (videoActualId) {
+            const ant = document.getElementById(videoActualId);
+            if (ant) {
+                ant.querySelector('.vid-frame').innerHTML = "";
+                mostrarThumb(videoActualId); // restaurar thumb para cuando vuelva
+            }
+        }
+
+        videoActualId = card.id;
+        const mediaId = card.getAttribute('data-media');
+        const type = card.getAttribute('data-type');
+        const frame = card.querySelector('.vid-frame');
+        const key = card.id;
+
+        // Asegurarse que el thumbnail sea visible mientras carga
+        mostrarThumb(key);
+
+        window.parent.postMessage({ type: 'startVideoProgress', videoId: mediaId }, '*');
+
+        if (type === 'direct') {
+            frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit:cover;background:#000;display:block;"><source src="${mediaId}" type="video/mp4"></video>`;
+            const video = frame.querySelector('video');
+            if (video) {
+                video.addEventListener('playing', () => ocultarThumb(key), { once: true });
+                // Fallback por si el evento no llega
+                setTimeout(() => ocultarThumb(key), 4000);
+            }
+
+        } else if (type === 'streamable') {
+            // Streamable no tiene API — el thumbnail cubre mientras carga, fade a 4s
+            if (frame.getAttribute('data-precargado')) {
+                ocultarThumb(key);
+            } else {
+                frame.innerHTML = `<iframe src="https://streamable.com/e/${mediaId}?autoplay=1&muted=${audioActivado ? 0 : 1}" frameborder="0" allow="autoplay; encrypted-media" style="position:absolute;left:0;top:0;width:100%;height:100%;border:none;"></iframe>`;
+                setTimeout(() => ocultarThumb(key), 4000);
+            }
+
+        } else if (type === 'dailymotion') {
+            if (frame.getAttribute('data-precargado')) {
+                ocultarThumb(key);
+            } else {
+                frame.innerHTML = `<iframe src="https://www.dailymotion.com/embed/video/${mediaId}?autoplay=1&mute=${audioActivado ? 0 : 1}&ui-start-screen-info=0&sharing-enable=0" frameborder="0" allow="autoplay; fullscreen; encrypted-media" style="position:absolute;left:0;top:0;width:100%;height:100%;border:none;"></iframe>`;
+                setTimeout(() => ocultarThumb(key), 4000);
+            }
+
+        } else {
+            // YouTube — usamos IFrame API para detectar exactamente cuándo reproduce
+            frame.innerHTML = ''; // limpiar precarga anterior si la hay
+            const divId = `yt-${key}-${Date.now()}`;
+            const div = document.createElement('div');
+            div.id = divId;
+            div.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;';
+            frame.appendChild(div);
+
+            const muteParam = audioActivado ? 0 : 1;
+
+            const crearPlayer = () => {
+                if (!ytApiReady || !window.YT || !window.YT.Player) {
+                    setTimeout(crearPlayer, 150);
+                    return;
+                }
+                // Si ya no es el video actual (usuario hizo swipe rápido), no crear player
+                if (videoActualId !== key) return;
+
+                new window.YT.Player(divId, {
+                    videoId: mediaId,
+                    playerVars: {
+                        autoplay: 1,
+                        controls: 0,
+                        mute: muteParam,
+                        loop: 1,
+                        playlist: mediaId,
+                        rel: 0,
+                        modestbranding: 1,
+                        playsinline: 1,
+                        iv_load_policy: 3
+                    },
+                    events: {
+                        onReady: (e) => {
+                            if (audioActivado) e.target.unMute();
+                            e.target.playVideo();
+                        },
+                        onStateChange: (e) => {
+                            // Ocultar thumbnail solo cuando el video REALMENTE está reproduciendo
+                            if (e.data === window.YT.PlayerState.PLAYING) {
+                                ocultarThumb(key);
+                            }
+                            // Si vuelve a buffering/paused, NO mostrar negro — el thumb ya está en z-index bajo
+                        },
+                        onError: () => {
+                            // Error de YouTube — dejar el thumbnail visible
+                            const spin = document.getElementById(`spin-${key}`);
+                            if (spin) {
+                                spin.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+                            }
+                        }
+                    }
+                });
+            };
+
+            crearPlayer();
+        }
+    }
+
+    window.activarAudioGlobal = () => {
+        audioActivado = true;
+        document.querySelectorAll('.unmute-box').forEach(el => el.remove());
+        const actual = document.getElementById(videoActualId);
+        if (actual) {
+            // Para YouTube, intentar unmute en el player existente
+            const frame = actual.querySelector('.vid-frame');
+            const ytDiv = frame ? frame.querySelector('[id^="yt-"]') : null;
+            if (ytDiv && ytDiv.contentWindow) {
+                // Recargar con audio
+                videoActualId = null;
+                reproducirVideo(actual);
+            } else {
+                videoActualId = null;
+                reproducirVideo(actual);
+            }
+        }
+    };
+
+    window.toggleLike = (postKey, ownerUid) => {
+        if (!idAuditor || idAuditor === "anon") return alert("Inicia sesión");
+        const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
+        const countRef = db.ref(`reportes/${postKey}/vCount`);
+        ref.once('value', s => {
+            if (s.exists()) {
+                ref.remove();
+                countRef.transaction(c => (c || 0) - 1);
+            } else {
+                ref.set(true);
+                countRef.transaction(c => (c || 0) + 1);
+                window.parent.postMessage({ type: 'playSelect' }, '*');
+                if (window.parent && ownerUid && ownerUid !== idAuditor) {
+                    window.parent.postMessage({ type: 'doLike', postKey: postKey, ownerUid: ownerUid }, '*');
+                }
+            }
+        });
+    };
+
+    window.abrirComentariosApp = (postKey) => {
+        if (window.parent) window.parent.postMessage({ type: 'openComments', key: postKey }, '*');
+    };
+
+    window.onload = cargarMuro;
+</script>
+</body>
+</html>
 
