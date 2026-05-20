@@ -116,9 +116,16 @@
 
     function getThumbnailUrl(mediaId, type, fotoPortada) {
         if (fotoPortada) return fotoPortada;
-        if (type === 'youtube') return `https://img.youtube.com/vi/${mediaId}/hqdefault.jpg`;
+        if (type === 'youtube')     return `https://img.youtube.com/vi/${mediaId}/hqdefault.jpg`;
         if (type === 'dailymotion') return `https://www.dailymotion.com/thumbnail/video/${mediaId}`;
-        if (type === 'streamable') return `https://thumbs.streamable.com/${mediaId}.jpg`;
+        if (type === 'streamable')  return `https://thumbs.streamable.com/${mediaId}.jpg`;
+        if (type === 'imgur') {
+            // mediaId es la URL completa; extraer ID sin extensión para obtener el .jpg
+            const base = mediaId.replace(/\.(mp4|gifv|gif|webm)$/i, '');
+            const imgId = base.split('/').pop();
+            return `https://i.imgur.com/${imgId}.jpg`;
+        }
+        // catbox y direct mp4 — sin thumbnail disponible
         return '';
     }
 
@@ -235,7 +242,13 @@
                 let mediaLink = "";
                 let type = "youtube";
 
-                if (post.musica.includes('workers.dev')) {
+                if (post.musica.includes('catbox.moe')) {
+                    mediaLink = post.musica;      // URL directa .mp4
+                    type = "catbox";
+                } else if (post.musica.includes('imgur.com')) {
+                    mediaLink = post.musica;      // URL directa .mp4 / .gifv
+                    type = "imgur";
+                } else if (post.musica.includes('workers.dev')) {
                     mediaLink = post.musica;
                     type = "direct";
                 } else if (post.musica.includes('streamable.com')) {
@@ -358,13 +371,16 @@
 
         window.parent.postMessage({ type: 'startVideoProgress', videoId: mediaId }, '*');
 
-        if (type === 'direct') {
-            frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit:cover;background:#000;display:block;"><source src="${mediaId}" type="video/mp4"></video>`;
+        // ── Video directo (workers.dev, catbox.moe, imgur .mp4/.gifv) ────────────
+        if (type === 'direct' || type === 'catbox' || type === 'imgur') {
+            const src = type === 'imgur'
+                ? mediaId.replace(/\.gifv$/i, '.mp4')   // .gifv → .mp4
+                : mediaId;
+            frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit:cover;background:#000;display:block;"><source src="${src}" type="video/mp4"></video>`;
             const video = frame.querySelector('video');
             if (video) {
                 video.addEventListener('playing', () => ocultarThumb(key), { once: true });
-                // Fallback por si el evento no llega
-                setTimeout(() => ocultarThumb(key), 4000);
+                setTimeout(() => ocultarThumb(key), 5000); // fallback 5s
             }
 
         } else if (type === 'streamable') {
