@@ -12,63 +12,77 @@
 
 .mision-card {
     background: white;
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 16px;
+    border-radius: 18px;
+    padding: 15px 16px;
+    margin-bottom: 12px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e2e8f0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1.5px solid #f1f5f9;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
 }
 
 .mision-card:active {
-    transform: scale(0.98);
-    background: #f8fafc;
+    transform: scale(0.97);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+}
+
+.mision-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
 }
 
 .mision-info {
     display: flex;
     flex-direction: column;
     flex: 1;
+    min-width: 0;
 }
 
 .mision-title {
     font-weight: 800;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: #0f172a;
-    margin: 0 0 4px 0;
+    margin: 0 0 3px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .mision-desc {
-    font-size: 0.8rem;
-    color: #64748b;
+    font-size: 0.75rem;
+    color: #94a3b8;
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.3;
 }
 
 .mision-reward {
-    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-    color: #0284c7;
-    padding: 6px 14px;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    padding: 7px 14px;
     border-radius: 50px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 800;
-    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
+    box-shadow: 0 3px 10px rgba(99,102,241,0.3);
     white-space: nowrap;
-    min-width: 90px;
     text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-shrink: 0;
 }
 
 .mision-completada {
-    opacity: 0.6;
+    opacity: 0.55;
     background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    border-color: #e2e8f0;
 }
 
 .mision-completada .mision-title {
@@ -77,10 +91,13 @@
 }
 
 .mision-completada .mision-desc {
-    color: #94a3b8 !important;
+    color: #cbd5e1 !important;
 }
 
-
+.mision-completada .mision-reward {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    box-shadow: 0 3px 10px rgba(34,197,94,0.25) !important;
+}
 
 .mision-btn.done {
     background: linear-gradient(135deg, #22c55e, #16a34a);
@@ -115,7 +132,7 @@
       box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
       transition: transform 0.2s;
   }
-  
+
   .mision-btn:active {
       transform: scale(0.95);
   }
@@ -347,7 +364,7 @@
       background: #f8fafc;
       touch-action: pan-y;
   }
- 
+
     /* HEADER */
   .header-fixed {
       position: fixed;
@@ -614,7 +631,7 @@
 
   .leader-info { display: flex; align-items: center; gap: 10px; }
   .crown-gold { color: #f59e0b; font-size: 22px; animation: pulse 2s infinite; }
-  
+
   .leader-avatar {
       width: 45px; height: 45px; border-radius: 50%;
       border: 2px solid #f59e0b; background-size: cover;
@@ -623,7 +640,7 @@
 
   .leader-text h4 { margin: 0; color: #0f172a; font-size: 15px; font-weight: 800; }
   .leader-text span { font-size: 12px; color: #f59e; font-weight: bold; }
-  
+
   .leader-btn {
       background: #0f172a; color: white; border: none;
       padding: 8px 14px; border-radius: 50px;
@@ -631,7 +648,7 @@
   }
   .stories-container { background: transparent; padding: 1px 0 15px 0; margin-bottom: 15px; }
   .stories-title { padding: 0 15px 10px; font-size: 0.85rem; font-weight: 700; color: #64748b; }
-  
+
   .stories-scroll {
       display: flex; overflow-x: auto; gap: 15px;
       padding: 0 15px; scrollbar-width: none;
@@ -639,7 +656,7 @@
   .stories-scroll::-webkit-scrollbar { display: none; }
 
   .story-item { display: flex; flex-direction: column; align-items: center; min-width: 65px; cursor: pointer; }
-  
+
   .story-avatar-box {
       position: relative; width: 58px; height: 58px;
       border-radius: 50%; padding: 3px;
@@ -649,11 +666,11 @@
 
   .story-avatar-box.online { border-color: #22c55e; }
   .story-img { width: 100%; height: 100%; border-radius: 50%; background-size: cover; background-color: #f1f5f9; }
-  
+
   .story-dot { position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; }
   .dot-online { background: #22c55e; }
   .dot-offline { background: #cbd5e1; }
-  
+
   .story-name { margin-top: 6px; font-size: 0.7rem; color: #334155; text-align: center; max-width: 65px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
 
   .social-card {
@@ -675,10 +692,10 @@
 
   .user-row { display: flex; align-items: center; gap: 12px; }
   .card-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; background-size: cover; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-  
+
   .card-username { color: white !important; text-shadow: 0 2px 4px rgba(0,0,0,0.5); font-size: 0.95rem; font-weight: 700; }
   .card-time { color: #e2e8f0 !important; font-size: 0.7rem; }
-  
+
   .top-creator-glow { border: 2px solid #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); }
   .top-badge { background: #fbbf24; color: #78350f; font-size: 9px; padding: 3px 8px; border-radius: 6px; margin-left: 5px; font-weight: 800; vertical-align: middle; text-transform: uppercase; }
 
@@ -717,9 +734,9 @@
     overflow: hidden;
 }
   #muroReportes::-webkit-scrollbar { display: none; }
-  
+
   .liked { color: #e11d48 !important; filter: drop-shadow(0 0 5px rgba(225, 29, 72, 0.5)); }
-  
+
   .card {
       background: white; border-radius: 24px; padding: 22px;
       margin-bottom: 20px; border: 1px solid #f8fafc;
@@ -736,7 +753,7 @@
   }
 
   .btn-blue:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
-  
+
   input, textarea {
       width: 100%; padding: 14px;
       border: 2px solid #f1f5f9; border-radius: 16px;
@@ -745,7 +762,7 @@
       background: #f8fafc; font-size: 1rem;
       transition: border-color 0.3s;
   }
-  
+
   input:focus, textarea:focus { border-color: #6366f1; background: white; }
 
   .btn-transfer {
@@ -757,7 +774,7 @@
   }
 
   .tab-container { display: flex; gap: 10px; margin: 20px 0; }
-  
+
   .tab-btn {
       flex: 1; padding: 14px; border: none;
       border-radius: 16px; background: #f1f5f9;
@@ -823,7 +840,7 @@
 
   .modal-comments-area { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   .modal-comments-list { flex: 1; overflow-y: auto; background: #f8fafc; padding: 20px; }
-  
+
   .comment-bubble {
       background: white; padding: 12px 16px;
       border-radius: 16px; margin-bottom: 12px;
@@ -834,9 +851,9 @@
 
   .comment-author { font-weight: 800; color: #6366f1; font-size: 0.85rem; margin-bottom: 3px; }
   .comment-text { color: #334155; line-height: 1.5; }
-  
+
   .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 12px; scrollbar-width: none; background: white; border-top: 1px solid #f1f5f9; }
-  
+
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   @keyframes slideIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
@@ -858,7 +875,7 @@
       cursor: pointer; transition: 0.3s;
       color: #64748b; font-size: 0.95rem; margin-bottom: 12px;
   }
-  
+
   .music-trigger:active { background: #eef2ff; border-color: #6366f1; }
 
   .music-list-container { max-height: 300px; overflow-y: auto; margin-top: 15px; }
@@ -866,7 +883,7 @@
   .music-item:active { background: #f8fafc; }
 
   .ruleta-container { position: relative; width: 220px; height: 220px; margin: 0 auto 20px; touch-action: none; }
-  
+
   #wheel {
       width: 100%; height: 100%; border-radius: 50%;
       border: 8px solid white;
@@ -905,7 +922,7 @@
  .toast {
     visibility: hidden;
     background: linear-gradient(135deg, #1e293b, #0f172a);
-    
+
     color: white;
     padding: 14px 22px;
 
@@ -961,7 +978,7 @@
     to { transform: translateX(0); opacity: 1; }
 }
   .historial-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
-  
+
   .noti-item {
       background: #f1f5f9; padding: 14px;
       border-radius: 16px; border: 1px solid #e2e8f0;
@@ -1005,7 +1022,7 @@
 
   .d-btn:active { background: rgba(255, 255, 255, 0.3); transform: scale(0.92); }
   .game-score { color: #38bdf8; font-size: 1.4rem; margin-bottom: 15px; font-weight: 800; text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
-  
+
   .btn-salir-game {
       position: absolute; top: 25px; right: 25px; bottom: auto;
       background: #ef4444; color: white; border: none;
@@ -1041,9 +1058,9 @@
 
   .chat-window.open { transform: translateY(0); }
   .chat-header { padding: 18px; background: white; border-bottom: 1px solid #e2e8f0; border-radius: 24px 24px 0 0; display: flex; justify-content: space-between; align-items: center; }
-  
+
   .chat-messages-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-  
+
    .msg-bubble {
        max-width: 80%; padding: 12px 16px;
        border-radius: 18px; font-size: 0.95rem;
@@ -1077,7 +1094,7 @@
 
   .msg-user { font-size: 0.75rem; color: #6366f1; margin-bottom: 2px; font-weight: 800; }
   .msg-time { font-size: 0.65rem; text-align: right; margin-top: 4px; color: #94a3b8; opacity: 0.8; }
-  
+
   .quoted-msg { background: rgba(0, 0, 0, 0.05); border-left: 4px solid #6366f1; padding: 6px 10px; margin-bottom: 6px; border-radius: 6px; font-size: 0.8rem; display: flex; flex-direction: column; }
   .quoted-author { font-weight: 800; color: #6366f1; font-size: 0.75rem; }
   .quoted-text { color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
@@ -1088,7 +1105,7 @@
   .typing-dots span { width: 5px; height: 5px; background: #64748b; border-radius: 50%; display: inline-block; animation: blink 1.4s infinite both; }
   .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
   .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-  
+
   @keyframes blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
 
   .chat-input-area { padding: 12px; background: white; border-top: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
@@ -1100,20 +1117,103 @@
   @keyframes floatCloudCard { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-3px); } }
 
   /* PERFIL */
-  .profile-header { padding: 35px 20px; background: transparent; text-align: center; }
-  
-  .profile-avatar-large {
-      width: 110px; height: 110px; border-radius: 50%;
-      border: 4px solid #6366f1; margin: 0 auto 18px;
-      background-size: cover; background-color: #e2e8f0;
-      box-shadow: 0 8px 30px rgba(99, 102, 241, 0.3);
+  .profile-header { padding: 0; background: transparent; text-align: center; }
+
+  .profile-cover-banner {
+      height: 130px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 55%, #7c3aed 100%);
+      position: relative;
+      overflow: hidden;
+  }
+  .profile-cover-banner::before {
+      content:''; position:absolute; top:-50px; right:-50px;
+      width:180px; height:180px; background:rgba(255,255,255,0.07); border-radius:50%;
+  }
+  .profile-cover-banner::after {
+      content:''; position:absolute; bottom:-30px; left:-30px;
+      width:120px; height:120px; background:rgba(255,255,255,0.05); border-radius:50%;
   }
 
-  .profile-menu-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
-  .menu-card-btn { flex-direction: row !important; justify-content: flex-start !important; padding: 18px 25px !important; text-align: left !important; }
-  .menu-card-btn::after { content: 'ᐳ'; margin-left: auto; color: #cbd5e1; font-weight: bold; font-size: 0.9rem; }
-  .menu-card-btn:active { transform: scale(0.98); background: #f8fafc; }
-  .menu-icon { margin-bottom: 0 !important; margin-right: 20px !important; font-size: 1.6rem !important; width: 35px; text-align: center; }
+  .profile-avatar-wrap {
+      position: absolute; bottom: -45px; left: 50%; transform: translateX(-50%);
+  }
+
+  .profile-avatar-large {
+      width: 90px; height: 90px; border-radius: 50%;
+      border: 4px solid white;
+      background-size: cover; background-color: #e2e8f0; background-position: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  }
+
+  .profile-stats-row {
+      display: flex; margin: 0 16px 16px; background: white;
+      border-radius: 18px; overflow: hidden;
+      box-shadow: 0 4px 16px rgba(99,102,241,0.12);
+  }
+  .profile-stat {
+      flex: 1; text-align: center; padding: 14px 8px;
+  }
+  .profile-stat + .profile-stat { border-left: 1px solid #f1f5f9; }
+  .profile-stat-val { font-size: 1.2rem; font-weight: 900; color: #0f172a; }
+  .profile-stat-lbl { font-size: 0.62rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; }
+
+  .profile-field-card {
+      background: white; border-radius: 16px; margin: 0 16px 12px;
+      padding: 14px 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  .profile-field-label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .profile-field-row { display: flex; align-items: center; gap: 8px; }
+  .profile-field-input {
+      flex: 1; padding: 10px 14px; font-size: 0.85rem;
+      border: 1.5px solid #e2e8f0; border-radius: 12px; background: #f8fafc;
+      color: #334155; font-family: 'Poppins', sans-serif;
+  }
+  .profile-field-input:focus { outline: none; border-color: #6366f1; background: white; }
+  .profile-save-btn {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: white; border: none; padding: 10px 16px; border-radius: 12px;
+      font-size: 0.78rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 3px 10px rgba(99,102,241,0.3); flex-shrink: 0;
+  }
+
+  .profile-menu-group {
+      background: white; border-radius: 18px; margin: 0 16px 12px;
+      overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  .menu-card-btn {
+      flex-direction: row !important; justify-content: flex-start !important;
+      padding: 16px 20px !important; text-align: left !important;
+      background: white; border: none; width: 100%; cursor: pointer;
+      border-bottom: 1px solid #f8fafc; transition: background 0.15s;
+  }
+  .menu-card-btn:last-child { border-bottom: none; }
+  .menu-card-btn::after { content: '›'; margin-left: auto; color: #cbd5e1; font-weight: bold; font-size: 1.2rem; }
+  .menu-card-btn:active { background: #f8fafc !important; }
+  .menu-icon { margin-bottom: 0 !important; margin-right: 16px !important; font-size: 1.3rem !important; width: 30px; text-align: center; flex-shrink: 0; }
+
+  /* CONTADOR M9 */
+  #m9CounterCard {
+      display: none;
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: white; border-radius: 24px; padding: 18px 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      z-index: 60000; min-width: 280px; text-align: center;
+      animation: slideUpCard 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes slideUpCard {
+      from { transform: translateX(-50%) translateY(30px); opacity:0; }
+      to   { transform: translateX(-50%) translateY(0);    opacity:1; }
+  }
+  .m9-step {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 900;
+      background: #f1f5f9; color: #94a3b8;
+      border: 2px solid #e2e8f0;
+      transition: all 0.3s ease;
+  }
+  .m9-step.done  { background: linear-gradient(135deg,#22c55e,#16a34a); color:white; border-color:#22c55e; }
+  .m9-step.active{ background: linear-gradient(135deg,#f97316,#ef4444); color:white; border-color:#f97316; animation: pulseCta 1s infinite; }
 
   .ic-yellow { color: #f59e0b; }
   .ic-green { color: #10b981; }
@@ -1170,10 +1270,10 @@
     object-fit: cover;
     display: block;
 }
-  
+
   .feed-header-wrapper { background: #f8fafc; padding-bottom: 10px; }
 
- 
+
   .chat-row { display: flex; align-items: flex-end; margin-bottom: 12px; width: 100%; }
   .chat-row.mine { justify-content: flex-end; }
   .chat-row.mine .chat-avatar-img { margin-left: 10px; order: 2; }
@@ -1225,80 +1325,210 @@
   .task-completed .task-icon { filter: grayscale(100%); opacity: 0.5; }
   .task-completed .task-progress-fill { background: #10b981; }
 
- 
+
   .confetti-piece { position: fixed; width: 10px; height: 10px; top: -10px; z-index: 99999; border-radius: 2px; animation: confettiFall linear forwards; pointer-events: none; }
   @keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
 
 .mision-screen-dark {
-    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
-    padding: 25px 15px 120px 15px !important;
+    background: #f1f5f9 !important;
+    padding: 0 0 120px 0 !important;
 }
 
-.mision-screen-dark h2 { 
-    color: #0f172a !important; 
-    font-size: 1.8rem !important;
+/* Header banner de misiones */
+.mision-header-banner {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 60%, #7c3aed 100%);
+    padding: 28px 20px 50px;
+    position: relative;
+    overflow: hidden;
+}
+
+.mision-header-banner::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 50%;
+}
+
+.mision-header-banner::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; left: -20px;
+    width: 100px; height: 100px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+}
+
+/* Barra de progreso general */
+.mision-progress-wrap {
+    background: rgba(255,255,255,0.15);
+    border-radius: 50px;
+    height: 10px;
+    margin-top: 14px;
+    overflow: hidden;
+}
+
+.mision-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #a5f3fc, #67e8f9);
+    border-radius: 50px;
+    transition: width 0.6s ease;
+}
+
+/* Tarjeta flotante de stats */
+.mision-stats-card {
+    background: white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin: -28px 16px 16px;
+    display: flex;
+    gap: 0;
+    box-shadow: 0 8px 30px rgba(99,102,241,0.15);
+    position: relative;
+    z-index: 2;
+}
+
+.mision-stat-item {
+    flex: 1;
     text-align: center;
-    margin-bottom: 25px !important;
-    text-shadow: none;
 }
 
+.mision-stat-item + .mision-stat-item {
+    border-left: 1px solid #f1f5f9;
+}
+
+.mision-stat-val {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1;
+}
+
+.mision-stat-lbl {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
 
 .mision-screen-dark .mision-card {
     background: white !important;
-    backdrop-filter: none;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    border-radius: 20px !important;
-    margin-bottom: 20px !important;
-    padding: 18px !important;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1.5px solid #f1f5f9 !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05) !important;
+    border-radius: 18px !important;
+    margin-bottom: 10px !important;
 }
 
 .mision-screen-dark .mision-card:active {
-    transform: scale(0.98) !important;
+    transform: scale(0.97) !important;
 }
 
-.mision-screen-dark .mision-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; width: 8px; height: 100%;
-    background: linear-gradient(180deg, #6366f1, #4f46e5);
-    box-shadow: none;
-    border-radius: 20px 0 0 20px;
-}
-
-/* Título de misión */
 .mision-screen-dark .mision-title {
     color: #0f172a !important;
-    font-size: 1.1rem !important;
-    font-weight: 700 !important;
-    margin-bottom: 6px !important;
+    font-size: 0.9rem !important;
+    font-weight: 800 !important;
 }
 
-/* Descripción */
 .mision-screen-dark .mision-desc {
-    color: #64748b !important;
-    font-size: 0.9rem !important;
-    line-height: 1.4 !important;
+    color: #94a3b8 !important;
+    font-size: 0.75rem !important;
 }
 
-/* Badge de puntos */
 .mision-screen-dark .mision-reward {
-    background: linear-gradient(90deg, #e0f2fe, #bae6fd) !important;
-    color: #0284c7 !important;
+    background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+    color: white !important;
     font-weight: 900 !important;
-    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
     border-radius: 50px !important;
-    padding: 8px 16px !important;
-    font-size: 0.9rem !important;
-    min-width: 90px;
+    padding: 7px 14px !important;
+    font-size: 0.8rem !important;
+    box-shadow: 0 3px 10px rgba(99,102,241,0.3) !important;
+}
+
+.mision-screen-dark .mision-card:active {
+    transform: scale(0.97) !important;
+}
+
+/* Overlay inactividad 12h */
+#overlayInactividad {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99000;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 30px;
     text-align: center;
 }
 
-.mision-screen-dark .mision-card:active {
-    transform: scale(0.98) !important;
+.overlay-inac-box {
+    background: white;
+    border-radius: 28px;
+    padding: 32px 28px;
+    max-width: 340px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}
+
+.overlay-inac-emoji {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 12px;
+    animation: floatEmoji 2s ease-in-out infinite;
+}
+
+@keyframes floatEmoji {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-10px); }
+}
+
+.overlay-inac-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+
+.overlay-inac-sub {
+    font-size: 0.88rem;
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.overlay-inac-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #f97316, #ef4444);
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(249,115,22,0.4);
+    animation: pulseCta 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseCta {
+    0%, 100% { box-shadow: 0 6px 20px rgba(249,115,22,0.4); }
+    50%       { box-shadow: 0 8px 30px rgba(249,115,22,0.65); }
+}
+
+.overlay-inac-btn:active {
+    transform: scale(0.97);
 }
 #modalLesson {
     background: rgba(0,0,0,0.55);
@@ -1773,7 +2003,7 @@ window.abrirPasoFoto = (url) => {
     // Detener audio antes de cambiar de modal
     const container = document.getElementById('reproductorAudioLib');
     if(container) container.innerHTML = "";
-    
+
     document.getElementById('modalLibreriaFinal').style.display = 'none';
     document.getElementById('modalSubirPortada').style.display = 'flex';
 };
@@ -1791,7 +2021,7 @@ window.procesarFotoPortada = (input) => {
             document.getElementById('imgPreviewPortada').src = e.target.result;
             document.getElementById('imgPreviewPortada').style.display = 'block';
             document.getElementById('placeholderText').style.display = 'none';
-            
+
             // 🔥 AGREGA ESTAS LÍNEAS QUE FALTAN:
             const btn = document.getElementById('btnFinalizarLibreria');
             btn.disabled = false;  // ← ESTO ES LO QUE FALTA
@@ -1800,7 +2030,7 @@ window.procesarFotoPortada = (input) => {
             btn.style.boxShadow = "0 0 20px rgba(29,185,84,0.4)";
             btn.style.cursor = "pointer";
             btn.style.opacity = "1";
-            
+
             notify("✅ Foto cargada. ¡Pulsa publicar!");
         };
         reader.readAsDataURL(input.files[0]);
@@ -1831,15 +2061,15 @@ window.finalizarPublicacionLibreria = () => {
     }).then(() => {
         db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) + 0.50);
         registrarHistorial("Video de Librería", 0.50);
-        
+
         document.getElementById('modalSubirPortada').style.display = 'none';
         notify("✅ ¡Publicado con éxito!");
-        
+
         // Resetear para la próxima
         window.fElegida = "";
         btn.innerText = "🚀 PUBLICAR EN EL MURO";
         btn.disabled = false;
-        
+
         goToScreen(2); // Ir al muro
     }).catch(err => {
         alert("Error: " + err.message);
@@ -1880,9 +2110,6 @@ window.confirmarPublicacionLibreria = (urlVideo) => {
     document.getElementById('modalSubirPortada').style.display = 'flex';
 };
 
-// (segunda definición duplicada de procesarFotoPortada eliminada)
-
-// (tercera definición duplicada eliminada)
 function cargarMuro() {
     console.log("Iniciando carga de videos...");
     const container = document.getElementById('muroReportes');
@@ -1893,10 +2120,8 @@ function cargarMuro() {
         if (loader) loader.remove();
     }
 
-    // FIX 3: Fallback — quitar el loader tras 6s aunque no haya posts
     const loaderTimeout = setTimeout(quitarLoader, 6000);
 
-    // FIX 4: Manejar el caso en que la base de datos esté vacía
     db.ref('reportes').limitToLast(15).once('value', snap => {
         if (!snap.exists()) {
             clearTimeout(loaderTimeout);
@@ -1907,7 +2132,6 @@ function cargarMuro() {
 
     db.ref('reportes').limitToLast(15).on('child_added', snap => {
         try {
-            // FIX 1: Quitar el loader en cuanto llega cualquier evento, ANTES del check de musica
             clearTimeout(loaderTimeout);
             quitarLoader();
 
@@ -1936,7 +2160,7 @@ function cargarMuro() {
                 mediaLink = getYouTubeID(post.musica);
                 type = "youtube";
             }
-            
+
             if (!mediaLink || document.getElementById(snap.key)) return;
 
             const card = crearCard(snap.key, post, mediaLink, type);
@@ -1958,23 +2182,22 @@ function cargarMuro() {
 </head>
 
 <body>
-  <!-- 🔥 BOTÓN DE PRUEBA FCM (borrar después) -->
 
 <script>
-// 🔥 PRUEBA 1: Verificar si AndroidNative está disponible
+
 window.probarPuenteKotlin = function() {
     const log = document.getElementById('fcmDebugLog');
-    
+
     if (typeof AndroidNative !== 'undefined') {
         log.textContent = "✅ AndroidNative DISPONIBLE";
         console.log("✅ JS puede comunicarse con Kotlin");
-        
+
         // Obtener UID actual
         const user = firebase.auth().currentUser;
         if (user) {
             log.textContent = "✅ UID: " + user.uid.substring(0,8) + "...";
             console.log("✅ Usuario logueado:", user.uid);
-            
+
             // Enviar UID a Kotlin
             AndroidNative.onLoginSuccess(user.uid);
             log.textContent = "📡 UID enviado a Kotlin";
@@ -1992,16 +2215,16 @@ window.probarPuenteKotlin = function() {
 window.forzarGuardarToken = function() {
     const log = document.getElementById('fcmDebugLog');
     const user = firebase.auth().currentUser;
-    
+
     if (!user) {
         log.textContent = "❌ Sin usuario";
         return;
     }
-    
+
     if (typeof AndroidNative !== 'undefined') {
         log.textContent = "🔄 Solicitando token...";
         AndroidNative.onLoginSuccess(user.uid);
-        
+
         // Esperar 3 segundos y verificar en DB
         setTimeout(() => {
             firebase.database().ref(`users/${user.uid}/fcmToken`).once('value')
@@ -2036,7 +2259,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <div id="modalCrearGrupo" class="modal-overlay" style="z-index: 30000; display: none;">
     <div class="modal-content" style="text-align: center;">
         <h3 style="color: #6366f1; margin-bottom: 15px;">➕ Crear Nuevo Grupo</h3>
-        
+
         <div style="text-align: left; margin-bottom: 10px;">
             <label style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Nombre del Grupo:</label>
             <input type="text" id="inputNombreGrupo" placeholder="Ej. Gamers VIP" maxlength="20" style="border: 2px solid #e2e8f0; margin-top: 5px;">
@@ -2059,7 +2282,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- MODAL DE LA SALA DE CHAT DEL GRUPO -->
 <div id="modalChatGrupo" class="modal-overlay" style="z-index: 29000; display: none;">
     <div class="modal-content" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; padding:0; display:flex; flex-direction:column; background:#e5e5f7;">
-        
+
         <!-- Cabecera del Grupo -->
         <div style="background:white; padding:15px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:12px; flex-shrink:0;">
             <button onclick="cerrarChatGrupo()" style="border:none; background:none; font-size:1.2rem; color:#334155; cursor:pointer;">⬅</button>
@@ -2132,28 +2355,28 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="font-size:3rem; animation:bounce 1s infinite;">🎁</div>
         <h3 style="color:#7c3aed; margin:10px 0;">Enviar Regalo</h3>
         <p id="labelDestinoRegalo" style="font-size:0.85rem; color:#64748b; margin-bottom:15px;">Para: ---</p>
-        
+
         <div style="background:#f5f3ff; border:1px dashed #a855f7; border-radius:12px; padding:15px; margin-bottom:15px;">
             <div style="font-size:0.75rem; color:#64748b; margin-bottom:8px;">Tu saldo disponible:</div>
             <div id="saldoRegaloDisplay" style="font-size:2rem; font-weight:800; color:#0070ba;">0.00 PTS</div>
         </div>
-        
+
         <!-- OPCIONES RÁPIDAS -->
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:15px;">
             <button onclick="seleccionarMontoRegalo(1)" class="btn-blue" style="background:#f5f3ff; color:#7c3aed; border:2px solid #a855f7; font-weight:800;">1 PTS</button>
             <button onclick="seleccionarMontoRegalo(5)" class="btn-blue" style="background:#f5f3ff; color:#7c3aed; border:2px solid #a855f7; font-weight:800;">5 PTS</button>
             <button onclick="seleccionarMontoRegalo(10)" class="btn-blue" style="background:#f5f3ff; color:#7c3aed; border:2px solid #a855f7; font-weight:800;">10 PTS</button>
         </div>
-        
+
         <input type="number" id="inputMontoRegalo" placeholder="O escribe cantidad..." 
                style="border:2px solid #a855f7; border-radius:12px; margin-bottom:15px;"
                oninput="actualizarBtnRegalo()">
-        
+
         <button id="btnConfirmarRegalo" onclick="confirmarRegaloPrivado()" 
                 class="btn-blue" style="background:linear-gradient(135deg,#a855f7,#8b5cf6); box-shadow:0 4px 15px rgba(168,85,247,0.4);">
             🎁 Enviar Regalo
         </button>
-        
+
         <button onclick="document.getElementById('modalRegaloPrivado').style.display='none'" 
                 style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">
             Cancelar
@@ -2177,20 +2400,20 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3 id="authTitle" style="margin-bottom: 22px; color: #e2e8f0; font-size:1.1rem; font-weight:700;">Crear Cuenta</h3>
             <input type="email" id="email" placeholder="tucorreo@gmail.com" style="text-align: left; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; margin-bottom: 12px; padding: 14px; border-radius: 14px;">
             <input type="password" id="pass" placeholder="Contraseña (6+ caracteres)" style="text-align: left; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; margin-bottom: 20px; padding: 14px; border-radius: 14px;">
-            
+
             <button id="btnAuth" onclick="manejarAuth()" class="btn-blue" style="background: linear-gradient(135deg, #6366f1, #4f46e5); margin-bottom: 15px; padding: 15px; border-radius: 14px; font-size:0.95rem; box-shadow: 0 6px 20px rgba(99,102,241,0.35);">REGISTRARME</button>
-            
+
             <p style="font-size: 0.75rem; color: #94a3b8;">
                 <span id="toggleText">¿Ya tienes cuenta?</span> 
                 <button onclick="toggleAuthMode()" style="background: none; border: none; color: #818cf8; font-weight: 700; cursor: pointer; text-decoration: underline;">Toca aquí</button>
             </p>
         </div>
-        
+
         <p style="margin-top: 20px; color: #475569; font-size: 0.65rem;">Al registrarte aceptas recibir notificaciones por correo.</p>
     </div>
 </div>
     <div id="loadingOverlay"><div class="spinner"></div><div style="margin-top:20px; font-weight:bold; color:#64748b;">Cargando...</div></div>
-    
+
 
 <header class="header-fixed">
         <div style="display:flex; align-items:center; gap:8px;">
@@ -2201,7 +2424,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <div style="display:flex; align-items:center; gap: 10px;">
-            
+
             <div id="barraMiAvatar" class="mini-avatar" style="background: #1e293b; background-size:cover; background-position:center; width:34px; height:34px; border-radius:50%; border:2px solid #3b82f6; flex-shrink:0; cursor:pointer;" onclick="goToScreen(4, true)"></div>
             <div id="btnNotis" class="noti-icon-box" onclick="abrirNotificaciones()" style="margin-right:0;">
                 <i class="fas fa-bell"></i>
@@ -2231,7 +2454,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="video-progress-text" id="videoProgressText">0s / 30s → +0.50 PTS</div>
     </div>
-    
+
 <!-- 🔔 MODAL DE NOTIFICACIONES -->
 <div id="modalNotificaciones" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999; align-items:center; justify-content:center;">
     <div class="modal-content" style="background:#fff; padding:0; border-radius:20px; width:92%; max-width:400px; color:#1e293b; margin:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); overflow:hidden;">
@@ -2247,7 +2470,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
         </div>
     </div>
-   
+
     <div id="modalRanking" class="modal-overlay" style="z-index: 25000;">
         <div class="modal-content" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border: 2px solid #fbbf24;">
             <div style="text-align: center; margin-bottom: 20px;">
@@ -2255,7 +2478,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h3 style="color: #fbbf24; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Salón de la Fama</h3>
                 <p style="font-size: 0.75rem; color: #94a3b8;">Los 4 mejores auditores</p>
             </div>
-            
+
             <div id="listaRanking" style="display: flex; flex-direction: column; gap: 10px;">
                 <div style="text-align:center; color:#94a3b8; padding: 20px;">
                     <i class="fas fa-spinner fa-spin"></i> Cargando podio...
@@ -2267,7 +2490,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 <div id="modalInvitar" class="modal-overlay" style="z-index: 26000;">
     <div class="modal-content" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #bae6fd;">
-        
+
         <div style="text-align: center; margin-bottom: 15px;">
             <div style="font-size: 3rem; margin-bottom: 5px; animation: bounce 2s infinite;">🚀</div>
             <h3 style="color: #0284c7; font-weight: 800; font-size: 1.3rem; margin: 0;">Centro de Invitación</h3>
@@ -2276,7 +2499,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="background: white; border: 2px dashed #0284c7; border-radius: 15px; padding: 15px; margin-bottom: 20px; position: relative;">
             <p style="font-size: 0.65rem; color: #94a3b8; margin-bottom: 5px; text-transform: uppercase; font-weight: bold;">Tu Clave Única:</p>
             <h2 id="displayInviteKey" style="font-size: 1.6rem; color: #334155; letter-spacing: 2px; margin: 0; font-weight: 900;">---</h2>
-            
+
             <button onclick="copiarClave()" style="margin-top: 10px; background: #0284c7; color: white; border: none; padding: 8px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; font-size: 0.8rem;">
                 <i class="fas fa-copy"></i> COPIAR
             </button>
@@ -2492,7 +2715,7 @@ Cerrar
             👾 <span id="gameSnakeWallet">0.00</span>
         </div>
     </div>
-    
+
     <button onclick="cerrarJuego()" class="btn-salir-game">✕ SALIR</button>
     <div class="game-score" id="gameInfoText">PUNTOS: 0</div>
     <canvas id="gameCanvas" width="300" height="300"></canvas>
@@ -2517,17 +2740,17 @@ Cerrar
 <div id="modalSoporte" class="modal-overlay">
     <div class="modal-content">
         <div style="font-size: 3rem; margin-bottom: 10px;">🎧</div>
-        
+
         <h3 style="margin-bottom: 10px; color: #334155;">Soporte Técnico</h3>
-        
+
         <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 25px; line-height: 1.5;">
             ¿Encontraste un error o tienes dudas con tu cuenta? Envíanos un correo directo.
         </p>
-        
+
         <button onclick="enviarCorreoSoporte()" class="btn-blue" style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);">
             📧 Redactar Correo
         </button>
-        
+
         <button onclick="document.getElementById('modalSoporte').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.85rem; margin-top:20px; cursor:pointer; text-decoration: underline;">
             Cerrar
         </button>
@@ -2552,7 +2775,7 @@ Cerrar
     </div>
 <div id="modalCompartir" class="modal-overlay" style="z-index: 31000;">
     <div class="modal-content" style="height: 70vh; display: flex; flex-direction: column; padding: 0; background: #f8fafc;">
-        
+
         <div style="padding: 15px; border-bottom: 1px solid #e2e8f0; background: white; border-radius: 20px 20px 0 0;">
             <h3 style="margin: 0; color: #334155; font-size: 1.1rem;">↪️ Compartir con...</h3>
         </div>
@@ -2630,7 +2853,7 @@ Cerrar
 
     <div id="modalChatPrivado" class="modal-overlay" style="z-index: 29000;">
     <div class="modal-content" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; padding:0; display:flex; flex-direction:column; background:#e5e5f7;">
-        
+
         <div style="background:white; padding:15px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
             <div style="display:flex; align-items:center; gap:10px;">
                 <button onclick="cerrarChatPrivado()" style="border:none; background:none; font-size:1.2rem; color:#334155;">⬅</button>
@@ -2665,7 +2888,7 @@ Cerrar
 
 <!-- INPUT ENVIAR MENSAJE -->
 <div style="background:white; padding:10px; border-top:1px solid #e2e8f0; display:flex; gap:8px; align-items:center; flex-shrink:0;">
-    
+
     <!-- BOTÓN REGALO -->
     <button onclick="abrirRegaloPrivado()" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#a855f7,#8b5cf6); border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(168,85,247,0.4); flex-shrink:0;">
         🎁
@@ -2675,9 +2898,9 @@ Cerrar
     <button onclick="abrirModalFotoPrivada()" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#10b981,#059669); border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 8px rgba(15,183,127,0.4); flex-shrink:0;">
         📷
     </button>
-    
+
 <input type="text" id="inputPrivMsg" placeholder="Mensaje privado..." style="flex:1; background:#f0f2f5; border:none; padding:8px 14px; border-radius:10px; outline:none; font-size:0.5rem;">
-    
+
     <button onclick="enviarMensajePrivado()" class="btn-blue" style="width:45px; height:45px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">
         ➤
     </button>
@@ -2689,7 +2912,7 @@ Cerrar
 <div id="modalSubirPortada" class="modal-overlay" style="z-index:1000000; display:none; background: rgba(0,0,0,0.95);">
     <div class="modal-content" style="max-width:350px; text-align:center; background:#121212; color:white; border:1px solid #1DB954; border-radius:24px; padding:25px;">
         <h3 style="margin-bottom:15px; color:#1DB954;">🎨 Personaliza tu Post</h3>
-        
+
         <div style="width:100%; height:160px; background:#181818; border:2px dashed #333; border-radius:15px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; margin-bottom:15px;">
             <img id="imgPreviewPortada" style="width:100%; height:100%; object-fit:cover; display:none; position:absolute; z-index:5;">
             <div id="placeholderText" style="color:#1DB954; font-weight:bold;">🖼️ Tap para elegir foto</div>
@@ -2714,7 +2937,7 @@ Cerrar
         <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
             Gana <b style="color:#10b981;">+0.10 PTS</b> al instante.
         </p>
-        
+
         <div style="background:#f0fdf4; border:2px dashed #10b981; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
             <img id="imgPreview" style="width:100%; height:100%; object-fit:contain; display:none;">
             <div id="placeholderUpload" style="text-align:center; color:#10b981;">
@@ -2728,7 +2951,7 @@ Cerrar
         <div style="font-size:0.65rem; color:#ef4444; margin-bottom:15px; background: #fef2f2; padding: 8px; border-radius: 8px;">
             ⚠️ Prohibido contenido +18 o violento. Serás baneado.
         </div>
-        
+
         <button id="btnPublicarFoto" class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" disabled onclick="subirFotoReal()">
             💰 Publicar y Ganar
         </button>
@@ -2743,7 +2966,7 @@ Cerrar
         <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
             Solo <b style="color:#10b981;">tu y la otra persona</b> podrán ver esta foto.
         </p>
-        
+
         <div style="background:#f0fdf4; border:2px dashed #10b981; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
             <img id="imgPreviewPrivada" style="width:100%; height:100%; object-fit:contain; display:none;">
             <div id="placeholderUploadPrivada" style="text-align:center; color:#10b981;">
@@ -2757,7 +2980,7 @@ Cerrar
         <div style="font-size:0.65rem; color:#ef4444; margin-bottom:15px; background: #fef2f2; padding: 8px; border-radius: 8px;">
             ⚠️ Prohibido contenido +18 o violento. Serás baneado.
         </div>
-        
+
         <button id="btnEnviarFotoPrivada" class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" disabled onclick="enviarFotoPrivada()">
             📷 Enviar Foto
         </button>
@@ -2771,7 +2994,7 @@ Cerrar
         <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
             Todos los miembros del grupo verán esta foto.
         </p>
-        
+
         <div style="background:#f0fdf4; border:2px dashed #10b981; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
             <img id="imgPreviewGrupo" style="width:100%; height:100%; object-fit:contain; display:none;">
             <div id="placeholderUploadGrupo" style="text-align:center; color:#10b981;">
@@ -2785,7 +3008,7 @@ Cerrar
         <div style="font-size:0.65rem; color:#ef4444; margin-bottom:15px; background: #fef2f2; padding: 8px; border-radius: 8px;">
             ⚠️ Prohibido contenido +18 o violento. Serás baneado.
         </div>
-        
+
         <button id="btnEnviarFotoGrupo" class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" disabled onclick="enviarFotoGrupo()">
             📷 Enviar Foto al Grupo
         </button>
@@ -2794,7 +3017,7 @@ Cerrar
 </div>
 <div id="modalFotoDetalle" class="modal-overlay" style="z-index:29000; background:black; align-items:center; justify-content:center; display:none;">
   <div id="galeriaContainer" style="width:100%; height:100%; position:relative; overflow:hidden;">
-    
+
     <!-- BOTÓN CERRAR -->
     <div style="position:absolute; top:15px; left:15px; z-index:20;">
       <button onclick="cerrarFotoDetalle()" style="background:rgba(0,0,0,0.5); color:white; border:none; width:40px; height:40px; border-radius:50%; font-size:1.5rem; display:flex; align-items:center; justify-content:center; cursor:pointer;">
@@ -2822,11 +3045,6 @@ Cerrar
 
     <!-- BARRA INFERIOR -->
     <div style="position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.9); padding:15px 20px; display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid rgba(255,255,255,0.1);">
-      
-      <div class="action-icon" id="btnLikeFoto" style="flex-direction:row; gap:8px;">
-        <i class="far fa-heart" style="font-size:1.8rem;"></i>
-        <span style="font-size:1.2rem;">0</span>
-      </div>
 
       <div class="action-icon" id="btnShareFoto" style="cursor:pointer; display:flex; flex-direction:column; align-items:center;">
         <i class="fas fa-share" style="font-size:1.5rem; color:white;"></i>
@@ -2906,7 +3124,7 @@ Cerrar
                 <p style="font-size: 0.9rem; color:#64748b; margin-bottom: 20px;">
                     Esta foto se eliminará permanentemente para todos.
                 </p>
-                
+
                 <div style="display: flex; gap: 10px;">
                     <button onclick="document.getElementById('modalConfirmDelete').style.display='none'" class="btn-blue" style="background: #e2e8f0; color: #475569; flex: 1;">
                         Cancelar
@@ -2951,7 +3169,7 @@ Cerrar
                 <!-- Círculos decorativos -->
                 <div style="position:absolute; top:-20px; right:-20px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.08);"></div>
                 <div style="position:absolute; bottom:-30px; left:-10px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.05);"></div>
-                
+
                 <div style="position:relative; z-index:2;">
                     <div style="font-size:0.7rem; color:rgba(255,255,255,0.7); font-weight:600; letter-spacing:2px; text-transform:uppercase;">Saldo Disponible</div>
                     <div style="font-size: 3rem; font-weight: 900; color: white; line-height:1.1; margin: 5px 0;">
@@ -3086,31 +3304,31 @@ style="background:#1e293b; border:2px solid #334155; border-radius:15px; color:w
 
     <div id="modalMision" class="modal-overlay">
         <div class="modal-content">
-            
+
             <div id="step1Mision">
                 <h3>🎵 Elige el Vibe</h3>
                 <p style="font-size:0.8rem; color:#64748b; margin-bottom:15px;">Antes de escribir, ponle música a tu momento.</p>
-                
+
                 <div id="btnMusicTrigger" class="music-trigger" onclick="abrirSelectorMusica()">
                     <span id="musicDisplayLabel">🔍 Toca para buscar canción...</span><span>ᐳ</span>
                 </div>
-                
+
                 <button id="btnMisionNext" onclick="goToStep2()" class="btn-blue" style="margin-top:15px; opacity: 0.5;">Continuar ➡</button>
             </div>
 
             <div id="step2Mision" style="display:none; animation: slideIn 0.3s;">
                 <h3>✍️ Tu Mensaje</h3>
-                
+
                 <div style="background:#f0f9ff; padding:10px; border-radius:12px; margin-bottom:15px; border:1px solid #bae6fd; display:flex; align-items:center; justify-content:space-between;">
                     <button id="btnAudioControl" onclick="toggleAudio()" class="btn-blue" style="width: 50px; height: 50px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: #0070ba; box-shadow: 0 4px 10px rgba(0,112,186,0.3);">
                         <i id="audioIcon" class="fas fa-play" style="margin-left: 4px;"></i>
                     </button>
-                    
+
                     <div style="flex:1; margin-left:15px; overflow:hidden;">
                         <div style="font-size:0.7rem; color:#64748b;">Canción seleccionada:</div>
                         <div id="songNamePreview" style="font-weight:bold; color:#0070ba; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">---</div>
                     </div>
-                    
+
                     <div id="invisiblePlayer" style="position:absolute; top:-9999px; left:-9999px;"></div>
                 </div>
 
@@ -3119,7 +3337,7 @@ style="display:none;">
 </textarea>
                 <div style="display:flex; gap:10px;">
                     <button onclick="backToStep1()" class="btn-blue" style="background:#cbd5e1; color:#475569; flex:1;">⬅ cambiar
-                    
+
                     </button>
                     <button id="btnEnviarMision" class="btn-blue" style="flex:2;">🚀 Publicar (+0.50)</button>
                 </div>
@@ -3135,7 +3353,7 @@ style="display:none;">
             <div style="font-size: 4rem; animation: pulse 1s infinite;">💔</div>
             <h3 style="color:#b91c1c; margin-top:10px;">¡Oh no!</h3>
             <p style="color:#64748b; margin-bottom:20px;">Te quedaste sin vidas.</p>
-            
+
             <div style="background:#fef2f2; padding:15px; border-radius:12px; border:1px dashed #ef4444; margin-bottom:15px;">
                 <p style="font-size:0.9rem;">Necesitas corazones para aprender.</p>
             </div>
@@ -3173,7 +3391,7 @@ style="display:none;">
             <button onclick="recargarVidasConAnuncio()" class="btn-blue" style="background: #ef4444; box-shadow: 0 4px 0 #b91c1c;">
                 📺 Recuperar Vidas (Ver Video)
             </button>
-            
+
             <button onclick="document.getElementById('modalNoVidas').style.display='none'" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">Cerrar</button>
         </div>
     </div>
@@ -3406,7 +3624,7 @@ style="display:none;">
     <div id="modalTareas" class="modal-overlay" style="z-index: 20500;">
     <div class="modal-content" style="text-align:left;">
         <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: #334155; text-align:center;">🎯 Progreso Diario</h3>
-        
+
         <div id="taskRuleta" class="task-row" onclick="irMision('ruleta')">
             <div class="task-icon">🎰</div>
             <div class="task-info">
@@ -3546,49 +3764,99 @@ style="display:none;">
         </div>
    </div>
 <div class="app-wrapper" id="appWrapper" style="transform: translateX(-200vw);">
-    
+
 <!-- PANTALLA 0: MISIONES -->
 <div class="screen mision-screen-dark">
-    <div style="height: 30px;"></div>
-    <div style="padding: 7px;">
-        <h2 style="color:#334155; margin-top: 0;">🎯 Misiones</h2>
-        <p style="color:#64748b; font-size:0.85rem;">
-            Completa tareas y gana puntos
-        </p>
+    <div style="height: 70px;"></div>
 
-        <!-- BARRA DE ICONOS MISIONES -->
-        <div style="display: flex; gap: 8px; margin: 15px 0; padding: 10px; background: #f8fafc; border-radius: 12px; overflow-x: auto; scrollbar-width: none;">
-            <button onclick="abrirRetiro()" style="min-width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; color: white; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(99, 102, 241, 0.3);">
-                <span style="font-size: 1.4rem;">💰</span>
-                <span style="font-size: 0.55rem; font-weight: 700;">Saldo</span>
-            </button>
-            <button onclick="abrirJuego()" style="min-width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);">
-                <span style="font-size: 1.4rem;">🎮</span>
-                <span style="font-size: 0.55rem; font-weight: 700;">Juegos</span>
-            </button>
-            <button onclick="abrirListaChats()" style="min-width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; color: white; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(59, 130, 246, 0.3);">
-                <span style="font-size: 1.4rem;">💬</span>
-                <span style="font-size: 0.55rem; font-weight: 700;">Chats</span>
-            </button>
-            <button onclick="abrirBusquedaUsuarios()" style="min-width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; color: white; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(245, 158, 11, 0.3);">
-                <span style="font-size: 1.4rem;">🔍</span>
-                <span style="font-size: 0.55rem; font-weight: 700;">Buscar</span>
-            </button>
-            <button onclick="compartirApp()" style="min-width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #ec4899, #db2777); border: none; color: white; font-size: 1.3rem; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 10px rgba(236, 72, 153, 0.3);">
-                <span style="font-size: 1.4rem;">📤</span>
-                <span style="font-size: 0.55rem; font-weight: 700;">Compartir</span>
+    <!-- BANNER HEADER -->
+    <div class="mision-header-banner">
+        <div style="display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1;">
+            <div>
+                <div style="font-size:0.75rem; color:rgba(255,255,255,0.7); font-weight:600; letter-spacing:0.5px; text-transform:uppercase;">Centro de</div>
+                <div style="font-size:1.6rem; font-weight:900; color:white; line-height:1.1;">Misiones 🎯</div>
+            </div>
+            <button onclick="document.getElementById('modalRanking').style.display='flex'; cargarRanking();"
+                style="background:rgba(255,255,255,0.2); border:none; color:white; padding:10px 16px; border-radius:50px; font-size:0.8rem; font-weight:700; cursor:pointer; backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.3);">
+                🏆 Fama
             </button>
         </div>
-<button onclick="document.getElementById('modalRanking').style.display='flex'; cargarRanking();"
-    style="width: 100%; padding: 14px; border: none; border-radius: 16px; 
-           background: linear-gradient(135deg, #f59e0b, #d97706); 
-           color: white; font-weight: 800; font-size: 0.95rem; 
-           cursor: pointer; margin-bottom: 10px;
-           box-shadow: 0 4px 12px rgba(245,158,11,0.3);">
-    🏆 Salón de la Fama
-</button>
-        <!-- El JS llenará este contenedor -->
-        <div id="listaMisiones" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;"></div>
+        <div style="position:relative; z-index:1; margin-top:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size:0.78rem; color:rgba(255,255,255,0.8); font-weight:600;">Progreso diario</span>
+                <span id="misionProgText" style="font-size:0.78rem; color:rgba(255,255,255,0.9); font-weight:800;">0 / 10</span>
+            </div>
+            <div class="mision-progress-wrap">
+                <div id="misionProgBar" class="mision-progress-bar" style="width:0%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS CARD FLOTANTE -->
+    <div class="mision-stats-card">
+        <div class="mision-stat-item">
+            <div id="statCompletadas" class="mision-stat-val">0</div>
+            <div class="mision-stat-lbl">✅ Hechas</div>
+        </div>
+        <div class="mision-stat-item">
+            <div id="statRestantes" class="mision-stat-val">10</div>
+            <div class="mision-stat-lbl">⏳ Restan</div>
+        </div>
+        <div class="mision-stat-item">
+            <div id="statPtsHoy" class="mision-stat-val">0</div>
+            <div class="mision-stat-lbl">⭐ Pts hoy</div>
+        </div>
+    </div>
+
+    <!-- ACCESOS RÁPIDOS -->
+    <div style="padding: 0 16px 12px; display:flex; gap:8px; overflow-x:auto; scrollbar-width:none;">
+        <button onclick="abrirRetiro()" style="min-width:62px; height:62px; border-radius:16px; background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(99,102,241,0.3); flex-shrink:0;">
+            <span style="font-size:1.5rem;">💰</span>
+            <span style="font-size:0.55rem; font-weight:700; margin-top:2px;">Saldo</span>
+        </button>
+        <button onclick="abrirJuego()" style="min-width:62px; height:62px; border-radius:16px; background:linear-gradient(135deg,#10b981,#059669); border:none; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(16,185,129,0.3); flex-shrink:0;">
+            <span style="font-size:1.5rem;">🎮</span>
+            <span style="font-size:0.55rem; font-weight:700; margin-top:2px;">Juegos</span>
+        </button>
+        <button onclick="abrirListaChats()" style="min-width:62px; height:62px; border-radius:16px; background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3); flex-shrink:0;">
+            <span style="font-size:1.5rem;">💬</span>
+            <span style="font-size:0.55rem; font-weight:700; margin-top:2px;">Chats</span>
+        </button>
+        <button onclick="abrirBusquedaUsuarios()" style="min-width:62px; height:62px; border-radius:16px; background:linear-gradient(135deg,#f59e0b,#d97706); border:none; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(245,158,11,0.3); flex-shrink:0;">
+            <span style="font-size:1.5rem;">🔍</span>
+            <span style="font-size:0.55rem; font-weight:700; margin-top:2px;">Buscar</span>
+        </button>
+        <button onclick="compartirApp()" style="min-width:62px; height:62px; border-radius:16px; background:linear-gradient(135deg,#ec4899,#db2777); border:none; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(236,72,153,0.3); flex-shrink:0;">
+            <span style="font-size:1.5rem;">📤</span>
+            <span style="font-size:0.55rem; font-weight:700; margin-top:2px;">Compartir</span>
+        </button>
+    </div>
+
+    <!-- SECCIÓN TÍTULO LISTA -->
+    <div style="padding: 0 16px 10px; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:0.85rem; font-weight:800; color:#334155;">Tareas de hoy</span>
+        <span style="font-size:0.75rem; color:#94a3b8; font-weight:600;">Reseteo en 24h</span>
+    </div>
+
+    <!-- El JS llenará este contenedor -->
+    <div id="listaMisiones" style="padding: 0 16px;"></div>
+</div>
+
+<!-- OVERLAY INACTIVIDAD 12H -->
+<div id="overlayInactividad" style="display:none; position:fixed; inset:0; z-index:99000; background:rgba(15,23,42,0.88); backdrop-filter:blur(14px); align-items:center; justify-content:center; flex-direction:column; padding:30px; text-align:center;">
+    <div class="overlay-inac-box">
+        <span class="overlay-inac-emoji">✈️</span>
+        <div class="overlay-inac-title">¡Tu recompensa te está esperando!</div>
+        <div class="overlay-inac-sub">
+            Han pasado más de 12 horas desde tu última misión.<br><br>
+            Mira <strong style="color:#f97316;">3 anuncios y al tercero ganas tu recompensa</strong> 🎁 — luego tú decides si sigues viendo los otros 2 para acumular más.
+        </div>
+        <button class="overlay-inac-btn" onclick="cerrarOverlayInactividad(); goToScreen(0); setTimeout(() => ejecutarMision('m9'), 400);">
+            🎁 Ir a Recompensas
+        </button>
+        <button onclick="cerrarOverlayInactividad()" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:14px; cursor:pointer; display:block; width:100%;">
+            Recordármelo más tarde
+        </button>
     </div>
 </div>
 
@@ -3640,7 +3908,7 @@ style="display:none;">
 </div>
 <!-- PANTALLA 3: MENSAJES -->
 <div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #f8fafc; padding-bottom: 65px;">
-    
+
     <div id="areaSuperiorMensajes" style="flex-shrink: 0;">
         <!-- Título y Campana -->
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 20px 5px; background: white;">
@@ -3653,7 +3921,7 @@ style="display:none;">
 <!-- 1. LISTA HORIZONTAL (Espacio real para las nubes) -->
 <div class="stories-container" style="background: white; border-bottom: 1px solid #e2e8f0; padding: 10px 0; flex-shrink: 0; overflow: visible !important;">
     <div class="stories-title" style="padding: 5px 15px 0; color: #64748b; font-size: 0.75rem; font-weight: bold;">Conectados reciente</div>
-    
+
     <!-- 🔥 AJUSTE VITAL: padding-top: 50px -->
     <div id="listaUsuariosHorizontal" 
          style="display:flex; gap:18px; padding: 50px 15px 15px; overflow-x:auto; overflow-y:visible !important; scrollbar-width:none; align-items: flex-start; position: relative;">
@@ -3670,11 +3938,11 @@ style="display:none;">
 
     <!-- 3. CONTENEDOR GLOBAL -->
     <div id="chatListContainer" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-        
+
         <div id="chatList" class="chat-messages-area" style="flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 10px;">
              <div style="text-align:center; padding:20px; color:#94a3b8;">Cargando chat...</div>
         </div>
-        
+
         <!-- Menciones y Respuestas -->
         <div id="mentionList" style="display: none; position: fixed; bottom: 130px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 300px; background: #1e293b; border-radius: 12px; z-index: 25000; border: 2px solid #fbbf24;"></div>
         <div id="replyBar" class="reply-bar" style="display: none;">
@@ -3703,7 +3971,7 @@ style="display:none;">
 </div>
     <!-- 4. CONTENEDOR GRUPOS -->
     <div id="gruposListContainer" style="flex: 1; overflow-y: auto; padding: 15px; display: none; background: #f8fafc;">
-        
+
         <button onclick="crearNuevoGrupo()" style="width: 100%; padding: 15px; border-radius: 16px; border: 2px dashed #6366f1; background: #eef2ff; color: #6366f1; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; cursor: pointer;">
             ➕ Crear Nuevo Grupo
         </button>
@@ -3712,83 +3980,129 @@ style="display:none;">
 </div>
 
 
-   <div class="screen">
-    <div style="height: 60px;"></div>
-    
-   <div class="profile-header">
-    <div style="position: relative; width: 100px; height: 100px; margin: 0 auto 15px;">
-        <div class="profile-avatar-large" id="avatarPerfilGrande" style="width: 100%; height: 100%; background-image: url(''); background-size: cover; background-position: center; border: 4px solid #0070ba; box-shadow: 0 4px 20px rgba(0, 112, 186, 0.2); border-radius: 50%;"></div>
-        
-        <div onclick="document.getElementById('inputAvatarPerfil').click()" style="position: absolute; bottom: 0; right: 0; background: #0070ba; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
-            <i class="fas fa-camera" style="font-size: 0.8rem;"></i>
+   <div class="screen" style="background:#f1f5f9;">
+    <div style="height: 70px;"></div>
+
+    <div class="profile-header">
+        <!-- COVER BANNER -->
+        <div class="profile-cover-banner">
+            <div class="profile-avatar-wrap">
+                <div class="profile-avatar-large" id="avatarPerfilGrande"></div>
+                <div onclick="document.getElementById('inputAvatarPerfil').click()" style="position:absolute; bottom:2px; right:2px; background:#6366f1; color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid white; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+                    <i class="fas fa-camera" style="font-size:0.65rem;"></i>
+                </div>
+            </div>
+        </div>
+
+        <input type="file" id="inputAvatarPerfil" accept="image/*" style="display:none;" onchange="subirMiFotoPerfil(this)">
+        <div id="myKeyDisplay" style="display:none;">---</div>
+
+        <!-- INFO -->
+        <div style="margin-top: 52px; padding: 0 20px 16px; text-align:center;">
+            <h2 id="profKey" style="color:#0f172a; font-size:1.3rem; font-weight:900; margin:0 0 4px;">Cargando...</h2>
+            <div id="profRank" style="display:inline-block; background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; font-size:0.65rem; font-weight:800; padding:4px 14px; border-radius:50px; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px;">MIEMBRO OFICIAL</div>
+            <p id="profEmail" style="font-size:0.75rem; color:#94a3b8; margin:0;">---</p>
+            <p id="profEmailFull" style="display:none;"></p>
+            <p style="font-size:0.65rem; color:#cbd5e1; margin:4px 0 0;">🔒 Solo tú ves este correo</p>
         </div>
     </div>
 
-    <input type="file" id="inputAvatarPerfil" accept="image/*" style="display: none;" onchange="subirMiFotoPerfil(this)">
-
-    <h2 id="profKey" style="color:#1e293b; letter-spacing: 1px; margin-bottom: 5px; font-weight: 800;">Cargando...</h2>
-    
-    <!-- APODO EDITABLE -->
-    <div style="margin: 10px 0;">
-        <span style="font-size: 0.7rem; color: #64748b;">Apodo:</span>
-        <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">
-            <input type="text" id="inputApodo" placeholder="Sin apodo" style="width: auto; padding: 5px 10px; font-size: 0.85rem; text-align: center; border: 1px dashed #cbd5e1; border-radius: 8px; background: transparent;" maxlength="15">
-            <button onclick="guardarApodo()" style="background: #10b981; color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer;">✓</button>
+    <!-- STATS ROW -->
+    <div class="profile-stats-row">
+        <div class="profile-stat">
+            <div class="profile-stat-val" id="profStatPts">—</div>
+            <div class="profile-stat-lbl">⭐ Puntos</div>
         </div>
-        <span style="font-size: 0.65rem; color: #94a3b8;">Máx. 15 caracteres</span>
+        <div class="profile-stat">
+            <div class="profile-stat-val" id="profStatRefs">—</div>
+            <div class="profile-stat-lbl">👥 Referidos</div>
+        </div>
+        <div class="profile-stat">
+            <div class="profile-stat-val" id="profStatMisiones">—</div>
+            <div class="profile-stat-lbl">🎯 Misiones</div>
+        </div>
     </div>
-    
-    <!-- FACEBOOK LINK -->
-    <div style="margin: 10px 0;">
-        <span style="font-size: 0.7rem; color: #64748b;">Facebook:</span>
-        <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">
-            <input type="url" id="inputFacebook" placeholder="https://facebook.com/tu.perfil" style="width: auto; padding: 5px 10px; font-size: 0.85rem; text-align: center; border: 1px dashed #1877f2; border-radius: 8px; background: transparent;" maxlength="150">
-            <button onclick="guardarFacebook()" style="background: #1877f2; color: white; border: none; padding: 5px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer;">✓</button>
+
+    <!-- APODO -->
+    <div class="profile-field-card">
+        <div class="profile-field-label">✏️ Apodo</div>
+        <div class="profile-field-row">
+            <input type="text" id="inputApodo" class="profile-field-input" placeholder="Sin apodo" maxlength="15">
+            <button onclick="guardarApodo()" class="profile-save-btn">Guardar</button>
         </div>
-        <span style="font-size: 0.65rem; color: #94a3b8;">Público · Los demás verán un anuncio antes de abrirlo</span>
+        <div style="font-size:0.65rem; color:#cbd5e1; margin-top:6px;">Máx. 15 caracteres · visible para todos</div>
     </div>
-    
-    <p id="profRank" style="font-size:0.75rem; font-weight:600; color:#64748b;">MIEMBRO OFICIAL</p>
-    <div id="myKeyDisplay" style="display:none;">---</div>
-<p id="profEmail" style="font-size:0.78rem; color:#64748b; margin-top:6px;">
-    Correo: ---
-</p>
 
-    <p style="font-size:0.7rem; color:#94a3b8;">
-        🔒 Solo tú puedes ver este correo. No es visible para otros usuarios.
-    </p>
-    <p id="profEmailFull" style="font-size:0.78rem; color:#64748b; margin-top:6px; word-break:break-all;">
-        
-    </p>
-</div>
-
-<div class="menu-card-btn" onclick="abrirModalInvitar()">
-    <i class="fas fa-key menu-icon ic-yellow"></i>
-    <span style="font-weight:700; color:#475569; font-size:0.9rem;">Invitar</span>
-</div>
-        <div class="menu-card-btn" onclick="verReferidos()"><i class="fas fa-users menu-icon ic-green"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Referidos</span></div>
-<div class="menu-card-btn" onclick="abrirHistorial()">
-    <i class="fas fa-list-ul menu-icon ic-blue"></i>
-    <span style="font-weight:700; color:#475569; font-size:0.9rem;">Historial</span>
-</div>
-       <div class="menu-card-btn" onclick="abrirModalTareas()">
-    <i class="fas fa-gamepad menu-icon ic-red"></i>
-    <span style="font-weight:700; color:#475569; font-size:0.9rem;">Misiones</span>
-</div>
-        <div class="menu-card-btn" onclick="abrirSoporte()"><i class="fas fa-headset menu-icon ic-purple"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Soporte</span></div>
-        <div class="menu-card-btn" onclick="abrirAjustes()"><i class="fas fa-cog menu-icon ic-gray"></i><span style="font-weight:700; color:#475569; font-size:0.9rem;">Ajustes</span></div>
-        <div id="btnAdminCorreos" class="menu-card-btn" onclick="iniciarEnvioMasivo()" style="display: none; border: 2px dashed #ef4444; background: #fef2f2; margin-top: 20px;">
-            <i class="fas fa-bullhorn menu-icon" style="color: #ef4444;"></i>
-            <span style="font-weight:800; color:#ef4444; font-size:0.9rem;">Admin: Avisos Masivos</span>
+    <!-- FACEBOOK -->
+    <div class="profile-field-card">
+        <div class="profile-field-label" style="color:#1877f2;">
+            <i class="fab fa-facebook" style="margin-right:5px;"></i>Facebook
         </div>
-        <div id="btnAdminRetiros" class="menu-card-btn" onclick="abrirAdminRetiros()" style="display: none; border: 2px dashed #0070ba; background: #f0f9ff;">
-            <i class="fas fa-money-bill-wave menu-icon" style="color: #0070ba;"></i>
-            <span style="font-weight:800; color:#0070ba; font-size:0.9rem;">Admin: Pagar Retiros</span>
+        <div class="profile-field-row">
+            <input type="url" id="inputFacebook" class="profile-field-input" placeholder="https://facebook.com/tu.perfil" maxlength="150" style="border-color:#dbeafe;">
+            <button onclick="guardarFacebook()" class="profile-save-btn" style="background:linear-gradient(135deg,#1877f2,#0d5bbf); box-shadow:0 3px 10px rgba(24,119,242,0.3);">Guardar</button>
         </div>
-
+        <div style="font-size:0.65rem; color:#cbd5e1; margin-top:6px;">Los demás verán un anuncio antes de abrirlo</div>
     </div>
-    <div style="height: 30px;"></div>
-</div> </div>
+
+    <!-- MENÚ -->
+    <div style="margin:0 16px 6px; font-size:0.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">Mi cuenta</div>
+    <div class="profile-menu-group">
+        <div class="menu-card-btn" onclick="abrirModalInvitar()">
+            <i class="fas fa-key menu-icon" style="color:#f59e0b;"></i>
+            <span style="font-weight:700; color:#334155; font-size:0.9rem;">Invitar amigos</span>
+        </div>
+        <div class="menu-card-btn" onclick="verReferidos()">
+            <i class="fas fa-users menu-icon" style="color:#10b981;"></i>
+            <span style="font-weight:700; color:#334155; font-size:0.9rem;">Mis referidos</span>
+        </div>
+        <div class="menu-card-btn" onclick="abrirHistorial()">
+            <i class="fas fa-list-ul menu-icon" style="color:#3b82f6;"></i>
+            <span style="font-weight:700; color:#334155; font-size:0.9rem;">Historial de puntos</span>
+        </div>
+        <div class="menu-card-btn" onclick="abrirModalTareas()">
+            <i class="fas fa-gamepad menu-icon" style="color:#ef4444;"></i>
+            <span style="font-weight:700; color:#334155; font-size:0.9rem;">Progreso de misiones</span>
+        </div>
+        <div class="menu-card-btn" onclick="abrirSoporte()">
+            <i class="fas fa-headset menu-icon" style="color:#8b5cf6;"></i>
+            <span style="font-weight:700; color:#334155; font-size:0.9rem;">Soporte</span>
+        </div>
+        <div class="menu-card-btn" onclick="abrirAjustes()">
+            <i class="fas fa-cog menu-icon" style="color:#64748b;"></i>
+            <span style="font-weight:700; color:#334155; font-size:0.9rem;">Ajustes</span>
+        </div>
+    </div>
+
+    <!-- ADMIN (ocultos por defecto) -->
+    <div id="btnAdminCorreos" class="menu-card-btn" onclick="iniciarEnvioMasivo()" style="display:none; margin:0 16px 8px; border-radius:14px; border:2px dashed #ef4444; background:#fef2f2;">
+        <i class="fas fa-bullhorn menu-icon" style="color:#ef4444;"></i>
+        <span style="font-weight:800; color:#ef4444; font-size:0.9rem;">Admin: Avisos Masivos</span>
+    </div>
+    <div id="btnAdminRetiros" class="menu-card-btn" onclick="abrirAdminRetiros()" style="display:none; margin:0 16px 8px; border-radius:14px; border:2px dashed #0070ba; background:#f0f9ff;">
+        <i class="fas fa-money-bill-wave menu-icon" style="color:#0070ba;"></i>
+        <span style="font-weight:800; color:#0070ba; font-size:0.9rem;">Admin: Pagar Retiros</span>
+    </div>
+
+    <div style="height: 40px;"></div>
+</div>
+
+<!-- CONTADOR PROGRESO M9 -->
+<div id="m9CounterCard">
+    <div style="font-size:0.7rem; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">🎁 Recompensas · Progreso</div>
+    <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:12px;">
+        <div class="m9-step" id="m9s1">1</div>
+        <div style="width:24px; height:2px; background:#e2e8f0; border-radius:2px;"></div>
+        <div class="m9-step" id="m9s2">2</div>
+        <div style="width:24px; height:2px; background:#e2e8f0; border-radius:2px;"></div>
+        <div class="m9-step" id="m9s3">3🎁</div>
+    </div>
+    <div id="m9CounterMsg" style="font-size:0.85rem; font-weight:700; color:#334155; margin-bottom:14px;">Ve el 1er anuncio para empezar</div>
+    <button id="m9NextBtn" onclick="ejecutarMision('m9')" style="width:100%; padding:13px; background:linear-gradient(135deg,#f97316,#ef4444); border:none; border-radius:14px; color:white; font-size:0.9rem; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(249,115,22,0.35);">
+        ▶ Ver anuncio
+    </button>
+    <button onclick="document.getElementById('m9CounterCard').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.75rem; margin-top:10px; cursor:pointer; width:100%;">Cerrar</button>
+</div>
 
 <div id="modalAdminRetiros" class="modal-overlay" style="z-index: 35000;">
     <div class="modal-content" style="width: 92%; max-width: 360px; max-height: 60vh; display: flex; flex-direction: column; padding: 12px;">
@@ -3803,9 +4117,9 @@ style="display:none;">
 </div>
 <div id="modalPaypal" class="modal-overlay" style="z-index:30000; display:none;">
   <div class="modal-content" style="text-align:center;">
-    
+
     <h3 style="margin-bottom:10px;">💰 ¡Empieza a ganar dinero real!</h3>
-    
+
     <p style="font-size:0.9rem; color:#334155;">
       Ya estás acumulando ganancias viendo videos 📺💸  
       Agrega tu PayPal para retirar tu dinero cuando quieras.
@@ -3856,7 +4170,7 @@ style="display:none;">
         </div>
         <button id="btnSpin" onclick="triggerSpin()" class="btn-blue" style="background:#f59e0b; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); margin-top:15px;">🎰 Girar Ruleta</button>
         <p id="spinInfo" style="font-size:0.7rem; margin-top:10px; color:#64748b;"></p>
-        
+
         <div style="margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
              <button id="btnVerAnuncio" style="width:100%; border:none; background:#f0f9ff; padding:10px; border-radius:10px; font-weight:800; color:#0070ba; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
                 📺 Ver Video (+0.25 & Giro)
@@ -3877,24 +4191,24 @@ Cerrar
 </div>
 <div id="modalHistorial" class="modal-overlay" style="z-index: 26000;">
     <div class="modal-content" style="background: #f8fafc; padding: 0; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh;">
-        
+
         <div style="background: white; padding: 15px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
             <h3 style="margin: 0; color: #1e293b; font-size: 1.1rem;">📊 Mi Trayectoria</h3>
             <button onclick="window.cerrarHistorial()" style="border: none; background: none; font-size: 1.2rem; color: #64748b;">✕</button>
         </div>
 
         <div style="padding: 20px; overflow-y: auto; flex: 1;">
-            
+
             <div style="background: linear-gradient(135deg, #4f46e5, #4338ca); border-radius: 15px; padding: 20px; color: white; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3); text-align: left;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <div style="font-weight: 700; font-size: 0.9rem;">💎 NIVEL DE LEALTAD</div>
                     <div id="historialLoyaltyPercent" style="font-weight: 800; font-size: 1.2rem; background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 10px;">0%</div>
                 </div>
-                
+
                 <div style="background: rgba(0,0,0,0.3); height: 12px; border-radius: 10px; overflow: hidden; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1);">
                     <div id="historialLoyaltyBar" style="width: 0%; height: 100%; background: #22d3ee; box-shadow: 0 0 10px #22d3ee; transition: width 1s ease;"></div>
                 </div>
-                
+
                 <p style="font-size: 0.7rem; opacity: 0.9; line-height: 1.4; margin: 0;">
                     Completa 5 misiones diarias para subir <b>1%</b>. ¡Llega al 100% para ser VIP!
                 </p>
@@ -3911,7 +4225,7 @@ Cerrar
 </div>
 <div id="modalPostOptions" class="modal-overlay" style="z-index:34000; align-items:flex-end;">
     <div class="modal-content" style="width:100%; max-width:100%; border-radius:20px 20px 0 0; padding:0; margin:0; background:#f8fafc; animation: slideUp 0.2s;">
-        
+
         <h3 style="padding:15px; margin:0; font-size:1rem; border-bottom:1px solid #e2e8f0; color:#334155;">
             Opciones de publicación
         </h3>
@@ -3956,7 +4270,7 @@ Cerrar
         <p style="font-size: 0.9rem; color:#64748b; margin-bottom: 20px;">
             Esta acción eliminará el mensaje para ambos usuarios permanentemente.
         </p>
-        
+
         <div style="display: flex; gap: 10px;">
             <button onclick="cerrarConfirmacionBorradoPrivado()" class="btn-blue" style="background: #e2e8f0; color: #475569; flex: 1;">
                 Cancelar
@@ -3972,12 +4286,12 @@ Cerrar
         <span class="nav-icon"><i class="fas fa-tasks"></i></span>
         <span>Misiones</span>
     </button>
-    
+
     <button class="nav-item" id="nav1" onclick="goToScreen(1, true)">
         <span class="nav-icon"><i class="fas fa-image"></i></span>
         <span>Muro</span>
     </button>
-    
+
     <button class="nav-item active" id="nav2" onclick="goToScreen(2, true)">
         <span class="nav-icon"><i class="fas fa-feather-alt"></i></span>
         <span>Feed</span>
@@ -3988,7 +4302,7 @@ Cerrar
         <span>Mensajes</span>
         <div id="msgBadge" style="display:none; ...">0</div>
     </button>
-    
+
     <button class="nav-item" id="nav4" onclick="goToScreen(4, true)">
         <span class="nav-icon"><i class="fas fa-user-circle"></i></span>
         <span>Perfil</span>
@@ -4010,11 +4324,11 @@ window.receiveFCMNotification = function(jsonStr) {
         if (data.title && data.body) {
             // Mostrar alerta visual
             if (typeof notify === 'function') notify("🔔 " + data.title);
-            
+
             // Hacer que la campana brinque
             const campana = document.getElementById('btnNotis');
             if (campana) campana.classList.add('bell-jump');
-            
+
             // Vibración
             if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
         }
@@ -4056,7 +4370,7 @@ onUIReady(() => {
 // 🔥 MOSTRAR NOTIFICACIÓN EN LA UI
 function showFCMNotification(title, body) {
     console.log("🔔 Mostrando notificación:", title, body);
-    
+
     if (typeof notify === 'function') {
         notify("🔔 " + title + ": " + body);
     } else if (typeof window.showToast === 'function') {
@@ -4064,11 +4378,11 @@ function showFCMNotification(title, body) {
     } else {
         console.log(`🔔 ${title}: ${body}`);
     }
-    
+
     // 1. Obtener los dos badges (el principal y el de la pantalla mensajes)
     const badge = document.getElementById('badgeNotis');
     const badgeMensajes = document.getElementById('badgeNotisMensajes'); // El nuevo
-    
+
     if (badge) {
         let count = parseInt(badge.textContent) || 0;
         let nuevoCount = count + 1;
@@ -4086,11 +4400,11 @@ function showFCMNotification(title, body) {
             badgeMensajes.parentElement?.classList.add('bell-jump');
         }
     }
-    
+
     if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
     }
-    
+
     agregarNotificacionAlPanel(title, body);
 }
 
@@ -4103,10 +4417,10 @@ function agregarNotificacionAlPanel(title, body) {
                 document.getElementById('panelNotificaciones') ||
                 document.querySelector('div[onclick*="noti"]') ||
                 document.querySelector('div[onclick*="Noti"]');
-    
+
     if (!panel) {
         console.log("⚠️ No se encontró el panel. Buscando alternativas...");
-        
+
         const elements = document.querySelectorAll('div, section, article');
         for (let el of elements) {
             if (el.textContent?.includes('Notificaciones') || 
@@ -4116,17 +4430,17 @@ function agregarNotificacionAlPanel(title, body) {
                 break;
             }
         }
-        
+
         if (!panel) {
             console.log("❌ No se pudo encontrar el panel de notificaciones");
             return;
         }
     }
-    
+
     const item = document.createElement('div');
     item.className = 'notificacion-item';
     item.style.cssText = 'padding:12px;margin:8px 0;border-radius:8px;background:linear-gradient(135deg,#f5f7fa 0%,#e4e8ec 100%);border-left:4px solid #2196F3;';
-    
+
     item.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:start;">
             <strong style="color:#1976D2;font-size:14px;">🔔 ${title}</strong>
@@ -4134,14 +4448,14 @@ function agregarNotificacionAlPanel(title, body) {
         </div>
         <p style="margin:6px 0 0 0;color:#424242;font-size:13px;line-height:1.4;">${body}</p>
     `;
-    
+
     const container = panel.querySelector('.lista-notificaciones') || 
                       panel.querySelector('[class*="lista"]') ||
                       panel.querySelector('[class*="items"]') ||
                       panel;
-    
+
     container.insertBefore(item, container.firstChild);
-    
+
     const emptyMessages = panel.querySelectorAll('*');
     for (let msg of emptyMessages) {
         if (msg.textContent?.includes('Sin notificaciones') || 
@@ -4162,7 +4476,7 @@ function agregarNotificacionAlPanel(title, body) {
         badge.textContent = count + 1;
         badge.classList.add('active');
     }
-    
+
     console.log("✅ Notificación agregada al panel");
 }
     console.log("🔥 JS PRINCIPAL CARGADO");
@@ -4183,7 +4497,7 @@ const auth = firebase.auth();
 firebase.auth().onAuthStateChanged((user) => {
   if (user) {
     console.log("✅ Usuario ya logueado detectado:", user.uid);
-    
+
     // Notificar a Kotlin que hay sesión activa
     if (typeof AndroidNative !== 'undefined') {
       AndroidNative.onLoginSuccess(user.uid);
@@ -4348,10 +4662,10 @@ const audioLibrary = {
      coin: new Audio('https://cdn.pixabay.com/audio/2024/08/06/audio_4739269156.mp3'),
      win: new Audio('https://cdn.pixabay.com/audio/2021/08/09/audio_276632dc04.mp3'),
      gameover: new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_8ce5e82719.mp3'),
-     
+
      // 🐍 SERPIENTE (Cascabel)
      snake: new Audio('https://raw.githubusercontent.com/amgel12/amgel12.github.io/main/snake-rattle-sound-hq-240150.mp3'),
-     
+
      // 🔫 DISPARO (Gun Fire)
      shoot: new Audio('https://raw.githubusercontent.com/amgel12/amgel12.github.io/main/gun-fire-475286.mp3'),
 
@@ -4367,7 +4681,7 @@ const audioLibrary = {
         } 
     };
     document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('button').forEach(btn => { btn.addEventListener('click', () => playSound('click')); }); });
-    
+
     let idAuditor = null; let myCurrentKey = ""; let currentEarnings = 0; let canSpin = false; let currentVideoId = null; let scrollTimeout = null; let audioActivadoGlobal = false; let isCommenting = false; let lastGameAd = 0; let isAdmin = false;
     let currentCommentSource = 'reportes'; // 'reportes' para videos, 'galeria_comunidad' para fotos del muro
     let mensajesNoLeidos = 0;
@@ -4616,7 +4930,7 @@ window.goToScreen = (index, userAction = false) => {
     // 1. Limpiar timers de fotos
     clearTimeout(pressTimerFoto);
     clearTimeout(pressTimerFotoDetalle);
-    
+
     if (index === 2 && !idAuditor) {
         notify("⏳ Cargando perfil...");
         return;
@@ -4700,13 +5014,13 @@ window.goToScreen = (index, userAction = false) => {
     if (index === 3) {
         const badgeMsg = document.getElementById('msgBadge');
         if (badgeMsg) badgeMsg.style.display = 'none';
-        
+
         setTimeout(() => {
             if (typeof scrollToBottom === 'function') scrollToBottom();
             if (typeof cargarChatsPrivadosNoLeidos === 'function') cargarChatsPrivadosNoLeidos();
         }, 200);
     }
-    
+
     if (index === 0 && typeof renderizarMisionesAprender === "function") {
         renderizarMisionesAprender();
     }
@@ -4727,7 +5041,7 @@ function iniciarProgresoVideo(ytId) {
     document.getElementById('videoProgressWrapper').style.display = 'block';
     const fill = document.getElementById('videoProgressFill');
     fill.style.background = 'linear-gradient(90deg, #10b981, #059669)';
-    
+
     videoProgressInterval = setInterval(() => {
         // Solo verificar que seguimos en el mismo video — no depende de videoActualJugando
         // (videoActualJugando se pone null al cambiar de tab pero el usuario puede volver)
@@ -4824,7 +5138,7 @@ window.activarSonido = (divId, ytId) => {
     if (container) {
         const btn = container.querySelector('.btn-sonido-flotante');
         if (btn) btn.remove();
-        
+
         // 🔥 CORRECCIÓN: allow="autoplay; encrypted-media; picture-in-picture"
         container.querySelector('.vid-frame').innerHTML = `
             <iframe width="100%" height="100%"
@@ -4867,12 +5181,12 @@ window.activarSonido = (divId, ytId) => {
         });
         document.getElementById('modalPerfilUsuario').style.display = 'flex';
     };
-    
+
     // Ir al perfil de otro usuario desde notificación
     window.irPerfil = (uid, nombre) => {
         window.mostrarPerfilUsuario(uid, nombre || 'Usuario');
     };
-    
+
 
 let feedRef = null; // Variable global para controlar la conexión
 
@@ -4912,14 +5226,14 @@ function construirPostHTML(post) {
     const avatarUrl = getUserProfilePhoto(post.uid);
     const nombre = getDisplayName(post.uid, post.autorClave || "Anónimo");
     let numComentarios = post.comentarios ? Object.keys(post.comentarios).length : 0;
-            
+
     let tiempo = "Reciente";
     if (post.fecha) {
         const min = Math.floor((Date.now() - post.fecha) / 60000);
         if (min > 60) tiempo = `Hace ${Math.floor(min/60)}h`;
         else if (min > 0) tiempo = `Hace ${min}m`;
     }
-            
+
     let mediaBlock = "";
     const ytId = getYouTubeID(post.musica);
     if (ytId) {
@@ -4940,14 +5254,14 @@ function construirPostHTML(post) {
             <i class="fas fa-music" style="font-size:5rem; color:rgba(255,255,255,0.1); animation:pulse 2s infinite;"></i>
         </div>`;
     }
-            
+
     const iLikedIt = (post.likes && idAuditor && post.likes[idAuditor]) ? true : false;
     const heartClass = iLikedIt ? 'fas fa-heart liked' : 'far fa-heart'; // Usamos far si no tiene like para diferenciar visualmente en el HTML inicial
     const heartColor = iLikedIt ? '#e11d48' : 'white';
-            
+
     return `
     <article id="post-${post.k}" class="social-card">
-        
+
         <div class="card-header">
             <div class="user-row">
                 <div class="card-avatar" style="background-image:url('${avatarUrl}'); border: 2px solid white;"></div>
@@ -5000,7 +5314,7 @@ window.likePost = function(postKey, postOwnerUid, btnElement) {
     // Referencias directas a los elementos hijos del botón clickeado
     const icon = btnElement.querySelector('i');
     const countSpan = btnElement.querySelector('span') || document.getElementById(`like-count-${postKey}`);
-    
+
     const likesRef = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
     const countRef = db.ref(`reportes/${postKey}/vCount`);
 
@@ -5017,7 +5331,7 @@ window.likePost = function(postKey, postOwnerUid, btnElement) {
             // --- QUITAR LIKE ---
             likesRef.remove().then(() => {
                 countRef.transaction(current => (current || 0) - 1);
-                
+
                 if(icon) {
                     icon.classList.remove('fas', 'liked');
                     icon.classList.add('far');
@@ -5064,7 +5378,7 @@ window.likePost = function(postKey, postOwnerUid, btnElement) {
     });
 };
     function cargarLeaderboard() { db.ref('users').orderByChild('earnings').limitToLast(1).on('value', snap => { if (!snap.exists()) return; snap.forEach(child => { const u = child.val(); /* Ya no actualizamos el leaderboard viejo */ }); }); }
-    
+
     // --- ACCIONES DE USUARIO ---
     window.copiarClave = () => { const textArea = document.createElement("textarea"); textArea.value = myCurrentKey; document.body.appendChild(textArea); textArea.select(); try { document.execCommand('copy'); notify("✅ Copiado"); } catch (e) {} document.body.removeChild(textArea); };
     window.verReferidos = () => {
@@ -5090,7 +5404,7 @@ window.likePost = function(postKey, postOwnerUid, btnElement) {
         }
         document.getElementById('modalReferidos').style.display = 'none';
     };
-    
+
     // BOTON REFERIDO
     // BOTON REFERIDO (Lógica: Máximo 3 amigos)
     const btnValidar = document.getElementById('btnValidar');
@@ -5098,10 +5412,10 @@ window.likePost = function(postKey, postOwnerUid, btnElement) {
         btnValidar.onclick = () => {
             const input = document.getElementById('inputFolio'); 
             const codigo = input.value.trim().toUpperCase();
-            
+
             if (!idAuditor) return notify("❌ Inicia sesión"); 
             if (!codigo || codigo === myCurrentKey) return notify("❌ Código inválido");
-            
+
             // CAMBIO: Consultamos la lista 'redeemedCodes' en lugar de un solo valor
             db.ref(`users/${idAuditor}/redeemedCodes`).once('value').then(snap => {
                 const usados = snap.val() || {};
@@ -5120,22 +5434,22 @@ window.likePost = function(postKey, postOwnerUid, btnElement) {
                 // Si pasa las reglas, buscamos al dueño del código
                 db.ref('users').orderByChild('myInviteKey').equalTo(codigo).once('value').then(userSnap => {
                     if (!userSnap.exists()) return notify("❌ No existe ese usuario.");
-                    
+
                     let ownerId = Object.keys(userSnap.val())[0];
                     const updates = {}; 
                     const fecha = firebase.database.ServerValue.TIMESTAMP;
-                    
+
                     // Dar premios
                     updates[`users/${ownerId}/earnings`] = firebase.database.ServerValue.increment(0.50);
                     updates[`users/${idAuditor}/earnings`] = firebase.database.ServerValue.increment(0.25);
-                    
+
                     // Registrar en lista del dueño
                     const refKey = db.ref(`users/${ownerId}/referidos`).push().key;
                     updates[`users/${ownerId}/referidos/${refKey}`] = { uid: idAuditor, clave: myCurrentKey, fecha: fecha };
-                    
+
                     // GUARDAR QUE YO YA USÉ ESTE CÓDIGO (Para el conteo)
                     updates[`users/${idAuditor}/redeemedCodes/${codigo}`] = true;
-                    
+
                     // Notificación
                     const notiKey = db.ref(`users/${ownerId}/notifications`).push().key;
                     updates[`users/${ownerId}/notifications/${notiKey}`] = { 
@@ -5205,17 +5519,17 @@ window.abrirMision = () => {
     const mus = document.getElementById('mMusic').value.trim(); 
 
     if (!mus) return notify("🎵 Primero elige una canción");
-    
-        
+
+
     localStorage.setItem('pendingPost', JSON.stringify({ 
         texto: txt, 
         musica: mus 
     })); 
-    
+
     notify("📢 Procesando..."); 
     document.getElementById('btnEnviarMision').textContent = "Publicando..."; 
     document.getElementById('btnEnviarMision').disabled = true; 
-    
+
     // Rewarded ad (bonificado) for publishing
     window._publicarMision = true;
     if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirVideoRecompensado) {
@@ -5228,7 +5542,7 @@ function procesarPublicacionPendiente() {
     const pending = localStorage.getItem('pendingPost');
     if (pending && idAuditor) {
         const data = JSON.parse(pending); 
-        
+
         // Limpiamos inmediatamente para que no se duplique al recargar
         localStorage.removeItem('pendingPost'); 
 
@@ -5237,7 +5551,7 @@ function procesarPublicacionPendiente() {
             const ahora = Date.now();
             const ultimoTime = u.lastMissionTime || 0;
             const horasDiff = (ahora - ultimoTime) / (1000 * 60 * 60);
-            
+
             let nuevoConteo = (u.missionCount || 0) + 1;
             if (horasDiff >= 8) nuevoConteo = 1; 
 
@@ -5260,15 +5574,15 @@ function procesarPublicacionPendiente() {
 
                 registrarHistorial("Misión: Publicar", 0.50);
                 if(window.checarProgresoDiario) window.checarProgresoDiario();
-                
+
                 // 3. Cerrar modal
                 document.getElementById('modalMision').style.display = 'none';
                 document.getElementById('btnEnviarMision').textContent = "📢 Publicar";
                 document.getElementById('btnEnviarMision').disabled = false;
-                
+
                 // 4. Forzar al Muro a mostrar lo nuevo
                 goToScreen(2);
-                
+
             }).catch(e => {
                 console.error("Error al publicar misión:", e);
                 notify("Error al publicar: " + e.message);
@@ -5288,17 +5602,17 @@ function procesarPublicacionPendiente() {
     tag.src = "https://www.youtube.com/iframe_api";
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-    
+
     window.goToStep2 = () => {
         const musicValue = document.getElementById('mMusic').value;
         if (!musicValue) return notify("⚠️ Elige una canción primero");
         const ytId = getYouTubeID(musicValue);
         if (!ytId) return notify("Error con la canción");
-    
+
         document.getElementById('step1Mision').style.display = 'none';
         document.getElementById('step2Mision').style.display = 'block';
         resetAudioControls();
-    
+
         if (audioPlayer) {
             audioPlayer.loadVideoById(ytId);
         } else {
@@ -5313,14 +5627,14 @@ function procesarPublicacionPendiente() {
         }
         setTimeout(() => document.getElementById('mText').focus(), 100);
     };
-    
+
     window.toggleAudio = () => {
         if (!audioPlayer || typeof audioPlayer.getPlayerState !== 'function') return;
         const playerState = audioPlayer.getPlayerState();
         if (playerState === YT.PlayerState.PLAYING) audioPlayer.pauseVideo();
         else audioPlayer.playVideo();
     };
-    
+
     function onPlayerStateChange(event) {
         const icon = document.getElementById('audioIcon');
         const btn = document.getElementById('btnAudioControl');
@@ -5334,7 +5648,7 @@ function procesarPublicacionPendiente() {
             btn.style.background = '#0070ba'; btn.style.boxShadow = '0 4px 10px rgba(0,112,186,0.3)';
         }
     }
-    
+
     function resetAudioControls() {
         isPlaying = false;
         document.getElementById('audioIcon').className = 'fas fa-play';
@@ -5343,13 +5657,13 @@ function procesarPublicacionPendiente() {
         if(btn) { btn.style.background = '#0070ba'; btn.style.boxShadow = '0 4px 10px rgba(0,112,186,0.3)'; }
         if (audioPlayer && typeof audioPlayer.stopVideo === 'function') audioPlayer.stopVideo();
     }
-    
+
     window.backToStep1 = () => {
         resetAudioControls();
         document.getElementById('step2Mision').style.display = 'none';
         document.getElementById('step1Mision').style.display = 'block';
     };
-    
+
     let commentsRef = null;
     let currentPostId = null;
     window.abrirModalComentarios = (postKey) => {
@@ -5498,7 +5812,7 @@ window.enviarComentarioModal = (e) => {
         window.history.pushState({modal:'modalComments'}, "");
     };
     function cargarChips() { return; }
-    
+
 // --- AUTH (CORREGIDO Y CERRADO) ---
 let isLoginMode = false;
 
@@ -5529,7 +5843,7 @@ window.manejarAuth = async () => {
             const user = userCredential.user;
             AndroidNative.onLoginSuccess(user.uid);
             notify("Sesión iniciada. Generando token...");
-            
+
             // Generar token DESPUÉS del login
             setTimeout(() => {
                 if (window.generarTokenFCMDirecto) {
@@ -5562,7 +5876,7 @@ window.manejarAuth = async () => {
         // 1. Configuración Inicial
         idAuditor = user.uid;
         document.getElementById('authScreen').style.display = 'none';
-        
+
         // Ocultar pantalla de carga
         const loadingOverlay = document.getElementById('loadingOverlay');
         if(loadingOverlay) loadingOverlay.style.display = 'none';
@@ -5636,16 +5950,16 @@ window.manejarAuth = async () => {
         });
         // 3. Verificar compras confirmadas pendientes de acreditar
         verificarComprasConfirmadas();
-        
+
         // 3. ESCUCHAR CAMBIOS EN TIEMPO REAL
         db.ref(`users/${idAuditor}`).on('value', snap => {
             const d = snap.val();
-            
+
             // --- A) DATOS BÁSICOS ---
             const correoUsuario = user.email || (d ? d.email : null) || "Sin correo";
             const labelEmail = document.getElementById('profEmail');
             if (labelEmail) labelEmail.textContent = "Correo: " + correoUsuario;
-            
+
             const emailParaAdmin = d && d.email ? d.email : user.email;
             if (emailParaAdmin && typeof verificarSiEsAdmin === "function") verificarSiEsAdmin(emailParaAdmin);
 
@@ -5669,10 +5983,10 @@ window.manejarAuth = async () => {
                 }
             }
             currentEarnings = newEarnings;
-            
+
             const labelPuntos = document.getElementById('mainPts');
             if (labelPuntos) labelPuntos.textContent = `${currentEarnings.toFixed(2)} PTS`;
-            
+
             const labelSnake = document.getElementById('snakeWalletDisplay');
             if(labelSnake) labelSnake.textContent = ` ${parseFloat(d.snakeTotal || 0).toFixed(2)}`;
 
@@ -5682,18 +5996,40 @@ window.manejarAuth = async () => {
             myCurrentKey = d.myInviteKey || "---";
             lastGameAd = d.lastGameAd || 0;
             userEnglishLevel = d.englishLevel || 1;
-            
+
             const nombreMostrar = d.apodo || myCurrentKey;
             if(document.getElementById('profKey')) document.getElementById('profKey').textContent = nombreMostrar;
             if(document.getElementById('myKeyDisplay')) document.getElementById('myKeyDisplay').textContent = myCurrentKey;
             if(document.getElementById('inputApodo')) document.getElementById('inputApodo').value = d.apodo || '';
             if(document.getElementById('inputFacebook')) document.getElementById('inputFacebook').value = d.facebookUrl || '';
 
+            // --- STATS PERFIL ---
+            // 1) Puntos
+            const elPts = document.getElementById('profStatPts');
+            if (elPts) elPts.textContent = parseFloat(d.earnings || 0).toFixed(0);
+
+            // 2) Misiones completadas (clave localStorage: "mision_m1" = "1")
+            const misionesKeys = ['m1','m2','m3','m4','m5','m6','m7','m8','m9','m10','m11','m12'];
+            const misionesOk = misionesKeys.filter(k => localStorage.getItem('mision_' + k) === '1').length;
+            const elMis = document.getElementById('profStatMisiones');
+            if (elMis) elMis.textContent = misionesOk + '/' + misionesKeys.length;
+
+            // 3) Referidos (consulta ligera solo si el elemento está visible)
+            const elRefs = document.getElementById('profStatRefs');
+            if (elRefs && !window._refStatsListener) {
+                window._refStatsListener = true;
+                db.ref(`users/${idAuditor}/referidos`).on('value', rSnap => {
+                    const total = rSnap.numChildren() || 0;
+                    const el = document.getElementById('profStatRefs');
+                    if (el) el.textContent = total;
+                });
+            }
+
             // Avatar
             const imagenMostrar = d.fotoPerfil || getAvatarUrl(idAuditor);
             const perfilGrande = document.getElementById('avatarPerfilGrande');
             if (perfilGrande) perfilGrande.style.backgroundImage = "url('" + imagenMostrar + "')";
-            
+
             const barraAvatar = document.getElementById('barraMiAvatar');
             if (barraAvatar) barraAvatar.style.backgroundImage = "url('" + imagenMostrar + "')";
 
@@ -5738,7 +6074,7 @@ window.manejarAuth = async () => {
             let userHearts = (typeof d.hearts !== 'undefined') ? d.hearts : 5;
             if(typeof actualizarVisualVidas === "function") actualizarVisualVidas(userHearts);
             if(typeof renderEnglishPath === "function") renderEnglishPath();
-            
+
             canSpin = ((d.lastSpinDate === new Date().toISOString().split('T')[0]) ? (d.spinsUsed || 0) : 0) < 3;
             if(document.getElementById('spinInfo')) document.getElementById('spinInfo').textContent = canSpin ? "Giros disponibles" : " ";
 
@@ -5753,7 +6089,7 @@ window.manejarAuth = async () => {
                 });
 
                 const badgeN = document.getElementById('badgeNotis');
-                
+
                 if(badgeN) {
                     if (unreadCount > 0) {
                         badgeN.classList.add('active');
@@ -5814,7 +6150,7 @@ window.manejarAuth = async () => {
                  document.getElementById('historialList').innerHTML = hHist;
              }
         }); // <--- CIERRE DEL LISTENER .on('value')
-        
+
         // Cargas iniciales únicas
         if(typeof cargarLeaderboard === "function") cargarLeaderboard();
         if(typeof cargarMuroReportes === "function") cargarMuroReportes();
@@ -5972,7 +6308,7 @@ if (girosDisponibles > 0) {
         document.getElementById('rifaDate').style.color = "#ea580c";
     };
     window.comprarTicketRifa = () => { if(currentEarnings<100) return notify("Faltan PTS"); db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(-100) }); registrarHistorial("Ticket Rifa", -100); notify("Ticket comprado"); };
-    
+
     // --- TRANSFERENCIA ULTRA-SEGURA (1 MINUTO) ---
     window.openTransfer = (tid, tname) => {
     notify(" abriendo chat ");
@@ -5983,13 +6319,13 @@ if (girosDisponibles > 0) {
 };
 
     window.darLasGracias = (targetUid) => { db.ref(`users/${targetUid}/notifications`).push({ from: myCurrentKey, fromName: getMiNombre(), type: 'simple', text: "🙏 ¡Te envió las gracias por el regalo!", timestamp: firebase.database.ServerValue.TIMESTAMP, read: false }).then(() => { notify("❤️ Agradecimiento enviado"); document.getElementById('modalGiftReceived').style.display = 'none'; }); };
-    
+
     // CINE
     let cineTimerInterval = null;
     window.abrirCine = () => { db.ref(`users/${idAuditor}`).once('value', s => { const u = s.val(); if(u.lastCineDate === new Date().toISOString().split('T')[0] && (u.cineCount||0)>=2) return notify("Vuelve mañana"); document.getElementById('modalCine').style.display='flex'; document.getElementById('videoPlayer').src = "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&controls=0"; let t = 15; const btn = document.getElementById('btnReclamarCine'); btn.disabled=true; btn.style.opacity=0.5; if(cineTimerInterval) clearInterval(cineTimerInterval); cineTimerInterval = setInterval(() => { t--; document.getElementById('cineTimer').textContent = `Espera ${t}s...`; if(t<=0) { clearInterval(cineTimerInterval); btn.disabled=false; btn.style.opacity=1; } }, 1000); }); };
     window.reclamarCine = () => { const hoy = new Date().toISOString().split('T')[0]; db.ref(`users/${idAuditor}`).once('value', s => { const u=s.val(); db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.50), lastCineDate: hoy, cineCount: ((u.lastCineDate===hoy)?(u.cineCount||0):0)+1 }); registrarHistorial("Cine", 0.50); window.cerrarCine(); window.playSound('win'); notify("+0.50 PTS"); }); };
     window.cerrarCine = () => { document.getElementById('modalCine').style.display = 'none'; document.getElementById('videoPlayer').src = ""; };
-    
+
    // VIDEO ADMOB (Ahora regala: +0.25 PTS y +1 GIRO)
     const btnAd = document.getElementById('btnVerAnuncio');
     if (btnAd) {
@@ -6014,7 +6350,7 @@ if (girosDisponibles > 0) {
                     earnings: firebase.database.ServerValue.increment(0.25), 
                     lastAdDate: hoy, 
                     adCount: contadorHoy + 1,
-                    
+
                     // 🔥 EL TRUCO: Restamos 1 a los "giros usados".
                     // Si ya habías gastado tus 3 giros, ahora te contará como 2
                     // y podrás girar de nuevo.
@@ -6022,7 +6358,7 @@ if (girosDisponibles > 0) {
                 });
 
                 registrarHistorial("Video Ad (+Giro)", 0.25); 
-                
+
                 // Misión diaria del 1%
                 if(window.checarProgresoDiario) window.checarProgresoDiario();
 
@@ -6038,7 +6374,7 @@ if (girosDisponibles > 0) {
             });
         };
     }
-    
+
     // CHAT
     let isChatOpen = false;
     window.toggleChat = () => {
@@ -6081,22 +6417,22 @@ if (girosDisponibles > 0) {
     // --- FUNCIÓN CHAT MEJORADA (CON FOTOS REALES) ---
     function iniciarChat() {
          const list = document.getElementById('chatList');
-         
+
          // 1. Escuchar mensajes nuevos
          db.ref('chat_global').limitToLast(50).on('child_added', s => {
              const m = s.val();
              const msgKey = s.key;
              const esMio = m.uid === idAuditor;
-             
+
 // URL por defecto (Robot)
               const avatarDefault = getUserProfilePhoto(m.uid);
               const nombreMostrar = getDisplayName(m.uid, m.autor);
-              
+
               // Crear contenedor de fila (Flexbox)
               const row = document.createElement('div');
               row.className = `chat-row ${esMio ? 'mine' : 'other'}`;
               row.id = `msg-row-${msgKey}`;
-              
+
               // HTML INTERNO: Foto + Burbuja
                // Nota: Usamos un ID único en la imagen (img-uid-key) para actualizarla luego
                const replyHtml = m.replyTo ? `
@@ -6180,16 +6516,16 @@ if (girosDisponibles > 0) {
         // Limpiar temporizadores anteriores primero
         clearTimeout(chatPressTimer);
         clearTimeout(deletePressTimer);
-        
+
         selectedMsgId = key;
         selectedMsgText = text;
         pressStartTime = Date.now();
-        
+
         // Esperar 600ms para abrir opciones
         chatPressTimer = setTimeout(() => {
             abrirOpcionesChat(uid, isPrivate);
         }, 600);
-        
+
         // En chat privado: 2 segundos para mostrar icono de borrado
         if (isPrivate && uid === idAuditor) {
             const burbuja = document.getElementById(`priv-msg-${key}`);
@@ -6197,7 +6533,7 @@ if (girosDisponibles > 0) {
                 burbuja.style.transition = 'background 2s linear';
                 burbuja.style.background = 'rgba(239, 68, 68, 0.8)';
             }
-            
+
             deletePressTimer = setTimeout(() => {
                 mostrarIconoBorrado(key);
             }, 2000);
@@ -6207,7 +6543,7 @@ if (girosDisponibles > 0) {
     function cancelPress(isPrivate = false) {
         clearTimeout(chatPressTimer);
         clearTimeout(deletePressTimer);
-        
+
         // Restaurar estilo si se cancela (NO ocultar el icono si ya se mostró)
         if (isPrivate && selectedMsgId) {
             const burbuja = document.getElementById(`priv-msg-${selectedMsgId}`);
@@ -6338,10 +6674,10 @@ if (girosDisponibles > 0) {
 
     function handleSwipeEnd(e, msgKey, text, author, uid) {
         if (!isSwiping || swipeMsgKey !== msgKey) return;
-        
+
         const touch = e.changedTouches ? e.changedTouches[0] : e;
         const deltaX = touch.clientX - swipeStartX;
-        
+
         const burbuja = document.getElementById(`msg-${msgKey}`);
         if (burbuja) {
             burbuja.classList.remove('swiping');
@@ -6351,7 +6687,7 @@ if (girosDisponibles > 0) {
             burbuja.style.borderLeft = '';
             burbuja.style.borderRight = '';
         }
-        
+
         // Swipe derecha > 60px → Responder
         if (deltaX > 60) {
             responderMensaje(msgKey, text, author, uid);
@@ -6362,7 +6698,7 @@ if (girosDisponibles > 0) {
                 window.mencionarEnChatGlobal(author);
             }
         }
-        
+
         isSwiping = false;
         swipeMsgKey = null;
         swipeMsgText = null;
@@ -6374,33 +6710,33 @@ if (girosDisponibles > 0) {
         const replyAuthor = document.getElementById('replyAuthor');
         const replyText = document.getElementById('replyText');
         const input = document.getElementById('inputChatMsg');
-        
+
         replyAuthor.textContent = author || 'Usuario';
         replyText.textContent = text || '';
         replyBar.style.display = 'flex';
-        
+
         // Guardar datos del mensaje al que se responde
         window.replyToMsgKey = msgKey;
         window.replyToMsgText = text;
         window.replyToMsgAuthor = author;
         window.replyToMsgUid = uid;
-        
+
         input.focus();
         input.placeholder = `Respondiendo a ${author}...`;
-        
+
         if (navigator.vibrate) navigator.vibrate(30);
     };
 
     window.cancelarRespuesta = () => {
         const replyBar = document.getElementById('replyBar');
         const input = document.getElementById('inputChatMsg');
-        
+
         replyBar.style.display = 'none';
         window.replyToMsgKey = null;
         window.replyToMsgText = null;
         window.replyToMsgAuthor = null;
         window.replyToMsgUid = null;
-        
+
         input.placeholder = 'Escribe...';
     };
 
@@ -6432,17 +6768,17 @@ if (girosDisponibles > 0) {
     function abrirOpcionesChat(uidAuthor, isPrivate = false) {
         // Vibración háptica si el móvil lo soporta (feedback físico)
         if (navigator.vibrate) navigator.vibrate(50);
-        
+
         const modal = document.getElementById('modalChatOptions');
         const btnBorrar = document.getElementById('btnBorrarMensaje');
-        
+
         // Mostrar botón "Borrar" si el mensaje es MÍO o si soy ADMIN
         if (uidAuthor === idAuditor || isAdmin) {
             btnBorrar.style.display = "flex";
         } else {
             btnBorrar.style.display = "none";
         }
-        
+
         modal.style.display = 'flex';
     }
 
@@ -6454,7 +6790,7 @@ if (girosDisponibles > 0) {
         tempInput.select();
         document.execCommand("copy");
         document.body.removeChild(tempInput);
-        
+
         document.getElementById('modalChatOptions').style.display = 'none';
         notify("✅ Texto copiado");
     };
@@ -6464,7 +6800,7 @@ if (girosDisponibles > 0) {
         if (selectedMsgId) {
             const esPrivado = document.getElementById(`priv-msg-${selectedMsgId}`);
             const esGrupo = document.getElementById(`grp-msg-${selectedMsgId}`);
-            
+
             let ruta;
             if (esGrupo && currentGrupoId) {
                 ruta = `grupos_chat/${currentGrupoId}/mensajes/${selectedMsgId}`;
@@ -6473,7 +6809,7 @@ if (girosDisponibles > 0) {
             } else {
                 ruta = `chat_global/${selectedMsgId}`;
             }
-            
+
             db.ref(ruta).remove()
                 .then(() => {
                     notify("🗑️ Mensaje eliminado");
@@ -6487,7 +6823,7 @@ if (girosDisponibles > 0) {
     // --- BORRADO AUTOMÁTICO TRAS 4 SEGUNDOS (PRIVADO) ---
     function ejecutarBorradoPrivadoParaTodos(msgKey) {
         if (!msgKey || !currentChatId) return;
-        
+
         db.ref(`chats_privados/${currentChatId}/${msgKey}`).remove()
             .then(() => {
                 notify("🗑️ Mensaje eliminado para todos");
@@ -6500,7 +6836,7 @@ if (girosDisponibles > 0) {
     // Enviar texto se mantiene igual, no hace falta cambiarlo
     // ...
     function scrollToBottom() { const d = document.getElementById('chatList'); setTimeout(() => d.scrollTop = d.scrollHeight, 100); }
-    
+
     // MENCIONES
     // --- FUNCIÓN PARA DETECTAR Y NOTIFICAR MENCIONES (@) ---
 function detectarYEnvarMenciones(txt, type) {
@@ -6575,11 +6911,11 @@ window.limpiarChatGlobal = () => {
     });
 };
 setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
-    
+
     // --- FUNCIÓN IR A NOTIFICACIÓN (CORREGIDA) ---
     window.irANotificacion = (type, extra, key, fromUid) => {
         let nombreEmisor = "Alguien";
-        
+
         // 1. Obtener el nombre de quien te escribió desde la propia notificación
         const notiElement = document.getElementById(`noti-${key}`);
         if (notiElement) { 
@@ -6587,18 +6923,18 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             if(strongTag) nombreEmisor = strongTag.innerText;
             notiElement.style.display = 'none'; 
         }
-        
+
         // 2. Borrar la notificación de la base de datos (ya la viste)
         if(idAuditor && key) db.ref(`users/${idAuditor}/notifications/${key}`).remove();
-        
+
         // 3. Cerrar el modal de notificaciones
         document.getElementById('modalNotificaciones').style.display = 'none';
-        
+
         // 4. Obtener el uid del emisor para poder ir a su perfil
         const senderUid = fromUid || extra.split('|').pop() || extra;
-        
+
         // --- AQUÍ ESTÁ LA MAGIA DE REDIRECCIÓN ---
-        
+
         if (type === 'chat_privado') {
             // Abre el chat privado con esa persona
             abrirChatPrivado(extra, nombreEmisor);
@@ -6608,26 +6944,51 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             if (!isChatOpen) toggleChat();
         } 
         else if (type === 'comentario' || type === 'like') {
-            // 1. Vamos a la pantalla del Feed (esto recrea el iframe)
-            goToScreen(2);
+            // Detectar si el comentario es sobre una foto del muro
+            const textoNotiComentario = notiElement?.querySelector('.noti-text')?.textContent || '';
+            const esFotoComentario = textoNotiComentario.includes('foto');
 
-            // 2. Esperamos a que el iframe cargue y le enviamos el ID del video
-            setTimeout(() => {
-                const iframe = document.getElementById('mainFeedIframe');
-                if (iframe && iframe.contentWindow) {
-                    // Le enviamos un "mensaje" al archivo de GitHub para que haga el scroll
-                    iframe.contentWindow.postMessage({
-                        type: 'scroll_to_post',
-                        postId: extra // El ID del video
-                    }, '*');
-                }
-            }, 1200); 
-
-            // 3. Si es comentario, abrimos la cajita de comentarios (que está en index.html)
-            if (type === 'comentario') {
+            if (type === 'comentario' && esFotoComentario) {
+                // 1. Ir al muro de fotos (pantalla 1)
+                goToScreen(1);
+                // 2. Localizar la foto, hacer scroll y abrir sus comentarios
                 setTimeout(() => {
-                    if (window.abrirModalComentarios) window.abrirModalComentarios(extra);
-                }, 1600);
+                    const photoEl = document.getElementById('photo-' + extra);
+                    if (photoEl) {
+                        photoEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        photoEl.style.transition = '0.3s';
+                        photoEl.style.border = '4px solid #6366f1';
+                        photoEl.style.transform = 'scale(1.02)';
+                        setTimeout(() => {
+                            photoEl.style.border = 'none';
+                            photoEl.style.transform = 'scale(1)';
+                        }, 1500);
+                    }
+                    if (extra && window.abrirComentariosFoto) {
+                        abrirComentariosFoto(extra);
+                    }
+                }, 800);
+            } else {
+                // 1. Vamos a la pantalla del Feed de videos
+                goToScreen(2);
+
+                // 2. Esperamos a que el iframe cargue y le enviamos el ID del video
+                setTimeout(() => {
+                    const iframe = document.getElementById('mainFeedIframe');
+                    if (iframe && iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({
+                            type: 'scroll_to_post',
+                            postId: extra
+                        }, '*');
+                    }
+                }, 1200);
+
+                // 3. Si es comentario, abrimos la cajita de comentarios
+                if (type === 'comentario') {
+                    setTimeout(() => {
+                        if (window.abrirModalComentarios) window.abrirModalComentarios(extra);
+                    }, 1600);
+                }
             }
         }
         else if (type === 'like') {
@@ -6655,7 +7016,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         else if (type === 'simple') {
             // Notificaciones genéricas: foto like, agradecimiento, etc.
             const textoNoti = notiElement?.querySelector('.noti-text')?.textContent || '';
-            
+
             if (textoNoti.includes('foto') || textoNoti.includes('galería') || textoNoti.includes('foto en la galería')) {
                 // Ir a la galería/fotos (pantalla 1) y abrir la foto
                 goToScreen(1);
@@ -6716,13 +7077,13 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             const partes = extra.split('|'); 
             const cantidad = partes[0]; 
             const uidEmisor = partes[1];
-            
+
             document.getElementById('giftSender').textContent = nombreEmisor;
             document.getElementById('giftAmount').textContent = cantidad;
             document.getElementById('modalGiftReceived').style.display = 'flex';
             lanzarAnimacionRegalo("receive");
             try { window.playSound('win'); } catch(e) {}
-            
+
             // Configurar botón de gracias
             const btnThanks = document.getElementById('btnThanks');
             if(btnThanks) btnThanks.onclick = () => { darLasGracias(uidEmisor); };
@@ -6742,7 +7103,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             }, 500);
         }
     };
-    
+
     const YOUTUBE_API_KEY = "AIzaSyAqswfC8HsBown7vyWtOfrWc-lbf4HFsbM"; // Tu API Key actual
 
 // ==========================================
@@ -6754,23 +7115,23 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 window.buscarEnYouTubeAPI = () => {
      const q = document.getElementById('inputSearchMusic').value.trim();
      if(!q) return;
-     
+
      stopPreview();
      document.getElementById('ytLoader').style.display='block';
      document.getElementById('musicResultsList').innerHTML = "";
-     
+
      // Usamos tu API Key
      fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(q)}&key=${YOUTUBE_API_KEY}`)
         .then(r => r.json())
         .then(d => {
              document.getElementById('ytLoader').style.display='none';
-             
+
              let h = `<div style="padding:10px; text-align:center; border-bottom:1px solid #f1f5f9;">
                         <button onclick="volverATendencias()" style="background:none; border:none; color:#0070ba; font-weight:bold; cursor:pointer; font-size:0.9rem;">
                             ⬅ Volver a Tendencias
                         </button>
                      </div>`;
-            
+
             if(!d.items || d.items.length === 0) {
                 document.getElementById('musicResultsList').innerHTML = h + "<div style='text-align:center;padding:20px;'>No se encontraron resultados.</div>";
                 return;
@@ -6779,10 +7140,10 @@ window.buscarEnYouTubeAPI = () => {
                  const rawTitle = i.snippet.title;
                  const thumb = i.snippet.thumbnails.medium ? i.snippet.thumbnails.medium.url : i.snippet.thumbnails.default.url;
                  const vidId = i.id.videoId;
-                 
+
                  // 🛡️ LIMPIEZA: Quitamos comillas para evitar errores
                  const titleSafe = rawTitle.replace(/'/g, "").replace(/"/g, "");
-                 
+
                  h += `
                 <div class="music-item" style="display:flex; align-items:center; padding:10px; border-bottom:1px solid #f1f5f9;">
                     <div onclick="previewMusic('${vidId}')" style="position:relative; width:100px; height:56px; margin-right:15px; cursor:pointer; flex-shrink:0;">
@@ -6793,7 +7154,7 @@ window.buscarEnYouTubeAPI = () => {
                     </div>
 <div style="flex:1; overflow:hidden;">
     <div style="font-size:0.8rem; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; color:#334155;">${titleSafe}</div>
-    
+
     <div style="display:flex; flex-direction:column; gap:6px;">
         <button class="btn-blue" style="width:100%; padding:6px 12px; font-size:0.75rem; height:auto; background:#0070ba; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="escucharCancion('${vidId}', this)">
             <i class="fas fa-play" style="font-size:0.7rem;"></i> Escuchar
@@ -6802,7 +7163,7 @@ window.buscarEnYouTubeAPI = () => {
             ✅ Elegir
         </button>
     </div>
-    
+
     <!-- BARRAS DE REPRODUCCIÓN -->
     <div id="barras-${vidId}" style="display:none; align-items:center; gap:6px; margin-top:6px;">
         <div style="display:flex; gap:3px; align-items:flex-end; height:14px;">
@@ -6817,7 +7178,7 @@ window.buscarEnYouTubeAPI = () => {
 </div>
                 </div>`;
              });
-             
+
              document.getElementById('musicResultsList').innerHTML = h;
          })
         .catch(e => {
@@ -6829,13 +7190,13 @@ window.buscarEnYouTubeAPI = () => {
     // Solo audio, sin mostrar video
     const audio = document.getElementById('audioPreviewBg');
     if(audio) audio.remove();
-    
+
     const nuevo = document.createElement('audio');
     nuevo.id = 'audioPreviewBg';
     nuevo.autoplay = true;
     nuevo.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
     document.body.appendChild(nuevo);
-    
+
     // 🔥 IFRAME CORREGIDO CON PERMISOS COMPLETOS
     const frame = document.getElementById('previewFrame');
 if(frame) {
@@ -6850,7 +7211,7 @@ if(frame) {
         frameborder="0">
     </iframe>`;
 }
-    
+
     notify("⏳ Cargando audio...");
     setTimeout(() => notify("🎵 ¡Reproduciendo!"), 3000);
 };
@@ -6867,7 +7228,7 @@ if(frame) {
         document.getElementById('musicDisplayLabel').innerHTML = `🎵 ${t.substring(0,20)}...`; 
         document.getElementById('songNamePreview').textContent = t.substring(0,30) + "...";
         document.getElementById('modalMusicSelector').style.display='none'; 
-        
+
         // Habilitar botón de continuar
         const btnNext = document.getElementById('btnMisionNext');
         if(btnNext) {
@@ -6890,10 +7251,10 @@ if(frame) {
     let activeGameMode = null; 
     let gameInterval = null; 
     let score = 0; 
-    
+
     // VARIABLES SNAKE
     let snake = []; let food = {}; let velocity = {}; 
-    
+
     // VARIABLES CARRERA
     let playerCar = { x: 1 }; // 0=Izq, 1=Centro, 2=Der
     // ==========================================
@@ -6956,32 +7317,32 @@ if(frame) {
             breakoutMoveInterval = null;
         }
     };
-    
+
     // --- GESTIÓN DE JUEGOS ---
     window.prepararJuego = (m) => {
     notify("Cargando...");
     setTimeout(() => {
         activeGameMode = m;
         document.getElementById('gameContainer').style.display='flex';
-        
+
         // 🔥 ACTUALIZAR PUNTOS AL ABRIR EL JUEGO
         actualizarPuntosEnJuegos();
-        
+
         if(m === 'snake') resetSnake();
         else if(m === 'breakout') resetBreakout();
     }, 1500);
 };
-    
+
     window.cerrarJuego = () => {
         clearInterval(gameInterval);
         stopBreakoutMove(); // detener movimiento continuo
         document.getElementById('gameContainer').style.display='none'; 
         activeGameMode = null;
-        
+
         // --- LÓGICA ANUNCIO CADA HORA ---
         const ahora = Date.now();
         const unaHora = 60 * 60 * 1000; 
-        
+
         if (ahora - lastGameAd > unaHora && idAuditor) {
             notify("⌛ Publicidad programada...");
             db.ref(`users/${idAuditor}`).update({ lastGameAd: firebase.database.ServerValue.TIMESTAMP });
@@ -6990,7 +7351,7 @@ if(frame) {
             }, 1000);
         }
     };
-    
+
     window.cerrarModalGameOver = () => { 
         document.getElementById('modalGameOver').style.display='none'; 
         document.getElementById('gameContainer').style.display='flex';
@@ -7003,18 +7364,18 @@ if(frame) {
             resetBreakout();
         }
     };
-    
+
     function gameOver() {
         clearInterval(gameInterval);
         const gain = (snakeScore/10)*0.05;
-        
+
         if(gain > 0) {
             db.ref(`users/${idAuditor}`).update({
                 earnings: firebase.database.ServerValue.increment(gain),
                 snakeTotal: firebase.database.ServerValue.increment(gain)
             });
             registrarHistorial("Juego Snake", gain);
-            
+
             // 🔥 AGREGA ESTA LÍNEA AQUÍ PARA QUE CUENTE COMO MISIÓN
             if(window.checarProgresoDiario) window.checarProgresoDiario();
         }
@@ -7028,14 +7389,14 @@ if(frame) {
         document.getElementById('scoreNewBalance').textContent = (currentEarnings + gain).toFixed(2);
         document.getElementById('modalGameOver').style.display='flex';
         window.playSound('gameover');
-        
+
         // Mostrar anuncio recompensado para bonus
         window._ultimaGananciaJuego = gain;
         setTimeout(() => {
             window.location.href = 'go:ad-game';
         }, 500);
     }
-    
+
     // ==========================================
     // 🐍 LÓGICA SNAKE
     // ==========================================
@@ -7043,20 +7404,20 @@ if(frame) {
 
     function resetSnake() {
         clearInterval(gameInterval);
-        
+
         snakeScore = 0;
         snake = [
             { x: 5, y: 5 },
             { x: 4, y: 5 },
             { x: 3, y: 5 }
         ];
-        
+
         velocity = { x: 1, y: 0 };
         food = generarComidaSnake();
-        
+
         const info = document.getElementById('gameInfoText');
         if (info) info.textContent = "PUNTOS: 0";
-        
+
         dibujarSnake();
         gameInterval = setInterval(actualizarSnake, 300);
     }
@@ -7082,19 +7443,19 @@ function generarComidaSnake() {
             x: snake[0].x + velocity.x,
             y: snake[0].y + velocity.y
         };
-        
+
         // choque con paredes
         if (cabeza.x < 0 || cabeza.x >= 15 || cabeza.y < 0 || cabeza.y >= 15) {
             return gameOver();
         }
-        
+
         // choque con sí misma
         if (snake.some(seg => seg.x === cabeza.x && seg.y === cabeza.y)) {
             return gameOver();
         }
-        
+
         snake.unshift(cabeza);
-        
+
         // comer comida
         if (cabeza.x === food.x && cabeza.y === food.y) {
             snakeScore += 10;
@@ -7105,7 +7466,7 @@ function generarComidaSnake() {
         } else {
             snake.pop();
         }
-        
+
         dibujarSnake();
     }
 
@@ -7154,10 +7515,10 @@ function dibujarSnake() {
         breakoutBall = { x: 150, y: 250, dx: 3, dy: -3 };
         breakoutScore = 0;
         initBricks();
-        
+
         const info = document.getElementById('gameInfoText');
         if (info) info.textContent = "PUNTOS: 0";
-        
+
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(updateBreakout, 20);
     }
@@ -7165,11 +7526,11 @@ function dibujarSnake() {
     function updateBreakout() {
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        
+
         // Fondo
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(0, 0, 300, 300);
-        
+
         // Dibujar ladrillos
         for (let c = 0; c < brickColumnCount; c++) {
             for (let r = 0; r < brickRowCount; r++) {
@@ -7178,28 +7539,28 @@ function dibujarSnake() {
                     const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
                     breakoutBricks[c][r].x = brickX;
                     breakoutBricks[c][r].y = brickY;
-                    
+
                     ctx.fillStyle = `hsl(${r * 60}, 70%, 50%)`;
                     ctx.fillRect(brickX, brickY, brickWidth, brickHeight);
                 }
             }
         }
-        
+
         // Dibujar pelota
         ctx.beginPath();
         ctx.arc(breakoutBall.x, breakoutBall.y, 6, 0, Math.PI * 2);
         ctx.fillStyle = '#ef4444';
         ctx.fill();
         ctx.closePath();
-        
+
         // Dibujar paleta
         ctx.fillStyle = '#10b981';
         ctx.fillRect(breakoutPaddle.x, 280, 50, 10);
-        
+
         // Mover pelota
         breakoutBall.x += breakoutBall.dx;
         breakoutBall.y += breakoutBall.dy;
-        
+
         // Colisión con paredes
         if (breakoutBall.x + breakoutBall.dx > 294 || breakoutBall.x + breakoutBall.dx < 6) {
             breakoutBall.dx = -breakoutBall.dx;
@@ -7207,12 +7568,12 @@ function dibujarSnake() {
         if (breakoutBall.y + breakoutBall.dy < 6) {
             breakoutBall.dy = -breakoutBall.dy;
         }
-        
+
         // Game over si la pelota cae
         if (breakoutBall.y > 290) {
             return gameOverBreakout();
         }
-        
+
         // Colisión con paleta (bounding box)
         const bLeft = breakoutBall.x - 6;
         const bRight = breakoutBall.x + 6;
@@ -7227,7 +7588,7 @@ function dibujarSnake() {
             breakoutBall.dy = -Math.abs(breakoutBall.dy);
             breakoutBall.y = pTop - 7; // sacar la pelota justo encima de la barra
         }
-        
+
         // Colisión con ladrillos
         for (let c = 0; c < brickColumnCount; c++) {
             for (let r = 0; r < brickRowCount; r++) {
@@ -7245,7 +7606,7 @@ function dibujarSnake() {
                 }
             }
         }
-        
+
         // Verificar si ganó
         if (breakoutScore >= brickRowCount * brickColumnCount * 10) {
             return gameOverBreakout();
@@ -7254,31 +7615,31 @@ function dibujarSnake() {
 
     function gameOverBreakout() {
         clearInterval(gameInterval);
-        
+
         const gain = breakoutScore * 0.01;
-        
+
         if (gain > 0 && idAuditor) {
             db.ref(`users/${idAuditor}`).update({
                 earnings: firebase.database.ServerValue.increment(gain),
                 snakeTotal: firebase.database.ServerValue.increment(gain)
             });
             registrarHistorial("Juego Breakout", gain);
-            
+
             if(window.checarProgresoDiario) window.checarProgresoDiario();
         }
-        
+
         const hoy = new Date().toISOString().split('T')[0];
         db.ref(`users/${idAuditor}`).update({
             gameMinutesToday: firebase.database.ServerValue.increment(5),
             lastGameDate: hoy
         });
-        
+
         document.getElementById('scoreWonDisplay').textContent = "+" + gain.toFixed(2);
         document.getElementById('scoreOldBalance').textContent = (currentEarnings).toFixed(2);
         document.getElementById('scoreNewBalance').textContent = (currentEarnings + gain).toFixed(2);
         document.getElementById('modalGameOver').style.display = 'flex';
         window.playSound('gameover');
-        
+
         // Mostrar anuncio recompensado para bonus
         window._ultimaGananciaJuego = gain;
         setTimeout(() => {
@@ -7455,7 +7816,7 @@ window.addEventListener('popstate', (e) => {
         adTrigger.style.display = 'none';
         adTrigger.src = 'go:s7'; // Tu código de anuncio
         document.body.appendChild(adTrigger);
-        
+
         // Limpieza del iframe
         setTimeout(() => {
             try { document.body.removeChild(adTrigger); } catch(e){}
@@ -7473,7 +7834,7 @@ window.addEventListener('popstate', (e) => {
     window.enviarCorreoSoporte = () => {
         const asunto = "Ayuda PAGOCODE - ID: " + (myCurrentKey || "Usuario");
         const cuerpo = "Hola, necesito ayuda con lo siguiente:\n\n(Escribe aquí tu problema)...";
-        
+
         if (typeof AndroidNative !== 'undefined') {
             AndroidNative.abrirCorreo("codec3865@gmail.com", asunto, cuerpo);
         } else {
@@ -7484,14 +7845,14 @@ window.addEventListener('popstate', (e) => {
     // --- FUNCIÓN PARA SUBIR EL 1% (META: 5 MISIONES) ---
     window.checarProgresoDiario = () => {
         const hoy = new Date().toISOString().split('T')[0];
-        
+
         db.ref(`users/${idAuditor}`).once('value').then(snap => {
             const u = snap.val();
-            
+
             // Datos de Lealtad
             let porcentajeActual = u.loyaltyPercent || 0;
             let fechaUltimoPunto = u.lastLoyaltyDate || ""; 
-            
+
             // Datos del Contador Diario
             let fechaConteo = u.dailyMissionDate || "";
             // Si es un nuevo día, el contador empieza en 0
@@ -7499,7 +7860,7 @@ window.addEventListener('popstate', (e) => {
 
             // 1. Sumamos la misión actual
             contadorHoy++;
-            
+
             const updates = {};
             updates['dailyMissionDate'] = hoy;
             updates['dailyMissionCount'] = contadorHoy;
@@ -7512,7 +7873,7 @@ window.addEventListener('popstate', (e) => {
                         porcentajeActual++;
                         updates['loyaltyPercent'] = porcentajeActual;
                         updates['lastLoyaltyDate'] = hoy; // Marcamos que hoy ya cobró
-                        
+
                         notify("🚀 ¡META DIARIA (5/5)! Lealtad +1%");
                         window.playSound('win');
                     }
@@ -7527,7 +7888,7 @@ window.addEventListener('popstate', (e) => {
 
             // 3. Guardamos en la base de datos
             db.ref(`users/${idAuditor}`).update(updates);
-            
+
             // Actualizar la barra visualmente si el modal está abierto
             if(document.getElementById('modalSoporte') && document.getElementById('modalSoporte').style.display === 'flex') {
                  document.getElementById('labelLoyalty').textContent = porcentajeActual + "%";
@@ -7538,7 +7899,7 @@ window.addEventListener('popstate', (e) => {
     // Reemplaza tu función window.abrirSoporte anterior por esta:
     window.abrirSoporte = () => {
         document.getElementById('modalSoporte').style.display = 'flex';
-        
+
         // Leemos el porcentaje de la base de datos para mostrarlo
         db.ref(`users/${idAuditor}/loyaltyPercent`).once('value').then(snap => {
             const val = snap.val() || 0;
@@ -7547,15 +7908,15 @@ window.addEventListener('popstate', (e) => {
         });
     };
     // --- PARCHE FINAL: SILENCIAR AL CERRAR ---
-    
+
     // 1. Función para matar el video
     window.stopPreview = () => {
         const container = document.getElementById('previewContainer');
         const frame = document.getElementById('previewFrame');
-        
+
         // Ocultamos el contenedor
         if(container) container.style.display = 'none';
-        
+
         // ¡ESTO ES LO IMPORTANTE! Borramos el iframe para que deje de sonar
         if(frame) frame.innerHTML = ""; 
     };
@@ -7564,7 +7925,7 @@ window.addEventListener('popstate', (e) => {
     window.cerrarSelectorMusica = () => {
         // Primero paramos la música
         stopPreview(); 
-        
+
         // Luego cerramos la ventana
         const modal = document.getElementById('modalMusicSelector');
         if(modal) modal.style.display = 'none';
@@ -7612,9 +7973,9 @@ window.addEventListener('popstate', (e) => {
     window.volverATendencias = () => {
         const input = document.getElementById('inputSearchMusic');
         if(input) input.value = ""; // Limpia el texto
-        
+
         stopPreview(); // Detiene la música si estaba sonando
-        
+
         document.getElementById('musicResultsList').innerHTML = htmlTendencias;
     };
     function irASnakeSeguro() {
@@ -7636,11 +7997,11 @@ window.addEventListener('popstate', (e) => {
 window.abrirRetiro = () => {
     const modal = document.getElementById('modalRetiro');
     modal.style.display = 'flex';
-    
+
     // Actualizamos saldo visual
     const saldo = (typeof currentEarnings !== 'undefined') ? currentEarnings : 0;
     document.getElementById('retiroSaldoDisplay').textContent = saldo.toFixed(2);
-    
+
     // 🔥 TRUCO MAGISTRAL: 
     // Agregamos un estado al historial. Así, cuando presiones "Atrás",
     // el navegador detecta que hay algo que cerrar antes de salir de la app.
@@ -7651,10 +8012,10 @@ window.abrirRetiro = () => {
     window.seleccionarMonto = (elemento, dolares, puntos) => {
     // 1. Quitar selección anterior
     document.querySelectorAll('.card-retiro').forEach(el => el.classList.remove('selected'));
-    
+
     // 2. Marcar nuevo
     elemento.classList.add('selected');
-    
+
     // 3. Guardar datos
     retiroMontoSeleccionado = dolares;
     retiroCostoPuntos = puntos;
@@ -7683,7 +8044,7 @@ window.abrirRetiro = () => {
     // PROCESAR RETIRO
     window.procesarRetiro = () => {
         const correo = document.getElementById('inputPaypalUnico').value.trim();
-        
+
         if (!correo || !correo.includes('@')) return notify("Ingresa un correo PayPal válido");
         if (currentEarnings < retiroCostoPuntos) return notify("Saldo insuficiente");
 
@@ -7696,7 +8057,7 @@ window.abrirRetiro = () => {
         db.ref(`users/${idAuditor}`).update({
             earnings: firebase.database.ServerValue.increment(-retiroCostoPuntos)
         }).then(() => {
-            
+
             // 2. CREAR SOLICITUD EN BASE DE DATOS (Para que tú la veas como Admin)
             db.ref('solicitudes_retiro').push({
                 uid: idAuditor,
@@ -7714,7 +8075,7 @@ window.abrirRetiro = () => {
             // 4. ÉXITO
             notify("✅ Solicitud enviada correctamente");
             document.getElementById('modalRetiro').style.display = 'none';
-            
+
             // Sonido de caja registradora
             try { new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_8ce5e82719.mp3').play(); } catch(e){}
         }).catch(error => {
@@ -7807,7 +8168,7 @@ function manejarMencion(input) {
     const mentionBox = document.getElementById('mentionList');
     const texto = input.value;
     const cursor = input.selectionStart;
-    
+
     // Detectar palabra actual
     const textoHastaCursor = texto.slice(0, cursor);
     const palabras = textoHastaCursor.split(' ');
@@ -7815,7 +8176,7 @@ function manejarMencion(input) {
 
     if (ultimaPalabra.startsWith('@')) {
         const busqueda = ultimaPalabra.substring(1).toUpperCase();
-        
+
         // Si la lista está vacía, intentamos cargarla de emergencia
         if (!listaUsuariosCache || listaUsuariosCache.length === 0) {
             console.log("⚠️ Lista vacía, intentando recargar...");
@@ -7830,7 +8191,7 @@ function manejarMencion(input) {
 
 function mostrarSugerencias(filtro, input) {
     const mentionBox = document.getElementById('mentionList');
-    
+
     // Candados de seguridad
     if (!filtro || filtro.trim() === "" || (typeof currentScreen !== 'undefined' && currentScreen !== 2)) {
         if(mentionBox) mentionBox.style.display = 'none';
@@ -7876,7 +8237,7 @@ function mostrarSugerencias(filtro, input) {
                 margin-right: 10px;
                 border: 1px solid #fbbf24;
             "></div>
-            
+
             <div style="flex: 1; line-height: 1.1;">
                 <div style="
                     font-weight: 700; 
@@ -7897,15 +8258,15 @@ function mostrarSugerencias(filtro, input) {
 function insertarMencion(nombre) {
     const input = document.getElementById('inputChatMsg');
     const mentionBox = document.getElementById('mentionList');
-    
+
     const texto = input.value;
     const cursor = input.selectionStart;
     const textoHastaCursor = texto.slice(0, cursor);
-    
+
     const palabras = textoHastaCursor.split(' ');
     palabras.pop(); 
     const nuevoInicio = palabras.join(' ') + (palabras.length > 0 ? ' ' : '') + "@" + nombre + " ";
-    
+
     input.value = nuevoInicio + texto.slice(cursor);
     mentionBox.style.display = 'none';
     input.focus();
@@ -7923,7 +8284,7 @@ function hablarTexto(texto) {
 
     // 3. Creamos el objeto y lo guardamos en la variable GLOBAL
     currentUtterance = new SpeechSynthesisUtterance(texto);
-    
+
     // 4. Configuración
     currentUtterance.lang = 'en-US'; 
     currentUtterance.rate = 0.9;
@@ -7980,7 +8341,7 @@ window.procesarFotoSeleccionada = () => {
             document.getElementById('imgPreview').src = fotoBase64Actual;
             document.getElementById('imgPreview').style.display = 'block';
             document.getElementById('placeholderUpload').style.display = 'none';
-            
+
             // Activar botón
             const btn = document.getElementById('btnPublicarFoto');
             btn.disabled = false;
@@ -7997,7 +8358,7 @@ window.procesarFotoSeleccionada = () => {
 // ==========================================
 window.subirFotoReal = () => {
     if (!fotoBase64Actual) return notify("Elige una foto primero");
-    
+
     const btn = document.getElementById('btnPublicarFoto');
     btn.disabled = true;
     btn.innerHTML = "Subiendo...";
@@ -8054,7 +8415,7 @@ function cargarGaleriaComunidad() {
 
     // Usamos .on('value') para que se actualice en tiempo real
     db.ref('galeria_comunidad').on('value', snap => {
-        
+
         // 1. Si no hay fotos, mostrar mensaje
         if (!snap.exists()) {
             contenedor.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1; grid-column:span 2; width:100%;">Sé el primero en subir una foto.</div>';
@@ -8078,7 +8439,7 @@ function cargarGaleriaComunidad() {
             if (a.pinned && !b.pinned) return -1;
             // Si b está fijado y a no, b va primero (1)
             if (!a.pinned && b.pinned) return 1;
-            
+
             // Si ambos son iguales en fijado, gana el más nuevo
             const fechaA = a.fecha || 0;
             const fechaB = b.fecha || 0;
@@ -8091,16 +8452,16 @@ function cargarGaleriaComunidad() {
             const imagenSrc = f.foto || "";
             const nombre = getDisplayName(f.uid, f.autor || "Anónimo");
             const esFijado = f.pinned ? '<div style="position:absolute; top:8px; right:8px; background:rgba(251, 191, 36, 0.9); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); font-size:0.8rem;">📌</div>' : '';
-            
+
             const divId = `photo-${f.k}`;
-            
+
             const commentCount = f.comentarios ? Object.keys(f.comentarios).length : 0;
 
             html += `
             <div id="${divId}" class="photo-card" 
                  data-index="${index}" data-key="${f.k}" data-uid="${f.uid}" data-pinned="${f.pinned}"
                  style="display:inline-block; width:100%; margin-bottom:10px; break-inside: avoid;">
-                
+
                 <div style="position:relative;">
                     ${esFijado}
                     <img src="${imagenSrc}" class="photo-img-content" loading="lazy" style="width:100%; display:block; border-radius:12px; pointer-events:none;">
@@ -8110,12 +8471,18 @@ function cargarGaleriaComunidad() {
                     <span style="font-weight:600; font-size:0.75rem; color:#334155; flex:1;">${nombre}</span>
                     ${f.uid === idAuditor ? '<span style="color:#ef4444; font-size:0.65rem; font-weight:600;">tu foto</span>' : ''}
                 </div>
-                <!-- Botón de comentar públicamente -->
+                <!-- Botones de like y comentar públicamente -->
                 <div style="padding:0 10px 10px; display:flex; align-items:center; gap:8px;">
                     <button
                         onclick="event.stopPropagation(); abrirComentariosFoto('${f.k}')"
                         style="display:flex; align-items:center; gap:5px; background:#f1f5f9; border:none; color:#475569; font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:background 0.15s;">
                         💬 <span id="cc-foto-${f.k}">${commentCount}</span> Comentar
+                    </button>
+                    <button
+                        onclick="event.stopPropagation(); likePhoto('${f.k}', '${f.uid}', this)"
+                        style="display:flex; align-items:center; gap:5px; background:#f1f5f9; border:none; color:#475569; font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:background 0.15s;">
+                        <i class="${(f.likes && idAuditor && f.likes[idAuditor]) ? 'fas fa-heart' : 'far fa-heart'}" style="color:${(f.likes && idAuditor && f.likes[idAuditor]) ? '#e11d48' : '#94a3b8'};"></i>
+                        <span>${f.vCount || 0}</span>
                     </button>
                 </div>
             </div>`;
@@ -8300,7 +8667,7 @@ window.enviarFotoPrivada = () => {
 window.mostrarFotoPrivada = (el) => {
     const fotoSrc = el.getAttribute('data-foto');
     if (!fotoSrc) return;
-    
+
     // Crear modal dinámico si no existe
     let modal = document.getElementById('modalVerFotoPrivada');
     if (!modal) {
@@ -8319,7 +8686,7 @@ window.mostrarFotoPrivada = (el) => {
         modal.onclick = () => modal.style.display = 'none';
         document.body.appendChild(modal);
     }
-    
+
     modal.innerHTML = `
         <img src="${fotoSrc}" style="max-width:95%; max-height:90vh; object-fit:contain; border-radius:12px; box-shadow:0 4px 30px rgba(0,0,0,0.5);">
         <button onclick="document.getElementById('modalVerFotoPrivada').style.display='none'" style="
@@ -8330,7 +8697,7 @@ window.mostrarFotoPrivada = (el) => {
             ✕
         </button>
     `;
-    
+
     modal.style.display = 'flex';
 };
 
@@ -8488,11 +8855,11 @@ const BONUS_AD_MSGS = 8;       // 8 mensajes extra al ver un anuncio
 window.abrirChatPrivado = (targetUid, targetName) => {
     if(!idAuditor) return notify("Inicia sesión primero");
     if(targetUid === idAuditor) return notify("No puedes hablarte a ti mismo");
-    
+
     targetUserUid = targetUid;
     currentChatTargetUid = targetUid;
     chatPrivadoActivo = true; // Marcar chat como activo
-    
+
     // Generar ID único del chat (Orden alfabético)
     currentChatId = [idAuditor, targetUid].sort().join('_');
 
@@ -8511,7 +8878,7 @@ window.abrirChatPrivado = (targetUid, targetName) => {
     // Configurar UI
     document.getElementById('privChatTitle').innerText = targetName;
     document.getElementById('privAvatar').style.backgroundImage = "url('" + getUserProfilePhoto(targetUid) + "')";
-    
+
     // Mostrar botón Facebook si existe
     const btnFb = document.getElementById('btnChatFacebook');
     btnFb.style.display = 'none';
@@ -8543,7 +8910,7 @@ window.abrirChatPrivado = (targetUid, targetName) => {
 
     document.getElementById('modalChatPrivado').style.display = 'flex';
     document.getElementById('privChatList').innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando chat...</div>';
-    
+
     cargarMensajesPrivados();
     checkLimiteDiario();
 };
@@ -8603,7 +8970,7 @@ function cargarMensajesPrivados() {
 
             html += `
             <div class="chat-row ${esMio ? 'mine' : 'other'}">
-                
+
                 <img 
                     src="${fotoMsg}" 
                     class="chat-avatar-img"
@@ -8830,7 +9197,7 @@ function checkLimiteDiario(uid) {
         const hoy = new Date().toISOString().split('T')[0];
         let conteo = (chatData.fecha === hoy) ? (chatData.count || 0) : 0;
         const total = LIMITE_DIARIO_MSGS + extras;
-        
+
         const label = document.getElementById('privDailyCount');
         if(label) {
             if (extras > 0) {
@@ -8886,10 +9253,10 @@ window.comprarMensajesPaypal = () => {
 // Verificar si hay compras confirmadas por el admin y acreditar mensajes
 function verificarComprasConfirmadas() {
     if (!idAuditor) return;
-    
+
     db.ref(`compras_mensajes_pendientes/${idAuditor}`).once('value', snap => {
         if (!snap.exists()) return;
-        
+
         const comprasConfirmadas = [];
         snap.forEach(child => {
             const compra = child.val();
@@ -8897,15 +9264,15 @@ function verificarComprasConfirmadas() {
                 comprasConfirmadas.push({ key: child.key, cantidad: compra.cantidad });
             }
         });
-        
+
         if (comprasConfirmadas.length === 0) return;
-        
+
         db.ref(`users/${idAuditor}/privados_diarios/extras`).once('value', s => {
             const extras = s.val() || 0;
-            
+
             let totalMensajes = 0;
             comprasConfirmadas.forEach(compra => totalMensajes += compra.cantidad);
-            
+
             db.ref(`users/${idAuditor}/privados_diarios/extras`).set(extras + totalMensajes)
             .then(() => {
                 // Marcar todas las compras como acreditadas
@@ -8966,16 +9333,16 @@ window.cerrarChatPrivado = () => {
         clearTimeout(window._pressTimer);
         clearTimeout(window._deleteTimer);
     } catch(e) {}
-    
+
     selectedMsgId = null;
     selectedMsgText = null;
     pressStartTime = 0;
-    
+
     // Ocultar modales
     document.getElementById('modalChatPrivado').style.display = 'none';
     document.getElementById('modalConfirmDeletePrivado').style.display = 'none';
     document.getElementById('modalChatOptions').style.display = 'none';
-    
+
     if(privChatRef) {
         privChatRef.off();
         privChatRef = null;
@@ -9236,7 +9603,7 @@ function cargarListaUsuariosHorizontal() {
 
     // Radar 1: Usuarios (para ver quién está conectado)
     db.ref('users').orderByChild('lastSeen').limitToLast(25).on('value', snapUsers => {
-        
+
         // Radar 2: 🔥 Pensamientos Públicos (Sincronización total)
         db.ref('pensamientos').on('value', snapNubes => {
             const nubesData = snapNubes.val() || {};
@@ -9246,7 +9613,7 @@ function cargarListaUsuariosHorizontal() {
             snapUsers.forEach(child => {
                 const u = child.val();
                 const uid = child.key;
-                
+
                 // Buscamos si este usuario tiene una nube en el nodo público
                 // Si la nube tiene más de 24 horas, no la mostramos para que no se llene de basura
                 const nube = nubesData[uid];
@@ -9303,11 +9670,11 @@ function renderizarUsuariosHorizontal() {
 
     listaUsuariosCacheReal.forEach(user => {
         const esMio = (user.key === idAuditor);
-        
+
         // --- 🔴 LÓGICA DEL BADGE ROJO (MENSAJES NO LEÍDOS) ---
         // Buscamos en el mapa si este usuario tiene mensajes para nosotros
         const numMensajes = window.mapaMensajesSinLeer ? (window.mapaMensajesSinLeer[user.key] || 0) : 0;
-        
+
         const badgeHtml = numMensajes > 0 
              ? `<div style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; 
                            border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; 
@@ -9342,7 +9709,7 @@ function renderizarUsuariosHorizontal() {
         // Tiempos y Colores de borde
         let tiempoTexto = esMio ? "Online" : (window.formatTimeAgo ? window.formatTimeAgo(user.rawTime) : "Reciente");
         let colorTiempo = (esMio || ahora - user.rawTime < 120000) ? "#10b981" : "#94a3b8";
-        
+
         // El borde se pone rojo si hay mensajes, verde si esta online, o gris normal
         let bordeColor = numMensajes > 0 ? '#ef4444' : (user.online ? '#10b981' : '#e2e8f0');
 
@@ -9350,22 +9717,22 @@ function renderizarUsuariosHorizontal() {
         html += `
         <div class="story-item" style="min-width: 70px; position:relative; margin-top: 35px;" 
              onclick="${esMio ? '' : `abrirChatPrivado('${user.key}', '${user.nombre.replace(/'/g, "\\'")}')`}">
-            
+
             ${nubeHtml} <!-- Nube flotante -->
 
             <div class="story-avatar-box" style="border-width: 3px; border-color: ${bordeColor}; position:relative; width:58px; height:58px; margin: 0 auto; transition: 0.3s;">
-                
+
                 <div class="story-img" style="background-image:url('${user.avatar}'); background-size: cover; background-position: center;"></div>
-                
+
                 ${badgeHtml} <!-- Círculo rojo de mensajes -->
-                
+
                 ${user.online ? `<div class="story-dot dot-online" style="border: 2px solid white; z-index: 10;"></div>` : ''}
             </div>
-            
+
             <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">
                 ${esMio ? 'Tú' : user.nombre}
             </div>
-            
+
             <div style="font-size: 0.55rem; color: ${colorTiempo}; font-weight: 800; margin-top:-2px;">
                 ${tiempoTexto}
             </div>
@@ -9382,7 +9749,7 @@ window.formatTimeAgo = (timestamp) => {
     const minutos = Math.floor(segundos / 60);
     const horas = Math.floor(minutos / 60);
     const dias = Math.floor(horas / 24);
-    
+
     if (minutos < 1) return 'Online';
     if (minutos < 60) return minutos + ' min';
     if (horas < 24) return horas + ' h';
@@ -9562,7 +9929,7 @@ function mostrarFotoGaleria() {
     if (contador) contador.textContent = `${galeriaIndexActual + 1} / ${galeriaFotosArray.length}`;
     if (btnAnt) btnAnt.style.display = galeriaIndexActual > 0 ? 'flex' : 'none';
     if (btnSig) btnSig.style.display = galeriaIndexActual < galeriaFotosArray.length - 1 ? 'flex' : 'none';
-    
+
     if (indicadores) {
         let indHtml = "";
         galeriaFotosArray.forEach((_, i) => {
@@ -9572,7 +9939,7 @@ function mostrarFotoGaleria() {
     }
 
     const nombre = foto.autor || "Anónimo";
-    
+
     if (btnSaludar) {
         if (foto.uid === idAuditor) {
             btnSaludar.style.display = 'none';
@@ -9584,13 +9951,13 @@ function mostrarFotoGaleria() {
             };
         }
     }
-    
+
     if (btnShare) {
         btnShare.onclick = () => {
             abrirModalCompartir(foto.k, "📸 Foto de " + nombre, 'foto');
         };
     }
-    
+
     if (btnLike) {
         btnLike.onclick = () => likePhoto(foto.k, foto.uid, btnLike);
         db.ref(`galeria_comunidad/${foto.k}`).once('value', snap => {
@@ -10368,30 +10735,69 @@ const misionesAprender = [
     { id: 'm8', titulo: 'Jugar Snake', descripcion: 'Juega dentro de la app', recompensa: 7 },
 ];
 
+const misionIconos = {
+    'm10': { icon: '🎵', color: '#8b5cf6', bg: '#f5f3ff' },
+    'm6':  { icon: '📥', color: '#10b981', bg: '#ecfdf5' },
+    'm1':  { icon: '📖', color: '#3b82f6', bg: '#eff6ff' },
+    'm4':  { icon: '📸', color: '#f59e0b', bg: '#fffbeb' },
+    'm11': { icon: '🎬', color: '#ef4444', bg: '#fef2f2' },
+    'm5':  { icon: '📤', color: '#ec4899', bg: '#fdf2f8' },
+    'm7':  { icon: '🌍', color: '#0ea5e9', bg: '#f0f9ff' },
+    'm9':  { icon: '🎁', color: '#f97316', bg: '#fff7ed' },
+    'm2':  { icon: '▶️', color: '#6366f1', bg: '#eef2ff' },
+    'm8':  { icon: '🐍', color: '#22c55e', bg: '#f0fdf4' },
+};
+
 function renderizarMisionesAprender() {
     const container = document.getElementById('listaMisiones');
     if (!container) return;
-    
+
     // Verificar si pasaron 24 horas desde el último reseteo
     const ultimoReseteo = localStorage.getItem('misiones_reseteo');
     const ahora = Date.now();
-    const veinticuatroHoras = 24 * 60 * 60 * 1000; // 24 horas en ms
-    
+    const veinticuatroHoras = 24 * 60 * 60 * 1000;
+
     if (!ultimoReseteo || (ahora - parseInt(ultimoReseteo)) > veinticuatroHoras) {
-        // Resetear todas las misiones
         misionesAprender.forEach(m => localStorage.removeItem('mision_' + m.id));
         localStorage.setItem('misiones_reseteo', ahora.toString());
+        localStorage.removeItem('mision_pts_hoy');
     }
-    
-    container.style.display = 'grid';
-    container.style.gridTemplateColumns = '1fr';
-    container.style.gap = '10px';
-    container.style.fontSize = '0.75rem';
+
+    // Calcular stats
+    let completadas = 0;
+    let ptsHoy = 0;
+    misionesAprender.forEach(m => {
+        if (localStorage.getItem('mision_' + m.id) === '1') {
+            completadas++;
+            ptsHoy += m.recompensa;
+        }
+    });
+    const total = misionesAprender.length;
+    const pct = Math.round((completadas / total) * 100);
+
+    // Actualizar header stats
+    const progBar = document.getElementById('misionProgBar');
+    const progText = document.getElementById('misionProgText');
+    const statC = document.getElementById('statCompletadas');
+    const statR = document.getElementById('statRestantes');
+    const statP = document.getElementById('statPtsHoy');
+    if (progBar) progBar.style.width = pct + '%';
+    if (progText) progText.textContent = `${completadas} / ${total}`;
+    if (statC) statC.textContent = completadas;
+    if (statR) statR.textContent = total - completadas;
+    if (statP) statP.textContent = ptsHoy;
+
+    container.style.display = 'block';
     container.innerHTML = misionesAprender.map(m => {
         const done = localStorage.getItem('mision_' + m.id) === '1';
-        return `<div class="mision-card ${done ? 'mision-completada' : ''}" onclick="ejecutarMision('${m.id}'); this.style.opacity='0.6'">
-            <div class="mision-top"><div><div class="mision-title">${m.titulo}</div><p class="mision-desc">${m.descripcion}</p></div><div class="mision-reward">+${m.recompensa} pts</div></div>
-            ${done ? `<div class="mision-badge">✔ Completada</div>` : ''}
+        const cfg = misionIconos[m.id] || { icon: '⭐', color: '#6366f1', bg: '#eef2ff' };
+        return `<div class="mision-card ${done ? 'mision-completada' : ''}" onclick="${done ? "notify('Ya completaste esta misión ✅')" : `ejecutarMision('${m.id}')`}">
+            <div class="mision-card-icon" style="background:${cfg.bg};">${cfg.icon}</div>
+            <div class="mision-info">
+                <div class="mision-title">${m.titulo}</div>
+                <p class="mision-desc">${m.descripcion}</p>
+            </div>
+            <div class="mision-reward">${done ? '✓ Listo' : '+' + m.recompensa + ' pts'}</div>
         </div>`;
     }).join('');
 }
@@ -10399,6 +10805,8 @@ function renderizarMisionesAprender() {
 function marcarMisionCompletada(clave, recompensa = 5) {
     if (localStorage.getItem(clave) === '1') return;
     localStorage.setItem(clave, '1');
+    // Guardar timestamp de última misión completada (para el check de 12h)
+    localStorage.setItem('ultima_mision_ts', Date.now().toString());
     sumarPuntosMision(recompensa);
     renderizarMisionesAprender();
     notify(`🎉 Misión completada. Ganaste ${recompensa} puntos`);
@@ -10435,7 +10843,7 @@ function ejecutarMision(id) {
     notify("📥 Abriendo Google Play Store...");
     // Abre el link de descarga
     window.open('https://play.google.com/store/apps/details?id=com.pagocode.app', '_blank');
-    
+
     // Simulamos que la completa después de 3 segundos
     setTimeout(() => {
         marcarMisionCompletada('mision_m6', 6);
@@ -10463,36 +10871,38 @@ if (id === 'm7') {
         localStorage.removeItem('mision_m9_intentos');
         localStorage.setItem('mision_m9_fecha', ahora.toString());
     }
-    
+
     // 2. Verificar cuántos intentos lleva el usuario
     let intentos = parseInt(localStorage.getItem('mision_m9_intentos')) || 0;
-    
+
     // 3. Si ya llegó a 5, bloquear
     if (intentos >= 5) {
         notify("🚫 Límite alcanzado. Vuelve en 24 horas.");
+        document.getElementById('m9CounterCard').style.display = 'none';
         return;
     }
-    
-    // 4. Incrementar el intento
+
+    // 4. Mostrar el contador antes de lanzar el anuncio
+    actualizarContadorM9(intentos);
+
+    // 5. Incrementar el intento
     intentos++;
     localStorage.setItem('mision_m9_intentos', intentos.toString());
-    
-    notify(`🎬 Intento ${intentos}/5... Mostrando anuncio`);
-    
-    // 5. Guardar intentos para el callback y disparar el anuncio AdMob
+
+    // 6. Guardar intentos para el callback y disparar el anuncio AdMob
     window._m9Intentos = intentos;
     window.location.href = 'go:ad-m9';
-    
+
     return;
 }
    if (id === 'm10') {
     notify("🎵 Abriendo reproductor de música...");
-    
+
     if (window.musicaTimerInterval) {
         clearInterval(window.musicaTimerInterval);
         window.musicaTimerInterval = null;
     }
-    
+
     const modal = document.createElement('div');
     modal.id = 'modalMusicaMision';
     modal.style.cssText = `
@@ -10500,7 +10910,7 @@ if (id === 'm7') {
         background: #000; z-index: 10002;
         display: flex; flex-direction: column;
     `;
-    
+
     const barra = document.createElement('div');
     barra.style.cssText = `
         background: linear-gradient(135deg, #ff0050 0%, #833ab4 100%);
@@ -10519,35 +10929,35 @@ if (id === 'm7') {
             ✕ Cerrar
         </button>
     `;
-    
+
     const iframe = document.createElement('iframe');
     iframe.src = 'https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator';
     iframe.style.cssText = 'flex: 1; border: none; width: 100%;';
     iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
     iframe.setAttribute('allowfullscreen', '');
-    
+
     modal.appendChild(barra);
     modal.appendChild(iframe);
     document.body.appendChild(modal);
-    
+
     window.history.pushState({modal: 'modalMusicaMision'}, "");
-    
+
     let segundosTranscurridos = 0;
     const timerElement = document.getElementById('timerMusica');
-    
+
     window.musicaTimerInterval = setInterval(() => {
         segundosTranscurridos++;
-        
+
         const secs = segundosTranscurridos;
         if (timerElement) timerElement.textContent = `0:${secs.toString().padStart(2, '0')}`;
-        
+
         if (segundosTranscurridos >= 30) {
             clearInterval(window.musicaTimerInterval);
             window.musicaTimerInterval = null;
             completarMisionMusica();
         }
     }, 1000);
-    
+
     function completarMisionMusica() {
         const m = document.getElementById('modalMusicaMision');
         if (m) m.remove();
@@ -10559,7 +10969,7 @@ if (id === 'm7') {
         notify("✅ ¡30 segundos completados! Ganaste 3 PTS");
         try { window.playSound('win'); } catch(e){}
     }
-    
+
     window.cerrarModalMusicaMision = function() {
         if (window.musicaTimerInterval) {
             clearInterval(window.musicaTimerInterval);
@@ -10568,17 +10978,70 @@ if (id === 'm7') {
         const m = document.getElementById('modalMusicaMision');
         if (m) m.remove();
     };
-    
+
     return;
  } }
+
+// ── CONTADOR VISUAL M9 ────────────────────────────────────────────────────
+function actualizarContadorM9(completados) {
+    const card = document.getElementById('m9CounterCard');
+    if (!card) return;
+    card.style.display = 'block';
+
+    const s1 = document.getElementById('m9s1');
+    const s2 = document.getElementById('m9s2');
+    const s3 = document.getElementById('m9s3');
+    const msg = document.getElementById('m9CounterMsg');
+    const btn = document.getElementById('m9NextBtn');
+
+    // Resetear clases
+    [s1, s2, s3].forEach(s => { s.className = 'm9-step'; });
+
+    if (completados === 0) {
+        s1.className = 'm9-step active';
+        if (msg) msg.textContent = '▶ Ve el 1er anuncio para empezar';
+        if (btn) btn.textContent = '▶ Ver 1er anuncio';
+    } else if (completados === 1) {
+        s1.className = 'm9-step done'; s1.textContent = '✓';
+        s2.className = 'm9-step active';
+        if (msg) msg.textContent = '1 de 3 ✅ — Ve el 2do anuncio';
+        if (btn) btn.textContent = '▶ Ver 2do anuncio';
+    } else if (completados === 2) {
+        s1.className = 'm9-step done'; s1.textContent = '✓';
+        s2.className = 'm9-step done'; s2.textContent = '✓';
+        s3.className = 'm9-step active';
+        if (msg) msg.innerHTML = '2 de 3 ✅ — <strong>¡El 3er anuncio da tu recompensa!</strong>';
+        if (btn) btn.textContent = '🎁 Ver 3er anuncio (recompensa)';
+    } else if (completados >= 3) {
+        s1.className = 'm9-step done'; s1.textContent = '✓';
+        s2.className = 'm9-step done'; s2.textContent = '✓';
+        s3.className = 'm9-step done'; s3.textContent = '✓';
+        if (msg) msg.innerHTML = '🎉 <strong>¡Recompensa desbloqueada!</strong>';
+        if (btn) {
+            if (completados < 5) {
+                btn.textContent = '▶ Seguir viendo (opcional)';
+                btn.style.background = 'linear-gradient(135deg,#6366f1,#4f46e5)';
+            } else {
+                btn.textContent = '🚫 Límite del día alcanzado';
+                btn.disabled = true;
+                btn.style.background = '#e2e8f0';
+                btn.style.color = '#94a3b8';
+                btn.style.boxShadow = 'none';
+            }
+        }
+    }
+}
 
 // Callback after AdMob interstitial ad for m9 mission
 window.onM9AdComplete = function() {
     const intentos = window._m9Intentos || 0;
-    
+
+    // Actualizar contador con el número de anuncios vistos
+    actualizarContadorM9(intentos);
+
     // 30% de probabilidad de ganar
     const gano = Math.random() < 0.3;
-    
+
     if (gano) {
         marcarMisionCompletada('mision_m9', 50);
         const modal = document.createElement('div');
@@ -10631,14 +11094,14 @@ window.onGameAdComplete = function() {
     const gain = window._ultimaGananciaJuego || 0;
     if (gain <= 0) return;
     window._ultimaGananciaJuego = null;
-    
+
     db.ref(`users/${idAuditor}`).update({
         earnings: firebase.database.ServerValue.increment(gain),
         snakeTotal: firebase.database.ServerValue.increment(gain)
     });
     registrarHistorial("Bonus video juego", gain);
     notify(`🎁 Bonus por anuncio: +${gain.toFixed(2)} PTS`);
-    
+
     // Actualizar montos en el modal
     const oldBalance = parseFloat(document.getElementById('scoreOldBalance').textContent) || 0;
     const currentDisplay = parseFloat(document.getElementById('scoreNewBalance').textContent) || 0;
@@ -10752,6 +11215,38 @@ function actualizarUIMisiones() {
 setInterval(verificarResetMisiones, 60000);
 document.addEventListener('DOMContentLoaded', function() { verificarResetMisiones(); });
 
+// ── CHECK INACTIVIDAD 12 HORAS ─────────────────────────────────────────────
+function verificarInactividadMisiones() {
+    const overlay = document.getElementById('overlayInactividad');
+    if (!overlay) return;
+    const ultimaTs = parseInt(localStorage.getItem('ultima_mision_ts') || '0');
+    if (ultimaTs === 0) {
+        // Primera vez: guardar ahora para no mostrar en el primer acceso
+        localStorage.setItem('ultima_mision_ts', Date.now().toString());
+        return;
+    }
+    const doceHoras = 12 * 60 * 60 * 1000;
+    const pasadas = Date.now() - ultimaTs;
+    // Solo mostrar si no fue cerrado hace menos de 1h
+    const ultimoCierre = parseInt(localStorage.getItem('overlay_inac_cerrado') || '0');
+    const unaHora = 60 * 60 * 1000;
+    if (pasadas > doceHoras && (Date.now() - ultimoCierre) > unaHora) {
+        overlay.style.display = 'flex';
+    }
+}
+
+window.cerrarOverlayInactividad = function() {
+    const overlay = document.getElementById('overlayInactividad');
+    if (overlay) overlay.style.display = 'none';
+    localStorage.setItem('overlay_inac_cerrado', Date.now().toString());
+};
+
+// Verificar al cargar y cada 30 minutos
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(verificarInactividadMisiones, 3000);
+});
+setInterval(verificarInactividadMisiones, 30 * 60 * 1000);
+
 function verificarResetDiario() {
     const ultimoReset = localStorage.getItem('ultimoResetDiario');
     const hoy = new Date().toDateString();
@@ -10810,7 +11305,7 @@ function resetearMisionesInmediatas() {
     localStorage.removeItem('mision_subir_foto_completada');
     localStorage.removeItem('mision_compartir_app_completada');
     localStorage.removeItem('mision_seguir_usuario_completada');
-    
+
     // SISTEMA 2: Misiones Aprender (m1 a m10)
     for(let i=1; i<=10; i++) {
         localStorage.removeItem('mision_m' + i);
@@ -10819,16 +11314,16 @@ function resetearMisionesInmediatas() {
     localStorage.removeItem('mision_m2_vistos');
     localStorage.removeItem('mision_m4_activa');
     localStorage.removeItem('mision_ingles_1');
-    
+
     // Reset de fecha de control
     localStorage.removeItem('ultimaRevisionMisiones');
-    
+
     // Reset de misión música (m10)
     localStorage.removeItem('mision_m10');
-    
+
     // Reset de contador de intentos (m9)
     localStorage.removeItem('mision_m9_intentos');
-    
+
     alert('✅ TODAS las misiones reseteadas. Recargando...');
     location.reload();
 }
@@ -11078,7 +11573,7 @@ window.abrirListaChats = () => {
 
     const container = document.getElementById('listaChatsContainer');
     container.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando chats...';
-    
+
     if (!idAuditor) return;
 
     // 1. Obtenemos TODOS los chats privados
@@ -11089,27 +11584,27 @@ window.abrirListaChats = () => {
         }
 
         let chatsPendientes = [];
-        
+
         snap.forEach(chatSnap => {
             const chatId = chatSnap.key;
             const partes = chatId.split('_');
-            
+
             // Verificamos si este chat es mío
             if (partes.includes(idAuditor)) {
                 // Obtenemos el otro usuario
                 const otroUid = partes[0] === idAuditor ? partes[1] : partes[0];
-                
+
                 // Obtenemos todos los mensajes de este chat para ver quién escribió último
                 const mensajes = [];
                 chatSnap.forEach(msgSnap => {
                     mensajes.push(msgSnap.val());
                 });
-                
+
                 if (mensajes.length > 0) {
                     // Ordenamos por fecha para encontrar el último
                     mensajes.sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
                     const ultimoMsg = mensajes[0];
-                    
+
                     // 🔥 FILTRO: Solo mostramos si el ÚLTIMO mensaje NO es mío (espero respuesta)
                     if (ultimoMsg.uid !== idAuditor) {
                         chatsPendientes.push({
@@ -11121,7 +11616,7 @@ window.abrirListaChats = () => {
                 }
             }
         });
-        
+
         if (chatsPendientes.length === 0) {
             container.innerHTML = '<div style="padding:20px; text-align:center; color:#64748b;">✅ ¡Todo al día!<br>No tienes mensajes pendientes de respuesta.</div>';
             return;
@@ -11135,16 +11630,16 @@ window.abrirListaChats = () => {
         chatsPendientes.forEach(chat => {
             const msg = chat.ultimoMsg;
             const uid = chat.otroUid;
-            
+
             // Calculamos tiempo
             const ahora = Date.now();
             const diffMin = Math.floor((ahora - (msg.fecha || Date.now())) / 60000);
             let tiempoTexto = diffMin < 1 ? 'Ahora' : `${diffMin} min`;
-            
+
             // Texto del mensaje
             let textoResumen = msg.texto || (msg.esFoto ? '📷 Foto' : '...');
             if (textoResumen.length > 30) textoResumen = textoResumen.substring(0, 30) + '...';
-            
+
             html += `<div id="chat-item-${uid}" onclick="abrirChatPrivado('${uid}', 'Cargando...')" 
                      style="padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 12px; background: white;">
                 <div style="width: 45px; height: 45px; border-radius: 50%; background: #e2e8f0; background-size: cover; background-image: url('${getUserProfilePhoto(uid)}'); flex-shrink: 0;"></div>
@@ -11162,23 +11657,23 @@ window.abrirListaChats = () => {
                 </div>
             </div>`;
         });
-        
+
         container.innerHTML = html;
 
         // 🔥 AQUÍ OBTENEMOS LOS NOMBRES REALES (Apodo o INV)
         const uidsPendientes = chatsPendientes.map(c => c.otroUid);
         const usersRef = db.ref('users');
-        
+
         // Promesa para esperar los datos de todos los usuarios
         const promises = uidsPendientes.map(uid => {
             return usersRef.child(uid).once('value').then(snap => {
                 const u = snap.val();
                 // LÓGICA: Primero busca Apodo, si no existe usa INV
                 const nombreReal = (u && u.apodo) ? u.apodo : (u && u.myInviteKey ? u.myInviteKey : 'Usuario');
-                
+
                 const elName = document.getElementById(`chat-name-${uid}`);
                 const elItem = document.getElementById(`chat-item-${uid}`);
-                
+
                 if (elName) {
                     elName.textContent = escapeHtml(nombreReal);
                 }
@@ -11188,7 +11683,7 @@ window.abrirListaChats = () => {
                 }
             });
         });
-        
+
         Promise.all(promises).then(() => {
             console.log("Nombres de chats actualizados con apodos reales");
         });
@@ -11220,10 +11715,10 @@ window.abrirBusquedaUsuarios = () => {
 window.buscarUsuarioPorClave = () => {
     const textoBusqueda = document.getElementById('inputBuscarUsuario').value.trim();
     if (!textoBusqueda) return notify("❌ Ingresa un código o apodo");
-    
+
     const resultado = document.getElementById('resultadoBusqueda');
     resultado.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
-    
+
     // Primero intentamos buscar por myInviteKey (código INV-XXXXX)
     db.ref('users').orderByChild('myInviteKey').equalTo(textoBusqueda.toUpperCase()).once('value', snap => {
         if (snap.exists()) {
@@ -11247,13 +11742,13 @@ window.buscarUsuarioPorClave = () => {
                             const u = user.val();
                             const apodoLower = (u.apodo || '').toLowerCase();
                             const busquedaLower = textoBusqueda.toLowerCase();
-                            
+
                             if (apodoLower.includes(busquedaLower) && user.key !== idAuditor) {
                                 mostrarResultadoBusqueda(user);
                                 encontrado = true;
                             }
                         });
-                        
+
                         if (!encontrado) {
                             resultado.innerHTML = '<div style="color: #ef4444; margin-top: 10px; text-align: center;">❌ Usuario no encontrado</div>';
                         }
@@ -11267,12 +11762,12 @@ window.buscarUsuarioPorClave = () => {
 function mostrarResultadoBusqueda(userSnap) {
     const u = userSnap.val();
     const resultado = document.getElementById('resultadoBusqueda');
-    
+
     const fbBtn = u.facebookUrl ? `
         <button onclick="abrirFacebookConAnuncio('${userSnap.key}')" class="btn-blue" style="margin-top:8px; background:#1877f2;">
             <i class="fab fa-facebook"></i> Ver Facebook
         </button>` : '';
-    
+
     resultado.innerHTML = `
         <div style="text-align: center; padding: 15px; background: #f0fdf4; border-radius: 12px; margin-top: 10px;">
             <div style="width: 60px; height: 60px; border-radius: 50%; background: #e2e8f0; margin: 0 auto 10px; background-size: cover; background-image: url('${getUserProfilePhoto(userSnap.key)}');"></div>
@@ -11324,7 +11819,7 @@ window.guardarApodo = () => {
     if (!apodo) return notify("❌ Ingresa un apodo");
     if (apodo.length > 15) return notify("❌ Máximo 15 caracteres");
     if (!idAuditor) return notify("❌ Inicia sesión primero");
-    
+
     apodosCache[idAuditor] = apodo;
     db.ref(`users/${idAuditor}`).update({ apodo: apodo }).then(() => {
         notify("✅ Apodo guardado: " + apodo);
@@ -11494,7 +11989,7 @@ window.cerrarModalNotif = () => {
 function actualizarPuntosEnJuegos() {
     const mainPts = document.getElementById('gameMainPts');
     const snakeWallet = document.getElementById('gameSnakeWallet');
-    
+
     if (mainPts) {
         mainPts.textContent = currentEarnings.toFixed(2);
     }
@@ -11603,7 +12098,7 @@ window.publicarPensamiento = () => {
 
     // 🔥 USAMOS EL NODO "pensamientos" DE TUS REGLAS
     const timestamp = firebase.database.ServerValue.TIMESTAMP;
-    
+
     const actualizaciones = {};
     // Lo guardamos en el nodo global para que sea PÚBLICO
     actualizaciones[`pensamientos/${idAuditor}`] = {
@@ -11627,7 +12122,7 @@ window.cargarPensamientosPublicos = () => {
     if(!feedContainer) return;
 
     db.ref('pensamientos').orderByChild('timestamp').limitToLast(15).on('value', snap => {
-        let html = "";
+        let html = ""; Ed
 
         if (!snap.exists()) {
             feedContainer.innerHTML = "<div style='color:#94a3b8; font-size:0.7rem;'>Nadie ha pensado nada hoy... ✨</div>";
@@ -11707,7 +12202,7 @@ window.procesarVideoSeleccionado = () => {
     videoCargador.onloadedmetadata = function() {
         // Liberar memoria
         window.URL.revokeObjectURL(videoCargador.src);
-        
+
         const duracion = videoCargador.duration;
         console.log("Duración detectada: " + duracion);
 
@@ -11723,12 +12218,12 @@ window.procesarVideoSeleccionado = () => {
         document.getElementById('modalSubirVideo').style.display = 'flex';
         const videoTag = document.getElementById('videoPreview');
         const placeholder = document.getElementById('videoPlaceholder');
-        
+
         const url = URL.createObjectURL(file);
         videoTag.src = url;
         videoTag.style.display = 'block';
         placeholder.style.display = 'none';
-        
+
         document.getElementById('btnPublicarVideo').disabled = false;
     };
 
@@ -11820,7 +12315,7 @@ window.subirVideoServidor = () => {
 
         document.getElementById('modalSubirVideo').style.display = 'none';
         notify("✅ ¡Video publicado! +0.50 PTS");
-        
+
         // Limpiar y refrescar
         document.getElementById('inputVideoArchivo').value = "";
         goToScreen(2); 
@@ -11833,13 +12328,13 @@ window.subirVideoServidor = () => {
 };
 window.iniciarCompraGooglePlay = () => {
     try { window.playSound('click'); } catch(e){}
-    
+
     if (typeof AndroidNative !== 'undefined' && AndroidNative.comprarMensajes) {
         notify("⏳ Abriendo Google Play...");
-        
+
         // 🔥 CAMBIO AQUÍ: Pon el ID EXACTO de tu producto de Google Play Console
         AndroidNative.comprarMensajes("pack_20_mensajes"); 
-        
+
     } else {
         notify("⚠️ Las compras integradas no están disponibles en este momento.");
     }
@@ -11862,7 +12357,7 @@ window.cambiarPestanaChat = (pestana) => {
     const btnGlobal = document.getElementById('tabGlobalBtn');
     const btnMensajes = document.getElementById('tabMensajesBtn');
     const btnGrupos = document.getElementById('tabGruposBtn');
-    
+
     const contGlobal = document.getElementById('chatListContainer');
     const contMensajes = document.getElementById('mensajesPrivadosContainer');
     const contGrupos = document.getElementById('gruposListContainer');
@@ -11886,7 +12381,7 @@ window.cambiarPestanaChat = (pestana) => {
     else if (pestana === 'mensajes') {
         if(btnMensajes) btnMensajes.classList.add('active');
         if(contMensajes) contMensajes.style.display = 'block';
-        
+
         // 🔥 ESTA ES LA LÍNEA QUE CARGA LOS CHATS
         if(typeof cargarChatsPrivadosNoLeidos === "function") {
             cargarChatsPrivadosNoLeidos();
@@ -11923,12 +12418,12 @@ window.abrirChatDeGrupo = (idGrupo, nombreGrupo, iconoGrupo) => {
         if (totalReferidos < 2) {
             const faltan = 2 - totalReferidos;
             notify(`🔒 Necesitas ${faltan} referido(s) más para entrar a los grupos`);
-            
+
             // Opcional: Le abrimos el modal de invitar para que vea su código
             setTimeout(() => {
                 if (typeof abrirModalInvitar === 'function') abrirModalInvitar();
             }, 1500);
-            
+
             try { window.playSound('gameover'); } catch(e){}
             return;
         }
@@ -11944,21 +12439,21 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
     document.getElementById('grupoChatTitle').innerText = nombreGrupo;
     document.getElementById('grupoIconoHeader').innerText = iconoGrupo || '💬';
     document.getElementById('modalChatGrupo').style.display = 'flex';
-    
+
     const list = document.getElementById('grupoChatList');
     list.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando mensajes...</div>';
 
     if (grupoChatRef) grupoChatRef.off();
-    
+
     // Escuchar los mensajes de este grupo específico
     grupoChatRef = db.ref(`grupos_chat/${idGrupo}/mensajes`).limitToLast(50);
-    
+
     grupoChatRef.on('value', snap => {
         if (!snap.exists()) {
             list.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:20px;">Sé el primero en escribir en este grupo.</div>';
             return;
         }
-        
+
         let html = '';
         snap.forEach(s => {
             const m = s.val();
@@ -11966,7 +12461,7 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
             const avatar = getUserProfilePhoto(m.uid);
             const textoEscapado = escapeHtml(m.texto).replace(/"/g, '&quot;');
             const fotoEscapada = m.foto ? m.foto.replace(/"/g, '&quot;') : '';
-            
+
             let fotoHTML = '';
             if (m.esFoto && m.foto) {
                 fotoHTML = `
@@ -11975,7 +12470,7 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
                     </div>
                 `;
             }
-            
+
             html += `
             <div class="chat-row ${esMio ? 'mine' : 'other'}">
                 <img src="${avatar}" class="chat-avatar-img" onclick="mostrarPerfilUsuario('${m.uid}', '${escapeHtml(m.autor)}')">
@@ -11999,7 +12494,7 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
                 </div>
             </div>`;
         });
-        
+
         list.innerHTML = html;
         setTimeout(() => list.scrollTop = list.scrollHeight, 100);
     });
@@ -12148,11 +12643,11 @@ window.crearNuevoGrupo = () => {
         if (totalReferidos < 2) {
             const faltan = 2 - totalReferidos;
             notify(`🔒 Necesitas ${faltan} referido(s) más para crear grupos`);
-            
+
             setTimeout(() => {
                 if (typeof abrirModalInvitar === 'function') abrirModalInvitar();
             }, 1500);
-            
+
             try { window.playSound('gameover'); } catch(e){}
             return;
         }
@@ -12175,12 +12670,12 @@ window.guardarNuevoGrupo = () => {
 
     const inputNombre = document.getElementById('inputNombreGrupo');
     const inputIcono = document.getElementById('inputIconoGrupo');
-    
+
     if (!inputNombre || !inputIcono) return console.error("No se encontraron los inputs");
 
     const nombre = inputNombre.value.trim();
     const icono = inputIcono.value.trim() || '💬'; // Si no pone emoji, le pone uno por defecto
-    
+
     if (!nombre) return notify("❌ Ponle un nombre al grupo");
 
     const btn = document.querySelector('#modalCrearGrupo .btn-blue');
@@ -12201,16 +12696,16 @@ window.guardarNuevoGrupo = () => {
     }).then(() => {
         document.getElementById('modalCrearGrupo').style.display = 'none';
         notify("✅ Grupo creado con éxito");
-        
+
         if (btn) {
             btn.disabled = false;
             btn.textContent = "Crear Grupo";
         }
-        
+
         // Limpiar los campos para la próxima vez
         inputNombre.value = '';
         inputIcono.value = '';
-        
+
         try { window.playSound('win'); } catch(e){}
     }).catch(err => {
         notify("❌ Error al crear grupo: " + err.message);
@@ -12326,7 +12821,7 @@ window.eliminarGrupo = () => {
 window.cargarChatsPrivadosNoLeidos = () => {
     const container = document.getElementById('mensajesPrivadosContainer');
     if (!container || !idAuditor) return;
-    
+
     // Mostrar spinner
     container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i><div style="margin-top:15px;">Buscando chats...</div></div>';
 
@@ -12340,7 +12835,7 @@ window.cargarChatsPrivadosNoLeidos = () => {
         snap.forEach(chatSnap => {
             const chatId = chatSnap.key;
             const partes = chatId.split('_');
-            
+
             // Verificar si soy participante del chat
             if (partes.includes(idAuditor)) {
                 const otroUid = partes[0] === idAuditor ? partes[1] : partes[0];
@@ -12455,7 +12950,7 @@ function reproducirVideo(card) {
     const frame = card.querySelector('.vid-frame');
 
     window.parent.postMessage({type: 'startVideoProgress', videoId: mediaId}, '*');
-    
+
     if (type === 'direct') {
         frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit: cover; background: #000;"><source src="${mediaId}" type="video/mp4"></video>`;
     } 
@@ -12476,11 +12971,11 @@ function reproducirVideo(card) {
 <!-- 📱 MENÚ DE OPCIONES AL TOCAR + -->
 <div id="modalMenuPublicar" class="modal-overlay" style="z-index: 40000; align-items: flex-end; display: none;">
     <div class="modal-content" style="width: 100%; max-width: 100%; border-radius: 25px 25px 0 0; padding: 30px 20px; margin: 0; animation: slideUp 0.3s ease;">
-        
+
         <h3 style="margin-bottom: 25px; color: #1e293b; text-align: center;">¿Qué deseas publicar?</h3>
 
         <div style="display: flex; flex-direction: column; gap: 15px;">
-            
+
             <!-- OPCIÓN YOUTUBE -->
 <!-- Añade este botón a tu modalMenuPublicar en index.html -->
 <!-- Botón Librería en modalMenuPublicar -->
@@ -12514,11 +13009,11 @@ function reproducirVideo(card) {
 <!-- 📱 SUB-MENÚ: CÁMARA O GALERÍA PARA VIDEO PROPIO -->
 <div id="modalOpcionVideoPropio" class="modal-overlay" style="z-index: 41000; align-items: flex-end; display: none;">
     <div class="modal-content" style="width: 100%; max-width: 100%; border-radius: 25px 25px 0 0; padding: 30px 20px; margin: 0; animation: slideUp 0.3s ease;">
-        
+
         <h3 style="margin-bottom: 25px; color: #1e293b; text-align: center;">Subir video propio</h3>
 
         <div style="display: flex; flex-direction: column; gap: 15px;">
-            
+
             <button onclick="grabarVideoCamara()" 
                 style="width: 100%; padding: 18px; border: 2px solid #6366f1; background: #eef2ff; border-radius: 18px; display: flex; align-items: center; gap: 15px; cursor: pointer;">
                 <span style="font-size: 2rem;">🎬</span>
@@ -12555,7 +13050,7 @@ function reproducirVideo(card) {
     <div class="modal-content" style="max-width: 350px;">
         <h3 style="color:#10b981;">🚀 Publicar Mi Video</h3>
         <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Gana +0.50 PTS por tu contenido.</p>
-        
+
         <div style="background:#000; border-radius:15px; height:200px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px;">
             <video id="videoPreview" style="width:100%; height:100%; display:none;" controls></video>
             <div id="videoPlaceholder" style="color:white; text-align:center;">
@@ -12565,7 +13060,7 @@ function reproducirVideo(card) {
         </div>
 
         <textarea id="videoDescripcion" placeholder="Escribe algo sobre tu video..." rows="3" style="text-align: left; font-size: 0.9rem;"></textarea>
-        
+
         <button id="btnPublicarVideo" onclick="publicarVideoConAnuncio()" class="btn-blue" style="background:#10b981;" disabled>
             📺 Publicar (anuncio bonificado)
         </button>
@@ -12578,13 +13073,13 @@ function reproducirVideo(card) {
     <div class="modal-content" style="max-width: 350px;">
         <h3 style="color:#8b5cf6; margin-bottom: 10px;">💭 Pensamiento Público</h3>
         <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Comparte lo que piensas con todos</p>
-        
+
         <textarea id="inputPensamiento" placeholder="¿En qué estás pensando?" rows="5" maxlength="160" style="text-align: left; font-size: 0.9rem; resize: vertical; max-height: 75px;"></textarea>
-        
+
         <div style="font-size: 0.7rem; color: #94a3b8; margin: 10px 0;">
             <span id="contadorPensamiento">0</span> / 280 caracteres
         </div>
-        
+
         <button id="btnPublicarPensamiento" onclick="publicarPensamiento()" class="btn-blue" style="background: linear-gradient(135deg, #8b5cf6, #a855f7); width: 100%; margin-bottom: 10px;">
             ✨ Publicar Pensamiento
         </button>
