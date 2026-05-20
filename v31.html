@@ -319,7 +319,7 @@
   .spinner {
       width: 45px; height: 45px;
       border: 4px solid #e2e8f0;
-      border-top: 4px solid #6366f1
+      border-top: 4px solid #6366f1;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
   }
@@ -332,7 +332,6 @@
       width: 500vw;
       height: 100vh;
       transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      transform: translateX(-100vw);
       will-change: transform;
       transform: translateZ(0);
       backface-visibility: hidden;
@@ -630,7 +629,7 @@
       padding: 8px 14px; border-radius: 50px;
       font-size: 11px; font-weight: 700; cursor: pointer;
   }
-  .stories-container { background: transparent; padding: 15px 0 15px 0; margin-bottom: 5px; }
+  .stories-container { background: transparent; padding: 1px 0 15px 0; margin-bottom: 15px; }
   .stories-title { padding: 0 15px 10px; font-size: 0.85rem; font-weight: 700; color: #64748b; }
   
   .stories-scroll {
@@ -1059,6 +1058,11 @@
        transition: none;
    }
 
+   .msg-bubble.swiping-mention {
+       transition: none;
+       box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3) !important;
+   }
+
   .msg-mine {
       align-self: flex-end;
       background: linear-gradient(135deg, #6366f1, #90ee9060);
@@ -1116,8 +1120,16 @@
   .ic-purple { color: #8b5cf6; }
   .ic-gray { color: #64748b; }
 
-  .pensamientos-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80%; text-align: center; padding: 30px; }
-
+.pensamientos-wrapper { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: flex-start; /* Cambiado de center a flex-start */
+    height: auto; /* Cambiado de 80% a auto */
+    text-align: center; 
+    padding: 10px; /* Reducido de 30px */
+    margin-top: 10px; /* Agregado para controlar la posición */
+}
 
 
 #muroFotosGrid {
@@ -1578,7 +1590,282 @@
           // Llave pública corregida 👇
           emailjs.init("VDnIwq_AnzDP-iCEO");
        })();
-       
+       let videoPendienteUrl = "";
+let fotoBase64Pendiente = "";
+
+window.abrirLibreriaVideosPremium = () => {
+    if(document.getElementById('modalMenuPublicar')) document.getElementById('modalMenuPublicar').style.display = 'none';
+    notify("🎧 Cargando Biblioteca Spotify...");
+
+    db.ref('libreria_videos').once('value', snap => {
+        let itemsHtml = "";
+        if(!snap.exists()) return notify("La biblioteca está vacía");
+
+        let data = snap.val();
+        let videos = data.Nombre ? data.Nombre : data;
+
+        Object.keys(videos).forEach(key => {
+            const url = videos[key];
+            const id = url.split('/').pop();
+            const thumbUrl = url.includes('dai.ly') 
+                ? `https://www.dailymotion.com/thumbnail/video/${id}`
+                : `https://thumbs.streamable.com/${id}.jpg`;
+            
+            itemsHtml += `
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #1a1a1a;">
+                <!-- SECCIÓN ESCUCHAR -->
+<div id="video-item-${key}" onclick="window.reproducirAudioPremium('${url.replace(/'/g, "\\'")}', '${key}')" 
+     style="display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; transition: transform 0.2s;"
+     data-video-url="${url}">
+                    <div style="width: 55px; height: 55px; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: #282828; position: relative; border: 1px solid #333;">
+                        <img src="${thumbUrl}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/117/117498.png';" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3);">
+                             <i class="fas fa-play" style="color: #1DB954; font-size: 0.9rem;"></i>
+                        </div>
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="color: white; font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${key}</div>
+                        <div style="color: #1DB954; font-size: 0.65rem; font-weight: 800; margin-top: 3px; letter-spacing: 0.5px;">▶ TOCAR PARA ESCUCHAR</div>
+                    </div>
+                </div>
+                <!-- BOTÓN ELEGIR -->
+                <button onclick="window.abrirPasoFoto('${url}')" 
+                        style="background: white; border: none; color: black; padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(255,255,255,0.1);">
+                    ELEGIR
+                </button>
+            </div>`;
+        });
+
+        const ex = document.getElementById("modalLibreriaFinal");
+        if(ex) ex.remove();
+
+        const modal = document.createElement('div');
+        modal.id = "modalLibreriaFinal";
+        modal.style.cssText = "position:fixed; inset:0; background:#000; z-index:999999; display:flex; flex-direction:column; padding:20px;";
+        modal.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px;">
+                <h3 style="color: white; font-size: 1.3rem; font-weight: 800;">Librería Premium</h3>
+                <div onclick="window.cerrarTodoLibreria()" style="color: white; font-size: 1.8rem; cursor: pointer;">✕</div>
+            </div>
+
+            <!-- MINI-PLAYER VISIBLE: visible para que el navegador permita audio -->
+            <div id="reproductorAudioLib" style="width:100%; height:0; border-radius:12px; overflow:hidden; background:#111; transition:height 0.3s ease; margin-bottom:0;"></div>
+            <div id="reproductorAudioLibLabel" style="display:none; color:#1DB954; font-size:0.75rem; font-weight:800; text-align:center; padding:6px 0 10px; letter-spacing:0.5px;">▶ REPRODUCIENDO...</div>
+
+            <div style="flex: 1; overflow-y: auto; scrollbar-width: none;">${itemsHtml}</div>
+            <div style="padding: 20px 0;"><button onclick="window.cerrarTodoLibreria()" style="width: 100%; background: #1DB954; color: #000; padding: 16px; border-radius: 40px; font-weight: 900; font-size: 1rem; border: none;">CERRAR</button></div>
+        `;
+        document.body.appendChild(modal);
+    });
+};
+
+window.reproducirAudioPremium = (url, videoKey) => {
+    const container = document.getElementById('reproductorAudioLib');
+    if (!container) return notify("❌ Error: Contenedor no encontrado");
+
+    const id = url.split('/').pop();
+    let src = '';
+
+    if (url.includes('dai.ly') || url.includes('dailymotion.com')) {
+        src = `https://www.dailymotion.com/embed/video/${id}?autoplay=1&mute=0&ui-start-screen-info=0`;
+    } else if (url.includes('streamable.com')) {
+        src = `https://streamable.com/e/${id}?autoplay=1&muted=0&nocontrols=0`;
+    } else {
+        return notify("❌ Plataforma no soportada");
+    }
+
+    // Resaltar el ítem activo y quitar resaltado de los demás
+    document.querySelectorAll('[id^="video-item-"]').forEach(el => {
+        el.style.background = 'transparent';
+    });
+    const activeItem = document.getElementById('video-item-' + videoKey);
+    if (activeItem) activeItem.style.background = 'rgba(29,185,84,0.15)';
+
+    // Expandir el mini-player (visible = audio permitido por el navegador)
+    container.style.height = '180px';
+    container.style.marginBottom = '10px';
+
+    // Mostrar etiqueta "Reproduciendo"
+    const label = document.getElementById('reproductorAudioLibLabel');
+    if (label) {
+        label.style.display = 'block';
+        label.textContent = '▶ REPRODUCIENDO: ' + videoKey;
+    }
+
+    // Inyectar iframe con permisos completos de audio
+    container.innerHTML = `
+        <iframe src="${src}"
+            style="width:100%; height:180px; border:none; display:block;"
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowfullscreen>
+        </iframe>`;
+};
+window.abrirPasoFoto = (url) => {
+    videoPendienteUrl = url;
+    // Detener audio antes de cambiar de modal
+    const container = document.getElementById('reproductorAudioLib');
+    if(container) container.innerHTML = "";
+    
+    document.getElementById('modalLibreriaFinal').style.display = 'none';
+    document.getElementById('modalSubirPortada').style.display = 'flex';
+};
+
+// --- VARIABLES GLOBALES (Asegúrate de que estén arriba) ---
+window.vElegido = ""; 
+window.fElegida = ""; 
+
+// 1. Procesa la foto y "enciende" el botón visualmente
+window.procesarFotoPortada = (input) => {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            window.fElegida = e.target.result;
+            document.getElementById('imgPreviewPortada').src = e.target.result;
+            document.getElementById('imgPreviewPortada').style.display = 'block';
+            document.getElementById('placeholderText').style.display = 'none';
+            
+            // 🔥 AGREGA ESTAS LÍNEAS QUE FALTAN:
+            const btn = document.getElementById('btnFinalizarLibreria');
+            btn.disabled = false;  // ← ESTO ES LO QUE FALTA
+            btn.style.background = "#1DB954";
+            btn.style.color = "black";
+            btn.style.boxShadow = "0 0 20px rgba(29,185,84,0.4)";
+            btn.style.cursor = "pointer";
+            btn.style.opacity = "1";
+            
+            notify("✅ Foto cargada. ¡Pulsa publicar!");
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+// 2. Función final (Al darle clic al botón verde)
+window.finalizarPublicacionLibreria = () => {
+    // Si no ha subido foto, no lo dejamos pasar
+    if (!window.fElegida) {
+        return notify("⚠️ Primero debes elegir una foto");
+    }
+
+    const txt = document.getElementById('inputTextoLibreria').value || "¡Video Premium! 🔥";
+    const btn = document.getElementById('btnFinalizarLibreria');
+
+    btn.innerText = "⏳ SUBIENDO...";
+    btn.disabled = true; // Solo lo bloqueamos al darle clic para no repetir post
+
+    db.ref('reportes').push({
+        uid: idAuditor,
+        autorClave: myCurrentKey,
+        texto: txt,
+        musica: window.vElegido, // Usamos la variable global del video
+        fotoPortada: window.fElegida,
+        conLogo: true, // Esto activará el logo en el feed
+        fecha: firebase.database.ServerValue.TIMESTAMP,
+        vCount: 0
+    }).then(() => {
+        db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) + 0.50);
+        registrarHistorial("Video de Librería", 0.50);
+        
+        document.getElementById('modalSubirPortada').style.display = 'none';
+        notify("✅ ¡Publicado con éxito!");
+        
+        // Resetear para la próxima
+        window.fElegida = "";
+        btn.innerText = "🚀 PUBLICAR EN EL MURO";
+        btn.disabled = false;
+        
+        goToScreen(2); // Ir al muro
+    }).catch(err => {
+        alert("Error: " + err.message);
+        btn.disabled = false;
+    });
+};
+window.cerrarTodoLibreria = () => {
+    const container = document.getElementById('reproductorAudioLib');
+    if (container) { container.innerHTML = ""; container.style.height = "0"; container.style.marginBottom = "0"; }
+    const label = document.getElementById('reproductorAudioLibLabel');
+    if (label) label.style.display = 'none';
+    const modal = document.getElementById('modalLibreriaFinal');
+    if (modal) modal.remove();
+};
+// (confirmarPublicacionLibreria – see final definition below)
+
+
+// (segunda definición duplicada eliminada)
+window.elegirEsteVideo = (url) => {
+    window.vElegido = url; // 🔥 IMPORTANTE: Guardamos el link aquí
+    window.cerrarTodoLibreria();
+    document.getElementById('modalSubirPortada').style.display = 'flex';
+};
+window.pararAudioLibreria = () => {
+    const modal = document.getElementById('modalLibreriaFinal');
+    if(modal) modal.remove();
+};
+// Reparación de audio oculto (ahora detecta dailymotion también)
+
+let videoParaPublicar = "";
+
+// Esta es la función que llama el botón de arriba
+window.confirmarPublicacionLibreria = (urlVideo) => {
+    window.vElegido = urlVideo; // Guardamos en variable global consistente
+    window.pararAudioLibreria();
+    const modalLib = document.getElementById("modalLibreriaFinal");
+    if (modalLib) modalLib.remove();
+    document.getElementById('modalSubirPortada').style.display = 'flex';
+};
+
+// (segunda definición duplicada de procesarFotoPortada eliminada)
+
+// (tercera definición duplicada eliminada)
+function cargarMuro() {
+    console.log("Iniciando carga de videos...");
+    const container = document.getElementById('muroReportes');
+    prepararObservador();
+
+    db.ref('reportes').limitToLast(15).on('child_added', snap => {
+        try {
+            const post = snap.val();
+            if (!post || !post.musica) return;
+
+            const loader = document.querySelector('.loader');
+            if(loader) loader.remove();
+
+            let mediaLink = "";
+            let type = "youtube"; // Por defecto
+
+            // --- 🔎 DETECTOR DE PLATAFORMAS ---
+            if (post.musica.includes('workers.dev')) {
+                mediaLink = post.musica;
+                type = "direct";
+            } 
+            else if (post.musica.includes('streamable.com')) {
+                mediaLink = getStreamableID(post.musica);
+                type = "streamable";
+            }
+            // 🔥 AQUÍ ESTÁ LO NUEVO PARA DAILYMOTION
+            else if (post.musica.includes('dai.ly') || post.musica.includes('dailymotion.com')) {
+                mediaLink = getDailymotionID(post.musica);
+                type = "dailymotion";
+            }
+            else {
+                mediaLink = getYouTubeID(post.musica);
+                type = "youtube";
+            }
+            
+            if (!mediaLink || document.getElementById(snap.key)) return;
+
+            const card = crearCard(snap.key, post, mediaLink, type);
+            container.prepend(card); 
+            observerFeed.observe(card);
+        } catch (e) {
+            console.error("Error cargando post:", e);
+        }
+    });
+
+    db.ref('reportes').on('child_removed', snap => {
+        const el = document.getElementById(snap.key);
+        if (el) el.remove();
+    });
+}
+
     </script>
 </head>
 
@@ -1702,6 +1989,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Input para escribir -->
         <div style="background:white; padding:10px; border-top:1px solid #e2e8f0; display:flex; gap:8px; align-items:center; flex-shrink:0;">
+            <button onclick="abrirModalFotoGrupo()" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#10b981,#059669); border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 8px rgba(15,183,127,0.4); flex-shrink:0; cursor:pointer;">
+                📷
+            </button>
             <input type="text" id="inputGrupoMsg" placeholder="Escribe al grupo..." onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensajeGrupo();}" style="flex:1; background:#f0f2f5; border:none; padding:10px 15px; border-radius:20px; outline:none;">
             <button onclick="enviarMensajeGrupo()" class="btn-blue" style="width:40px; height:40px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">➤</button>
         </div>
@@ -1813,7 +2103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
     <div id="loadingOverlay"><div class="spinner"></div><div style="margin-top:20px; font-weight:bold; color:#64748b;">Cargando...</div></div>
     
-    <div id="debugLog"><h3 style="color:white">⚠️ Diagnóstico</h3><button onclick="document.getElementById('debugLog').style.display='none'" style="margin-bottom:10px; padding:5px;">Cerrar</button><div id="logContent"></div></div>
+
 <header class="header-fixed">
         <div style="display:flex; align-items:center; gap:8px;">
             <div class="app-title" id="pageTitle" style="font-weight: 800; font-size: 1.1rem; letter-spacing: 1px; color: #3b82f6;">
@@ -2237,10 +2527,10 @@ Cerrar
                  font-weight:800; font-size:0.95rem; display:flex; align-items:center;
                  justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(16,185,129,0.35);
                  cursor:pointer;">
-          📺 Ver anuncio — Gana 10 mensajes
+          📺 Ver anuncio — Gana 8 mensajes
         </button>
         <div style="font-size:0.7rem; color:#10b981; margin-top:6px; margin-bottom:6px;">
-          🎁 +10 mensajes gratis
+          🎁 +8 mensajes gratis
         </div>
 
         <button onclick="cerrarModalComprarMensajes()"
@@ -2306,6 +2596,31 @@ Cerrar
 </div>
     </div>
 </div>
+<!-- 🖼️ MODAL PARA ELEGIR FOTO DE PORTADA -->
+<!-- 🖼️ VENTANA PARA SUBIR FOTO (SIN BLOQUEO) -->
+<div id="modalSubirPortada" class="modal-overlay" style="z-index:1000000; display:none; background: rgba(0,0,0,0.95);">
+    <div class="modal-content" style="max-width:350px; text-align:center; background:#121212; color:white; border:1px solid #1DB954; border-radius:24px; padding:25px;">
+        <h3 style="margin-bottom:15px; color:#1DB954;">🎨 Personaliza tu Post</h3>
+        
+        <div style="width:100%; height:160px; background:#181818; border:2px dashed #333; border-radius:15px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; margin-bottom:15px;">
+            <img id="imgPreviewPortada" style="width:100%; height:100%; object-fit:cover; display:none; position:absolute; z-index:5;">
+            <div id="placeholderText" style="color:#1DB954; font-weight:bold;">🖼️ Tap para elegir foto</div>
+            <input type="file" accept="image/*" onchange="window.procesarFotoPortada(this)" style="position:absolute; inset:0; opacity:0; cursor:pointer; z-index:10;">
+        </div>
+
+        <input type="text" id="inputTextoLibreria" placeholder="Escribe un mensaje..." style="background:#181818; border:1px solid #333; color:white; padding:12px; border-radius:10px; width:100%; margin-bottom:15px; outline:none;">
+
+        <!-- 🔥 EL BOTÓN YA NO TIENE 'DISABLED' -->
+       <button id="btnFinalizarLibreria" 
+        onclick="window.finalizarPublicacionLibreria()" 
+        disabled 
+        style="...">
+    🚀 PUBLICAR EN EL MURO
+</button>
+
+        <button onclick="document.getElementById('modalSubirPortada').style.display='none'" style="background:none; border:none; color:#b3b3b3; margin-top:15px; cursor:pointer;">Cancelar</button>
+    </div>
+</div>
    <div id="modalSubirFoto" class="modal-overlay" style="z-index: 26000;">
     <div class="modal-content">
         <h3 style="color:#10b981;">📸 Monetiza tu Foto</h3>
@@ -2360,6 +2675,34 @@ Cerrar
             📷 Enviar Foto
         </button>
         <button onclick="cerrarModalFotoPrivada()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
+    </div>
+</div>
+<!-- MODAL SUBIR FOTO GRUPO -->
+<div id="modalFotoGrupo" class="modal-overlay" style="z-index: 30000;">
+    <div class="modal-content">
+        <h3 style="color:#10b981;">📷 Enviar Foto al Grupo</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
+            Todos los miembros del grupo verán esta foto.
+        </p>
+        
+        <div style="background:#f0fdf4; border:2px dashed #10b981; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
+            <img id="imgPreviewGrupo" style="width:100%; height:100%; object-fit:contain; display:none;">
+            <div id="placeholderUploadGrupo" style="text-align:center; color:#10b981;">
+                <i class="fas fa-camera" style="font-size:2.5rem; margin-bottom: 10px;"></i>
+                <p style="font-size:0.8rem; font-weight:bold;">Selecciona una foto</p>
+                <p style="font-size:0.65rem; opacity:0.8;">Todos la verán al instante</p>
+            </div>
+            <input type="file" id="inputFotoGrupo" accept="image/*" onchange="procesarFotoGrupo()" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+        </div>
+
+        <div style="font-size:0.65rem; color:#ef4444; margin-bottom:15px; background: #fef2f2; padding: 8px; border-radius: 8px;">
+            ⚠️ Prohibido contenido +18 o violento. Serás baneado.
+        </div>
+        
+        <button id="btnEnviarFotoGrupo" class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" disabled onclick="enviarFotoGrupo()">
+            📷 Enviar Foto al Grupo
+        </button>
+        <button onclick="cerrarModalFotoGrupo()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
     </div>
 </div>
 <div id="modalFotoDetalle" class="modal-overlay" style="z-index:29000; background:black; align-items:center; justify-content:center; display:none;">
@@ -2749,6 +3092,14 @@ style="display:none;">
     </div>
 
 <style>
+#video-item {
+    transition: all 0.2s ease;
+}
+
+#video-item:active {
+    transform: scale(0.95);
+    opacity: 0.7;
+}
   .music-modal {
     background: linear-gradient(145deg, #1e1b4b 0%, #0f172a 100%) !important;
     color: white;
@@ -3200,23 +3551,35 @@ style="display:none;">
         </div>
     </div>
 </div>
-
-<div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #e5e5f7; padding-bottom: 65px;">
-    <div style="height: 25px; flex-shrink: 0; background:white;"></div>
+<!-- PANTALLA 3: MENSAJES -->
+<div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #f8fafc; padding-bottom: 65px;">
     
-    <!-- 1. LISTA HORIZONTAL -->
-    <div class="stories-container" style="background: white; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; flex-shrink: 0;">
-        <div class="stories-title" style="padding: 10px 15px 5px; color: #64748b; font-size: 0.75rem;">Conectados reciente</div>
-        <div id="listaUsuariosHorizontal" class="stories-scroll" style="padding-bottom: 10px;">
-            <div style="padding:10px; font-size:0.8rem; color:#94a3b8;">Cargando...</div>
+    <div id="areaSuperiorMensajes" style="flex-shrink: 0;">
+        <!-- Título y Campana -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 20px 5px; background: white;">
+            <h2 style="margin:0; font-size: 1.5rem; font-weight: 800; color: #1e293b;">Mensajes</h2>
+            <div class="noti-icon-box" onclick="abrirNotificaciones()">
+                <i class="fas fa-bell"></i>
+                <div id="badgeNotisMensajes" class="noti-badge">0</div>
+            </div>
         </div>
+<!-- 1. LISTA HORIZONTAL (Espacio real para las nubes) -->
+<div class="stories-container" style="background: white; border-bottom: 1px solid #e2e8f0; padding: 10px 0; flex-shrink: 0; overflow: visible !important;">
+    <div class="stories-title" style="padding: 5px 15px 0; color: #64748b; font-size: 0.75rem; font-weight: bold;">Conectados reciente</div>
+    
+    <!-- 🔥 AJUSTE VITAL: padding-top: 50px -->
+    <div id="listaUsuariosHorizontal" 
+         style="display:flex; gap:18px; padding: 50px 15px 15px; overflow-x:auto; overflow-y:visible !important; scrollbar-width:none; align-items: flex-start; position: relative;">
+        <!-- Usuarios... -->
     </div>
-
+</div>
+</div>
     <!-- 2. PESTAÑAS -->
-    <div class="chat-tabs-container" style="flex-shrink: 0;">
-        <button id="tabGlobalBtn" class="chat-tab-btn active" onclick="cambiarPestanaChat('global')">🌍 Global</button>
-        <button id="tabGruposBtn" class="chat-tab-btn" onclick="cambiarPestanaChat('grupos')">👥 Grupos</button>
-    </div>
+<div class="chat-tabs-container" style="flex-shrink: 0;">
+    <button id="tabGlobalBtn" class="chat-tab-btn active" onclick="cambiarPestanaChat('global')">🌍 Global</button>
+    <button id="tabMensajesBtn" class="chat-tab-btn" onclick="cambiarPestanaChat('mensajes')">💬 Mensajes</button>
+    <button id="tabGruposBtn" class="chat-tab-btn" onclick="cambiarPestanaChat('grupos')">👥 Grupos</button>
+</div>
 
     <!-- 3. CONTENEDOR GLOBAL -->
     <div id="chatListContainer" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
@@ -3244,7 +3607,13 @@ style="display:none;">
                <button onclick="enviarTexto()" class="btn-blue" style="width: 40px; height: 40px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: #0070ba; color: white; border: none; margin-left: 10px;">➤</button>
         </div>
     </div>
+<div id="mensajesPrivadosContainer" style="flex: 1; overflow-y: auto; padding: 15px; display: none; background: #f8fafc;">
+    <div style="text-align:center; padding:40px; color:#94a3b8;">
+        <i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i>
+        <div style="margin-top:15px;">Cargando conversaciones...</div>
+    </div>
 
+</div>
     <!-- 4. CONTENEDOR GRUPOS -->
     <div id="gruposListContainer" style="flex: 1; overflow-y: auto; padding: 15px; display: none; background: #f8fafc;">
         
@@ -3254,6 +3623,7 @@ style="display:none;">
         <div id="listaDeGrupos"></div>
     </div>
 </div>
+
 
    <div class="screen">
     <div style="height: 60px;"></div>
@@ -3300,7 +3670,7 @@ style="display:none;">
     <p style="font-size:0.7rem; color:#94a3b8;">
         🔒 Solo tú puedes ver este correo. No es visible para otros usuarios.
     </p>
-    <p id="profEmail" style="font-size:0.78rem; color:#64748b; margin-top:6px; word-break:break-all;">
+    <p id="profEmailFull" style="font-size:0.78rem; color:#64748b; margin-top:6px; word-break:break-all;">
         
     </p>
 </div>
@@ -3550,19 +3920,18 @@ Cerrar
 window.receiveFCMNotification = function(jsonStr) {
     try {
         const data = JSON.parse(jsonStr);
-        console.log("📡 FCM desde Kotlin:", data);
-        
         if (data.title && data.body) {
-            if (!window._fcmReady) {
-                queueFCMNotification(data.title, data.body);
-                console.log("⏳ UI no lista, encolando notificación");
-            } else {
-                showFCMNotification(data.title, data.body);
-            }
+            // Mostrar alerta visual
+            if (typeof notify === 'function') notify("🔔 " + data.title);
+            
+            // Hacer que la campana brinque
+            const campana = document.getElementById('btnNotis');
+            if (campana) campana.classList.add('bell-jump');
+            
+            // Vibración
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
         }
-    } catch (e) {
-        console.error("❌ Error parsing FCM:", e);
-    }
+    } catch (e) { console.error("Error FCM:", e); }
 };
 
 // 🔥 SISTEMA DE COLA
@@ -3609,12 +3978,26 @@ function showFCMNotification(title, body) {
         console.log(`🔔 ${title}: ${body}`);
     }
     
+    // 1. Obtener los dos badges (el principal y el de la pantalla mensajes)
     const badge = document.getElementById('badgeNotis');
+    const badgeMensajes = document.getElementById('badgeNotisMensajes'); // El nuevo
+    
     if (badge) {
         let count = parseInt(badge.textContent) || 0;
-        badge.textContent = count + 1;
+        let nuevoCount = count + 1;
+
+        // Actualizar campana principal
+        badge.textContent = nuevoCount;
         badge.classList.add('active');
         badge.parentElement?.classList.add('bell-jump');
+
+        // 2. Sincronizar con la campana de la pantalla de mensajes
+        if (badgeMensajes) {
+            badgeMensajes.textContent = nuevoCount;
+            badgeMensajes.classList.add('active');
+            // También hacemos que brinque la segunda campana
+            badgeMensajes.parentElement?.classList.add('bell-jump');
+        }
     }
     
     if (navigator.vibrate) {
@@ -3696,12 +4079,19 @@ function agregarNotificacionAlPanel(title, body) {
     console.log("✅ Notificación agregada al panel");
 }
     console.log("🔥 JS PRINCIPAL CARGADO");
-    const firebaseConfig = { apiKey: "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A", authDomain: "ingresos-minimos.firebaseapp.com", databaseURL: "https://ingresos-minimos-default-rtdb.firebaseio.com", projectId: "ingresos-minimos", storageBucket: "ingresos-minimos.firebasestorage.app", messagingSenderId: "104886265441", appId: "1:104886265441:web:2272d88ad1129919ea6c20", measurementId: "G-SN89X63V38" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const auth = firebase.auth();
-    
-    
+    const firebaseConfig = { 
+    apiKey: "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A", 
+    authDomain: "ingresos-minimos.firebaseapp.com", 
+    databaseURL: "https://ingresos-minimos-default-rtdb.firebaseio.com", 
+    projectId: "ingresos-minimos", 
+    storageBucket: "ingresos-minimos.firebasestorage.app", 
+    messagingSenderId: "104886265441", 
+    appId: "1:104886265441:web:2272d88ad1129919ea6c20", 
+    measurementId: "G-SN89X63V38" 
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
    // 🔥 DETECTAR USUARIO LOGUEADO AL CARGAR LA APP
 firebase.auth().onAuthStateChanged((user) => {
   if (user) {
@@ -4113,11 +4503,10 @@ function getUserProfilePhoto(uid) {
     return getAvatarUrl(uid);
 }
 
-function getYouTubeID(url) {
+function getDailymotionID(url) {
     if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
+    const match = url.match(/(?:dailymotion\.com\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
+    return (match && match[1]) ? match[1] : null;
 }
 
 function registrarHistorial(motivo, puntos) {
@@ -4136,9 +4525,10 @@ function registrarHistorial(motivo, puntos) {
 let currentScreen = 2;
 
 window.goToScreen = (index, userAction = false) => {
+    // 1. Limpiar timers de fotos
     clearTimeout(pressTimerFoto);
     clearTimeout(pressTimerFotoDetalle);
-    // 🛡️ SEGURIDAD
+    
     if (index === 2 && !idAuditor) {
         notify("⏳ Cargando perfil...");
         return;
@@ -4148,6 +4538,23 @@ window.goToScreen = (index, userAction = false) => {
         if (window.cerrarModalLecturaMision) window.cerrarModalLecturaMision();
         if (window.cerrarModalMusicaMision) window.cerrarModalMusicaMision();
     }
+
+    // --- LÓGICA DE HEADER DINÁMICO ---
+    const mainHeader = document.querySelector('.header-fixed');
+    if (mainHeader) {
+        if (index === 3) {
+            mainHeader.style.display = 'none';
+        } else {
+            mainHeader.style.display = 'flex';
+        }
+    }
+
+    // --- 🔥 TRUCO PARA EL SCROLL (Añade esto aquí) ---
+    const todasLasScreens = document.querySelectorAll('.screen');
+    if (todasLasScreens[index]) {
+        todasLasScreens[index].scrollTop = 0; // Esto sube la pantalla al inicio
+    }
+    // -------------------------------------------------
 
     if (userAction && index === 2 && currentScreen === 2) {
         const iframe = document.getElementById('mainFeedIframe');
@@ -4161,6 +4568,7 @@ window.goToScreen = (index, userAction = false) => {
     if (userAction && index !== 2) {
         window.history.pushState({ screen: index }, "");
     }
+
     if (document.activeElement) document.activeElement.blur();
 
     currentScreen = index;
@@ -4171,22 +4579,15 @@ window.goToScreen = (index, userAction = false) => {
     const btnActivo = document.getElementById(`nav${index}`);
     if (btnActivo) btnActivo.classList.add('active');
 
-    if (index === 0 && typeof renderizarMisionesAprender === "function") {
-        renderizarMisionesAprender();
-    }
-
     const screens = document.querySelectorAll('.screen');
     screens.forEach((screen, i) => {
         screen.style.pointerEvents = (i === index) ? "auto" : "none";
     });
 
     const container = document.getElementById('muroReportes');
-
     if (index === 2) {
-        // --- ENTRANDO AL FEED ---
         if (container) {
             container.style.display = "block";
-            // Solo creamos el iframe si no existe actualmente
             if (!document.getElementById('mainFeedIframe')) {
                 container.innerHTML = `<iframe id="mainFeedIframe" 
                     src="https://amgel12.github.io/feed.html?uid=${idAuditor}" 
@@ -4196,11 +4597,9 @@ window.goToScreen = (index, userAction = false) => {
             }
         }
     } else {
-        // --- SALIENDO DEL FEED ---
         detenerProgresoVideo();
         if (container) {
             container.style.display = "none";
-            // 🔥 IMPORTANTE: Vaciamos el contenedor para MATAR el proceso del video y el sonido
             container.innerHTML = ""; 
         }
     }
@@ -4208,12 +4607,20 @@ window.goToScreen = (index, userAction = false) => {
     const fabBtn = document.getElementById('fabPublicar');
     if (fabBtn) {
         fabBtn.style.display = (index === 2) ? 'flex' : 'none';
-        fabBtn.style.zIndex = "10001";
     }
 
     if (index === 3) {
-        document.getElementById('msgBadge').style.display = 'none';
-        setTimeout(scrollToBottom, 200);
+        const badgeMsg = document.getElementById('msgBadge');
+        if (badgeMsg) badgeMsg.style.display = 'none';
+        
+        setTimeout(() => {
+            if (typeof scrollToBottom === 'function') scrollToBottom();
+            if (typeof cargarChatsPrivadosNoLeidos === 'function') cargarChatsPrivadosNoLeidos();
+        }, 200);
+    }
+    
+    if (index === 0 && typeof renderizarMisionesAprender === "function") {
+        renderizarMisionesAprender();
     }
 };
 // --- FUNCIONES PARA BARRA DE PROGRESO DE VIDEOS ---
@@ -4996,14 +5403,73 @@ window.manejarAuth = async () => {
         const loadingOverlay = document.getElementById('loadingOverlay');
         if(loadingOverlay) loadingOverlay.style.display = 'none';
 
+        // 🔥 VITAL: AVISAR A KOTLIN QUIÉN ES EL USUARIO (Para notificaciones en segundo plano)
+        if (typeof AndroidNative !== 'undefined') {
+            console.log("📡 Sincronizando UID con Kotlin para FCM...");
+            AndroidNative.onLoginSuccess(user.uid);
+        }
+
         // 🔥 INICIALIZAR BANDERAS PARA EL BRINCO (CRUCIAL)
         window._appInitialized = true; 
         window._lastNotiCount = 0;
 
         // 2. Inicializar cachés y heartbeat
-        setTimeout(() => { if(typeof cachearUsuarios === "function") cachearUsuarios(); }, 1000);
-        setInterval(() => db.ref(`users/${idAuditor}`).update({ lastSeen: firebase.database.ServerValue.TIMESTAMP }), 10000);
-        
+        setTimeout(() => { 
+            if(typeof cachearUsuarios === "function") cachearUsuarios(); 
+        }, 1000);
+
+        setInterval(() => {
+            if(idAuditor) {
+                db.ref(`users/${idAuditor}`).update({ 
+                    lastSeen: firebase.database.ServerValue.TIMESTAMP 
+                });
+            }
+        }, 10000);
+
+        // --- 🔔 RADAR DE MENSAJES Y NOTIFICACIONES (PUNTOS ROJOS) ---
+        db.ref(`users/${idAuditor}/notifications`).on('value', snap => {
+            window.mapaMensajesSinLeer = {}; 
+            let totalMensajesNuevos = 0;
+
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    const n = child.val();
+                    // Contamos chats privados no leídos
+                    if (n.type === 'chat_privado' && n.read === false) {
+                        const emisorUid = n.extra;
+                        if (emisorUid) {
+                            window.mapaMensajesSinLeer[emisorUid] = (window.mapaMensajesSinLeer[emisorUid] || 0) + 1;
+                            totalMensajesNuevos++;
+                        }
+                    }
+                });
+            }
+
+
+            // 1. Número rojo en el menú de abajo (Pestaña Mensajes)
+            const badgeMenu = document.getElementById('msgBadge');
+            if (badgeMenu) {
+                if (totalMensajesNuevos > 0) {
+                    badgeMenu.style.display = 'flex';
+                    badgeMenu.textContent = totalMensajesNuevos > 99 ? '99+' : totalMensajesNuevos;
+                    document.getElementById('nav3')?.querySelector('.nav-icon')?.classList.add('nav-jumping');
+                } else {
+                    badgeMenu.style.display = 'none';
+                    document.getElementById('nav3')?.querySelector('.nav-icon')?.classList.remove('nav-jumping');
+                }
+            }
+
+            // 2. Sincronizar campanas (arriba y pestaña mensajes)
+            const b1 = document.getElementById('badgeNotis');
+            const b2 = document.getElementById('badgeNotisMensajes');
+            if (b1) { b1.textContent = totalMensajesNuevos; b1.classList.toggle('active', totalMensajesNuevos > 0); }
+            if (b2) { b2.textContent = totalMensajesNuevos; b2.classList.toggle('active', totalMensajesNuevos > 0); }
+
+            // 3. 🔥 RE-DIBUJAR LA LISTA PARA QUE SALGAN LOS GLOBITOS ROJOS
+            if (typeof renderizarUsuariosHorizontal === 'function') {
+                renderizarUsuariosHorizontal();
+            }
+        });
         // 3. Verificar compras confirmadas pendientes de acreditar
         verificarComprasConfirmadas();
         
@@ -5222,6 +5688,7 @@ if (girosDisponibles > 0) {
             // Lógica Maestra (Usuarios Activos)
             iniciarMonitorDeBadges();
             cargarListaUsuariosHorizontal();
+            cargarPensamientosPublicos();
             limpiarChatGlobal();
 
 } else {
@@ -5675,13 +6142,31 @@ if (girosDisponibles > 0) {
             const burbuja = document.getElementById(`msg-${msgKey}`);
             if (burbuja) {
                 burbuja.classList.add('swiping');
-                const translateX = Math.max(0, Math.min(deltaX, 100));
-                burbuja.style.transform = `translateX(${translateX}px)`;
 
-                // Cambiar apariencia cuando se desliza suficiente
-                if (translateX > 50) {
-                    burbuja.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
-                    burbuja.style.borderLeft = '4px solid #6366f1';
+                if (deltaX > 0) {
+                    // Swipe derecha → Responder
+                    const translateX = Math.min(deltaX, 100);
+                    burbuja.style.transform = `translateX(${translateX}px)`;
+                    burbuja.classList.remove('swiping-mention');
+                    if (translateX > 50) {
+                        burbuja.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
+                        burbuja.style.borderLeft = '4px solid #6366f1';
+                        burbuja.style.borderRight = '';
+                    }
+                } else {
+                    // Swipe izquierda → Mencionar
+                    const translateX = Math.max(deltaX, -100);
+                    burbuja.style.transform = `translateX(${translateX}px)`;
+                    burbuja.classList.add('swiping-mention');
+                    if (translateX < -50) {
+                        burbuja.style.boxShadow = '0 4px 15px rgba(251, 191, 36, 0.4)';
+                        burbuja.style.borderRight = '4px solid #fbbf24';
+                        burbuja.style.borderLeft = '';
+                    } else {
+                        burbuja.style.boxShadow = '';
+                        burbuja.style.borderRight = '';
+                        burbuja.style.borderLeft = '';
+                    }
                 }
             }
         }
@@ -5696,13 +6181,22 @@ if (girosDisponibles > 0) {
         const burbuja = document.getElementById(`msg-${msgKey}`);
         if (burbuja) {
             burbuja.classList.remove('swiping');
+            burbuja.classList.remove('swiping-mention');
             burbuja.style.transform = '';
             burbuja.style.background = '';
+            burbuja.style.borderLeft = '';
+            burbuja.style.borderRight = '';
         }
         
-        // Si se deslizó más de 60px a la derecha, responder
+        // Swipe derecha > 60px → Responder
         if (deltaX > 60) {
             responderMensaje(msgKey, text, author, uid);
+        }
+        // Swipe izquierda < -60px → Mencionar
+        else if (deltaX < -60) {
+            if (typeof window.mencionarEnChatGlobal === 'function') {
+                window.mencionarEnChatGlobal(author);
+            }
         }
         
         isSwiping = false;
@@ -5744,6 +6238,17 @@ if (girosDisponibles > 0) {
         window.replyToMsgUid = null;
         
         input.placeholder = 'Escribe...';
+    };
+
+    window.mencionarEnChatGlobal = (nombre) => {
+        const input = document.getElementById('inputChatMsg');
+        if (!input) return;
+        const texto = input.value;
+        const cursor = input.selectionStart || 0;
+        const mencion = "@" + nombre + " ";
+        input.value = texto.slice(0, cursor) + mencion + texto.slice(cursor);
+        input.focus();
+        if (navigator.vibrate) navigator.vibrate(30);
     };
 
     window.scrollToMessage = (msgKey) => {
@@ -6755,9 +7260,9 @@ window.addEventListener('popstate', (e) => {
     }
 
     // SI SE CERRÓ ALGO, DETENEMOS AQUÍ (Para no salir de la app)
-    if (seccion === 'aprender') {
-    renderizarMisionesAprender();
-}
+    if (typeof seccion !== 'undefined' && seccion === 'aprender') {
+        renderizarMisionesAprender();
+    }
     if (seCerroAlgo) { 
         window.history.pushState({stopper: true}, ""); 
         return; 
@@ -6803,10 +7308,13 @@ window.addEventListener('popstate', (e) => {
     // --- 1. FUNCIÓN PARA ABRIR CORREO REAL ---
     window.enviarCorreoSoporte = () => {
         const asunto = "Ayuda PAGOCODE - ID: " + (myCurrentKey || "Usuario");
-        const cuerpo = "Hola, necesito ayuda con lo siguiente:%0D%0A%0D%0A(Escribe aquí tu problema)...";
+        const cuerpo = "Hola, necesito ayuda con lo siguiente:\n\n(Escribe aquí tu problema)...";
         
-        // AQUÍ ES DONDE PONES TU CORREO REAL:
-        window.location.href = `mailto:codec3865@gmail.com?subject=${asunto}&body=${cuerpo}`;
+        if (typeof AndroidNative !== 'undefined') {
+            AndroidNative.abrirCorreo("codec3865@gmail.com", asunto, cuerpo);
+        } else {
+            window.open(`mailto:codec3865@gmail.com?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`, '_system');
+        }
     };
     // Esta función se debe llamar cuando el usuario complete una misión (Video o Publicación)
     // --- FUNCIÓN PARA SUBIR EL 1% (META: 5 MISIONES) ---
@@ -7651,6 +8159,144 @@ window.mostrarFotoPrivada = (el) => {
     
     modal.style.display = 'flex';
 };
+
+// ==========================================
+// 📷 FOTO EN CHAT GRUPO
+// ==========================================
+let fotoGrupoBase64 = "";
+
+window.abrirModalFotoGrupo = () => {
+    if (!currentGrupoId) return notify("No hay grupo activo");
+    document.getElementById('modalFotoGrupo').style.display = 'flex';
+    document.getElementById('imgPreviewGrupo').style.display = 'none';
+    document.getElementById('placeholderUploadGrupo').style.display = 'block';
+    document.getElementById('btnEnviarFotoGrupo').disabled = true;
+    document.getElementById('btnEnviarFotoGrupo').innerHTML = '📷 Enviar Foto al Grupo';
+    fotoGrupoBase64 = "";
+};
+
+window.cerrarModalFotoGrupo = () => {
+    document.getElementById('modalFotoGrupo').style.display = 'none';
+    document.getElementById('inputFotoGrupo').value = "";
+    fotoGrupoBase64 = "";
+};
+
+window.procesarFotoGrupo = () => {
+    const file = document.getElementById('inputFotoGrupo').files[0];
+    if (!file) return;
+
+    document.getElementById('placeholderUploadGrupo').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 600;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            fotoGrupoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+
+            document.getElementById('imgPreviewGrupo').src = fotoGrupoBase64;
+            document.getElementById('imgPreviewGrupo').style.display = 'block';
+            document.getElementById('placeholderUploadGrupo').style.display = 'none';
+
+            const btn = document.getElementById('btnEnviarFotoGrupo');
+            btn.disabled = false;
+            btn.innerHTML = '📷 Enviar Foto al Grupo';
+            btn.style.opacity = "1";
+        };
+    };
+    reader.readAsDataURL(file);
+};
+
+window.enviarFotoGrupo = () => {
+    if (!fotoGrupoBase64) return notify("Elige una foto primero");
+    if (!currentGrupoId) return notify("Grupo no activo");
+
+    const btn = document.getElementById('btnEnviarFotoGrupo');
+    btn.disabled = true;
+    btn.innerHTML = 'Enviando...';
+
+    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
+
+    db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push({
+        uid: idAuditor,
+        autor: miNombre,
+        texto: "📷 Foto",
+        foto: fotoGrupoBase64,
+        esFoto: true,
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        cerrarModalFotoGrupo();
+        notify("✅ Foto enviada al grupo");
+        try { window.playSound('win'); } catch(e){}
+    }).catch(err => {
+        notify("Error: " + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '📷 Enviar Foto al Grupo';
+    });
+};
+window.mostrarFotoGrupo = (el) => {
+    const fotoSrc = el?.getAttribute('data-foto');
+    if (!fotoSrc) return;
+
+    // 1. Reutilizar modal si ya existe (evita fugas de memoria y duplicados)
+    let modal = document.getElementById('modalVerFotoGrupo');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalVerFotoGrupo';
+        modal.style.cssText = `
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 10000;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.25s ease;
+            backdrop-filter: blur(4px);
+        `;
+        document.body.appendChild(modal);
+
+        // Cerrar al tocar el fondo oscuro
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.style.display = 'none';
+        });
+    }
+
+    // 2. Estructura HTML con contexto de posicionamiento correcto
+    modal.innerHTML = `
+        <div style="position: relative; display: inline-block; max-width: 95%; max-height: 90vh;">
+            <img src="${fotoSrc}" 
+                 style="width: auto; height: auto; max-width: 100%; max-height: 90vh; 
+                        object-fit: contain; border-radius: 12px; 
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.6); pointer-events: none;" 
+                 draggable="false">
+            <button id="btnCerrarFotoGrupo" style="
+                position: absolute; top: -14px; right: -14px;
+                background: rgba(255,255,255,0.15); color: white; border: none;
+                width: 36px; height: 36px; border-radius: 50%; font-size: 1.3rem;
+                display: flex; align-items: center; justify-content: center; cursor: pointer;
+                backdrop-filter: blur(6px); transition: transform 0.2s, background 0.2s;
+            ">✕</button>
+        </div>
+    `;
+
+    // 3. Evento seguro para el botón (evita que el clic cierre el modal dos veces)
+    document.getElementById('btnCerrarFotoGrupo').addEventListener('click', (e) => {
+        e.stopPropagation(); // Impide que el evento llegue al modal
+        modal.style.display = 'none';
+    });
+
+    // 4. Mostrar con transición suave
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => modal.style.opacity = '1');
+};
+
 // ==========================================
 // 🔒 LÓGICA DE CHAT PRIVADO (1 vs 1)
 // ==========================================
@@ -7662,7 +8308,7 @@ let privChatRef = null;
 let privUserRef = null;
 const LIMITE_DIARIO_MSGS = 10;
 const BONUS_PAYPAL_MSGS = 20; // 20 mensajes extra al comprar por PayPal
-const BONUS_AD_MSGS = 10;       // 10 mensajes extra al ver un anuncio
+const BONUS_AD_MSGS = 8;       // 8 mensajes extra al ver un anuncio
 
 // 1. ABRIR EL MODAL Y PREPARAR
 window.abrirChatPrivado = (targetUid, targetName) => {
@@ -7954,13 +8600,9 @@ window.enviarMensajePrivado = () => {
         return;
     }
 
-    // USUARIO NORMAL: Verificar límite diario (por destinatario)
-    Promise.all([
-        db.ref(`users/${idAuditor}/privados_diarios/extras`).once('value'),
-        db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).once('value')
-    ]).then(([sExtras, sChat]) => {
-        const extras = sExtras.val() || 0;
+    db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).once('value', sChat => {
         const chatData = sChat.val() || {};
+        const extras = chatData.extras || 0;
         const hoy = new Date().toISOString().split('T')[0];
         let conteo = (chatData.fecha === hoy) ? (chatData.count || 0) : 0;
         const totalDisponible = LIMITE_DIARIO_MSGS + extras;
@@ -7974,7 +8616,7 @@ window.enviarMensajePrivado = () => {
 
         detectarYEnvarMenciones(txt, "chat");
 
-        db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).set({
+        db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).update({
             fecha: hoy,
             count: conteo + 1
         });
@@ -8008,12 +8650,9 @@ function checkLimiteDiario(uid) {
         return;
     }
 
-    Promise.all([
-        db.ref(`users/${idAuditor}/privados_diarios/extras`).once('value'),
-        db.ref(`users/${idAuditor}/privados_diarios/${targetUid}`).once('value')
-    ]).then(([sExtras, sChat]) => {
-        const extras = sExtras.val() || 0;
+    db.ref(`users/${idAuditor}/privados_diarios/${targetUid}`).once('value', sChat => {
         const chatData = sChat.val() || {};
+        const extras = chatData.extras || 0;
         const hoy = new Date().toISOString().split('T')[0];
         let conteo = (chatData.fecha === hoy) ? (chatData.count || 0) : 0;
         const total = LIMITE_DIARIO_MSGS + extras;
@@ -8110,37 +8749,39 @@ function verificarComprasConfirmadas() {
     });
 }
 
-// 📺 OPCIÓN 2: Ver anuncio (go:s7) para 5 mensajes extra
+// 📺 OPCIÓN 2: Ver anuncio recompensado para 8 mensajes extra
 window.verAnuncioMensajes = () => {
     try { window.playSound('click'); } catch(e){}
-    notify("📺 Cargando anuncio...");
+    notify("📺 Ve el anuncio completo para ganar 8 mensajes...");
 
-    // Lanzar anuncio go:s7 vía iframe oculto (mismo patrón que el resto de la app)
-    try {
-        const adTrigger = document.createElement('iframe');
-        adTrigger.style.display = 'none';
-        adTrigger.src = 'go:s7';
-        document.body.appendChild(adTrigger);
-        setTimeout(() => {
-            try { document.body.removeChild(adTrigger); } catch(e){}
-        }, 3000);
-    } catch(err) {
-        console.log("Error al cargar anuncio: ", err);
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirVideoRecompensado) {
+        window._rewardPendingTarget = targetUserUid;
+        AndroidNative.abrirVideoRecompensado();
+    } else {
+        notify("⚠️ Anuncios no disponibles en esta versión");
     }
+};
 
-    // Acreditar los 5 mensajes extra después del anuncio
-    setTimeout(() => {
-        db.ref(`users/${idAuditor}/privados_diarios/extras`).once('value', s => {
-            const extras = s.val() || 0;
-            db.ref(`users/${idAuditor}/privados_diarios/extras`).set(extras + BONUS_AD_MSGS)
-            .then(() => {
-                cerrarModalComprarMensajes();
-                notify(`🎁 +${BONUS_AD_MSGS} mensajes desbloqueados por ver anuncio`);
-                checkLimiteDiario(targetUserUid);
-                try { window.playSound('win'); } catch(e){}
-            });
+// Callback desde Kotlin tras ver anuncio recompensado para mensajes
+window.otorgarMensajesPorAd = () => {
+    const targetUid = window._rewardPendingTarget || targetUserUid;
+    if (!targetUid) return notify("⚠️ Error: no hay chat activo");
+
+    db.ref(`users/${idAuditor}/privados_diarios/${targetUid}`).once('value', s => {
+        const data = s.val() || {};
+        const extras = data.extras || 0;
+        db.ref(`users/${idAuditor}/privados_diarios/${targetUid}/extras`).set(extras + BONUS_AD_MSGS)
+        .then(() => {
+            cerrarModalComprarMensajes();
+            notify(`🎁 +${BONUS_AD_MSGS} mensajes desbloqueados por ver anuncio`);
+            checkLimiteDiario(targetUid);
+            try { window.playSound('win'); } catch(e){}
+        })
+        .catch(err => {
+            console.error("Error al guardar mensajes extra:", err);
+            notify("❌ Error al acreditar mensajes. Intenta de nuevo.");
         });
-    }, 1200);
+    });
 };
 
 window.cerrarChatPrivado = () => {
@@ -8419,117 +9060,153 @@ function cargarListaUsuariosHorizontal() {
     const contenedor = document.getElementById('listaUsuariosHorizontal');
     if (!contenedor) return;
 
-    db.ref('users').orderByChild('lastSeen').limitToLast(30).on('value', snap => {
-        listaUsuariosCacheReal = [];
-        const ahora = Date.now();
+    // Radar 1: Usuarios (para ver quién está conectado)
+    db.ref('users').orderByChild('lastSeen').limitToLast(25).on('value', snapUsers => {
         
-        snap.forEach(child => {
-            const u = child.val();
-            if (child.key !== idAuditor) {
-                const tiempo = u.lastSeen || 0;
-                const minutos = Math.floor((ahora - tiempo) / 60000);
-                const esOnline = minutos < 2;
+        // Radar 2: 🔥 Pensamientos Públicos (Sincronización total)
+        db.ref('pensamientos').on('value', snapNubes => {
+            const nubesData = snapNubes.val() || {};
+            listaUsuariosCacheReal = [];
+            const ahora = Date.now();
+
+            snapUsers.forEach(child => {
+                const u = child.val();
+                const uid = child.key;
                 
-                // Mostrar apodo si existe, sino mostrar código INV
-                const nombreMostrar = u.apodo || (u.myInviteKey ? (u.myInviteKey.split('-')[1] || "User") : "User");
-                
-                // 🔥 ACTUALIZAR CACHE DE FOTO EN TIEMPO REAL
-                if (u.fotoPerfil) {
-                    cacheFotosPerfil[child.key] = u.fotoPerfil;
+                // Buscamos si este usuario tiene una nube en el nodo público
+                // Si la nube tiene más de 24 horas, no la mostramos para que no se llene de basura
+                const nube = nubesData[uid];
+                let pensamientoFinal = "";
+                if (nube && (ahora - nube.timestamp < 86400000)) {
+                    pensamientoFinal = nube.texto;
                 }
-                
+
                 listaUsuariosCacheReal.push({
-                    key: child.key,
-                    nombre: nombreMostrar,
-                    avatar: getUserProfilePhoto(child.key),
-                    online: esOnline,
-                    rawTime: tiempo
+                    key: uid,
+                    nombre: u.apodo || u.myInviteKey || "User",
+                    avatar: u.fotoPerfil || getAvatarUrl(uid),
+                    online: (ahora - (u.lastSeen || 0) < 120000),
+                    rawTime: u.lastSeen || 0,
+                    pensamiento: pensamientoFinal // 👈 Ahora es 100% público
                 });
-            }
-        });
+            });
 
-        listaUsuariosCacheReal.sort((a, b) => {
-             const msgA = mapaMensajesSinLeer[a.key] || 0;
-             const msgB = mapaMensajesSinLeer[b.key] || 0;
-             if (msgA > 0 && msgB === 0) return -1;
-             if (msgB > 0 && msgA === 0) return 1;
-             if (a.online && !b.online) return -1;
-             if (!a.online && b.online) return 1;
-             return b.rawTime - a.rawTime;
-        });
+            // Ordenamos: Los que escribieron pensamientos nuevos aparecen de PRIMERO
+            listaUsuariosCacheReal.sort((a, b) => {
+                if (a.pensamiento && !b.pensamiento) return -1;
+                if (!a.pensamiento && b.pensamiento) return 1;
+                return b.rawTime - a.rawTime;
+            });
 
-        renderizarUsuariosHorizontal();
+            renderizarUsuariosHorizontal();
+        });
     });
 }
-
 // ==========================================
-// 3. RENDERIZAR USUARIOS (CON HORA DE CONEXIÓN)
+// 3. RENDERIZAR USUARIOS (CON NUBES Y BADGES ROJOS)
 // ==========================================
 function renderizarUsuariosHorizontal() {
     const contenedor = document.getElementById('listaUsuariosHorizontal');
     if (!contenedor) return;
 
-    if (listaUsuariosCacheReal.length === 0) {
-        contenedor.innerHTML = '<div style="padding:10px; font-size:0.8rem; color:#94a3b8;">Esperando usuarios...</div>';
+    // --- 1. BOTÓN "PENSAR" (Siempre de primero) ---
+    let html = `
+    <div class="story-item" style="min-width: 75px; flex-shrink: 0; text-align: center; margin-top: 35px;">
+        <div onclick="document.getElementById('modalPensamiento').style.display='flex'; document.getElementById('inputPensamiento').focus();" 
+             style="width: 55px; height: 55px; border-radius: 20px; border: 2.5px dashed #8b5cf6; background: #faf5ff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; margin: 0 auto;">
+            💭
+        </div>
+        <div style="margin-top: 6px; font-size: 0.75rem; color: #8b5cf6; font-weight: 800;">Pensar</div>
+    </div>`;
+
+    // Si no hay usuarios, mostramos solo el botón pensar
+    if (!listaUsuariosCacheReal || listaUsuariosCacheReal.length === 0) {
+        contenedor.innerHTML = html;
         return;
     }
 
-    let html = "";
-    const ahora = Date.now(); // Hora actual para calcular
+    const ahora = Date.now();
 
     listaUsuariosCacheReal.forEach(user => {
-        const numMensajes = mapaMensajesSinLeer[user.key] || 0;
-
-        let tiempoTexto = "";
-        let colorTiempo = "#94a3b8";
+        const esMio = (user.key === idAuditor);
         
-        const msDiff = ahora - user.rawTime;
-        const minDiff = Math.floor(msDiff / 60000);
-
-        if (minDiff < 2) {
-            tiempoTexto = "Online";
-            colorTiempo = "#10b981";
-        } else if (minDiff < 60) {
-            tiempoTexto = minDiff + " min";
-        } else if (minDiff < 1440) {
-            tiempoTexto = Math.floor(minDiff / 60) + " h";
-        } else {
-            tiempoTexto = Math.floor(minDiff / 1440) + " d";
-        }
-
+        // --- 🔴 LÓGICA DEL BADGE ROJO (MENSAJES NO LEÍDOS) ---
+        // Buscamos en el mapa si este usuario tiene mensajes para nosotros
+        const numMensajes = window.mapaMensajesSinLeer ? (window.mapaMensajesSinLeer[user.key] || 0) : 0;
+        
         const badgeHtml = numMensajes > 0 
-             ? `<div style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; display:flex; align-items:center; justify-content:center; border:2px solid white; font-weight:800; box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index:10; animation: popIn 0.3s;">${numMensajes}</div>` 
+             ? `<div style="position:absolute; top:-5px; right:-5px; background:#ef4444; color:white; 
+                           border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; 
+                           display:flex; align-items:center; justify-content:center; 
+                           border:2px solid white; font-weight:800; z-index:110; 
+                           animation: popIn 0.3s;">${numMensajes}</div>` 
              : '';
 
-        let bordeColor = '#e2e8f0'; 
-        if (user.online) bordeColor = '#10b981';
-        if (numMensajes > 0) bordeColor = '#ef4444';
+        // --- ☁️ LÓGICA DE LA NUBE DE PENSAMIENTO ---
+        let nubeHtml = "";
+        if (user.pensamiento && user.pensamiento.trim() !== "") {
+            nubeHtml = `
+            <div style="position: absolute; top: -42px; left: 50%; transform: translateX(-50%); 
+                        background: ${esMio ? '#6366f1' : '#8b5cf6'}; color: white; padding: 5px 12px; border-radius: 15px; 
+                        font-size: 0.62rem; font-weight: 800; white-space: nowrap; 
+                        box-shadow: 0 4px 12px rgba(99,102,241,0.4); z-index: 100;
+                        max-width: 95px; overflow: hidden; text-overflow: ellipsis; animation: bounce 2s infinite;">
+                ${escapeHtml(user.pensamiento)}
+                <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+                            width: 0; height: 0; border-left: 6px solid transparent; 
+                            border-right: 6px solid transparent; border-top: 6px solid ${esMio ? '#6366f1' : '#8b5cf6'};"></div>
+            </div>`;
+        }
 
-        const dotClass = user.online ? "dot-online" : "dot-offline";
-
-        const userKey = user.key;
-        const userName = user.nombre.replace(/'/g, "\\'");
+        // Tiempos y Colores de borde
+        let tiempoTexto = esMio ? "Online" : (window.formatTimeAgo ? window.formatTimeAgo(user.rawTime) : "Reciente");
+        let colorTiempo = (esMio || ahora - user.rawTime < 120000) ? "#10b981" : "#94a3b8";
         
+        // El borde se pone rojo si hay mensajes, verde si esta online, o gris normal
+        let bordeColor = numMensajes > 0 ? '#ef4444' : (user.online ? '#10b981' : '#e2e8f0');
+
+        // --- 2. CONSTRUIR CADA ITEM DE LA LISTA ---
         html += `
-        <div class="story-item" style="min-width: 65px; position:relative;" onclick="abrirChatPrivado('${userKey}', '${userName}')">
-            <div class="story-avatar-box" style="border-color: ${bordeColor}; position:relative; transition:0.3s;">
-                <div class="story-img" style="background-image:url('${user.avatar}')"></div>
-                <div class="story-dot ${dotClass}"></div>
-                ${badgeHtml}
-                ${user.online ? `<button onclick="event.stopPropagation(); abrirRegaloPrivadoTarget('${userKey}', '${userName}')" style="position:absolute; bottom:-2px; left:-2px; width:22px; height:22px; border-radius:50%; background: linear-gradient(135deg, #a855f7, #8b5cf6); border:2px solid white; font-size:0.7rem; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 2px 5px rgba(168,85,247,0.5); z-index:20;" title="Enviar puntos">🎁</button>` : ''}
+        <div class="story-item" style="min-width: 70px; position:relative; margin-top: 35px;" 
+             onclick="${esMio ? '' : `abrirChatPrivado('${user.key}', '${user.nombre.replace(/'/g, "\\'")}')`}">
+            
+            ${nubeHtml} <!-- Nube flotante -->
+
+            <div class="story-avatar-box" style="border-width: 3px; border-color: ${bordeColor}; position:relative; width:58px; height:58px; margin: 0 auto; transition: 0.3s;">
+                
+                <div class="story-img" style="background-image:url('${user.avatar}'); background-size: cover; background-position: center;"></div>
+                
+                ${badgeHtml} <!-- Círculo rojo de mensajes -->
+                
+                ${user.online ? `<div class="story-dot dot-online" style="border: 2px solid white; z-index: 10;"></div>` : ''}
             </div>
             
-            <div class="story-name" style="font-weight:${numMensajes>0?'800':'normal'}; color:${numMensajes>0?'#1e293b':'#334155'}; margin-bottom: 0;">
-                ${user.nombre}
+            <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">
+                ${esMio ? 'Tú' : user.nombre}
             </div>
             
-            <div style="font-size: 0.6rem; color: ${colorTiempo}; font-weight: 600; margin-top: -2px;">
+            <div style="font-size: 0.55rem; color: ${colorTiempo}; font-weight: 800; margin-top:-2px;">
                 ${tiempoTexto}
             </div>
         </div>`;
     });
+
     contenedor.innerHTML = html;
 }
+window.formatTimeAgo = (timestamp) => {
+    if (!timestamp) return "Reciente";
+    const ahora = Date.now();
+    const diff = ahora - timestamp;
+    const segundos = Math.floor(diff / 1000);
+    const minutos = Math.floor(segundos / 60);
+    const horas = Math.floor(minutos / 60);
+    const dias = Math.floor(horas / 24);
+    
+    if (minutos < 1) return 'Online';
+    if (minutos < 60) return minutos + ' min';
+    if (horas < 24) return horas + ' h';
+    return dias + ' d';
+};
 // ==========================================
 // 🚀 ABRIR MODAL INVITAR (CON CONTADOR REAL)
 // ==========================================
@@ -10727,9 +11404,77 @@ window.seleccionarTipoPublicacion = (tipo) => {
             }
             document.getElementById('modalOpcionVideoPropio').style.display = 'flex';
         });
+    } else if (tipo === 'pensamiento') {
+        if (!idAuditor) return notify("Inicia sesión");
+        document.getElementById('modalPensamiento').style.display = 'flex';
+        document.getElementById('inputPensamiento').focus();
     }
 };
 
+// 💭 FUNCIONES PARA PENSAMIENTOS PÚBLICOS
+window.publicarPensamiento = () => {
+    if (!idAuditor) return notify("❌ Inicia sesión");
+    const texto = document.getElementById('inputPensamiento').value.trim();
+    if (!texto) return notify("📝 Escribe algo");
+
+    const btn = document.getElementById('btnPublicarPensamiento');
+    btn.disabled = true;
+
+    // 🔥 USAMOS EL NODO "pensamientos" DE TUS REGLAS
+    const timestamp = firebase.database.ServerValue.TIMESTAMP;
+    
+    const actualizaciones = {};
+    // Lo guardamos en el nodo global para que sea PÚBLICO
+    actualizaciones[`pensamientos/${idAuditor}`] = {
+        texto: texto,
+        autor: document.getElementById('profKey').textContent || "Usuario",
+        timestamp: timestamp
+    };
+    // Actualizamos tu 'lastSeen' para que brinques al principio de la lista de todos
+    actualizaciones[`users/${idAuditor}/lastSeen`] = timestamp;
+
+    db.ref().update(actualizaciones).then(() => {
+        notify("✨ Pensamiento publicado para todos");
+        document.getElementById('inputPensamiento').value = '';
+        document.getElementById('modalPensamiento').style.display = 'none';
+        btn.disabled = false;
+    });
+};
+// Cargar pensamientos públicos (opcional - para futuro)
+window.cargarPensamientosPublicos = () => {
+    const feedContainer = document.getElementById('pensamientosPublicosFeed');
+    if(!feedContainer) return;
+
+    db.ref('pensamientos').orderByChild('timestamp').limitToLast(15).on('value', snap => {
+        let html = "";
+
+        if (!snap.exists()) {
+            feedContainer.innerHTML = "<div style='color:#94a3b8; font-size:0.7rem;'>Nadie ha pensado nada hoy... ✨</div>";
+            return;
+        }
+
+        snap.forEach(child => {
+            const p = child.val();
+            const avatar = getUserProfilePhoto(p.uid);
+            const nombre = p.autor || "Usuario";
+            const textoCorto = p.texto.length > 40 ? p.texto.substring(0, 37) + "..." : p.texto;
+
+            // Diseño de Burbuja Horizontal "Premium"
+            html = `
+            <div onclick="mostrarPerfilUsuario('${p.uid}', '${nombre}')" style="min-width: 140px; max-width: 140px; background: #faf5ff; border-radius: 18px; padding: 10px; border: 1.5px solid #e9d5ff; flex-shrink: 0; position: relative; box-shadow: 0 2px 8px rgba(139,92,246,0.05);">
+                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                    <img src="${avatar}" style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #8b5cf6;">
+                    <span style="font-size: 0.65rem; font-weight: 800; color: #7c3aed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${nombre}</span>
+                </div>
+                <div style="font-size: 0.75rem; color: #475569; line-height: 1.2; font-style: italic; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                    "${escapeHtml(p.texto)}"
+                </div>
+            </div>` + html;
+        });
+
+        feedContainer.innerHTML = html;
+    });
+};
 window.grabarVideoCamara = () => {
     document.getElementById('modalOpcionVideoPropio').style.display = 'none';
     if (typeof AndroidNative !== 'undefined' && AndroidNative.openVideoCamera) {
@@ -10808,8 +11553,13 @@ window.publicarVideoConAnuncio = () => {
     }
 };
 
-// Callback desde Kotlin tras ver el anuncio bonificado
+// Callback desde Kotlin tras ver el anuncio recompensado
 window.otorgarMensajesPorVideo = () => {
+    if (window._rewardPendingTarget) {
+        window._rewardPendingTarget = null;
+        otorgarMensajesPorAd();
+        return;
+    }
     if (window._publicarMision) {
         window._publicarMision = false;
         procesarPublicacionPendiente();
@@ -10823,12 +11573,16 @@ window.otorgarMensajesPorVideo = () => {
 };
 
 window.onAdSkipped = () => {
+    window._rewardPendingTarget = null;
     const btn = document.getElementById('btnPublicarVideo');
     if (btn) {
         btn.disabled = false;
         btn.innerHTML = "📺 Publicar (anuncio bonificado)";
     }
-    notify("💬 Ve el anuncio completo para publicar tu video");
+    if (window._adMsgBtn) {
+        window._adMsgBtn = null;
+    }
+    notify("💬 Ve el anuncio completo para recibir tu recompensa");
 };
 
 // 4. Subir a Firebase (Simulación de Storage usando Base64 o Link temporal)
@@ -10910,28 +11664,45 @@ window.onCompraMensajesExitosa = (cantidadMensajes) => {
 };
 window.cambiarPestanaChat = (pestana) => {
     const btnGlobal = document.getElementById('tabGlobalBtn');
+    const btnMensajes = document.getElementById('tabMensajesBtn');
     const btnGrupos = document.getElementById('tabGruposBtn');
+    
     const contGlobal = document.getElementById('chatListContainer');
+    const contMensajes = document.getElementById('mensajesPrivadosContainer');
     const contGrupos = document.getElementById('gruposListContainer');
 
+    // 1. Ocultar todos los contenedores
+    if(contGlobal) contGlobal.style.display = 'none';
+    if(contMensajes) contMensajes.style.display = 'none';
+    if(contGrupos) contGrupos.style.display = 'none';
+
+    // 2. Quitar clase active de todos los botones
+    if(btnGlobal) btnGlobal.classList.remove('active');
+    if(btnMensajes) btnMensajes.classList.remove('active');
+    if(btnGrupos) btnGrupos.classList.remove('active');
+
+    // 3. Activar el seleccionado
     if (pestana === 'global') {
-        // Mostrar Global
-        btnGlobal.classList.add('active');
-        btnGrupos.classList.remove('active');
-        contGlobal.style.display = 'flex';
-        contGrupos.style.display = 'none';
-        scrollToBottom(); 
-    } else {
-        // Mostrar Grupos
-        btnGrupos.classList.add('active');
-        btnGlobal.classList.remove('active');
-        contGrupos.style.display = 'block';
-        contGlobal.style.display = 'none';
+        if(btnGlobal) btnGlobal.classList.add('active');
+        if(contGlobal) contGlobal.style.display = 'flex';
+        setTimeout(() => scrollToBottom(), 100);
+    } 
+    else if (pestana === 'mensajes') {
+        if(btnMensajes) btnMensajes.classList.add('active');
+        if(contMensajes) contMensajes.style.display = 'block';
         
-        // 🔥 EL TRUCO: Forzamos a que descargue los grupos cada vez que tocas la pestaña
-        if(typeof cargarListaDeGrupos === "function") {
-            cargarListaDeGrupos();
+        // 🔥 ESTA ES LA LÍNEA QUE CARGA LOS CHATS
+        if(typeof cargarChatsPrivadosNoLeidos === "function") {
+            cargarChatsPrivadosNoLeidos();
+        } else {
+            console.error("❌ Error: La función cargarChatsPrivadosNoLeidos no existe");
+            contMensajes.innerHTML = '<div style="padding:20px; text-align:center; color:red;">Error: Función de carga no encontrada.</div>';
         }
+    } 
+    else { // grupos
+        if(btnGrupos) btnGrupos.classList.add('active');
+        if(contGrupos) contGrupos.style.display = 'block';
+        if(typeof cargarListaDeGrupos === "function") cargarListaDeGrupos();
     }
 };
 // Funciones vacías para que no te dé error al tocar los botones de ejemplo
@@ -10998,6 +11769,16 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
             const esMio = m.uid === idAuditor;
             const avatar = getUserProfilePhoto(m.uid);
             const textoEscapado = escapeHtml(m.texto).replace(/"/g, '&quot;');
+            const fotoEscapada = m.foto ? m.foto.replace(/"/g, '&quot;') : '';
+            
+            let fotoHTML = '';
+            if (m.esFoto && m.foto) {
+                fotoHTML = `
+                    <div style="margin:8px 0; cursor:pointer;" onclick="mostrarFotoGrupo(this)" data-foto="${fotoEscapada}">
+                        <img src="${m.foto}" style="max-width:200px; max-height:200px; border-radius:12px; object-fit:cover; box-shadow:0 2px 8px rgba(0,0,0,0.15);" loading="lazy">
+                    </div>
+                `;
+            }
             
             html += `
             <div class="chat-row ${esMio ? 'mine' : 'other'}">
@@ -11006,13 +11787,15 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
                      data-msg-key="${s.key}"
                      data-msg-text="${textoEscapado}"
                      data-msg-uid="${m.uid}"
-                     onmousedown="startPressFromElement(this, false)"
-                     onmouseup="cancelPress(false)"
-                     onmouseleave="cancelPress(false)"
-                     ontouchstart="startPressFromElement(this, false)"
-                     ontouchend="cancelPress(false)"
-                     ontouchmove="cancelPress(false)">
+                     data-msg-author="${escapeHtml(m.autor)}"
+                     onmousedown="startPressFromElement(this, false); handleGroupSwipeStart(event, '${s.key}')"
+                     onmouseup="cancelPress(false); handleGroupSwipeEnd(event, '${s.key}')"
+                     onmouseleave="cancelPress(false); handleGroupSwipeEnd(event, '${s.key}')"
+                     ontouchstart="startPressFromElement(this, false); handleGroupSwipeStart(event, '${s.key}')"
+                     ontouchend="cancelPress(false); handleGroupSwipeEnd(event, '${s.key}')"
+                     ontouchmove="handleGroupSwipeMove(event, '${s.key}')">
                     <div class="msg-user">${escapeHtml(m.autor)}</div>
+                    ${fotoHTML}
                     <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
                     <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
                         ${new Date(m.fecha).toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
@@ -11025,6 +11808,103 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
         setTimeout(() => list.scrollTop = list.scrollHeight, 100);
     });
 }
+
+// --- SWIPE PARA MENCIONAR (CHAT GRUPO) ---
+let grpSwipeStartX = 0;
+let grpSwipeStartY = 0;
+let grpSwipeMsgKey = null;
+let grpIsSwiping = false;
+
+window.handleGroupSwipeStart = (e, msgKey) => {
+    const touch = e.touches ? e.touches[0] : e;
+    grpSwipeStartX = touch.clientX;
+    grpSwipeStartY = touch.clientY;
+    grpSwipeMsgKey = msgKey;
+    grpIsSwiping = true;
+};
+
+window.handleGroupSwipeMove = (e, msgKey) => {
+    if (!grpIsSwiping || grpSwipeMsgKey !== msgKey) return;
+    const touch = e.touches ? e.touches[0] : e;
+    const deltaX = touch.clientX - grpSwipeStartX;
+    const deltaY = Math.abs(touch.clientY - grpSwipeStartY);
+
+    if (deltaY > 30) {
+        grpIsSwiping = false;
+        cancelPress(false);
+        return;
+    }
+
+    if (Math.abs(deltaX) > 10) {
+        e.preventDefault();
+        cancelPress(false);
+        const burbuja = document.getElementById(`grp-msg-${msgKey}`);
+        if (burbuja) {
+            burbuja.classList.add('swiping');
+            if (deltaX > 0) {
+                const translateX = Math.min(deltaX, 100);
+                burbuja.style.transform = `translateX(${translateX}px)`;
+                burbuja.classList.remove('swiping-mention');
+                if (translateX > 50) {
+                    burbuja.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)';
+                    burbuja.style.borderLeft = '4px solid #6366f1';
+                    burbuja.style.borderRight = '';
+                }
+            } else {
+                const translateX = Math.max(deltaX, -100);
+                burbuja.style.transform = `translateX(${translateX}px)`;
+                burbuja.classList.add('swiping-mention');
+                if (translateX < -50) {
+                    burbuja.style.boxShadow = '0 4px 15px rgba(251, 191, 36, 0.4)';
+                    burbuja.style.borderRight = '4px solid #fbbf24';
+                    burbuja.style.borderLeft = '';
+                } else {
+                    burbuja.style.boxShadow = '';
+                    burbuja.style.borderRight = '';
+                    burbuja.style.borderLeft = '';
+                }
+            }
+        }
+    }
+};
+
+window.handleGroupSwipeEnd = (e, msgKey) => {
+    if (!grpIsSwiping || grpSwipeMsgKey !== msgKey) return;
+    grpIsSwiping = false;
+
+    const touch = e.changedTouches ? e.changedTouches[0] : e;
+    const deltaX = touch.clientX - grpSwipeStartX;
+
+    const burbuja = document.getElementById(`grp-msg-${msgKey}`);
+    if (burbuja) {
+        burbuja.classList.remove('swiping');
+        burbuja.classList.remove('swiping-mention');
+        burbuja.style.transform = '';
+        burbuja.style.background = '';
+        burbuja.style.borderLeft = '';
+        burbuja.style.borderRight = '';
+    }
+
+    if (Math.abs(deltaX) > 60) {
+        const author = burbuja ? burbuja.dataset.msgAuthor : '';
+        if (author && typeof window.mencionarEnChatGrupo === 'function') {
+            window.mencionarEnChatGrupo(author);
+        }
+    }
+
+    grpSwipeMsgKey = null;
+};
+
+window.mencionarEnChatGrupo = (nombre) => {
+    const input = document.getElementById('inputGrupoMsg');
+    if (!input) return;
+    const texto = input.value;
+    const cursor = input.selectionStart || 0;
+    const mencion = "@" + nombre + " ";
+    input.value = texto.slice(0, cursor) + mencion + texto.slice(cursor);
+    input.focus();
+    if (navigator.vibrate) navigator.vibrate(30);
+};
 
 // ENVIAR MENSAJE AL GRUPO
 window.enviarMensajeGrupo = () => {
@@ -11246,6 +12126,156 @@ window.eliminarGrupo = () => {
         })
         .catch(err => notify('❌ Error: ' + err.message));
 };
+// Función para cargar chats privados en la pestaña Mensajes
+window.cargarChatsPrivadosNoLeidos = () => {
+    const container = document.getElementById('mensajesPrivadosContainer');
+    if (!container || !idAuditor) return;
+    
+    // Mostrar spinner
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i><div style="margin-top:15px;">Buscando chats...</div></div>';
+
+    db.ref('chats_privados').once('value', snap => {
+        if (!snap.exists()) {
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-comments" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i><div>No tienes conversaciones aún.</div></div>';
+            return;
+        }
+
+        let chats = [];
+        snap.forEach(chatSnap => {
+            const chatId = chatSnap.key;
+            const partes = chatId.split('_');
+            
+            // Verificar si soy participante del chat
+            if (partes.includes(idAuditor)) {
+                const otroUid = partes[0] === idAuditor ? partes[1] : partes[0];
+                let ultimoMsg = null;
+                let mensajesNoLeidos = 0;
+
+                // Recorrer mensajes para encontrar el último y contar no leídos
+                chatSnap.forEach(msgSnap => {
+                    const msg = msgSnap.val();
+                    // Actualizar último mensaje
+                    if (!ultimoMsg || (msg.fecha && msg.fecha > (ultimoMsg.fecha || 0))) {
+                        ultimoMsg = msg;
+                    }
+                    // Contar no leídos (mensajes del otro usuario)
+                    if (msg.uid !== idAuditor && !msg.leido) {
+                        mensajesNoLeidos++;
+                    }
+                });
+
+                if (ultimoMsg) {
+                    chats.push({ otroUid, ultimoMsg, mensajesNoLeidos });
+                }
+            }
+        });
+
+        // Ordenar: Primero los que tienen mensajes sin leer, luego por fecha
+        chats.sort((a, b) => {
+            if (a.mensajesNoLeidos > 0 && b.mensajesNoLeidos === 0) return -1;
+            if (b.mensajesNoLeidos > 0 && a.mensajesNoLeidos === 0) return 1;
+            return (b.ultimoMsg.fecha || 0) - (a.ultimoMsg.fecha || 0);
+        });
+
+        if (chats.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-check-circle" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i><div>¡Todo al día! No hay mensajes nuevos.</div></div>';
+            return;
+        }
+
+        // Generar HTML
+        let html = '';
+        chats.forEach(chat => {
+            const msg = chat.ultimoMsg;
+            const uid = chat.otroUid;
+            const diffMin = Math.floor((Date.now() - (msg.fecha || Date.now())) / 60000);
+            const tiempo = diffMin < 1 ? 'Ahora' : diffMin < 60 ? `${diffMin} min` : `${Math.floor(diffMin/60)} h`;
+            let texto = msg.texto || (msg.esFoto ? '📷 Foto' : '...');
+            if (texto.length > 40) texto = texto.substring(0, 40) + '...';
+
+            // Indicador de no leído (Badge rojo y borde)
+            const bordeNoLeidos = chat.mensajesNoLeidos > 0 ? 'border-left: 4px solid #ef4444; background: #fff5f5;' : '';
+            const badgeHtml = chat.mensajesNoLeidos > 0 
+                ? `<div style="background:#ef4444; color:white; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:10px;">${chat.mensajesNoLeidos} nuevo(s)</div>` 
+                : '';
+
+            html += `
+                <div onclick="abrirChatPrivado('${uid}', 'Cargando...')" 
+                     style="background:white; padding:15px; border-radius:16px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); cursor:pointer; transition:0.2s; ${bordeNoLeidos}">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="width:50px; height:50px; border-radius:50%; background:#e2e8f0; background-size:cover; background-image:url('${getUserProfilePhoto(uid)}'); flex-shrink:0;"></div>
+                        <div style="flex:1; min-width:0;">
+                            <div id="name-chat-${uid}" style="font-weight:700; color:#1e293b; font-size:1rem;">Cargando...</div>
+                            <div style="font-size:0.85rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(texto)}</div>
+                            ${badgeHtml}
+                        </div>
+                        <div style="font-size:0.75rem; color:#94a3b8; font-weight:600;">${tiempo}</div>
+                    </div>
+                </div>`;
+        });
+
+        container.innerHTML = html;
+
+        // Cargar nombres de usuarios en segundo plano
+        chats.forEach(chat => {
+            db.ref(`users/${chat.otroUid}`).once('value', snapU => {
+                const u = snapU.val();
+                const nombre = (u && u.apodo) ? u.apodo : (u && u.myInviteKey ? u.myInviteKey : 'Usuario');
+                const el = document.getElementById(`name-chat-${chat.otroUid}`);
+                if (el) el.textContent = nombre;
+            });
+        });
+    });
+};
+// --- FUNCIÓN PARA DAR ESPACIO AL CHAT ---
+document.addEventListener('DOMContentLoaded', () => {
+    const areaSuperior = document.getElementById('areaSuperiorMensajes');
+    const inputChat = document.getElementById('inputChatMsg');
+
+    if (inputChat && areaSuperior) {
+        // Al tocar el input para escribir
+        inputChat.addEventListener('focus', () => {
+            areaSuperior.style.display = 'none'; // Escondemos lo de arriba
+            setTimeout(scrollToBottom, 100); // Bajamos el chat para ver lo último
+        });
+
+        // Al salir del input o cerrar teclado
+        inputChat.addEventListener('blur', () => {
+            // Esperamos un poquito para que no sea brusco
+            setTimeout(() => {
+                areaSuperior.style.display = 'block'; // Mostramos de nuevo
+            }, 100);
+        });
+    }
+});
+function reproducirVideo(card) {
+    if (videoActualId === card.id) return;
+    if (videoActualId) {
+        const ant = document.getElementById(videoActualId);
+        if (ant) ant.querySelector('.vid-frame').innerHTML = "";
+    }
+    videoActualId = card.id;
+    const mediaId = card.getAttribute('data-media');
+    const type = card.getAttribute('data-type');
+    const frame = card.querySelector('.vid-frame');
+
+    window.parent.postMessage({type: 'startVideoProgress', videoId: mediaId}, '*');
+    
+    if (type === 'direct') {
+        frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit: cover; background: #000;"><source src="${mediaId}" type="video/mp4"></video>`;
+    } 
+    else if (type === 'streamable') {
+        frame.innerHTML = `<iframe src="https://streamable.com/e/${mediaId}?autoplay=1&muted=${audioActivado ? 0 : 1}" frameborder="0" width="100%" height="100%" allow="autoplay" style="position:absolute;left:0;top:0;width:100%;height:100%;"></iframe>`;
+    }
+    // 🔥 MOTOR DAILYMOTION
+    else if (type === 'dailymotion') {
+        frame.innerHTML = `<iframe width="100%" height="100%" src="https://www.dailymotion.com/embed/video/${mediaId}?autoplay=1&mute=${audioActivado ? 0 : 1}" frameborder="0" allow="autoplay; fullscreen" style="width:100%; height:100%; object-fit:cover;"></iframe>`;
+    }
+    else {
+        const muteState = audioActivado ? 0 : 1;
+        frame.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${mediaId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=https://amgel12.github.io&mute=${muteState}&playlist=${mediaId}&loop=1" frameborder="0" allow="autoplay; encrypted-media"></iframe>`;
+    }
+}
+
 </script>
 <!-- 📱 MENÚ DE OPCIONES AL TOCAR + -->
 <div id="modalMenuPublicar" class="modal-overlay" style="z-index: 40000; align-items: flex-end; display: none;">
@@ -11256,14 +12286,16 @@ window.eliminarGrupo = () => {
         <div style="display: flex; flex-direction: column; gap: 15px;">
             
             <!-- OPCIÓN YOUTUBE -->
-            <button onclick="seleccionarTipoPublicacion('youtube')" 
-                style="width: 100%; padding: 18px; border: 2px solid #ef4444; background: #fff1f2; border-radius: 18px; display: flex; align-items: center; gap: 15px; cursor: pointer;">
-                <span style="font-size: 2rem;">📺</span>
-                <div style="text-align: left;">
-                    <div style="font-weight: 800; color: #ef4444; font-size: 1rem;">Video de YouTube</div>
-                    <div style="font-size: 0.75rem; color: #64748b;">Pega el link y gana +0.50 PTS</div>
-                </div>
-            </button>
+<!-- Añade este botón a tu modalMenuPublicar en index.html -->
+<!-- Botón Librería en modalMenuPublicar -->
+<button onclick="abrirLibreriaVideosPremium()" 
+    style="width: 100%; padding: 18px; border: 2px solid #3b82f6; background: #f0f7ff; border-radius: 18px; display: flex; align-items: center; gap: 15px; cursor: pointer; margin-top:10px;">
+    <span style="font-size: 2rem;">📚</span>
+    <div style="text-align: left;">
+        <div style="font-weight: 800; color: #3b82f6; font-size: 1rem;">Librería Premium</div>
+        <div style="font-size: 0.75rem; color: #64748b;">Elige videos con música sin bloqueos</div>
+    </div>
+</button>
 
             <!-- OPCIÓN VIDEO PROPIO -->
             <button onclick="seleccionarTipoPublicacion('propio')" 
@@ -11274,6 +12306,7 @@ window.eliminarGrupo = () => {
                     <div style="font-size: 0.75rem; color: #64748b;">Graba o sube desde tu galería</div>
                 </div>
             </button>
+
 
             <button onclick="document.getElementById('modalMenuPublicar').style.display='none'" 
                 style="margin-top: 10px; padding: 15px; border: none; background: none; color: #94a3b8; font-weight: 700; cursor: pointer;">
@@ -11343,18 +12376,28 @@ window.eliminarGrupo = () => {
         <button onclick="document.getElementById('modalSubirVideo').style.display='none'" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">Cancelar</button>
     </div>
 </div>
-<!-- Busca el modalSubirVideo y cambia el párrafo de descripción -->
-<div id="modalSubirVideo" class="modal-overlay" style="z-index: 45000;">
-    <div class="modal-content">
-        <h3 style="color:#10b981;">🚀 Publicar Mi Video</h3>
-        <!-- 🔥 Texto actualizado -->
-        <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 15px;">
-            Duración máxima: <b style="col    or:#ef4444;">10 segundos</b>.
-        </p>
+
+<!-- 💭 MODAL PARA COMPARTIR PENSAMIENTO PÚBLICO -->
+<div id="modalPensamiento" class="modal-overlay" style="z-index: 42000;">
+    <div class="modal-content" style="max-width: 350px;">
+        <h3 style="color:#8b5cf6; margin-bottom: 10px;">💭 Pensamiento Público</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Comparte lo que piensas con todos</p>
         
-        <!-- ... resto del modal ... -->
+        <textarea id="inputPensamiento" placeholder="¿En qué estás pensando?" rows="5" maxlength="160" style="text-align: left; font-size: 0.9rem; resize: vertical; max-height: 75px;"></textarea>
+        
+        <div style="font-size: 0.7rem; color: #94a3b8; margin: 10px 0;">
+            <span id="contadorPensamiento">0</span> / 280 caracteres
+        </div>
+        
+        <button id="btnPublicarPensamiento" onclick="publicarPensamiento()" class="btn-blue" style="background: linear-gradient(135deg, #8b5cf6, #a855f7); width: 100%; margin-bottom: 10px;">
+            ✨ Publicar Pensamiento
+        </button>
+        <button onclick="document.getElementById('modalPensamiento').style.display='none'" style="background:none; border:none; color:#94a3b8; width: 100%; cursor:pointer; padding: 10px;">Cancelar</button>
     </div>
 </div>
+
 <!-- 3. AL FINAL: Cerrar etiquetas HTML -->
+
+
 </body>
 </html>
