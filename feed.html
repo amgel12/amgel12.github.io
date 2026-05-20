@@ -17,6 +17,30 @@
         .social-card { height: 100vh; width: 100vw; position: relative; scroll-snap-align: start; scroll-snap-stop: always; background: #000; display: flex; align-items: center; justify-content: center; }
         .card-media { position: absolute; inset: 0; z-index: 1; }
         .vid-frame { width: 100%; height: 100%; pointer-events: none; position: relative; overflow: hidden; }
+
+        /* FIX 1: Thumbnail de portada — se muestra mientras el iframe carga */
+        .card-thumb {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            background-size: cover;
+            background-position: center;
+            background-color: #111;
+            transition: opacity 0.4s ease;
+        }
+        .card-thumb.oculto { opacity: 0; pointer-events: none; }
+
+        /* Spinner sobre el thumbnail */
+        .card-spinner {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3;
+            color: rgba(255,255,255,0.7);
+            font-size: 1.8rem;
+        }
+        .card-spinner.oculto { display: none; }
+
         .card-overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 40%, rgba(0,0,0,0.3) 100%); pointer-events: none; }
         .user-info { pointer-events: auto; margin-bottom: 60px; color: #fff; max-width: 80%; }
         .user-info h4 { font-size: 1rem; font-weight: 800; margin-bottom: 5px; color: #3b82f6; }
@@ -29,7 +53,6 @@
         @keyframes pop { 0% {transform: scale(1);} 50% {transform: scale(1.4);} 100% {transform: scale(1);} }
         .unmute-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background: rgba(0,0,0,0.6); padding: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); color: #fff; display: flex; flex-direction: column; align-items: center; cursor: pointer; pointer-events: auto; backdrop-filter: blur(4px); }
         .loader { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; z-index: 200; text-align: center; }
-        .empty-feed { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.5); text-align: center; font-size: 1rem; z-index: 200; }
         .retry-btn { margin-top: 20px; background: #3b82f6; color: white; border: none; padding: 12px 28px; border-radius: 50px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: 'Poppins', sans-serif; }
     </style>
 </head>
@@ -78,12 +101,60 @@
         return match ? match[1] : null;
     }
 
+    // FIX 1: Obtener URL del thumbnail según plataforma
+    function getThumbnailUrl(mediaId, type, fotoPortada) {
+        if (fotoPortada) return fotoPortada; // Portada subida por el usuario — siempre preferida
+        if (type === 'youtube') return `https://img.youtube.com/vi/${mediaId}/hqdefault.jpg`;
+        if (type === 'dailymotion') return `https://www.dailymotion.com/thumbnail/video/${mediaId}`;
+        if (type === 'streamable') return `https://thumbs.streamable.com/${mediaId}.jpg`;
+        return ''; // direct (workers.dev) — sin thumbnail disponible
+    }
+
     function prepararObservador() {
+        // FIX 2: Threshold bajado de 0.6 → 0.3 para empezar a cargar antes
         observerFeed = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) reproducirVideo(entry.target);
+                if (entry.isIntersecting) {
+                    reproducirVideo(entry.target);
+                    // FIX 3: Precargar el siguiente video silenciosamente
+                    precargarSiguiente(entry.target);
+                }
             });
-        }, { threshold: 0.6 });
+        }, { threshold: 0.3 });
+    }
+
+    // FIX 3: Precargar la siguiente card en el DOM antes de que el usuario llegue a ella
+    function precargarSiguiente(cardActual) {
+        const container = document.getElementById('muroReportes');
+        const cards = Array.from(container.querySelectorAll('.social-card'));
+        const idx = cards.indexOf(cardActual);
+        if (idx === -1) return;
+
+        // La siguiente card en el scroll (abajo)
+        const siguiente = cards[idx + 1];
+        if (!siguiente) return;
+
+        const frame = siguiente.querySelector('.vid-frame');
+        // Solo precargar si el frame está vacío (no se ha cargado aún)
+        if (!frame || frame.innerHTML.trim() !== '') return;
+
+        const mediaId = siguiente.getAttribute('data-media');
+        const type = siguiente.getAttribute('data-type');
+
+        // Precargar en silencio (muted) dentro de un iframe oculto
+        let src = '';
+        if (type === 'youtube') {
+            const origin = encodeURIComponent(window.location.origin || 'https://localhost');
+            src = `https://www.youtube.com/embed/${mediaId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${origin}&mute=1&playlist=${mediaId}&loop=1`;
+        } else if (type === 'streamable') {
+            src = `https://streamable.com/e/${mediaId}?autoplay=1&muted=1`;
+        } else if (type === 'dailymotion') {
+            src = `https://www.dailymotion.com/embed/video/${mediaId}?autoplay=1&mute=1&ui-start-screen-info=0&sharing-enable=0`;
+        } else {
+            return; // direct — no precargar (consume ancho de banda)
+        }
+
+        frame.innerHTML = `<iframe src="${src}" frameborder="0" allow="autoplay; encrypted-media" style="position:absolute;left:0;top:0;width:100%;height:100%;border:none;" data-precargado="1"></iframe>`;
     }
 
     function quitarLoader() {
@@ -110,7 +181,6 @@
 
         db.ref('reportes').limitToLast(20).on('child_added', snap => {
             try {
-                // Quitar loader en cuanto llega el PRIMER evento, antes del check de musica
                 clearTimeout(loaderTimeout);
                 quitarLoader();
 
@@ -140,8 +210,6 @@
                 container.prepend(card);
                 observerFeed.observe(card);
 
-                // FIX D: Disparar video en la primera card visible
-                // (el IntersectionObserver puede perderse el prepend rápido)
                 clearTimeout(window._feedLoadTimer);
                 window._feedLoadTimer = setTimeout(() => {
                     const primerCard = container.querySelector('.social-card');
@@ -172,8 +240,20 @@
 
         const isLikedInitial = post.likes && idAuditor && post.likes[idAuditor];
 
+        // FIX 1: Obtener thumbnail para mostrar mientras carga el video
+        const thumbUrl = getThumbnailUrl(mediaId, type, post.fotoPortada || '');
+        const thumbStyle = thumbUrl ? `background-image:url('${thumbUrl}')` : 'background-color:#111';
+
         card.innerHTML = `
-            <div class="card-media"><div class="vid-frame"></div></div>
+            <div class="card-media">
+                <div class="vid-frame"></div>
+                <!-- FIX 1: Portada visible mientras el iframe carga -->
+                <div class="card-thumb" style="${thumbStyle}" id="thumb-${key}">
+                    <div class="card-spinner" id="spin-${key}">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                    </div>
+                </div>
+            </div>
             <div class="card-overlay">
                 <div class="user-info">
                     <h4>@${post.autorClave || 'Usuario'}</h4>
@@ -213,6 +293,14 @@
         return card;
     }
 
+    function ocultarThumb(key) {
+        // Desvanece el thumbnail y el spinner cuando el video está listo
+        const thumb = document.getElementById(`thumb-${key}`);
+        const spin = document.getElementById(`spin-${key}`);
+        if (thumb) thumb.classList.add('oculto');
+        if (spin) spin.classList.add('oculto');
+    }
+
     function reproducirVideo(card) {
         if (videoActualId === card.id) return;
         if (videoActualId) {
@@ -223,20 +311,45 @@
         const mediaId = card.getAttribute('data-media');
         const type = card.getAttribute('data-type');
         const frame = card.querySelector('.vid-frame');
+        const key = card.id;
 
         window.parent.postMessage({ type: 'startVideoProgress', videoId: mediaId }, '*');
 
+        // Si ya fue precargado, solo ocultar el thumb (el iframe ya existe)
+        if (frame.querySelector('[data-precargado="1"]')) {
+            ocultarThumb(key);
+            // Actualizar mute/unmute según estado de audio actual
+            const iframe = frame.querySelector('iframe');
+            if (iframe && !audioActivado) {
+                const src = iframe.src;
+                if (!src.includes('mute=1') && !src.includes('muted=1')) return;
+            }
+            ocultarThumb(key);
+            return;
+        }
+
+        const muteState = audioActivado ? 0 : 1;
+
         if (type === 'direct') {
             frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit:cover; background:#000; display:block;"><source src="${mediaId}" type="video/mp4"></video>`;
+            // Para video directo, ocultar thumb cuando el video puede reproducirse
+            const video = frame.querySelector('video');
+            if (video) {
+                video.addEventListener('canplay', () => ocultarThumb(key), { once: true });
+                setTimeout(() => ocultarThumb(key), 2000); // fallback 2s
+            }
         } else if (type === 'streamable') {
-            frame.innerHTML = `<iframe src="https://streamable.com/e/${mediaId}?autoplay=1&muted=${audioActivado ? 0 : 1}" frameborder="0" allow="autoplay; encrypted-media" style="position:absolute; left:0; top:0; width:100%; height:100%; border:none;"></iframe>`;
+            frame.innerHTML = `<iframe src="https://streamable.com/e/${mediaId}?autoplay=1&muted=${muteState}" frameborder="0" allow="autoplay; encrypted-media" style="position:absolute; left:0; top:0; width:100%; height:100%; border:none;"></iframe>`;
+            setTimeout(() => ocultarThumb(key), 2500);
         } else if (type === 'dailymotion') {
-            const muteState = audioActivado ? 0 : 1;
             frame.innerHTML = `<iframe src="https://www.dailymotion.com/embed/video/${mediaId}?autoplay=1&mute=${muteState}&ui-start-screen-info=0&sharing-enable=0" frameborder="0" allow="autoplay; fullscreen; encrypted-media" style="position:absolute; left:0; top:0; width:100%; height:100%; border:none;"></iframe>`;
+            setTimeout(() => ocultarThumb(key), 2500);
         } else {
-            const muteState = audioActivado ? 0 : 1;
+            // YouTube
             const origin = encodeURIComponent(window.location.origin || 'https://localhost');
             frame.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${mediaId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${origin}&mute=${muteState}&playlist=${mediaId}&loop=1" frameborder="0" allow="autoplay; encrypted-media" style="width:100%; height:100%; border:none; display:block;"></iframe>`;
+            // YouTube tarda más — ocultar thumb con un delay mayor
+            setTimeout(() => ocultarThumb(key), 3000);
         }
     }
 
