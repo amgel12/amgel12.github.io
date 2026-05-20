@@ -1595,44 +1595,96 @@
        let videoPendienteUrl = "";
 let fotoBase64Pendiente = "";
 
+// ── Helpers de plataforma para la Librería Premium ──────────────────────────
+window._libGetPlatform = (url) => {
+    if (!url) return 'unknown';
+    if (url.includes('catbox.moe'))                              return 'catbox';
+    if (url.includes('imgur.com'))                               return 'imgur';
+    if (url.includes('dai.ly') || url.includes('dailymotion'))  return 'dailymotion';
+    if (url.includes('streamable.com'))                          return 'streamable';
+    return 'direct';
+};
+
+window._libThumb = (url, platform) => {
+    try {
+        if (platform === 'dailymotion') {
+            const id = url.match(/(?:dai\.ly|video\/)([a-zA-Z0-9]+)/)?.[1] || url.split('/').pop();
+            return `https://www.dailymotion.com/thumbnail/video/${id}`;
+        }
+        if (platform === 'streamable') {
+            const id = url.split('/').pop();
+            return `https://thumbs.streamable.com/${id}.jpg`;
+        }
+        if (platform === 'imgur') {
+            // i.imgur.com/XXXXX.mp4 → i.imgur.com/XXXXX.jpg
+            const base = url.replace(/\.(mp4|gifv|gif|webm)$/i, '');
+            const imgId = base.split('/').pop();
+            return `https://i.imgur.com/${imgId}.jpg`;
+        }
+        // Catbox and direct mp4 — no thumbnail API, use a play icon placeholder
+        return '';
+    } catch(e) { return ''; }
+};
+
+window._libBadge = (platform) => {
+    const badges = {
+        catbox:      { label: 'Catbox',      color: '#6366f1' },
+        imgur:       { label: 'Imgur',        color: '#1bb76e' },
+        dailymotion: { label: 'Dailymotion', color: '#0066dc' },
+        streamable:  { label: 'Streamable',  color: '#ef4444' },
+        direct:      { label: 'MP4',         color: '#f59e0b' },
+    };
+    const b = badges[platform] || { label: 'Video', color: '#555' };
+    return `<span style="font-size:0.55rem;font-weight:900;background:${b.color};color:#fff;padding:2px 6px;border-radius:20px;letter-spacing:0.5px;">${b.label}</span>`;
+};
+
 window.abrirLibreriaVideosPremium = () => {
     if(document.getElementById('modalMenuPublicar')) document.getElementById('modalMenuPublicar').style.display = 'none';
-    notify("🎧 Cargando Biblioteca Spotify...");
+    notify("🎬 Cargando Librería Premium...");
 
     db.ref('libreria_videos').once('value', snap => {
-        let itemsHtml = "";
         if(!snap.exists()) return notify("La biblioteca está vacía");
 
         let data = snap.val();
         let videos = data.Nombre ? data.Nombre : data;
 
-        Object.keys(videos).forEach(key => {
+        // Orden aleatorio en cada apertura
+        let keys = Object.keys(videos);
+        for (let i = keys.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [keys[i], keys[j]] = [keys[j], keys[i]];
+        }
+
+        let itemsHtml = "";
+        keys.forEach(key => {
             const url = videos[key];
-            const id = url.split('/').pop();
-            const thumbUrl = url.includes('dai.ly') 
-                ? `https://www.dailymotion.com/thumbnail/video/${id}`
-                : `https://thumbs.streamable.com/${id}.jpg`;
-            
+            const platform = window._libGetPlatform(url);
+            const thumbUrl = window._libThumb(url, platform);
+            const badge = window._libBadge(platform);
+            const safeUrl = url.replace(/'/g, "\\'");
+
+            const thumbContent = thumbUrl
+                ? `<img src="${thumbUrl}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`
+                : `<i class="fas fa-film" style="color:#555;font-size:1.4rem;"></i>`;
+
             itemsHtml += `
-            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #1a1a1a;">
-                <!-- SECCIÓN ESCUCHAR -->
-<div id="video-item-${key}" onclick="window.reproducirAudioPremium('${url.replace(/'/g, "\\'")}', '${key}')" 
-     style="display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; transition: transform 0.2s;"
-     data-video-url="${url}">
-                    <div style="width: 55px; height: 55px; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: #282828; position: relative; border: 1px solid #333;">
-                        <img src="${thumbUrl}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/117/117498.png';" style="width: 100%; height: 100%; object-fit: cover;">
-                        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3);">
-                             <i class="fas fa-play" style="color: #1DB954; font-size: 0.9rem;"></i>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #1a1a1a;">
+                <div id="video-item-${key}"
+                     onclick="window.reproducirAudioPremium('${safeUrl}','${key}')"
+                     style="display:flex;align-items:center;gap:12px;flex:1;cursor:pointer;transition:background 0.2s;border-radius:10px;padding:4px;">
+                    <div style="width:55px;height:55px;flex-shrink:0;border-radius:8px;overflow:hidden;background:#1a1a1a;position:relative;border:1px solid #333;display:flex;align-items:center;justify-content:center;">
+                        ${thumbContent}
+                        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);">
+                            <i class="fas fa-play" style="color:#1DB954;font-size:0.9rem;"></i>
                         </div>
                     </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="color: white; font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${key}</div>
-                        <div style="color: #1DB954; font-size: 0.65rem; font-weight: 800; margin-top: 3px; letter-spacing: 0.5px;">▶ TOCAR PARA ESCUCHAR</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="color:white;font-weight:700;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;">${key}</div>
+                        <div style="display:flex;align-items:center;gap:6px;">${badge}<span style="color:#888;font-size:0.6rem;">▶ Preview</span></div>
                     </div>
                 </div>
-                <!-- BOTÓN ELEGIR -->
-                <button onclick="window.abrirPasoFoto('${url}')" 
-                        style="background: white; border: none; color: black; padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(255,255,255,0.1);">
+                <button onclick="window.abrirPasoFoto('${safeUrl}')"
+                        style="background:white;border:none;color:black;padding:8px 16px;border-radius:20px;font-size:0.75rem;font-weight:900;cursor:pointer;flex-shrink:0;">
                     ELEGIR
                 </button>
             </div>`;
@@ -1643,19 +1695,18 @@ window.abrirLibreriaVideosPremium = () => {
 
         const modal = document.createElement('div');
         modal.id = "modalLibreriaFinal";
-        modal.style.cssText = "position:fixed; inset:0; background:#000; z-index:999999; display:flex; flex-direction:column; padding:20px;";
+        modal.style.cssText = "position:fixed;inset:0;background:#000;z-index:999999;display:flex;flex-direction:column;padding:20px;";
         modal.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; margin-top: 20px;">
-                <h3 style="color: white; font-size: 1.3rem; font-weight: 800;">Librería Premium</h3>
-                <div onclick="window.cerrarTodoLibreria()" style="color: white; font-size: 1.8rem; cursor: pointer;">✕</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;margin-top:20px;">
+                <h3 style="color:white;font-size:1.3rem;font-weight:800;">🎬 Librería Premium</h3>
+                <div onclick="window.cerrarTodoLibreria()" style="color:white;font-size:1.8rem;cursor:pointer;">✕</div>
             </div>
-
-            <!-- MINI-PLAYER VISIBLE: visible para que el navegador permita audio -->
-            <div id="reproductorAudioLib" style="width:100%; height:0; border-radius:12px; overflow:hidden; background:#111; transition:height 0.3s ease; margin-bottom:0;"></div>
-            <div id="reproductorAudioLibLabel" style="display:none; color:#1DB954; font-size:0.75rem; font-weight:800; text-align:center; padding:6px 0 10px; letter-spacing:0.5px;">▶ REPRODUCIENDO...</div>
-
-            <div style="flex: 1; overflow-y: auto; scrollbar-width: none;">${itemsHtml}</div>
-            <div style="padding: 20px 0;"><button onclick="window.cerrarTodoLibreria()" style="width: 100%; background: #1DB954; color: #000; padding: 16px; border-radius: 40px; font-weight: 900; font-size: 1rem; border: none;">CERRAR</button></div>
+            <div id="reproductorAudioLib" style="width:100%;height:0;border-radius:12px;overflow:hidden;background:#111;transition:height 0.3s ease;margin-bottom:0;"></div>
+            <div id="reproductorAudioLibLabel" style="display:none;color:#1DB954;font-size:0.75rem;font-weight:800;text-align:center;padding:6px 0 10px;letter-spacing:0.5px;">▶ REPRODUCIENDO...</div>
+            <div style="flex:1;overflow-y:auto;scrollbar-width:none;">${itemsHtml}</div>
+            <div style="padding:20px 0;">
+                <button onclick="window.cerrarTodoLibreria()" style="width:100%;background:#1DB954;color:#000;padding:16px;border-radius:40px;font-weight:900;font-size:1rem;border:none;">CERRAR</button>
+            </div>
         `;
         document.body.appendChild(modal);
     });
@@ -1665,42 +1716,56 @@ window.reproducirAudioPremium = (url, videoKey) => {
     const container = document.getElementById('reproductorAudioLib');
     if (!container) return notify("❌ Error: Contenedor no encontrado");
 
-    const id = url.split('/').pop();
-    let src = '';
+    const platform = window._libGetPlatform(url);
+    let playerHtml = '';
 
-    if (url.includes('dai.ly') || url.includes('dailymotion.com')) {
-        src = `https://www.dailymotion.com/embed/video/${id}?autoplay=1&mute=0&ui-start-screen-info=0`;
-    } else if (url.includes('streamable.com')) {
-        src = `https://streamable.com/e/${id}?autoplay=1&muted=0&nocontrols=0`;
+    if (platform === 'dailymotion') {
+        const id = url.match(/(?:dai\.ly|video\/)([a-zA-Z0-9]+)/)?.[1] || url.split('/').pop();
+        playerHtml = `<iframe src="https://www.dailymotion.com/embed/video/${id}?autoplay=1&mute=0&ui-start-screen-info=0"
+            style="width:100%;height:180px;border:none;display:block;"
+            allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
+
+    } else if (platform === 'streamable') {
+        const id = url.split('/').pop();
+        playerHtml = `<iframe src="https://streamable.com/e/${id}?autoplay=1&muted=0"
+            style="width:100%;height:180px;border:none;display:block;"
+            allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
+
+    } else if (platform === 'catbox') {
+        // Catbox = enlace directo .mp4
+        playerHtml = `<video src="${url}" autoplay controls loop playsinline
+            style="width:100%;height:180px;object-fit:contain;background:#000;display:block;"></video>`;
+
+    } else if (platform === 'imgur') {
+        // Convertir .gifv → .mp4 si aplica
+        const mp4Url = url.replace(/\.gifv$/i, '.mp4');
+        playerHtml = `<video src="${mp4Url}" autoplay controls loop playsinline
+            style="width:100%;height:180px;object-fit:contain;background:#000;display:block;"></video>`;
+
     } else {
-        return notify("❌ Plataforma no soportada");
+        // Intento genérico como video directo
+        playerHtml = `<video src="${url}" autoplay controls loop playsinline
+            style="width:100%;height:180px;object-fit:contain;background:#000;display:block;"></video>`;
     }
 
-    // Resaltar el ítem activo y quitar resaltado de los demás
+    // Resaltar ítem activo
     document.querySelectorAll('[id^="video-item-"]').forEach(el => {
         el.style.background = 'transparent';
     });
     const activeItem = document.getElementById('video-item-' + videoKey);
     if (activeItem) activeItem.style.background = 'rgba(29,185,84,0.15)';
 
-    // Expandir el mini-player (visible = audio permitido por el navegador)
+    // Expandir mini-player
     container.style.height = '180px';
     container.style.marginBottom = '10px';
 
-    // Mostrar etiqueta "Reproduciendo"
     const label = document.getElementById('reproductorAudioLibLabel');
     if (label) {
         label.style.display = 'block';
         label.textContent = '▶ REPRODUCIENDO: ' + videoKey;
     }
 
-    // Inyectar iframe con permisos completos de audio
-    container.innerHTML = `
-        <iframe src="${src}"
-            style="width:100%; height:180px; border:none; display:block;"
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowfullscreen>
-        </iframe>`;
+    container.innerHTML = playerHtml;
 };
 window.abrirPasoFoto = (url) => {
     videoPendienteUrl = url;
@@ -4304,6 +4369,7 @@ const audioLibrary = {
     document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('button').forEach(btn => { btn.addEventListener('click', () => playSound('click')); }); });
     
     let idAuditor = null; let myCurrentKey = ""; let currentEarnings = 0; let canSpin = false; let currentVideoId = null; let scrollTimeout = null; let audioActivadoGlobal = false; let isCommenting = false; let lastGameAd = 0; let isAdmin = false;
+    let currentCommentSource = 'reportes'; // 'reportes' para videos, 'galeria_comunidad' para fotos del muro
     let mensajesNoLeidos = 0;
     let currentQIndex = 0;
     let selectedOptionText = null;
@@ -5285,9 +5351,11 @@ function procesarPublicacionPendiente() {
     };
     
     let commentsRef = null;
+    let currentPostId = null;
     window.abrirModalComentarios = (postKey) => {
         isCommenting = true;
         currentPostId = postKey;
+        currentCommentSource = 'reportes'; // comentarios de videos del feed
         const modal = document.getElementById('modalComments');
         const list = document.getElementById('modalCommentsList');
         modal.style.display = 'flex';
@@ -5338,11 +5406,20 @@ window.enviarComentarioModal = (e) => {
     if (e) e.preventDefault();
     const inp = document.getElementById('modalCommentInput');
     const txt = inp.value.trim();
-    if (!txt) return; 
+    if (!txt) return;
     const autorNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
-    db.ref(`reportes/${currentPostId}/comentarios`).push({ uid: idAuditor, autor: autorNombre, texto: txt, timestamp: firebase.database.ServerValue.TIMESTAMP });
+    const refBase = currentCommentSource || 'reportes';
+    // Guardar el comentario en la ruta correcta (reportes o galeria_comunidad)
+    db.ref(`${refBase}/${currentPostId}/comentarios`).push({
+        uid: idAuditor,
+        autor: autorNombre,
+        texto: txt,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
     detectarYEnvarMenciones(txt, "comentario");
-    db.ref(`reportes/${currentPostId}`).once('value').then(snap => {
+    // Notificaciones solo para comentarios de videos (reportes)
+    if (refBase === 'reportes') {
+        db.ref(`reportes/${currentPostId}`).once('value').then(snap => {
             if (snap.exists()) {
                 const post = snap.val();
                 if (post.uid !== idAuditor) {
@@ -5354,12 +5431,71 @@ window.enviarComentarioModal = (e) => {
             }
             window._replyToUid = null;
         });
-        inp.value = ""; inp.focus();
-    };
+    } else {
+        // Notificación para comentarios en fotos del muro
+        db.ref(`galeria_comunidad/${currentPostId}`).once('value').then(snap => {
+            if (snap.exists()) {
+                const foto = snap.val();
+                if (foto.uid && foto.uid !== idAuditor) {
+                    db.ref(`users/${foto.uid}/notifications`).push({ from: myCurrentKey, fromName: getMiNombre(), type: 'comentario', text: "💬 Comentó tu foto", extra: currentPostId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false });
+                }
+            }
+            window._replyToUid = null;
+        });
+    }
+    inp.value = ""; inp.focus();
+};
     window.cerrarModalComentarios = () => {
         document.getElementById('modalComments').style.display = 'none';
         if (commentsRef) commentsRef.off();
         isCommenting = false;
+    };
+
+    // ── Comentarios públicos en fotos del muro ────────────────────────────────
+    window.abrirComentariosFoto = (fotoKey) => {
+        isCommenting = true;
+        currentPostId = fotoKey;
+        currentCommentSource = 'galeria_comunidad';
+        const modal = document.getElementById('modalComments');
+        const list = document.getElementById('modalCommentsList');
+        modal.style.display = 'flex';
+        list.innerHTML = '<div style="text-align:center;padding:20px;">Cargando...</div>';
+        if (commentsRef) commentsRef.off();
+        commentsRef = db.ref(`galeria_comunidad/${fotoKey}/comentarios`);
+        let isEmpty = true;
+        commentsRef.on('value', snap => {
+            const count = snap.val() ? Object.keys(snap.val()).length : 0;
+            const title = document.getElementById('modalCommentsTitle');
+            if (title) title.textContent = `💬 Comentarios de foto (${count})`;
+            // Actualizar contador en la card del muro si está visible
+            const badge = document.getElementById(`cc-foto-${fotoKey}`);
+            if (badge) badge.textContent = count;
+            if (!snap.exists()) list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Sé el primero en comentar.</div>';
+        });
+        commentsRef.limitToLast(50).on('child_added', s => {
+            if (isEmpty) { list.innerHTML = ""; isEmpty = false; }
+            const c = s.val();
+            const esMio = (c.uid === idAuditor);
+            const d = document.createElement('div');
+            d.className = "comment-bubble";
+            d.style.borderLeft = esMio ? '3px solid #10b981' : '3px solid #0070ba';
+            const nombreSeguro = (c.autor || 'Anónimo').replace(/'/g, "\\'");
+            const hora = c.timestamp
+                ? new Date(c.timestamp).toLocaleDateString([], {day:'2-digit',month:'2-digit'}) + ' '
+                  + new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
+                : '';
+            d.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span class="comment-author">${escapeHtml(getDisplayName(c.uid, c.autor))}</span>
+                    <button onclick="replyToUser('${nombreSeguro}','${c.uid}')" style="border:none;background:none;color:#0070ba;font-size:0.7rem;font-weight:bold;cursor:pointer;padding:2px 5px;">Responder ↩</button>
+                </div>
+                <div class="comment-text">${escapeHtml(c.texto)}</div>
+                <div style="font-size:0.65rem;color:#94a3b8;margin-top:4px;text-align:right;">${hora}</div>
+            `;
+            list.appendChild(d);
+            list.scrollTop = list.scrollHeight;
+        });
+        window.history.pushState({modal:'modalComments'}, "");
     };
     function cargarChips() { return; }
     
@@ -7958,6 +8094,8 @@ function cargarGaleriaComunidad() {
             
             const divId = `photo-${f.k}`;
             
+            const commentCount = f.comentarios ? Object.keys(f.comentarios).length : 0;
+
             html += `
             <div id="${divId}" class="photo-card" 
                  data-index="${index}" data-key="${f.k}" data-uid="${f.uid}" data-pinned="${f.pinned}"
@@ -7967,10 +8105,18 @@ function cargarGaleriaComunidad() {
                     ${esFijado}
                     <img src="${imagenSrc}" class="photo-img-content" loading="lazy" style="width:100%; display:block; border-radius:12px; pointer-events:none;">
                 </div>
-                <div style="padding:8px 10px; display:flex; align-items:center; gap:6px;">
+                <div style="padding:6px 10px; display:flex; align-items:center; gap:6px;">
                     <div style="width:22px; height:22px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; border:1px solid #e2e8f0; flex-shrink:0;"></div>
-                    <span style="font-weight:600; font-size:0.75rem; color:#334155;">${nombre}</span>
-                    ${f.uid === idAuditor ? '<span style="color:#ef4444; font-size:0.65rem; font-weight:600; margin-left:4px;">tu foto</span>' : ''}
+                    <span style="font-weight:600; font-size:0.75rem; color:#334155; flex:1;">${nombre}</span>
+                    ${f.uid === idAuditor ? '<span style="color:#ef4444; font-size:0.65rem; font-weight:600;">tu foto</span>' : ''}
+                </div>
+                <!-- Botón de comentar públicamente -->
+                <div style="padding:0 10px 10px; display:flex; align-items:center; gap:8px;">
+                    <button
+                        onclick="event.stopPropagation(); abrirComentariosFoto('${f.k}')"
+                        style="display:flex; align-items:center; gap:5px; background:#f1f5f9; border:none; color:#475569; font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:background 0.15s;">
+                        💬 <span id="cc-foto-${f.k}">${commentCount}</span> Comentar
+                    </button>
                 </div>
             </div>`;
         });
