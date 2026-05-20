@@ -166,19 +166,7 @@
         const container = document.getElementById('muroReportes');
         prepararObservador();
 
-        // Fallback: si tras 8s no hay ninguna card, mostrar botón de reintentar
-        const loaderTimeout = setTimeout(() => {
-            quitarLoader();
-            if (!container.querySelector('.social-card')) {
-                container.innerHTML = `
-                    <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:rgba(255,255,255,0.6);pointer-events:auto;">
-                        <i class="fas fa-video-slash" style="font-size:2.5rem;margin-bottom:12px;display:block;"></i>
-                        Sin videos disponibles<br>
-                        <button class="retry-btn" onclick="location.reload()">Reintentar</button>
-                    </div>`;
-            }
-        }, 8000);
-
+        
         db.ref('reportes').limitToLast(20).on('child_added', snap => {
             try {
                 clearTimeout(loaderTimeout);
