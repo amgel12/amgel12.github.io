@@ -16,7 +16,10 @@
         #muroReportes::-webkit-scrollbar { display: none; }
         .social-card { height: 100vh; width: 100vw; position: relative; scroll-snap-align: start; scroll-snap-stop: always; background: #000; display: flex; align-items: center; justify-content: center; }
         .card-media { position: absolute; inset: 0; z-index: 1; }
-        .vid-frame { width: 100%; height: 100%; pointer-events: none; }
+
+        /* FIX 3: position:relative para que los iframes position:absolute queden contenidos */
+        .vid-frame { width: 100%; height: 100%; pointer-events: none; position: relative; overflow: hidden; }
+
         .card-overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 40%, rgba(0,0,0,0.3) 100%); pointer-events: none; }
         .user-info { pointer-events: auto; margin-bottom: 60px; color: #fff; max-width: 80%; }
         .user-info h4 { font-size: 1rem; font-weight: 800; margin-bottom: 5px; color: #3b82f6; }
@@ -46,18 +49,19 @@
         messagingSenderId: "104886265441",
         appId: "1:104886265441:web:2272d88ad1129919ea6c20"
     };
-    
+
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const urlParams = new URLSearchParams(window.location.search);
     const idAuditor = urlParams.get('uid') || "anon";
-    
+
     let audioActivado = false;
     let videoActualId = null;
     let observerFeed = null;
 
-    // Detectores de ID
+    // --- DETECTORES DE ID ---
+
     function getYouTubeID(url) {
         if (!url) return null;
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
@@ -68,6 +72,15 @@
     function getStreamableID(url) {
         if (!url || !url.includes('streamable.com')) return null;
         return url.split('/').pop();
+    }
+
+    // FIX 1: Nueva función para extraer ID de Dailymotion
+    function getDailymotionID(url) {
+        if (!url) return null;
+        if (!url.includes('dai.ly') && !url.includes('dailymotion.com')) return null;
+        // Soporta: dai.ly/xyz, dailymotion.com/video/xyz, dailymotion.com/embed/video/xyz
+        const match = url.match(/(?:dai\.ly|dailymotion\.com\/(?:video|embed\/video))\/([a-zA-Z0-9]+)/);
+        return match ? match[1] : null;
     }
 
     function prepararObservador() {
@@ -88,7 +101,7 @@
                 if (!post || !post.musica) return;
 
                 const loader = document.querySelector('.loader');
-                if(loader) loader.remove();
+                if (loader) loader.remove();
 
                 let mediaLink = "";
                 let type = "youtube";
@@ -99,16 +112,31 @@
                 } else if (post.musica.includes('streamable.com')) {
                     mediaLink = getStreamableID(post.musica);
                     type = "streamable";
+                // FIX 1: Soporte Dailymotion (antes estas URLs caían a YouTube → ID nulo → card nunca creada)
+                } else if (post.musica.includes('dai.ly') || post.musica.includes('dailymotion.com')) {
+                    mediaLink = getDailymotionID(post.musica);
+                    type = "dailymotion";
                 } else {
                     mediaLink = getYouTubeID(post.musica);
                     type = "youtube";
                 }
-                
+
                 if (!mediaLink || document.getElementById(snap.key)) return;
 
                 const card = crearCard(snap.key, post, mediaLink, type);
-                container.prepend(card); 
+                container.prepend(card);
                 observerFeed.observe(card);
+
+                // FIX 4: Disparar video manualmente para la card visible al terminar de cargar
+                // (el IntersectionObserver puede perderse la card final por el prepend rápido)
+                clearTimeout(window._feedLoadTimer);
+                window._feedLoadTimer = setTimeout(() => {
+                    const primerCard = container.querySelector('.social-card');
+                    if (primerCard && !videoActualId) {
+                        reproducirVideo(primerCard);
+                    }
+                }, 600);
+
             } catch (e) { console.error(e); }
         });
     }
@@ -120,7 +148,7 @@
         card.setAttribute('data-media', mediaId);
         card.setAttribute('data-type', type);
         card.setAttribute('data-uid', post.uid || '');
-        
+
         const isLikedInitial = post.likes && idAuditor && post.likes[idAuditor];
 
         card.innerHTML = `
@@ -151,7 +179,7 @@
         // Listeners tiempo real
         db.ref(`reportes/${key}/vCount`).on('value', s => {
             const el = document.getElementById(`l-count-${key}`);
-            if(el) el.textContent = s.val() || 0;
+            if (el) el.textContent = s.val() || 0;
         });
 
         db.ref(`reportes/${key}/likes/${idAuditor}`).on('value', s => {
@@ -176,19 +204,24 @@
         const type = card.getAttribute('data-type');
         const frame = card.querySelector('.vid-frame');
 
-        window.parent.postMessage({type: 'startVideoProgress', videoId: mediaId}, '*');
-        
+        window.parent.postMessage({ type: 'startVideoProgress', videoId: mediaId }, '*');
+
         if (type === 'direct') {
-            frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit: cover; background: #000;"><source src="${mediaId}" type="video/mp4"></video>`;
-        } 
+            frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit:cover; background:#000; display:block;"><source src="${mediaId}" type="video/mp4"></video>`;
+        }
         else if (type === 'streamable') {
-            // 🔥 REPRODUCTOR STREAMABLE
-            frame.innerHTML = `<iframe src="https://streamable.com/e/${mediaId}?autoplay=1&muted=${audioActivado ? 0 : 1}" frameborder="0" width="100%" height="100%" allow="autoplay" style="position:absolute;left:0;top:0;width:100%;height:100%;"></iframe>`;
+            frame.innerHTML = `<iframe src="https://streamable.com/e/${mediaId}?autoplay=1&muted=${audioActivado ? 0 : 1}" frameborder="0" allow="autoplay; encrypted-media" style="position:absolute; left:0; top:0; width:100%; height:100%; border:none;"></iframe>`;
+        }
+        // FIX 1: Reproductor Dailymotion
+        else if (type === 'dailymotion') {
+            const muteState = audioActivado ? 0 : 1;
+            frame.innerHTML = `<iframe src="https://www.dailymotion.com/embed/video/${mediaId}?autoplay=1&mute=${muteState}&ui-start-screen-info=0&sharing-enable=0" frameborder="0" allow="autoplay; fullscreen; encrypted-media" style="position:absolute; left:0; top:0; width:100%; height:100%; border:none;"></iframe>`;
         }
         else {
-            // YOUTUBE CON ORIGIN FIJO
+            // FIX 2: Origin dinámico en lugar del hardcoded 'amgel12.github.io'
             const muteState = audioActivado ? 0 : 1;
-            frame.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${mediaId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=https://amgel12.github.io&mute=${muteState}&playlist=${mediaId}&loop=1" frameborder="0" allow="autoplay; encrypted-media"></iframe>`;
+            const origin = encodeURIComponent(window.location.origin || 'https://localhost');
+            frame.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${mediaId}?autoplay=1&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${origin}&mute=${muteState}&playlist=${mediaId}&loop=1" frameborder="0" allow="autoplay; encrypted-media" style="width:100%; height:100%; border:none; display:block;"></iframe>`;
         }
     }
 
@@ -210,16 +243,16 @@
             } else {
                 ref.set(true);
                 countRef.transaction(c => (c || 0) + 1);
-                window.parent.postMessage({type: 'playSelect'}, '*');
+                window.parent.postMessage({ type: 'playSelect' }, '*');
                 if (window.parent && ownerUid && ownerUid !== idAuditor) {
-                    window.parent.postMessage({type: 'doLike', postKey: postKey, ownerUid: ownerUid}, '*');
+                    window.parent.postMessage({ type: 'doLike', postKey: postKey, ownerUid: ownerUid }, '*');
                 }
             }
         });
     };
 
     window.abrirComentariosApp = (postKey) => {
-        if (window.parent) window.parent.postMessage({type: 'openComments', key: postKey}, '*');
+        if (window.parent) window.parent.postMessage({ type: 'openComments', key: postKey }, '*');
     };
 
     window.onload = cargarMuro;
