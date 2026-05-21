@@ -1888,6 +1888,154 @@
     color: white; font-weight: bold; z-index: 200; text-align: center;
 }
 </style>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   PAGOCODE IMAGE CACHE — Cache API + MutationObserver
+   Cachea fotos de perfil, thumbnails y posts en el almacena-
+   miento del teléfono. Firebase solo envía imágenes nuevas.
+   ═══════════════════════════════════════════════════════════ */
+(function() {
+    if (!('caches' in window)) return; // Safari antiguo / fallback silencioso
+
+    const CACHE_NAME  = 'pagocode-img-v2';
+    const MAX_ENTRIES = 200; // máximo de URLs guardadas
+    // Dominios que SÍ cacheamos (soportan CORS)
+    const CACHEABLE   = [
+        'firebasestorage.googleapis.com',
+        'firebasestorage.app',
+        'catbox.moe',
+        'imgur.com',
+        'i.imgur.com',
+        'lh3.googleusercontent.com',   // Google avatars
+        'lh4.googleusercontent.com',
+        'lh5.googleusercontent.com',
+        'lh6.googleusercontent.com',
+    ];
+
+    function esCacheable(url) {
+        if (!url || typeof url !== 'string') return false;
+        if (url.startsWith('data:') || url.startsWith('blob:')) return false;
+        try { return CACHEABLE.some(d => new URL(url).hostname.includes(d)); }
+        catch(e) { return false; }
+    }
+
+    // Obtener desde caché o fetch + guardar
+    async function resolveUrl(url) {
+        if (!esCacheable(url)) return null;
+        try {
+            const cache  = await caches.open(CACHE_NAME);
+            const cached = await cache.match(url);
+            if (cached) {
+                const blob = await cached.blob();
+                return URL.createObjectURL(blob);
+            }
+            // No está en caché → fetch y guardar para la próxima vez
+            const resp = await fetch(url, { mode: 'cors', cache: 'force-cache' });
+            if (resp.ok) {
+                await cache.put(url, resp.clone());
+                const blob = await resp.blob();
+                // Control de tamaño: si hay más de MAX_ENTRIES, borrar los primeros 50
+                cache.keys().then(keys => {
+                    if (keys.length > MAX_ENTRIES) {
+                        keys.slice(0, 50).forEach(k => cache.delete(k));
+                    }
+                });
+                return URL.createObjectURL(blob);
+            }
+        } catch(e) {/* CORS u otro error → usar URL original */}
+        return null;
+    }
+
+    // Procesar <img src="...">
+    function processImg(img) {
+        const src = img.getAttribute('src') || '';
+        if (!esCacheable(src)) return;
+        img.dataset.cachedUrl = src; // marca para evitar doble proceso
+        resolveUrl(src).then(blob => {
+            if (blob && img.dataset.cachedUrl === src) img.src = blob;
+        });
+    }
+
+    // Procesar background-image:url(...)
+    const BG_RE = /url\(\s*['"]?([^'")\s]+)['"]?\s*\)/;
+    function processBg(el) {
+        const bg = el.style.backgroundImage || '';
+        const m  = bg.match(BG_RE);
+        if (!m) return;
+        const url = m[1];
+        if (!esCacheable(url)) return;
+        resolveUrl(url).then(blob => {
+            if (blob && el.isConnected) {
+                el.style.backgroundImage = "url('" + blob + "')";
+            }
+        });
+    }
+
+    // Procesar un nodo y sus descendientes
+    function processNode(node) {
+        if (node.nodeType !== 1) return;
+        if (node.tagName === 'IMG' && !node.dataset.cachedUrl) processImg(node);
+        if (node.style && node.style.backgroundImage && !node.dataset.bgCached) {
+            node.dataset.bgCached = '1';
+            processBg(node);
+        }
+        node.querySelectorAll('img:not([data-cached-url])').forEach(processImg);
+        node.querySelectorAll('[style*="url("]').forEach(el => {
+            if (!el.dataset.bgCached) { el.dataset.bgCached = '1'; processBg(el); }
+        });
+    }
+
+    // Observer: intercepta todo lo que se añada al DOM dinámicamente
+    const observer = new MutationObserver(mutations => {
+        for (const m of mutations) {
+            for (const node of m.addedNodes) processNode(node);
+            // También detectar cambios de atributo style (cuando JS pone backgroundImage)
+            if (m.type === 'attributes' && m.target.nodeType === 1) {
+                const el = m.target;
+                if (el.style && el.style.backgroundImage && !el.dataset.bgCached) {
+                    el.dataset.bgCached = '1';
+                    processBg(el);
+                }
+            }
+        }
+    });
+
+    // Arrancar el observer cuando el DOM esté listo
+    function start() {
+        observer.observe(document.body, {
+            childList: true,
+            subtree:   true,
+            attributes: true,
+            attributeFilter: ['style', 'src']
+        });
+        // Procesar imágenes que ya existen en el DOM
+        processNode(document.body);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+    } else {
+        start();
+    }
+
+    // API pública para forzar recarga de una URL concreta (útil si el admin sube nueva foto)
+    window.imgCacheInvalidate = async function(url) {
+        try {
+            const c = await caches.open(CACHE_NAME);
+            await c.delete(url);
+        } catch(e) {}
+    };
+    // Limpiar toda la caché de imágenes
+    window.imgCacheClear = async function() {
+        try { await caches.delete(CACHE_NAME); notify('🗑️ Caché de imágenes limpiada'); }
+        catch(e) {}
+    };
+
+    console.log('✅ PagoImageCache activo — caché: ' + CACHE_NAME);
+})();
+</script>
+
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
        (function(){
@@ -2330,19 +2478,69 @@ function crearCard(key, post, mediaId, type) {
     return card;
 }
 
+// ══════════════════════════════════════════════════════════
+// FEED CACHE — localStorage para renderizado instantáneo
+// ══════════════════════════════════════════════════════════
+const FEED_CACHE_KEY = 'pgc_feed_v2';
+const FEED_MAX       = 20;
+
+function feedCacheGuardar(key, post, mediaLink, type) {
+    try {
+        let arr = JSON.parse(localStorage.getItem(FEED_CACHE_KEY) || '[]');
+        arr = arr.filter(p => p.key !== key); // evitar duplicados
+        // Guardar solo los campos ligeros (likes/comentarios se cargan vivos)
+        const postLite = {
+            musica: post.musica, uid: post.uid || '',
+            autorClave: post.autorClave || '', texto: post.texto || '',
+            fotoPortada: post.fotoPortada || '', vCount: post.vCount || 0
+        };
+        arr.unshift({ key, post: postLite, mediaLink, type }); // newest-first
+        if (arr.length > FEED_MAX) arr.length = FEED_MAX;
+        localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(arr));
+    } catch(e) {}
+}
+
+function feedCacheRenderizar(container) {
+    try {
+        const arr = JSON.parse(localStorage.getItem(FEED_CACHE_KEY) || '[]');
+        if (!arr.length) return false;
+        // Renderizar de oldest→newest con prepend → newest queda arriba (igual que Firebase)
+        for (let i = arr.length - 1; i >= 0; i--) {
+            const { key, post, mediaLink, type } = arr[i];
+            if (document.getElementById(key)) continue;
+            const card = crearCard(key, post, mediaLink, type);
+            container.prepend(card);
+            if (observerFeed) observerFeed.observe(card);
+        }
+        return arr.length > 0;
+    } catch(e) { return false; }
+}
+
 function cargarMuro() {
     if (window._muroIniciado) return;
     window._muroIniciado = true;
 
     const container = document.getElementById('muroReportes');
-    container.innerHTML = '<div class="feed-loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Cargando Feed...</div>';
     prepararObservador();
+
+    // 1. Mostrar caché LOCAL inmediatamente (sin esperar a Firebase)
+    const hayCached = feedCacheRenderizar(container);
+    if (!hayCached) {
+        container.innerHTML = '<div class="feed-loader"><i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Cargando Feed...</div>';
+    } else {
+        // Reproducir el primer video cacheado
+        setTimeout(() => {
+            const primera = container.querySelector('.feed-card');
+            if (primera && !videoActualId) reproducirVideo(primera);
+        }, 100);
+    }
 
     const loaderTimeout = setTimeout(() => {
         const loader = container.querySelector('.feed-loader');
         if (loader) loader.remove();
     }, 4000);
 
+    // 2. Firebase: solo agrega posts que NO están ya en DOM (check por id)
     db.ref('reportes').limitToLast(20).on('child_added', snap => {
         try {
             clearTimeout(loaderTimeout);
@@ -2367,6 +2565,9 @@ function cargarMuro() {
             container.prepend(card);
             observerFeed.observe(card);
 
+            // Guardar en caché local para la próxima visita
+            feedCacheGuardar(snap.key, post, mediaLink, type);
+
             clearTimeout(window._feedLoadTimer);
             window._feedLoadTimer = setTimeout(() => {
                 const primerCard = container.querySelector('.feed-card');
@@ -2381,6 +2582,12 @@ function cargarMuro() {
     db.ref('reportes').on('child_removed', snap => {
         const el = document.getElementById(snap.key);
         if (el) el.remove();
+        // Eliminar también de caché local
+        try {
+            let arr = JSON.parse(localStorage.getItem(FEED_CACHE_KEY) || '[]');
+            arr = arr.filter(p => p.key !== snap.key);
+            localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(arr));
+        } catch(e) {}
     });
 }
 
@@ -5259,6 +5466,9 @@ const VIDEO_REWARD_SECONDS = 30;
 const VIDEO_REWARD_POINTS = 0.50;
 
 function iniciarProgresoVideo(ytId) {
+    // Solo mostrar la barra si estamos en la pantalla del feed (screen 2)
+    if (typeof currentScreen !== 'undefined' && currentScreen !== 2) return;
+
     if (videoProgressInterval) clearInterval(videoProgressInterval);
     videoWatchId = ytId;
     videoWatchSeconds = 0;
@@ -5269,8 +5479,13 @@ function iniciarProgresoVideo(ytId) {
     fill.style.background = 'linear-gradient(90deg, #10b981, #059669)';
 
     videoProgressInterval = setInterval(() => {
-        // Solo verificar que seguimos en el mismo video — no depende de videoActualJugando
-        // (videoActualJugando se pone null al cambiar de tab pero el usuario puede volver)
+        // Si el usuario cambió de pantalla, detener y ocultar la barra
+        if (typeof currentScreen !== 'undefined' && currentScreen !== 2) {
+            clearInterval(videoProgressInterval);
+            videoProgressInterval = null;
+            document.getElementById('videoProgressWrapper').style.display = 'none';
+            return;
+        }
         if (videoWatchId === ytId) {
             videoWatchSeconds++;
             actualizarBarraProgreso();
@@ -8645,7 +8860,6 @@ window.cerrarModalFoto = () => {
     fotoBase64Actual = "";
 };
 
-// 3. Descargar y Mostrar Fotos en el Muro (Pantalla 1)
 // --- VARIABLES GLOBALES PARA FOTOS ---
 let fotoSeleccionadaKey = null;
 let fotoSeleccionadaData = null;
@@ -8654,87 +8868,108 @@ let pressTimerFotoDetalle = null;
 let galeriaFotosArray = [];
 let galeriaIndexActual = 0;
 
+const CACHE_MURO_KEY = 'pgc_muro_fotos_cache_v2';
+
+// 🔥 1. CREAMOS EL CANDADO (Bandera global)
+window._galeriaIniciada = false;
+
 function cargarGaleriaComunidad() {
+    // 🔥 2. SI YA SE CARGÓ UNA VEZ, DETENEMOS LA FUNCIÓN. 
+    // Las fotos ya están en la pantalla, no hay que hacer nada más.
+    if (window._galeriaIniciada) return;
+    
+    // Marcamos el candado como cerrado
+    window._galeriaIniciada = true;
+
     const contenedor = document.getElementById('muroFotosGrid');
     if (!contenedor) return;
 
-    // Usamos .on('value') para que se actualice en tiempo real
-    db.ref('galeria_comunidad').on('value', snap => {
+    // 3. RENDERIZADO INSTANTÁNEO DESDE CACHÉ (0 SEGUNDOS)
+    try {
+        const cacheRaw = localStorage.getItem(CACHE_MURO_KEY);
+        if (cacheRaw) {
+            const fotosCacheadas = JSON.parse(cacheRaw);
+            galeriaFotosArray = fotosCacheadas; 
+            renderizarHtmlMuro(fotosCacheadas, contenedor);
+        } else {
+            contenedor.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1; grid-column:span 2; width:100%;"><i class="fas fa-spinner fa-spin" style="font-size:2rem; margin-bottom:10px;"></i><br>Cargando fotos...</div>';
+        }
+    } catch(e) {}
 
-        // 1. Si no hay fotos, mostrar mensaje
+    // 4. ESCUCHAR FIREBASE EN SEGUNDO PLANO
+    db.ref('galeria_comunidad').on('value', snap => {
         if (!snap.exists()) {
             contenedor.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1; grid-column:span 2; width:100%;">Sé el primero en subir una foto.</div>';
             return;
         }
 
-        // 2. Convertir los datos a una lista
         let fotos = [];
         snap.forEach(child => {
             fotos.push({ k: child.key, ...child.val() });
         });
 
-        // 2.1 Guardar array global para galería deslizable
+        // Ordenamiento (Fijados primero, luego fecha descendente)
+        fotos.sort((a, b) => {
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            return (b.fecha || 0) - (a.fecha || 0);
+        });
+
         galeriaFotosArray = fotos;
 
-        // 3. ORDENAMIENTO MAESTRO
-        // Prioridad 1: Pinned (Fijados)
-        // Prioridad 2: Fecha (Más reciente arriba)
-        fotos.sort((a, b) => {
-            // Si a está fijado y b no, a va primero (-1)
-            if (a.pinned && !b.pinned) return -1;
-            // Si b está fijado y a no, b va primero (1)
-            if (!a.pinned && b.pinned) return 1;
+        try {
+            localStorage.setItem(CACHE_MURO_KEY, JSON.stringify(fotos.slice(0, 10)));
+        } catch (e) {}
 
-            // Si ambos son iguales en fijado, gana el más nuevo
-            const fechaA = a.fecha || 0;
-            const fechaB = b.fecha || 0;
-            return fechaB - fechaA; // Descendente
-        });
-
-        // 4. GENERAR HTML
-        let html = "";
-        fotos.forEach((f, index) => {
-            const imagenSrc = f.foto || "";
-            const nombre = getDisplayName(f.uid, f.autor || "Anónimo");
-            const esFijado = f.pinned ? '<div style="position:absolute; top:8px; right:8px; background:rgba(251, 191, 36, 0.9); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); font-size:0.8rem;">📌</div>' : '';
-
-            const divId = `photo-${f.k}`;
-
-            const commentCount = f.comentarios ? Object.keys(f.comentarios).length : 0;
-
-            html += `
-            <div id="${divId}" class="photo-card" 
-                 data-index="${index}" data-key="${f.k}" data-uid="${f.uid}" data-pinned="${f.pinned}"
-                 style="display:inline-block; width:100%; margin-bottom:10px; break-inside: avoid;">
-
-                <div style="position:relative;">
-                    ${esFijado}
-                    <img src="${imagenSrc}" class="photo-img-content" loading="lazy" style="width:100%; display:block; border-radius:12px; pointer-events:none;">
-                </div>
-                <div style="padding:6px 10px; display:flex; align-items:center; gap:6px;">
-                    <div style="width:22px; height:22px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; border:1px solid #e2e8f0; flex-shrink:0;"></div>
-                    <span style="font-weight:600; font-size:0.75rem; color:#334155; flex:1;">${nombre}</span>
-                    ${f.uid === idAuditor ? '<span style="color:#ef4444; font-size:0.65rem; font-weight:600;">tu foto</span>' : ''}
-                </div>
-                <!-- Botones de like y comentar públicamente -->
-                <div style="padding:0 10px 10px; display:flex; align-items:center; gap:8px;">
-                    <button
-                        onclick="event.stopPropagation(); abrirComentariosFoto('${f.k}')"
-                        style="display:flex; align-items:center; gap:5px; background:#f1f5f9; border:none; color:#475569; font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:background 0.15s;">
-                        💬 <span id="cc-foto-${f.k}">${commentCount}</span> Comentar
-                    </button>
-                    <button
-                        onclick="event.stopPropagation(); likePhoto('${f.k}', '${f.uid}', this)"
-                        style="display:flex; align-items:center; gap:5px; background:#f1f5f9; border:none; color:#475569; font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:background 0.15s;">
-                        <i class="${(f.likes && idAuditor && f.likes[idAuditor]) ? 'fas fa-heart' : 'far fa-heart'}" style="color:${(f.likes && idAuditor && f.likes[idAuditor]) ? '#e11d48' : '#94a3b8'};"></i>
-                        <span>${f.vCount || 0}</span>
-                    </button>
-                </div>
-            </div>`;
-        });
-
-        contenedor.innerHTML = html;
+        // Pintamos el muro con los datos reales
+        renderizarHtmlMuro(fotos, contenedor);
     });
+}
+
+// Función auxiliar para pintar las fotos
+function renderizarHtmlMuro(fotos, contenedor) {
+    let html = "";
+    
+    fotos.forEach((f, index) => {
+        const imagenSrc = f.foto || "";
+        const nombre = getDisplayName(f.uid, f.autor || "Anónimo");
+        const esFijado = f.pinned ? '<div style="position:absolute; top:8px; right:8px; background:rgba(251, 191, 36, 0.9); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); font-size:0.8rem;">📌</div>' : '';
+
+        const divId = `photo-${f.k}`;
+        const commentCount = f.comentarios ? Object.keys(f.comentarios).length : 0;
+        const isLiked = f.likes && idAuditor && f.likes[idAuditor];
+
+        html += `
+        <div id="${divId}" class="photo-card" 
+             data-index="${index}" data-key="${f.k}" data-uid="${f.uid}" data-pinned="${f.pinned}"
+             style="display:inline-block; width:100%; margin-bottom:10px; break-inside: avoid;">
+
+            <div style="position:relative;">
+                ${esFijado}
+                <img src="${imagenSrc}" class="photo-img-content" loading="lazy" style="width:100%; display:block; border-radius:12px; pointer-events:none;">
+            </div>
+            <div style="padding:6px 10px; display:flex; align-items:center; gap:6px;">
+                <div style="width:22px; height:22px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; border:1px solid #e2e8f0; flex-shrink:0;"></div>
+                <span style="font-weight:600; font-size:0.75rem; color:#334155; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(nombre)}</span>
+                ${f.uid === idAuditor ? '<span style="color:#ef4444; font-size:0.65rem; font-weight:600;">tu foto</span>' : ''}
+            </div>
+            <div style="padding:0 10px 10px; display:flex; align-items:center; gap:8px;">
+                <button
+                    onclick="event.stopPropagation(); abrirComentariosFoto('${f.k}')"
+                    style="display:flex; align-items:center; gap:5px; background:#f1f5f9; border:none; color:#475569; font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:background 0.15s;">
+                    💬 <span id="cc-foto-${f.k}">${commentCount}</span> Comentar
+                </button>
+                <button
+                    onclick="event.stopPropagation(); likePhoto('${f.k}', '${f.uid}', this)"
+                    style="display:flex; align-items:center; gap:5px; background:#f1f5f9; border:none; color:#475569; font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:background 0.15s;">
+                    <i class="${isLiked ? 'fas fa-heart liked' : 'far fa-heart'}" style="color:${isLiked ? '#e11d48' : '#94a3b8'};"></i>
+                    <span>${f.vCount || 0}</span>
+                </button>
+            </div>
+        </div>`;
+    });
+
+    contenedor.innerHTML = html;
 }
 
 // Inicializar manejadores de eventos para el muro de fotos (solo una vez)
@@ -9109,6 +9344,10 @@ window.abrirChatPrivado = (targetUid, targetName) => {
     currentChatId = [idAuditor, targetUid].sort().join('_');
 
     // MARCAR COMO LEÍDO AL ABRIR
+// Generar ID único del chat (Orden alfabético)
+    currentChatId = [idAuditor, targetUid].sort().join('_');
+
+    // MARCAR COMO LEÍDO AL ABRIR
     db.ref(`users/${idAuditor}/notifications`).once('value', snap => {
         if (snap.exists()) {
             snap.forEach(s => {
@@ -9120,6 +9359,28 @@ window.abrirChatPrivado = (targetUid, targetName) => {
         }
     });
 
+    // 🔥 NUEVO: Marcar mensajes de este chat como leídos en la base de datos
+    db.ref(`chats_privados/${currentChatId}`).once('value', snap => {
+        if (snap.exists()) {
+            const updates = {};
+            snap.forEach(msgSnap => {
+                const msg = msgSnap.val();
+                // Si el mensaje es de la otra persona y no está marcado como leído
+                if (msg.uid !== idAuditor && !msg.leido) {
+                    updates[`${msgSnap.key}/leido`] = true;
+                }
+            });
+            if (Object.keys(updates).length > 0) {
+                db.ref(`chats_privados/${currentChatId}`).update(updates);
+            }
+        }
+    });
+
+    // 🔥 NUEVO: Forzar limpieza del círculo rojo inmediatamente
+    if (window.mapaMensajesSinLeer && window.mapaMensajesSinLeer[targetUid]) {
+        delete window.mapaMensajesSinLeer[targetUid];
+        if (typeof renderizarUsuariosHorizontal === 'function') renderizarUsuariosHorizontal();
+    }
     // Configurar UI
     document.getElementById('privChatTitle').innerText = targetName;
     document.getElementById('privAvatar').style.backgroundImage = "url('" + getUserProfilePhoto(targetUid) + "')";
@@ -9840,57 +10101,76 @@ function iniciarMonitorDeBadges() {
         }
     });
 }
+// 2. CARGAR USUARIOS (OPTIMIZADO Y EN PARALELO)
+let _cacheDataUsers = null;
+let _cacheDataNubes = {};
+let _listenersUsuariosIniciados = false;
 
-// 2. CARGAR USUARIOS
 function cargarListaUsuariosHorizontal() {
     const contenedor = document.getElementById('listaUsuariosHorizontal');
     if (!contenedor) return;
 
-    // Radar 1: Usuarios (para ver quién está conectado)
+    // Pintar el botón de "Pensar" INMEDIATAMENTE para que la UI no se vea vacía ni un milisegundo
+    if (!listaUsuariosCacheReal || listaUsuariosCacheReal.length === 0) {
+        renderizarUsuariosHorizontal(); 
+    }
+
+    // Evitar duplicar los escuchadores si ya se iniciaron
+    if (_listenersUsuariosIniciados) return;
+    _listenersUsuariosIniciados = true;
+
+    // ESCUCHA 1: Usuarios (Se ejecuta independiente)
     db.ref('users').orderByChild('lastSeen').limitToLast(25).on('value', snapUsers => {
+        _cacheDataUsers = snapUsers;
+        combinarYRenderizarUsuarios();
+    });
 
-        // Radar 2: 🔥 Pensamientos Públicos (Sincronización total)
-        db.ref('pensamientos').on('value', snapNubes => {
-            const nubesData = snapNubes.val() || {};
-            listaUsuariosCacheReal = [];
-            const ahora = Date.now();
-
-            snapUsers.forEach(child => {
-                const u = child.val();
-                const uid = child.key;
-
-                // Buscamos si este usuario tiene una nube en el nodo público
-                // Si la nube tiene más de 24 horas, no la mostramos para que no se llene de basura
-                const nube = nubesData[uid];
-                let pensamientoFinal = "";
-                if (nube && (ahora - nube.timestamp < 86400000)) {
-                    pensamientoFinal = nube.texto;
-                }
-
-                listaUsuariosCacheReal.push({
-                    key: uid,
-                    nombre: u.apodo || u.myInviteKey || "User",
-                    avatar: u.fotoPerfil || getAvatarUrl(uid),
-                    online: (ahora - (u.lastSeen || 0) < 120000),
-                    rawTime: u.lastSeen || 0,
-                    pensamiento: pensamientoFinal // 👈 Ahora es 100% público
-                });
-            });
-
-            // Ordenamos: Los que escribieron pensamientos nuevos aparecen de PRIMERO
-            listaUsuariosCacheReal.sort((a, b) => {
-                if (a.pensamiento && !b.pensamiento) return -1;
-                if (!a.pensamiento && b.pensamiento) return 1;
-                return b.rawTime - a.rawTime;
-            });
-
-            renderizarUsuariosHorizontal();
-        });
+    // ESCUCHA 2: Pensamientos (Se ejecuta independiente y en paralelo)
+    db.ref('pensamientos').on('value', snapNubes => {
+        _cacheDataNubes = snapNubes.val() || {};
+        combinarYRenderizarUsuarios();
     });
 }
-// ==========================================
-// 3. RENDERIZAR USUARIOS (CON NUBES Y BADGES ROJOS)
-// ==========================================
+
+// Función maestra que combina ambos datos apenas llegan y pinta la pantalla al instante
+function combinarYRenderizarUsuarios() {
+    // Si aún no llegan los usuarios de Firebase, esperamos
+    if (!_cacheDataUsers || !_cacheDataUsers.exists) return;
+
+    listaUsuariosCacheReal = [];
+    const ahora = Date.now();
+
+    _cacheDataUsers.forEach(child => {
+        const u = child.val();
+        const uid = child.key;
+
+        // Buscar si tiene nube activa (menos de 24h)
+        const nube = _cacheDataNubes[uid];
+        let pensamientoFinal = "";
+        if (nube && (ahora - nube.timestamp < 86400000)) {
+            pensamientoFinal = nube.texto;
+        }
+
+        listaUsuariosCacheReal.push({
+            key: uid,
+            nombre: u.apodo || u.myInviteKey || "User",
+            avatar: u.fotoPerfil || getAvatarUrl(uid),
+            online: (ahora - (u.lastSeen || 0) < 120000),
+            rawTime: u.lastSeen || 0,
+            pensamiento: pensamientoFinal
+        });
+    });
+
+    // Ordenar: Pensamientos nuevos primero, luego conectados recientes
+    listaUsuariosCacheReal.sort((a, b) => {
+        if (a.pensamiento && !b.pensamiento) return -1;
+        if (!a.pensamiento && b.pensamiento) return 1;
+        return b.rawTime - a.rawTime;
+    });
+
+    // Enviar a pintar al HTML
+    renderizarUsuariosHorizontal();
+}
 function renderizarUsuariosHorizontal() {
     const contenedor = document.getElementById('listaUsuariosHorizontal');
     if (!contenedor) return;
@@ -12688,6 +12968,9 @@ window.cambiarPestanaChat = (pestana) => {
     if(btnGrupos) btnGrupos.classList.remove('active');
 
     // 3. Activar el seleccionado
+    // Detener el intervalo de mensajes si salimos de esa pestaña
+    if (pestana !== 'mensajes') clearInterval(window._mensajesInterval);
+
     if (pestana === 'global') {
         if(btnGlobal) btnGlobal.classList.add('active');
         if(contGlobal) contGlobal.style.display = 'flex';
@@ -12697,13 +12980,30 @@ window.cambiarPestanaChat = (pestana) => {
         if(btnMensajes) btnMensajes.classList.add('active');
         if(contMensajes) contMensajes.style.display = 'block';
 
-        // 🔥 ESTA ES LA LÍNEA QUE CARGA LOS CHATS
         if(typeof cargarChatsPrivadosNoLeidos === "function") {
             cargarChatsPrivadosNoLeidos();
         } else {
-            console.error("❌ Error: La función cargarChatsPrivadosNoLeidos no existe");
             contMensajes.innerHTML = '<div style="padding:20px; text-align:center; color:red;">Error: Función de carga no encontrada.</div>';
         }
+
+        // Actualización cada 3 segundos mientras la pestaña está activa
+        clearInterval(window._mensajesInterval);
+        window._mensajesInterval = setInterval(() => {
+            if (!window._chatsPrivadosRef || !idAuditor) return;
+            window._chatsPrivadosRef.once('value', snap => {
+                const chats = procesarSnapshotChats(snap);
+                try {
+                    localStorage.setItem(CHATS_CACHE_KEY(), JSON.stringify(chats));
+                    localStorage.setItem(CHATS_TS_KEY(), String(Date.now()));
+                } catch(e){}
+                const cont = document.getElementById('mensajesPrivadosContainer');
+                if (cont && cont.style.display !== 'none') {
+                    renderChatsHTML(chats, cont);
+                    actualizarNombresEnDOM(chats);
+                }
+                sincronizarBadgesDesdeChats(chats);
+            });
+        }, 3000);
     } 
     else { // grupos
         if(btnGrupos) btnGrupos.classList.add('active');
@@ -13132,105 +13432,156 @@ window.eliminarGrupo = () => {
         })
         .catch(err => notify('❌ Error: ' + err.message));
 };
-// Función para cargar chats privados en la pestaña Mensajes
+// ══════════════════════════════════════════════════════
+// MENSAJES CON CACHÉ LOCAL — muestra datos guardados
+// al instante, Firebase solo trae mensajes nuevos
+// ══════════════════════════════════════════════════════
+const CHATS_CACHE_KEY  = () => 'pgc_chats_' + (idAuditor || '');
+const NAMES_CACHE_KEY  = () => 'pgc_names_' + (idAuditor || '');
+const CHATS_TS_KEY     = () => 'pgc_chats_ts_' + (idAuditor || '');
+const CHATS_TTL        = 5 * 60 * 1000; // re-fetch cada 5 min como máximo
+
+function renderChatsHTML(chats, container) {
+    if (!chats || chats.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-check-circle" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i><div>¡Todo al día! No hay mensajes nuevos.</div></div>';
+        return;
+    }
+    // Leer caché de nombres
+    let namesCache = {};
+    try { namesCache = JSON.parse(localStorage.getItem(NAMES_CACHE_KEY()) || '{}'); } catch(e){}
+
+    let html = '';
+    chats.forEach(chat => {
+        const msg  = chat.ultimoMsg;
+        const uid  = chat.otroUid;
+        const diffMin = Math.floor((Date.now() - (msg.fecha || Date.now())) / 60000);
+        const tiempo  = diffMin < 1 ? 'Ahora' : diffMin < 60 ? `${diffMin} min` : `${Math.floor(diffMin/60)} h`;
+        let texto = msg.texto || (msg.esFoto ? '📷 Foto' : '...');
+        if (texto.length > 40) texto = texto.substring(0, 40) + '...';
+        const borde   = chat.mensajesNoLeidos > 0 ? 'border-left:4px solid #ef4444;background:#fff5f5;' : '';
+        const badge   = chat.mensajesNoLeidos > 0
+            ? `<div style="background:#ef4444;color:white;font-size:0.7rem;font-weight:800;padding:2px 8px;border-radius:10px;">${chat.mensajesNoLeidos} nuevo(s)</div>` : '';
+        const nombre  = namesCache[uid] || 'Cargando...';
+        html += `<div onclick="abrirChatPrivado('${uid}','${escapeHtml(nombre)}')"
+                      style="background:white;padding:15px;border-radius:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer;transition:.2s;${borde}">
+                   <div style="display:flex;align-items:center;gap:12px;">
+                     <div style="width:50px;height:50px;border-radius:50%;background:#e2e8f0;background-size:cover;background-image:url('${getUserProfilePhoto(uid)}');flex-shrink:0;"></div>
+                     <div style="flex:1;min-width:0;">
+                       <div id="name-chat-${uid}" style="font-weight:700;color:#1e293b;font-size:1rem;">${escapeHtml(nombre)}</div>
+                       <div style="font-size:.85rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">${escapeHtml(texto)}</div>
+                       ${badge}
+                     </div>
+                     <div style="font-size:.75rem;color:#94a3b8;font-weight:600;">${tiempo}</div>
+                   </div>
+                 </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function actualizarNombresEnDOM(chats) {
+    let namesCache = {};
+    try { namesCache = JSON.parse(localStorage.getItem(NAMES_CACHE_KEY()) || '{}'); } catch(e){}
+    chats.forEach(chat => {
+        const uid = chat.otroUid;
+        if (namesCache[uid]) {
+            const el = document.getElementById('name-chat-' + uid);
+            if (el) el.textContent = namesCache[uid];
+            return; // ya en caché, no pedir a Firebase
+        }
+        db.ref('users/' + uid).once('value', snapU => {
+            const u = snapU.val();
+            const nombre = (u && u.apodo) ? u.apodo : (u && u.myInviteKey ? u.myInviteKey : 'Usuario');
+            namesCache[uid] = nombre;
+            try { localStorage.setItem(NAMES_CACHE_KEY(), JSON.stringify(namesCache)); } catch(e){}
+            const el = document.getElementById('name-chat-' + uid);
+            if (el) el.textContent = nombre;
+        });
+    });
+}
+
+function procesarSnapshotChats(snap) {
+    if (!snap.exists()) return [];
+    const chats = [];
+    snap.forEach(chatSnap => {
+        const partes = chatSnap.key.split('_');
+        if (!partes.includes(idAuditor)) return;
+        const otroUid = partes[0] === idAuditor ? partes[1] : partes[0];
+        let ultimoMsg = null, noLeidos = 0;
+        chatSnap.forEach(msgSnap => {
+            const msg = msgSnap.val();
+            if (!ultimoMsg || (msg.fecha && msg.fecha > (ultimoMsg.fecha || 0))) ultimoMsg = msg;
+            if (msg.uid !== idAuditor && !msg.leido) noLeidos++;
+        });
+        if (ultimoMsg) chats.push({ otroUid, ultimoMsg, mensajesNoLeidos: noLeidos });
+    });
+    chats.sort((a, b) => {
+        if (a.mensajesNoLeidos > 0 && b.mensajesNoLeidos === 0) return -1;
+        if (b.mensajesNoLeidos > 0 && a.mensajesNoLeidos === 0) return 1;
+        return (b.ultimoMsg.fecha || 0) - (a.ultimoMsg.fecha || 0);
+    });
+    return chats;
+}
+
+// ─── Helper: actualiza círculos rojos de stories desde lista de chats ────────
+function sincronizarBadgesDesdeChats(chats) {
+    if (!chats || !chats.length) return;
+    chats.forEach(chat => {
+        if (chat.mensajesNoLeidos > 0 && chat.otroUid) {
+            window.mapaMensajesSinLeer = window.mapaMensajesSinLeer || {};
+            const prev = window.mapaMensajesSinLeer[chat.otroUid] || 0;
+            if (prev !== chat.mensajesNoLeidos) {
+                window.mapaMensajesSinLeer[chat.otroUid] = chat.mensajesNoLeidos;
+            }
+        }
+    });
+    if (typeof renderizarUsuariosHorizontal === 'function') renderizarUsuariosHorizontal();
+}
+
 window.cargarChatsPrivadosNoLeidos = () => {
     const container = document.getElementById('mensajesPrivadosContainer');
     if (!container || !idAuditor) return;
 
-    // Mostrar spinner
-    container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i><div style="margin-top:15px;">Buscando chats...</div></div>';
+    // 1. Mostrar caché instantánea si existe (sin spinner)
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem(CHATS_CACHE_KEY())); } catch(e){}
 
-    db.ref('chats_privados').once('value', snap => {
-        if (!snap.exists()) {
-            container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-comments" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i><div>No tienes conversaciones aún.</div></div>';
-            return;
+    if (cached && cached.length >= 0) {
+        renderChatsHTML(cached, container);
+        actualizarNombresEnDOM(cached);
+        sincronizarBadgesDesdeChats(cached);
+    } else {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i><div style="margin-top:15px;">Buscando chats...</div></div>';
+    }
+
+    // 2. Listener en tiempo real: solo re-ejecuta cuando un chat cambia (incremental)
+    //    Se configura UNA sola vez; los cambios posteriores la disparan solos.
+    if (window._chatsPrivadosRef) return; // ya escuchando
+
+    window._chatsPrivadosRef = db.ref('chats_privados');
+
+    const procesarYGuardar = (snap) => {
+        const chats = procesarSnapshotChats(snap);
+        try {
+            localStorage.setItem(CHATS_CACHE_KEY(), JSON.stringify(chats));
+            localStorage.setItem(CHATS_TS_KEY(), String(Date.now()));
+        } catch(e){}
+        const cont = document.getElementById('mensajesPrivadosContainer');
+        if (cont && cont.style.display !== 'none') {
+            renderChatsHTML(chats, cont);
+            actualizarNombresEnDOM(chats);
         }
+        // Siempre actualizar los círculos rojos de stories
+        sincronizarBadgesDesdeChats(chats);
+    };
 
-        let chats = [];
-        snap.forEach(chatSnap => {
-            const chatId = chatSnap.key;
-            const partes = chatId.split('_');
-
-            // Verificar si soy participante del chat
-            if (partes.includes(idAuditor)) {
-                const otroUid = partes[0] === idAuditor ? partes[1] : partes[0];
-                let ultimoMsg = null;
-                let mensajesNoLeidos = 0;
-
-                // Recorrer mensajes para encontrar el último y contar no leídos
-                chatSnap.forEach(msgSnap => {
-                    const msg = msgSnap.val();
-                    // Actualizar último mensaje
-                    if (!ultimoMsg || (msg.fecha && msg.fecha > (ultimoMsg.fecha || 0))) {
-                        ultimoMsg = msg;
-                    }
-                    // Contar no leídos (mensajes del otro usuario)
-                    if (msg.uid !== idAuditor && !msg.leido) {
-                        mensajesNoLeidos++;
-                    }
-                });
-
-                if (ultimoMsg) {
-                    chats.push({ otroUid, ultimoMsg, mensajesNoLeidos });
-                }
-            }
-        });
-
-        // Ordenar: Primero los que tienen mensajes sin leer, luego por fecha
-        chats.sort((a, b) => {
-            if (a.mensajesNoLeidos > 0 && b.mensajesNoLeidos === 0) return -1;
-            if (b.mensajesNoLeidos > 0 && a.mensajesNoLeidos === 0) return 1;
-            return (b.ultimoMsg.fecha || 0) - (a.ultimoMsg.fecha || 0);
-        });
-
-        if (chats.length === 0) {
-            container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-check-circle" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i><div>¡Todo al día! No hay mensajes nuevos.</div></div>';
-            return;
-        }
-
-        // Generar HTML
-        let html = '';
-        chats.forEach(chat => {
-            const msg = chat.ultimoMsg;
-            const uid = chat.otroUid;
-            const diffMin = Math.floor((Date.now() - (msg.fecha || Date.now())) / 60000);
-            const tiempo = diffMin < 1 ? 'Ahora' : diffMin < 60 ? `${diffMin} min` : `${Math.floor(diffMin/60)} h`;
-            let texto = msg.texto || (msg.esFoto ? '📷 Foto' : '...');
-            if (texto.length > 40) texto = texto.substring(0, 40) + '...';
-
-            // Indicador de no leído (Badge rojo y borde)
-            const bordeNoLeidos = chat.mensajesNoLeidos > 0 ? 'border-left: 4px solid #ef4444; background: #fff5f5;' : '';
-            const badgeHtml = chat.mensajesNoLeidos > 0 
-                ? `<div style="background:#ef4444; color:white; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:10px;">${chat.mensajesNoLeidos} nuevo(s)</div>` 
-                : '';
-
-            html += `
-                <div onclick="abrirChatPrivado('${uid}', 'Cargando...')" 
-                     style="background:white; padding:15px; border-radius:16px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); cursor:pointer; transition:0.2s; ${bordeNoLeidos}">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div style="width:50px; height:50px; border-radius:50%; background:#e2e8f0; background-size:cover; background-image:url('${getUserProfilePhoto(uid)}'); flex-shrink:0;"></div>
-                        <div style="flex:1; min-width:0;">
-                            <div id="name-chat-${uid}" style="font-weight:700; color:#1e293b; font-size:1rem;">Cargando...</div>
-                            <div style="font-size:0.85rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(texto)}</div>
-                            ${badgeHtml}
-                        </div>
-                        <div style="font-size:0.75rem; color:#94a3b8; font-weight:600;">${tiempo}</div>
-                    </div>
-                </div>`;
-        });
-
-        container.innerHTML = html;
-
-        // Cargar nombres de usuarios en segundo plano
-        chats.forEach(chat => {
-            db.ref(`users/${chat.otroUid}`).once('value', snapU => {
-                const u = snapU.val();
-                const nombre = (u && u.apodo) ? u.apodo : (u && u.myInviteKey ? u.myInviteKey : 'Usuario');
-                const el = document.getElementById(`name-chat-${chat.otroUid}`);
-                if (el) el.textContent = nombre;
-            });
-        });
+    // child_changed → solo chats que tuvieron actividad nueva (NO recarga todo)
+    window._chatsPrivadosRef.on('child_changed', () => {
+        // Re-leer snapshot completo para recalcular orden y conteos
+        window._chatsPrivadosRef.once('value', procesarYGuardar);
     });
+
+    // Primera carga completa
+    window._chatsPrivadosRef.once('value', procesarYGuardar);
 };
 // --- FUNCIÓN PARA DAR ESPACIO AL CHAT ---
 document.addEventListener('DOMContentLoaded', () => {
