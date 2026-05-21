@@ -6906,7 +6906,7 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
                ` : '';
 
                row.innerHTML = `
-                  <img id="img-chat-${msgKey}" src="${avatarDefault}" class="chat-avatar-img" onclick="mostrarPerfilUsuario('${m.uid}', '${nombreMostrar}')">
+                  <img id="img-chat-${msgKey}" src="${avatarDefault}" class="chat-avatar-img" data-uid="${m.uid}" onclick="mostrarPerfilUsuario('${m.uid}', '${nombreMostrar}')">
 
                    <div id="msg-${msgKey}" class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}">
                        <div><span class="msg-user">${escapeHtml(nombreMostrar)}</span></div>
@@ -6941,15 +6941,26 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
 
              // 🔥 TRUCO MAGISTRAL: BUSCAR FOTO REAL EN SEGUNDO PLANO
              // Consultamos solo la foto de este usuario para no saturar
-             db.ref(`users/${m.uid}/fotoPerfil`).once('value').then(snap => {
-                 if (snap.exists()) {
-                     const fotoReal = snap.val();
-                     const imgTag = document.getElementById(`img-chat-${msgKey}`);
-                     if (imgTag) {
-                         imgTag.src = fotoReal; // ¡Reemplazo instantáneo!
+             // Solo buscar foto en Firebase si no está en caché ya
+             if (!cacheFotosPerfil[m.uid]) {
+                 db.ref(`users/${m.uid}/fotoPerfil`).once('value').then(snap => {
+                     if (snap.exists()) {
+                         const fotoReal = snap.val();
+                         cacheFotosPerfil[m.uid] = fotoReal; // Guardar en caché para mensajes futuros
+                         // Actualizar SOLO el avatar de este mensaje por su ID único
+                         const imgTag = document.getElementById(`img-chat-${msgKey}`);
+                         if (imgTag) imgTag.src = fotoReal;
+                         // Actualizar otros mensajes visibles del mismo usuario en el chat global
+                         document.querySelectorAll(`#chatList .chat-avatar-img[data-uid="${m.uid}"]`).forEach(img => {
+                             img.src = fotoReal;
+                         });
                      }
-                 }
-             });
+                 });
+             } else {
+                 // Ya tenemos la foto en caché: aplicar directamente sin llamada Firebase
+                 const imgTag = document.getElementById(`img-chat-${msgKey}`);
+                 if (imgTag) imgTag.src = cacheFotosPerfil[m.uid];
+             }
          });
 
          // 2. Escuchar borrados
@@ -9402,7 +9413,8 @@ window.abrirChatPrivado = (targetUid, targetName) => {
         if (u.fotoPerfil) {
             cacheFotosPerfil[targetUid] = u.fotoPerfil;
             document.getElementById('privAvatar').style.backgroundImage = "url('" + u.fotoPerfil + "')";
-            document.querySelectorAll('.chat-row.other .chat-avatar-img').forEach(img => {
+            // Solo actualizar imágenes dentro del chat privado que pertenezcan a este usuario
+            document.querySelectorAll(`#privChatList .chat-avatar-img[data-uid="${targetUid}"]`).forEach(img => {
                 img.src = u.fotoPerfil;
             });
         }
