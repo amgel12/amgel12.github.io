@@ -4165,8 +4165,8 @@ style="display:none;">
 </div>
     <!-- 2. PESTAÑAS -->
 <div class="chat-tabs-container" style="flex-shrink: 0;">
-    <button id="tabGlobalBtn" class="chat-tab-btn active" onclick="cambiarPestanaChat('global')">🌍 Global</button>
-    <button id="tabMensajesBtn" class="chat-tab-btn" onclick="cambiarPestanaChat('mensajes')">💬 Mensajes</button>
+    <button id="tabMensajesBtn" class="chat-tab-btn active" onclick="cambiarPestanaChat('mensajes')">💬 Mensajes</button>
+    <button id="tabGlobalBtn" class="chat-tab-btn" onclick="cambiarPestanaChat('global')">🌍 Global</button>
     <button id="tabGruposBtn" class="chat-tab-btn" onclick="cambiarPestanaChat('grupos')">👥 Grupos</button>
 </div>
 
@@ -4386,35 +4386,6 @@ style="display:none;">
 
   </div>
 </div>
-<div id="modalRuletaGame" class="modal-overlay" onclick="if(event.target===this)window.cerrarRuleta()">
-    <div class="modal-content" style="text-align:center;"onclick="event.stopPropagation()">
-        <h3 style="color:#f59e0b; margin-bottom: 10px;">🎰 Ruleta Diaria</h3>
-        <div class="ruleta-container">
-            <div class="pointer"></div>
-            <div id="wheel">
-                <div class="numero" style="transform: rotate(22.5deg);">0.25</div>
-                <div class="numero" style="transform: rotate(67.5deg);">VACÍO</div>
-                <div class="numero" style="transform: rotate(112.5deg);">0.50</div>
-                <div class="numero" style="transform: rotate(157.5deg);">VACÍO</div>
-                <div class="numero" style="transform: rotate(202.5deg);">0.75</div>
-                <div class="numero" style="transform: rotate(247.5deg);">VACÍO</div>
-                <div class="numero" style="transform: rotate(292.5deg);">0.25</div>
-                <div class="numero" style="transform: rotate(337.5deg);">0.50</div>
-            </div>
-        </div>
-        <button id="btnSpin" onclick="triggerSpin()" class="btn-blue" style="background:#f59e0b; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); margin-top:15px;">🎰 Girar Ruleta</button>
-        <p id="spinInfo" style="font-size:0.7rem; margin-top:10px; color:#64748b;"></p>
-
-        <div style="margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
-             <button id="btnVerAnuncio" style="width:100%; border:none; background:#f0f9ff; padding:10px; border-radius:10px; font-weight:800; color:#0070ba; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
-                📺 Ver Video (+0.25 & Giro)
-            </button>
-        </div>
-<button onclick="window.cerrarRuleta()" class="btn-blue" style="background:#cbd5e1; color:#475569; margin-top:15px;">
-Cerrar
-</button>
-    </div>
-</div>
 <div id="modalHistorial" class="modal-overlay" style="z-index: 26000;">
     <div class="modal-content" style="background: #f8fafc; padding: 0; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh;">
 
@@ -4507,6 +4478,34 @@ Cerrar
         </div>
     </div>
 </div>
+<!-- Ruleta fuera del appWrapper para que position:fixed funcione sobre cualquier pantalla -->
+<div id="modalRuletaGame" class="modal-overlay" onclick="if(event.target===this)window.cerrarRuleta()">
+    <div class="modal-content" style="text-align:center;" onclick="event.stopPropagation()">
+        <h3 style="color:#f59e0b; margin-bottom: 10px;">🎰 Ruleta Diaria</h3>
+        <div class="ruleta-container">
+            <div class="pointer"></div>
+            <div id="wheel">
+                <div class="numero" style="transform: rotate(22.5deg);">0.25</div>
+                <div class="numero" style="transform: rotate(67.5deg);">VACÍO</div>
+                <div class="numero" style="transform: rotate(112.5deg);">0.50</div>
+                <div class="numero" style="transform: rotate(157.5deg);">VACÍO</div>
+                <div class="numero" style="transform: rotate(202.5deg);">0.75</div>
+                <div class="numero" style="transform: rotate(247.5deg);">VACÍO</div>
+                <div class="numero" style="transform: rotate(292.5deg);">0.25</div>
+                <div class="numero" style="transform: rotate(337.5deg);">0.50</div>
+            </div>
+        </div>
+        <button id="btnSpin" onclick="triggerSpin()" class="btn-blue" style="background:#f59e0b; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); margin-top:15px;">🎰 Girar Ruleta</button>
+        <p id="spinInfo" style="font-size:0.7rem; margin-top:10px; color:#64748b;"></p>
+        <div style="margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+            <button id="btnVerAnuncio" style="width:100%; border:none; background:#f0f9ff; padding:10px; border-radius:10px; font-weight:800; color:#0070ba; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                📺 Ver Video (+0.25 & Giro)
+            </button>
+        </div>
+        <button onclick="window.cerrarRuleta()" class="btn-blue" style="background:#cbd5e1; color:#475569; margin-top:15px;">Cerrar</button>
+    </div>
+</div>
+
 <nav class="bottom-nav">
    <button class="nav-item" id="nav0" onclick="goToScreen(0, true)">
         <span class="nav-icon"><i class="fas fa-tasks"></i></span>
@@ -5216,6 +5215,18 @@ window.goToScreen = (index, userAction = false) => {
         // Feed iniciado una sola vez desde onAuthStateChanged — solo mostrar
     } else {
         detenerProgresoVideo();
+        // Pausar todos los <video> del feed para que no sigan sonando
+        if (container) {
+            container.querySelectorAll('video').forEach(function(v) {
+                try { v.pause(); v.muted = true; } catch(e){}
+            });
+            // También pausar iframes de YouTube poniendo src vacío temporal no — solo mute
+            container.querySelectorAll('iframe').forEach(function(f) {
+                try {
+                    f.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+                } catch(e){}
+            });
+        }
         if (container) container.style.display = "none";
         // ✅ No borrar innerHTML — el feed queda en memoria
     }
@@ -5230,8 +5241,9 @@ window.goToScreen = (index, userAction = false) => {
         if (badgeMsg) badgeMsg.style.display = 'none';
 
         setTimeout(() => {
+            // Mostrar pestaña Mensajes por defecto al entrar al chat
+            if (typeof cambiarPestanaChat === 'function') cambiarPestanaChat('mensajes');
             if (typeof scrollToBottom === 'function') scrollToBottom();
-            if (typeof cargarChatsPrivadosNoLeidos === 'function') cargarChatsPrivadosNoLeidos();
         }, 200);
     }
 
@@ -10508,7 +10520,10 @@ function actualizarBarra(idBase, actual, max, label) {
 
 window.irMision = (tipo) => {
     document.getElementById('modalTareas').style.display = 'none';
-    if (tipo === 'ruleta') document.getElementById('modalRuletaGame').style.display = 'flex';
+    if (tipo === 'ruleta') {
+        var m = document.getElementById('modalRuletaGame');
+        if (m) { m.style.pointerEvents = ''; m.style.zIndex = ''; m.style.display = 'flex'; }
+    }
     if (tipo === 'anuncio') document.getElementById('btnVerAnuncio').click();
     if (tipo === 'cine') abrirCine();
     if (tipo === 'snake') prepararJuego('snake');
