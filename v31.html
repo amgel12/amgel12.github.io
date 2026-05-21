@@ -9344,10 +9344,6 @@ window.abrirChatPrivado = (targetUid, targetName) => {
     currentChatId = [idAuditor, targetUid].sort().join('_');
 
     // MARCAR COMO LEÍDO AL ABRIR
-// Generar ID único del chat (Orden alfabético)
-    currentChatId = [idAuditor, targetUid].sort().join('_');
-
-    // MARCAR COMO LEÍDO AL ABRIR
     db.ref(`users/${idAuditor}/notifications`).once('value', snap => {
         if (snap.exists()) {
             snap.forEach(s => {
@@ -9360,7 +9356,7 @@ window.abrirChatPrivado = (targetUid, targetName) => {
     });
 
     // 🔥 NUEVO: Marcar mensajes de este chat como leídos en la base de datos
-    db.ref(`chats_privados/${currentChatId}`).once('value', snap => {
+    db.ref(`chats_privados/${currentChatId}`).limitToLast(50).once('value', snap => {
         if (snap.exists()) {
             const updates = {};
             snap.forEach(msgSnap => {
@@ -9426,90 +9422,109 @@ window.abrirFacebookDesdeChat = () => {
     abrirFacebookConAnuncio(currentChatTargetUid);
 };
 
+function crearFilaMensajePrivado(s) {
+    const m = s.val();
+    const key = s.key;
+    const esMio = m.uid === idAuditor;
+    const fotoMsg = getUserProfilePhoto(m.uid);
+    const autorNombre = esMio
+        ? (document.getElementById('profKey').textContent || myCurrentKey)
+        : document.getElementById('privChatTitle').innerText;
+    const textoEscapado = escapeHtml(m.texto || '').replace(/'/g, "\'").replace(/"/g, '&quot;');
+    const textoFinal = hacerEnlacesClickeables(escapeHtml(m.texto || ''));
+
+    let fotoHTML = '';
+    if (m.esFoto && m.foto) {
+        fotoHTML = `<div style="margin:8px 0; cursor:pointer;" onclick="mostrarFotoPrivada(this)" data-foto="${m.foto.replace(/"/g, '&quot;')}"><img src="${m.foto}" style="max-width:200px; max-height:200px; border-radius:12px; object-fit:cover; box-shadow:0 2px 8px rgba(0,0,0,0.15);" loading="lazy"></div>`;
+    }
+
+    let replyHTML = '';
+    if (m.replyTo) {
+        replyHTML = `<div style="background:rgba(0,0,0,0.08); border-left:3px solid #6366f1; padding:6px 10px; border-radius:6px; margin-bottom:6px; font-size:0.78rem;"><div style="font-weight:800; color:#6366f1;">${escapeHtml(m.replyTo.author || 'Usuario')}</div><div style="opacity:0.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${escapeHtml(m.replyTo.text || '')}</div></div>`;
+    }
+
+    const row = document.createElement('div');
+    row.className = `chat-row ${esMio ? 'mine' : 'other'}`;
+    row.id = `priv-row-${key}`;
+    row.innerHTML = `
+        <img src="${fotoMsg}" class="chat-avatar-img" style="display:block;" data-uid="${m.uid}" onclick="mostrarPerfilUsuario(this, '${autorNombre}')">
+        ${esMio ? `<span id="del-icon-${key}" class="delete-msg-trigger" onclick="event.stopPropagation();eliminarMensajePrivadoDirecto('${key}')">🗑️</span>` : ''}
+        <div id="priv-msg-${key}"
+             class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}"
+             style="max-width:75%; cursor:grab; transition: transform 0.2s ease-out;"
+             data-msg-key="${key}"
+             data-msg-text="${escapeHtml(m.texto || '').replace(/"/g, '&quot;')}"
+             data-msg-uid="${m.uid}"
+             ontouchstart="startPressFromElement(this, true); privSwipeStart(event, '${key}')"
+             ontouchmove="privSwipeMove(event, '${key}')"
+             ontouchend="privSwipeEnd(event, '${key}', '${textoEscapado}', '${autorNombre}', '${m.uid}'); cancelPress(true)"
+             onmousedown="startPressFromElement(this, true)"
+             onmouseup="cancelPress(true)"
+             onmouseleave="cancelPress(true)">
+            ${replyHTML}
+            ${fotoHTML}
+            <div>${textoFinal}</div>
+            <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
+                ${new Date(m.fecha).toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+            </div>
+        </div>`;
+    return row;
+}
+
 function cargarMensajesPrivados() {
     if (privChatRef) privChatRef.off();
+    if (window._privChatRemovedRef) { window._privChatRemovedRef.off(); window._privChatRemovedRef = null; }
 
     const list = document.getElementById('privChatList');
+    // Vaciar y mostrar indicador de carga solo al abrir un chat nuevo
+    list.innerHTML = '';
+    let mensajesCargados = false;
+
     privChatRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(30);
 
-    privChatRef.on('value', snap => {
-        if (!snap.exists()) {
-            list.innerHTML = '<div style="text-align:center; padding:20px; color:#cbd5e1; font-size:0.8rem;">🔒 Chat Privado y Seguro.<br>Empieza a escribir.</div>';
-            return;
+    // child_added: agrega cada mensaje individualmente al DOM (sin reconstruir todo)
+    privChatRef.on('child_added', snap => {
+        // Primera vez que llegan mensajes: quitar el spinner si existe
+        if (!mensajesCargados) {
+            mensajesCargados = true;
+            const spinner = list.querySelector('.priv-loading');
+            if (spinner) spinner.remove();
         }
 
-        let html = "";
+        // Si el mensaje ya está en el DOM (reapertura del mismo chat), saltar
+        if (document.getElementById(`priv-row-${snap.key}`)) return;
 
-        snap.forEach(s => {
-            const m = s.val();
-            const esMio = m.uid === idAuditor;
+        const row = crearFilaMensajePrivado(snap);
+        list.appendChild(row);
 
-            let textoSeguro = escapeHtml(m.texto);
-            let textoFinal = hacerEnlacesClickeables(textoSeguro);
+        // Solo scroll automático si ya estamos cerca del fondo (evita interrumpir lectura)
+        const distanciaFondo = list.scrollHeight - list.scrollTop - list.clientHeight;
+        if (distanciaFondo < 150) {
+            list.scrollTop = list.scrollHeight;
+        }
+    }, err => {
+        list.innerHTML = '<div style="text-align:center; padding:20px; color:#ef4444; font-size:0.8rem;">Error al cargar mensajes.</div>';
+    });
 
-            const fotoMsg = getUserProfilePhoto(m.uid);
-            const autorNombre = esMio ? (document.getElementById('profKey').textContent || myCurrentKey) : document.getElementById('privChatTitle').innerText;
-            const textoEscapado = escapeHtml(m.texto).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    // Mostrar placeholder vacío solo si no llegan mensajes tras 800ms
+    const placeholderTimer = setTimeout(() => {
+        if (!mensajesCargados) {
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:#cbd5e1; font-size:0.8rem;">🔒 Chat Privado y Seguro.<br>Empieza a escribir.</div>';
+        }
+    }, 800);
 
-            let fotoHTML = "";
-            if (m.esFoto && m.foto) {
-                fotoHTML = `
-                    <div style="margin:8px 0; cursor:pointer;" onclick="mostrarFotoPrivada(this)" data-foto="${m.foto.replace(/"/g, '&quot;')}">
-                        <img src="${m.foto}" style="max-width:200px; max-height:200px; border-radius:12px; object-fit:cover; box-shadow:0 2px 8px rgba(0,0,0,0.15);" loading="lazy">
-                    </div>
-                `;
-            }
+    // Limpiar el timer si ya llegaron mensajes
+    privChatRef.once('value', () => { clearTimeout(placeholderTimer); });
 
-            // Mostrar mensaje citado si existe
-            let replyHTML = "";
-            if (m.replyTo) {
-                replyHTML = `
-                    <div style="background:rgba(0,0,0,0.08); border-left:3px solid #6366f1; 
-                                padding:6px 10px; border-radius:6px; margin-bottom:6px; font-size:0.78rem;">
-                        <div style="font-weight:800; color:#6366f1;">${escapeHtml(m.replyTo.author || 'Usuario')}</div>
-                        <div style="opacity:0.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">
-                            ${escapeHtml(m.replyTo.text || '')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            html += `
-            <div class="chat-row ${esMio ? 'mine' : 'other'}">
-
-                <img 
-                    src="${fotoMsg}" 
-                    class="chat-avatar-img"
-                    style="display:block;"
-                    data-uid="${m.uid}"
-                    onclick="mostrarPerfilUsuario(this, '${autorNombre}')">
-
-                ${esMio ? `<span id="del-icon-${s.key}" class="delete-msg-trigger" onclick="event.stopPropagation();eliminarMensajePrivadoDirecto('${s.key}')">🗑️</span>` : ''}
-
-                <div id="priv-msg-${s.key}" 
-                     class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}" 
-                     style="max-width:75%; cursor:grab; transition: transform 0.2s ease-out;"
-                     data-msg-key="${s.key}"
-                     data-msg-text="${escapeHtml(m.texto).replace(/"/g, '&quot;')}"
-                     data-msg-uid="${m.uid}"
-                     ontouchstart="startPressFromElement(this, true); privSwipeStart(event, '${s.key}')"
-                     ontouchmove="privSwipeMove(event, '${s.key}')"
-                     ontouchend="privSwipeEnd(event, '${s.key}', '${textoEscapado}', '${autorNombre}', '${m.uid}'); cancelPress(true)"
-                     onmousedown="startPressFromElement(this, true)"
-                     onmouseup="cancelPress(true)"
-                     onmouseleave="cancelPress(true)">
-                    ${replyHTML}
-                    ${fotoHTML}
-                    <div>${textoFinal}</div>
-                    <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
-                        ${new Date(m.fecha).toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
-                    </div>
-                </div>
-            </div>`;
-        });
-
-        list.innerHTML = html;
-        list.scrollTop = list.scrollHeight;
+    // child_removed: eliminar mensajes borrados del DOM sin reconstruir la lista
+    window._privChatRemovedRef = db.ref(`chats_privados/${currentChatId}`);
+    window._privChatRemovedRef.on('child_removed', snap => {
+        const row = document.getElementById(`priv-row-${snap.key}`);
+        if (row) {
+            row.style.transition = 'opacity 0.25s';
+            row.style.opacity = '0';
+            setTimeout(() => row.remove(), 250);
+        }
     });
 }
 
