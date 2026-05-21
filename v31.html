@@ -2258,44 +2258,64 @@ window.procesarFotoPortada = (input) => {
 };
 // 2. Función final (Al darle clic al botón verde)
 window.finalizarPublicacionLibreria = () => {
-    // Si no ha subido foto, no lo dejamos pasar
-    if (!window.fElegida) {
-        return notify("⚠️ Primero debes elegir una foto");
-    }
+    if (!window.fElegida) return notify("⚠️ Primero debes elegir una foto");
 
     const txt = document.getElementById('inputTextoLibreria').value || "¡Video Premium! 🔥";
     const btn = document.getElementById('btnFinalizarLibreria');
+    btn.innerText = "⏳ Procesando...";
+    btn.disabled = true;
 
-    btn.innerText = "⏳ SUBIENDO...";
-    btn.disabled = true; // Solo lo bloqueamos al darle clic para no repetir post
-
-    db.ref('reportes').push({
+    // Guardar datos y lanzar interstitial
+    localStorage.setItem('pendingType', 'libreria');
+    localStorage.setItem('pendingLibreria', JSON.stringify({
         uid: idAuditor,
         autorClave: myCurrentKey,
         texto: txt,
-        musica: window.vElegido, // Usamos la variable global del video
-        fotoPortada: window.fElegida,
-        conLogo: true, // Esto activará el logo en el feed
+        musica: window.vElegido,
+        fotoPortada: window.fElegida
+    }));
+
+    if (typeof AndroidNative !== 'undefined') {
+        window.location = 'go:s7';
+    } else {
+        procesarPublicacionPendiente();
+    }
+};
+
+function _publicarLibreriaPendiente() {
+    const raw = localStorage.getItem('pendingLibreria');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    localStorage.removeItem('pendingLibreria');
+    localStorage.removeItem('pendingType');
+
+    db.ref('reportes').push({
+        uid: data.uid,
+        autorClave: data.autorClave,
+        texto: data.texto,
+        musica: data.musica,
+        fotoPortada: data.fotoPortada,
+        conLogo: true,
         fecha: firebase.database.ServerValue.TIMESTAMP,
         vCount: 0
     }).then(() => {
-        db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) + 0.50);
+        db.ref(`users/${data.uid}/earnings`).transaction(c => (c || 0) + 0.50);
         registrarHistorial("Video de Librería", 0.50);
 
         document.getElementById('modalSubirPortada').style.display = 'none';
         notify("✅ ¡Publicado con éxito!");
 
-        // Resetear para la próxima
         window.fElegida = "";
-        btn.innerText = "🚀 PUBLICAR EN EL MURO";
-        btn.disabled = false;
+        const btn = document.getElementById('btnFinalizarLibreria');
+        if (btn) { btn.innerText = "🚀 PUBLICAR EN EL MURO"; btn.disabled = false; }
 
-        goToScreen(2); // Ir al muro
+        goToScreen(2);
     }).catch(err => {
-        alert("Error: " + err.message);
-        btn.disabled = false;
+        notify("Error: " + err.message);
+        const btn = document.getElementById('btnFinalizarLibreria');
+        if (btn) { btn.innerText = "🚀 PUBLICAR EN EL MURO"; btn.disabled = false; }
     });
-};
+}
 window.cerrarTodoLibreria = () => {
     const container = document.getElementById('reproductorAudioLib');
     if (container) { container.innerHTML = ""; container.style.height = "0"; container.style.marginBottom = "0"; }
@@ -3258,8 +3278,7 @@ Cerrar
           Desbloquea más mensajes privados para seguir chateando hoy.
         </p>
 
-        <!-- OPCIÓN 1: PAYPAL → 20 MENSAJES -->
-<!-- OPCIÓN 1: GOOGLE PLAY BILLING → 20 MENSAJES -->
+        <!-- OPCIÓN 1: GOOGLE PLAY BILLING → 20 MENSAJES -->
 <button onclick="iniciarCompraGooglePlay()"
   style="width:100%; padding:14px; border:none; border-radius:14px;
          background:linear-gradient(135deg,#0f9d58,#059669); color:white;
@@ -3676,20 +3695,43 @@ Cerrar
 
     </div>
 
-    <!-- MÉTODO PAGO -->
-    <div style="margin: 15px 20px 0; background:#1e293b; border:1px solid #334155; border-radius:15px; padding:12px 15px; display:flex; align-items:center; justify-content:space-between;">
-        <div>
-            <div style="font-size:0.65rem; color:#64748b; font-weight:600; text-transform:uppercase;">Método de Pago</div>
-            <div style="color:white; font-weight:700; font-size:0.9rem; margin-top:2px;">PayPal</div>
+    <!-- SELECTOR DE MÉTODO DE PAGO -->
+    <div style="padding: 15px 20px 8px;">
+        <div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Método de Pago</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+
+            <!-- PayPal -->
+            <div id="metodoPP" onclick="seleccionarMetodoPago('paypal')"
+                 style="background:#0070ba; border:2px solid #0070ba; border-radius:12px; padding:10px 6px; text-align:center; cursor:pointer; transition:0.2s; box-shadow:0 4px 12px rgba(0,112,186,0.4);">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" style="height:18px; filter:brightness(10); margin-bottom:4px; display:block; margin:0 auto 4px;">
+                <div style="color:white; font-size:0.65rem; font-weight:800;">PayPal</div>
+            </div>
+
+            <!-- Binance Pay -->
+            <div id="metodoBNB" onclick="seleccionarMetodoPago('binance')"
+                 style="background:#1e293b; border:2px solid #334155; border-radius:12px; padding:10px 6px; text-align:center; cursor:pointer; transition:0.2s; opacity:0.6;">
+                <div style="font-size:1.4rem; line-height:1; margin-bottom:4px;">🟡</div>
+                <div style="color:#f0b90b; font-size:0.62rem; font-weight:800;">Binance</div>
+            </div>
+
+            <!-- TropiPay -->
+            <div id="metodoTP" onclick="seleccionarMetodoPago('tropipay')"
+                 style="background:#1e293b; border:2px solid #334155; border-radius:12px; padding:10px 6px; text-align:center; cursor:pointer; transition:0.2s; opacity:0.6;">
+                <div style="font-size:1.4rem; line-height:1; margin-bottom:4px;">🌴</div>
+                <div style="color:#10b981; font-size:0.62rem; font-weight:800;">TropiPay</div>
+            </div>
         </div>
-        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" style="height:22px; filter:brightness(10);">
     </div>
 
-    <!-- INPUT PAYPAL -->
-    <div style="margin: 12px 20px 0; position:relative;">
-        <div style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#64748b; font-size:0.9rem;">📧</div>
-<input type="email" id="inputPaypalUnico" placeholder="Correo de PayPal"
-style="background:#1e293b; border:2px solid #334155; border-radius:15px; color:white; padding:12px 14px; width:100%;">
+    <!-- INPUT DINÁMICO SEGÚN MÉTODO -->
+    <div style="margin: 8px 20px 0; position:relative;">
+        <div id="iconoInputPago" style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#64748b; font-size:0.9rem;">📧</div>
+        <input id="inputDatosPago" type="text" placeholder="Correo de PayPal"
+               style="background:#1e293b; border:2px solid #334155; border-radius:15px; color:white; padding:12px 14px 12px 40px; width:100%; outline:none; font-family:inherit;">
+    </div>
+    <!-- Nota informativa del método -->
+    <div id="notaMetodoPago" style="margin:6px 20px 0; font-size:0.65rem; color:#64748b; text-align:center;">
+        💡 Tu correo asociado a PayPal
     </div>
 
     <!-- BOTÓN RETIRO -->
@@ -5980,6 +6022,12 @@ window.abrirMision = () => {
     }
 };
 function procesarPublicacionPendiente() {
+    // Dispatcher: enrutar según el tipo de publicación pendiente
+    const tipo = localStorage.getItem('pendingType');
+    if (tipo === 'foto')     { _publicarFotoPendiente();     return; }
+    if (tipo === 'libreria') { _publicarLibreriaPendiente(); return; }
+
+    // Flujo original: misión (texto + música)
     const pending = localStorage.getItem('pendingPost');
     if (pending && idAuditor) {
         const data = JSON.parse(pending); 
@@ -8512,46 +8560,103 @@ window.abrirRetiro = () => {
     }
 };
 
+    // VARIABLES DE MÉTODO PAGO
+    let metodoPagoSeleccionado = 'paypal'; // 'paypal' | 'binance' | 'tropipay'
+
+    // SELECTOR DE MÉTODO
+    window.seleccionarMetodoPago = (metodo) => {
+        metodoPagoSeleccionado = metodo;
+        const input = document.getElementById('inputDatosPago');
+        const icono = document.getElementById('iconoInputPago');
+        const nota  = document.getElementById('notaMetodoPago');
+
+        // Estilos activos/inactivos
+        const ids = {paypal:'metodoPP', binance:'metodoBNB', tropipay:'metodoTP'};
+        const colores = {
+            paypal:   {bg:'#0070ba', border:'#0070ba', opacity:'1', shadow:'rgba(0,112,186,0.4)'},
+            binance:  {bg:'#f0b90b', border:'#f0b90b', opacity:'1', shadow:'rgba(240,185,11,0.4)'},
+            tropipay: {bg:'#10b981', border:'#10b981', opacity:'1', shadow:'rgba(16,185,129,0.4)'}
+        };
+        Object.entries(ids).forEach(([key, id]) => {
+            const el = document.getElementById(id);
+            if (key === metodo) {
+                el.style.background = colores[key].bg;
+                el.style.borderColor = colores[key].border;
+                el.style.opacity = '1';
+                el.style.boxShadow = `0 4px 12px ${colores[key].shadow}`;
+            } else {
+                el.style.background = '#1e293b';
+                el.style.borderColor = '#334155';
+                el.style.opacity = '0.5';
+                el.style.boxShadow = 'none';
+            }
+        });
+
+        // Cambiar placeholder y nota
+        if (metodo === 'paypal') {
+            input.type = 'email';
+            input.placeholder = 'Correo de PayPal';
+            icono.textContent = '📧';
+            nota.innerHTML = '💡 Tu correo asociado a PayPal';
+        } else if (metodo === 'binance') {
+            input.type = 'text';
+            input.placeholder = 'Pay ID o email de Binance';
+            icono.textContent = '🟡';
+            nota.innerHTML = '💡 Tu Binance Pay ID (9 dígitos) o correo de Binance';
+        } else if (metodo === 'tropipay') {
+            input.type = 'text';
+            input.placeholder = 'Correo o teléfono TropiPay';
+            icono.textContent = '🌴';
+            nota.innerHTML = '💡 Tu correo o teléfono registrado en TropiPay';
+        }
+        input.focus();
+    };
+
     // PROCESAR RETIRO
     window.procesarRetiro = () => {
-        const correo = document.getElementById('inputPaypalUnico').value.trim();
+        const datos = document.getElementById('inputDatosPago').value.trim();
+        const metodo = metodoPagoSeleccionado;
 
-        if (!correo || !correo.includes('@')) return notify("Ingresa un correo PayPal válido");
+        if (!datos) {
+            const labels = {paypal:'correo PayPal', binance:'Binance Pay ID / correo', tropipay:'correo o teléfono TropiPay'};
+            return notify(`⚠️ Ingresa tu ${labels[metodo]}`);
+        }
+        if ((metodo === 'paypal' || metodo === 'tropipay') && datos.includes(' ') && !datos.includes('@')) {
+            return notify("⚠️ Verifica el dato ingresado");
+        }
         if (currentEarnings < retiroCostoPuntos) return notify("Saldo insuficiente");
 
-        // PREVENCIÓN DOBLE CLICK
         const btn = document.getElementById('btnSolicitarRetiro');
         btn.disabled = true;
         btn.textContent = "Procesando...";
 
-        // 1. DESCONTAR PUNTOS EN FIREBASE
+        const metodosLabel = {paypal:'PayPal', binance:'Binance Pay', tropipay:'TropiPay'};
+
         db.ref(`users/${idAuditor}`).update({
             earnings: firebase.database.ServerValue.increment(-retiroCostoPuntos)
         }).then(() => {
 
-            // 2. CREAR SOLICITUD EN BASE DE DATOS (Para que tú la veas como Admin)
             db.ref('solicitudes_retiro').push({
                 uid: idAuditor,
                 usuario: myCurrentKey,
-                correo_paypal: correo,
+                metodo_pago: metodo,
+                datos_pago: datos,
+                correo_paypal: metodo === 'paypal' ? datos : null,
                 monto_usd: retiroMontoSeleccionado,
                 costo_pts: retiroCostoPuntos,
                 fecha: firebase.database.ServerValue.TIMESTAMP,
-                estado: "pendiente" 
+                estado: "pendiente"
             });
 
-            // 3. GUARDAR EN HISTORIAL DEL USUARIO
-            registrarHistorial(`Retiro PayPal $${retiroMontoSeleccionado}`, -retiroCostoPuntos);
+            registrarHistorial(`Retiro ${metodosLabel[metodo]} $${retiroMontoSeleccionado}`, -retiroCostoPuntos);
 
-            // 4. ÉXITO
-            notify("✅ Solicitud enviada correctamente");
+            notify(`✅ Solicitud ${metodosLabel[metodo]} enviada`);
             document.getElementById('modalRetiro').style.display = 'none';
-
-            // Sonido de caja registradora
             try { new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_8ce5e82719.mp3').play(); } catch(e){}
         }).catch(error => {
             notify("Error: " + error.message);
             btn.disabled = false;
+            btn.textContent = `💸 Retirar $${retiroMontoSeleccionado} USD`;
         });
     };
 // --- VARIABLE GLOBAL PARA USUARIOS (ESTO TE FALTABA) ---
@@ -8832,35 +8937,67 @@ window.subirFotoReal = () => {
 
     const btn = document.getElementById('btnPublicarFoto');
     btn.disabled = true;
-    btn.innerHTML = "Subiendo...";
+    btn.innerHTML = "⏳ Procesando...";
+
+    // Guardar datos pendientes para publicar después del anuncio
+    localStorage.setItem('pendingType', 'foto');
+    localStorage.setItem('pendingFoto', JSON.stringify({
+        foto: fotoBase64Actual,
+        uid: idAuditor,
+        autor: myCurrentKey
+    }));
+
+    // En Android: lanzar interstitial vía go:s7 → Kotlin llama procesarPublicacionPendiente()
+    if (typeof AndroidNative !== 'undefined') {
+        window.location = 'go:s7';
+    } else {
+        // En navegador web: publicar directamente sin anuncio
+        procesarPublicacionPendiente();
+    }
+};
+
+// Publicar foto desde localStorage (llamada por Kotlin tras el anuncio)
+function _publicarFotoPendiente() {
+    const raw = localStorage.getItem('pendingFoto');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    localStorage.removeItem('pendingFoto');
+    localStorage.removeItem('pendingType');
 
     db.ref('galeria_comunidad').push({
-        uid: idAuditor,
-        autor: myCurrentKey,
-        foto: fotoBase64Actual,
+        uid: data.uid,
+        autor: data.autor,
+        foto: data.foto,
         fecha: firebase.database.ServerValue.TIMESTAMP
     }).then(() => {
-    notify("✅ Foto subida con éxito");
-    cerrarModalFoto();
+        notify("✅ Foto publicada con éxito");
+        cerrarModalFoto();
 
-    // 👇 MISIÓN M4 AQUÍ
-    if (localStorage.getItem('mision_m4_activa') === '1') {
-        localStorage.setItem('mision_m4', '1');
-        localStorage.removeItem('mision_m4_activa');
+        // MISIÓN M4
+        if (localStorage.getItem('mision_m4_activa') === '1') {
+            localStorage.setItem('mision_m4', '1');
+            localStorage.removeItem('mision_m4_activa');
+            sumarPuntosMision(8);
+            if (typeof renderizarMisionesAprender === 'function') renderizarMisionesAprender();
+            notify("✅ Misión completada: Foto subida");
+        }
 
-        sumarPuntosMision(8);
-        renderizarMisionesAprender();
-        notify("✅ Misión completada: Foto subida");
-    }
+        // Recompensa +0.10
+        db.ref(`users/${idAuditor}`).update({
+            earnings: firebase.database.ServerValue.increment(0.10)
+        });
 
-    // Recompensa en dinero (+0.10)
-    db.ref(`users/${idAuditor}`).update({
-        earnings: firebase.database.ServerValue.increment(0.10)
+        if (window.checarProgresoDiario) window.checarProgresoDiario();
+
+        // Restaurar botón por si el modal sigue abierto
+        const btn = document.getElementById('btnPublicarFoto');
+        if (btn) { btn.disabled = false; btn.innerHTML = "💰 Publicar y Ganar"; }
+    }).catch(err => {
+        notify("Error al publicar: " + err.message);
+        const btn = document.getElementById('btnPublicarFoto');
+        if (btn) { btn.disabled = false; btn.innerHTML = "💰 Publicar y Ganar"; }
     });
-
-    if(window.checarProgresoDiario) window.checarProgresoDiario();
-})
-};
+}
 
 window.cerrarModalFoto = () => {
     document.getElementById('modalSubirFoto').style.display = 'none';
@@ -9746,6 +9883,7 @@ function checkLimiteDiario(uid) {
 
 // ==========================================
 // 💎 COMPRAR / DESBLOQUEAR MÁS MENSAJES PRIVADOS
+
 // ==========================================
 window.abrirModalComprarMensajes = () => {
     try { window.playSound('click'); } catch(e){}
