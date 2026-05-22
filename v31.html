@@ -8927,87 +8927,92 @@ window.procesarFotoSeleccionada = () => {
     };
     reader.readAsDataURL(file);
 };
+// =================================================================
+// 📸 MONETIZAR FOTO - SISTEMA DE PUBLICACIÓN DIRECTA CON ANUNCIOS
+// =================================================================
 
-// 2. Subir la foto a Firebase
-// ==========================================
-// 2. SUBIR FOTO REAL (CONECTADO A MISIONES)
-// ==========================================
+// 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN
 window.subirFotoReal = () => {
     if (!fotoBase64Actual) return notify("Elige una foto primero");
 
     const btn = document.getElementById('btnPublicarFoto');
-    btn.disabled = true;
-    btn.innerHTML = "⏳ Procesando...";
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = "Cargando anuncio...";
+    }
 
-    // Guardar datos pendientes para publicar después del anuncio
-    localStorage.setItem('pendingType', 'foto');
-    localStorage.setItem('pendingFoto', JSON.stringify({
-        foto: fotoBase64Actual,
-        uid: idAuditor,
-        autor: myCurrentKey
-    }));
-
-    // En Android: lanzar interstitial vía go:s7 → Kotlin llama procesarPublicacionPendiente()
+    // Usamos el sistema de redirección (go:ad-foto) que funciona al instante
     if (typeof AndroidNative !== 'undefined') {
-        window.location = 'go:s7';
+        notify("📺 Ve el anuncio para publicar tu foto...");
+        window.location.href = 'go:ad-foto';
     } else {
-        // En navegador web: publicar directamente sin anuncio
-        procesarPublicacionPendiente();
+        // Fallback por si pruebas desde la computadora
+        ejecutarSubidaFotoFirebase();
     }
 };
 
-// Publicar foto desde localStorage (llamada por Kotlin tras el anuncio)
-function _publicarFotoPendiente() {
-    const raw = localStorage.getItem('pendingFoto');
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    localStorage.removeItem('pendingFoto');
-    localStorage.removeItem('pendingType');
+// 2. KOTLIN LLAMA A ESTO AL TERMINAR EL ANUNCIO CON ÉXITO
+window.ejecutarSubidaFotoFirebase = () => {
+    const btn = document.getElementById('btnPublicarFoto');
+    if (btn) btn.innerHTML = "Subiendo...";
 
     db.ref('galeria_comunidad').push({
-        uid: data.uid,
-        autor: data.autor,
-        foto: data.foto,
+        uid: idAuditor,
+        autor: myCurrentKey,
+        foto: fotoBase64Actual,
         fecha: firebase.database.ServerValue.TIMESTAMP
     }).then(() => {
-        notify("✅ Foto publicada con éxito");
+        notify("✅ Foto subida con éxito");
         cerrarModalFoto();
 
-        // MISIÓN M4
+        // Si tenía la misión M4 activa
         if (localStorage.getItem('mision_m4_activa') === '1') {
             localStorage.setItem('mision_m4', '1');
             localStorage.removeItem('mision_m4_activa');
             sumarPuntosMision(8);
             if (typeof renderizarMisionesAprender === 'function') renderizarMisionesAprender();
-            notify("✅ Misión completada: Foto subida");
+            notify("✅ Misión completada");
         }
 
-        // Recompensa +0.10
+        // DARLE LOS +0.10 PUNTOS POR SUBIR LA FOTO
         db.ref(`users/${idAuditor}`).update({
             earnings: firebase.database.ServerValue.increment(0.10)
         });
 
         if (window.checarProgresoDiario) window.checarProgresoDiario();
-
-        // Restaurar botón por si el modal sigue abierto
-        const btn = document.getElementById('btnPublicarFoto');
-        if (btn) { btn.disabled = false; btn.innerHTML = "💰 Publicar y Ganar"; }
+        try { window.playSound('win'); } catch(e){}
+        
     }).catch(err => {
-        notify("Error al publicar: " + err.message);
-        const btn = document.getElementById('btnPublicarFoto');
-        if (btn) { btn.disabled = false; btn.innerHTML = "💰 Publicar y Ganar"; }
+        notify("Error al subir: " + err.message);
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = "💰 Publicar y Ganar";
+        }
     });
-}
+};
 
+// 3. FUNCIÓN PARA CERRAR EL MODAL Y RESETEAR VARIABLES
 window.cerrarModalFoto = () => {
     document.getElementById('modalSubirFoto').style.display = 'none';
     document.getElementById('imgPreview').style.display = 'none';
     document.getElementById('placeholderUpload').style.display = 'block';
-    document.getElementById('placeholderUpload').innerHTML = '<i class="fas fa-cloud-upload-alt" style="font-size:2rem;"></i><p style="font-size:0.8rem; margin-top:5px;">Toca para elegir</p>';
+    document.getElementById('placeholderUpload').innerHTML = '<i class="fas fa-camera" style="font-size:2.5rem; margin-bottom: 10px;"></i><p style="font-size:0.8rem; font-weight:bold;">Toca para subir</p><p style="font-size:0.65rem; opacity:0.8;">Selfie • Paisaje • Meme</p>';
     document.getElementById('inputFotoArchivo').value = "";
     fotoBase64Actual = "";
+    
+    // Restaurar botón por si se vuelve a abrir
+    const btn = document.getElementById('btnPublicarFoto');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = "💰 Publicar y Ganar";
+    }
 };
-
+// ==========================================
+// FUNCIÓN DE SEGURIDAD PARA EVITAR CRASH
+// ==========================================
+window._publicarFotoPendiente = () => {
+    console.log("Función antigua _publicarFotoPendiente ignorada de forma segura.");
+};
 // --- VARIABLES GLOBALES PARA FOTOS ---
 let fotoSeleccionadaKey = null;
 let fotoSeleccionadaData = null;
