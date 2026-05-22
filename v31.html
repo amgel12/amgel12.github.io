@@ -6022,18 +6022,22 @@ window.abrirMision = () => {
     }
 };
 function procesarPublicacionPendiente() {
-    // Dispatcher: enrutar según el tipo de publicación pendiente
+    // Dispatcher: enrutar según el tipo de publicación de video pendiente
     const tipo = localStorage.getItem('pendingType');
-    if (tipo === 'foto')     { _publicarFotoPendiente();     return; }
-    if (tipo === 'libreria') { _publicarLibreriaPendiente(); return; }
+    
+    // 1. Si es de la Librería Premium (Video para el Feed)
+    if (tipo === 'libreria') {
+        _publicarLibreriaPendiente(); 
+        return; 
+    }
 
-    // Flujo original: misión (texto + música)
+    // 2. Flujo original: Misión del Feed (Video de YouTube / texto + música)
     const pending = localStorage.getItem('pendingPost');
     if (pending && idAuditor) {
-        const data = JSON.parse(pending); 
-
+        const data = JSON.parse(pending);
+        
         // Limpiamos inmediatamente para que no se duplique al recargar
-        localStorage.removeItem('pendingPost'); 
+        localStorage.removeItem('pendingPost');
 
         db.ref(`users/${idAuditor}`).once('value').then(snap => {
             const u = snap.val() || {};
@@ -6044,7 +6048,7 @@ function procesarPublicacionPendiente() {
             let nuevoConteo = (u.missionCount || 0) + 1;
             if (horasDiff >= 8) nuevoConteo = 1; 
 
-            // 1. Guardar en Firebase
+            // Publicamos el video en la base de datos de reportes (Feed)
             const nuevoPostRef = db.ref('reportes').push();
             nuevoPostRef.set({ 
                 uid: idAuditor, 
@@ -6054,7 +6058,7 @@ function procesarPublicacionPendiente() {
                 vCount: 0, 
                 fecha: firebase.database.ServerValue.TIMESTAMP 
             }).then(() => {
-                // 2. Actualizar puntos del usuario
+                // Premiar al usuario por publicar en el Feed
                 db.ref(`users/${idAuditor}`).update({ 
                     earnings: firebase.database.ServerValue.increment(0.50), 
                     lastMissionTime: firebase.database.ServerValue.TIMESTAMP, 
@@ -6062,26 +6066,30 @@ function procesarPublicacionPendiente() {
                 });
 
                 registrarHistorial("Misión: Publicar", 0.50);
-                if(window.checarProgresoDiario) window.checarProgresoDiario();
+                if(typeof window.checarProgresoDiario === 'function') window.checarProgresoDiario();
 
-                // 3. Cerrar modal
-                document.getElementById('modalMision').style.display = 'none';
-                document.getElementById('btnEnviarMision').textContent = "📢 Publicar";
-                document.getElementById('btnEnviarMision').disabled = false;
+                // Cerrar modales si estaban abiertos
+                const modMision = document.getElementById('modalMision');
+                if (modMision) modMision.style.display = 'none';
+                
+                const btnMision = document.getElementById('btnEnviarMision');
+                if (btnMision) {
+                    btnMision.textContent = "🚀 Publicar (+0.50)";
+                    btnMision.disabled = false;
+                }
 
-                // 4. Forzar al Muro a mostrar lo nuevo
-                goToScreen(2);
+                notify("✅ ¡Publicado en el Feed!");
+                goToScreen(2); // Ir al Feed para ver el video nuevo
 
             }).catch(e => {
                 console.error("Error al publicar misión:", e);
                 notify("Error al publicar: " + e.message);
-                document.getElementById('btnEnviarMision').textContent = "📢 Publicar";
-                document.getElementById('btnEnviarMision').disabled = false;
+                const btnMision = document.getElementById('btnEnviarMision');
+                if (btnMision) {
+                    btnMision.textContent = "🚀 Publicar (+0.50)";
+                    btnMision.disabled = false;
+                }
             });
-        }).catch(e => {
-            console.error("Error al leer usuario:", e);
-            document.getElementById('btnEnviarMision').textContent = "📢 Publicar";
-            document.getElementById('btnEnviarMision').disabled = false;
         });
     }
 }
@@ -8928,10 +8936,10 @@ window.procesarFotoSeleccionada = () => {
     reader.readAsDataURL(file);
 };
 // =================================================================
-// 📸 MONETIZAR FOTO - SISTEMA DE PUBLICACIÓN DIRECTA CON ANUNCIOS
+// 📸 MONETIZAR FOTOS - MURO DE LA COMUNIDAD (CÓDIGO UNIFICADO FINAL)
 // =================================================================
 
-// 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN
+// 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN USANDO LA REDIRECCIÓN DE URL (SEGURO)
 window.subirFotoReal = () => {
     if (!fotoBase64Actual) return notify("Elige una foto primero");
 
@@ -8941,17 +8949,17 @@ window.subirFotoReal = () => {
         btn.innerHTML = "Cargando anuncio...";
     }
 
-    // Usamos el sistema de redirección (go:ad-foto) que funciona al instante
+    // Enviamos la orden go:ad-foto a Kotlin (método ultra-estable)
     if (typeof AndroidNative !== 'undefined') {
         notify("📺 Ve el anuncio para publicar tu foto...");
         window.location.href = 'go:ad-foto';
     } else {
-        // Fallback por si pruebas desde la computadora
+        // Fallback por si pruebas desde la computadora (fuera del APK)
         ejecutarSubidaFotoFirebase();
     }
 };
 
-// 2. KOTLIN LLAMA A ESTO AL TERMINAR EL ANUNCIO CON ÉXITO
+// 2. KOTLIN LLAMA A ESTA FUNCIÓN AL TERMINAR EL ANUNCIO CON ÉXITO
 window.ejecutarSubidaFotoFirebase = () => {
     const btn = document.getElementById('btnPublicarFoto');
     if (btn) btn.innerHTML = "Subiendo...";
@@ -8965,7 +8973,7 @@ window.ejecutarSubidaFotoFirebase = () => {
         notify("✅ Foto subida con éxito");
         cerrarModalFoto();
 
-        // Si tenía la misión M4 activa
+        // Verificar si la misión M4 de misiones diarias estaba activa
         if (localStorage.getItem('mision_m4_activa') === '1') {
             localStorage.setItem('mision_m4', '1');
             localStorage.removeItem('mision_m4_activa');
@@ -8974,7 +8982,7 @@ window.ejecutarSubidaFotoFirebase = () => {
             notify("✅ Misión completada");
         }
 
-        // DARLE LOS +0.10 PUNTOS POR SUBIR LA FOTO
+        // Acreditar la recompensa de +0.10 PTS
         db.ref(`users/${idAuditor}`).update({
             earnings: firebase.database.ServerValue.increment(0.10)
         });
@@ -8991,7 +8999,7 @@ window.ejecutarSubidaFotoFirebase = () => {
     });
 };
 
-// 3. FUNCIÓN PARA CERRAR EL MODAL Y RESETEAR VARIABLES
+// 3. FUNCIÓN PARA CERRAR EL MODAL, LIMPIAR ENTRADAS Y RESTAURAR EL BOTÓN
 window.cerrarModalFoto = () => {
     document.getElementById('modalSubirFoto').style.display = 'none';
     document.getElementById('imgPreview').style.display = 'none';
@@ -9000,20 +9008,22 @@ window.cerrarModalFoto = () => {
     document.getElementById('inputFotoArchivo').value = "";
     fotoBase64Actual = "";
     
-    // Restaurar botón por si se vuelve a abrir
+    // Restaurar el botón al estado inicial
     const btn = document.getElementById('btnPublicarFoto');
     if (btn) {
         btn.disabled = true;
         btn.innerHTML = "💰 Publicar y Ganar";
     }
 };
-// ==========================================
-// FUNCIÓN DE SEGURIDAD PARA EVITAR CRASH
-// ==========================================
+
+// 4. FUNCIÓN STUB PARA EVITAR EL CRASH POR LLAMADAS ANTIGUAS (MANTENER SIEMPRE)
 window._publicarFotoPendiente = () => {
-    console.log("Función antigua _publicarFotoPendiente ignorada de forma segura.");
+    console.log("Antigua función _publicarFotoPendiente ignorada con éxito para prevenir errores.");
 };
-// --- VARIABLES GLOBALES PARA FOTOS ---
+
+// ==========================================
+// --- VARIABLES GLOBALES PARA FOTOS (NO TOCAR) ---
+// ==========================================
 let fotoSeleccionadaKey = null;
 let fotoSeleccionadaData = null;
 let pressTimerFoto;
@@ -9023,9 +9033,8 @@ let galeriaIndexActual = 0;
 
 const CACHE_MURO_KEY = 'pgc_muro_fotos_cache_v2';
 
-// 🔥 1. CREAMOS EL CANDADO (Bandera global)
+// Candado para evitar doble inicialización de la galería
 window._galeriaIniciada = false;
-
 function cargarGaleriaComunidad() {
     // 🔥 2. SI YA SE CARGÓ UNA VEZ, DETENEMOS LA FUNCIÓN. 
     // Las fotos ya están en la pantalla, no hay que hacer nada más.
