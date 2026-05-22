@@ -1,9 +1,0 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "com.pagocode.app",
-    "sha256_cert_fingerprints":
-    ["62:69:5A:38:BC:90:2C:CF:59:02:04:96:09:FD:8B:B5:45:06:C7:35:36:AE:5C:24:2C:12:04:EE:64:E1:D1:E6"]
-  }
-}]
