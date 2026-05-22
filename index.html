@@ -6545,35 +6545,35 @@ window.manejarAuth = async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const grupoInvitacionId = urlParams.get('grupo');
 
-            if (grupoInvitacionId) {
-                notify("🔍 Buscando el grupo...");
+            if (grupoInvitacionId && idAuditor) {
+                notify("🔍 Abriendo invitación de grupo...");
                 
                 db.ref(`grupos_chat/${grupoInvitacionId}`).once('value').then(snap => {
                     if (snap.exists()) {
                         const info = snap.val().info;
                         
-                        // Validar si tiene referidos antes de dejarlo entrar por link
-                        db.ref(`users/${idAuditor}/referidos`).once('value').then(refSnap => {
-                            const totalReferidos = refSnap.numChildren() || 0;
-                            if (totalReferidos >= 2 || isAdmin) {
-                                // Si cumple, vamos a la pestaña de mensajes y abrimos el grupo
-                                goToScreen(3);
-                                setTimeout(() => { cambiarPestanaChat('grupos'); }, 300);
+                        // 1. Vamos a la pantalla de mensajes (Screen 3)
+                        goToScreen(3);
+                        
+                        // 2. Cambiamos a la pestaña de Grupos
+                        setTimeout(() => {
+                            if(typeof cambiarPestanaChat === 'function') cambiarPestanaChat('grupos');
+                            
+                            // 3. Abrimos el chat del grupo automáticamente
+                            if(typeof abrirChatDeGrupo === 'function') {
                                 abrirChatDeGrupo(grupoInvitacionId, info.nombre, info.icono);
-                            } else {
-                                notify("🔒 Necesitas 2 referidos para unirse a grupos por enlace.");
                             }
-                        });
+                        }, 500);
 
                     } else {
-                        notify("❌ Este grupo ya no existe.");
+                        notify("❌ El grupo ya no existe.");
                     }
 
-                    // Limpiar la URL para que no se vuelva a abrir si recarga la página
+                    // LIMPIAR URL (Para que si el usuario recarga, no se abra el grupo otra vez solo)
                     window.history.replaceState({}, document.title, window.location.pathname);
                 });
             }
-        }, 2000); 
+        }, 2500); // 👈 2.5 segundos es el tiempo perfecto para que cargue Firebase
         setTimeout(() => { 
             if(typeof cachearUsuarios === "function") cachearUsuarios(); 
         }, 1000);
