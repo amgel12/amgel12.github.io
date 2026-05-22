@@ -2692,7 +2692,25 @@ window.activarAudioGlobal = () => {
 </head>
 
 <body>
-
+<script>
+// ==========================================
+// 📥 BANNER DE DESCARGA (Solo para navegadores)
+// ==========================================
+if (typeof AndroidNative === 'undefined') {
+    const banner = document.createElement('div');
+    banner.style.cssText = "position:fixed; top:0; left:0; width:100%; background:#1e293b; color:white; padding:15px; text-align:center; z-index:100000; font-size:0.9rem; box-shadow:0 4px 15px rgba(0,0,0,0.3); display:flex; flex-direction:column; gap:10px; border-bottom:3px solid #6366f1;";
+    
+    banner.innerHTML = `
+        <div><strong style="color:#fbbf24;">¡Atención!</strong> Para entrar a este grupo debes usar la aplicación oficial.</div>
+        <a href="https://play.google.com/store/apps/details?id=com.pagocode.app" 
+           style="background:linear-gradient(135deg, #6366f1, #4f46e5); color:white; padding:12px 25px; border-radius:50px; text-decoration:none; font-weight:800; display:inline-block; align-self:center; box-shadow:0 4px 10px rgba(99,102,241,0.3);">
+           🚀 DESCARGAR APP GRATIS
+        </a>
+    `;
+    document.body.prepend(banner);
+    document.body.style.paddingTop = "110px";
+}
+</script>
 <script>
 
 window.probarPuenteKotlin = function() {
@@ -2794,15 +2812,22 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="modal-content" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; padding:0; display:flex; flex-direction:column; background:#e5e5f7;">
 
         <!-- Cabecera del Grupo -->
-        <div style="background:white; padding:15px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:12px; flex-shrink:0;">
-            <button onclick="cerrarChatGrupo()" style="border:none; background:none; font-size:1.2rem; color:#334155; cursor:pointer;">⬅</button>
-            <div id="grupoIconoHeader" style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 2px 8px rgba(99,102,241,0.3);">🎮</div>
-            <div>
-                <h3 id="grupoChatTitle" style="margin:0; font-size:1rem; color:#1e293b;">Nombre Grupo</h3>
-                <span style="font-size:0.65rem; color:#10b981; font-weight:bold;">Chat Grupal</span>
+<!-- Cabecera del Grupo -->
+        <div style="background:white; padding:15px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button onclick="cerrarChatGrupo()" style="border:none; background:none; font-size:1.2rem; color:#334155; cursor:pointer;">⬅</button>
+                <div id="grupoIconoHeader" style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 2px 8px rgba(99,102,241,0.3);">🎮</div>
+                <div>
+                    <h3 id="grupoChatTitle" style="margin:0; font-size:1rem; color:#1e293b;">Nombre Grupo</h3>
+                    <span style="font-size:0.65rem; color:#10b981; font-weight:bold;">Chat Grupal</span>
+                </div>
             </div>
+            
+            <!-- NUEVO BOTÓN COMPARTIR -->
+            <button onclick="compartirLinkGrupo()" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s;">
+                <i class="fas fa-share-nodes"></i>
+            </button>
         </div>
-
         <!-- Lista de Mensajes -->
         <div id="grupoChatList" style="flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:8px;">
             <div style="text-align:center; padding:20px; color:#94a3b8;">Cargando mensajes...</div>
@@ -3396,28 +3421,39 @@ Cerrar
 </div>
 
 <!-- INPUT ENVIAR MENSAJE -->
-<div style="background:white; padding:10px; border-top:1px solid #e2e8f0; display:flex; gap:8px; align-items:center; flex-shrink:0;">
+<!-- BARRA DE CHAT PRIVADO -->
+<div style="background:white; padding:10px; border-top:1px solid #e2e8f0; display:flex; gap:10px; align-items:center; flex-shrink:0; position:relative;">
 
-    <!-- BOTÓN REGALO -->
-    <button onclick="abrirRegaloPrivado()" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#a855f7,#8b5cf6); border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(168,85,247,0.4); flex-shrink:0;">
-        🎁
-    </button>
+    <div style="position: relative;">
+        <!-- Botón + -->
+        <button id="btnAbrirMenuAcciones" onclick="toggleMenuChatPrivado()" style="width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; color:white; font-size:1.4rem; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(99,102,241,0.3); cursor:pointer; transition: 0.3s;">
+            <i id="iconoRotarPlus" class="fas fa-plus" style="transition: 0.3s;"></i>
+        </button>
 
-    <!-- BOTÓN FOTO PRIVADA -->
-    <button onclick="abrirModalFotoPrivada()" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#10b981,#059669); border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 8px rgba(15,183,127,0.4); flex-shrink:0;">
-        📷
-    </button>
-
-<input type="text" id="inputPrivMsg" placeholder="Mensaje privado..." style="flex:1; background:#f0f2f5; border:none; padding:8px 14px; border-radius:10px; outline:none; font-size:0.5rem;">
-
-    <button onclick="enviarMensajePrivado()" class="btn-blue" style="width:45px; height:45px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">
-        ➤
-    </button>
-</div>
+        <!-- Menú Flotante -->
+        <div id="boxMenuAcciones" style="display:none; position:absolute; bottom:55px; left:0; background:white; border-radius:15px; box-shadow:0 8px 30px rgba(0,0,0,0.15); width:170px; z-index:9999; overflow:hidden; border:1px solid #f1f5f9;">
+            <div onclick="clickGaleriaDirecta()" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; border-bottom:1px solid #f8fafc;">
+                <i class="fas fa-image" style="color:#10b981;"></i>
+                <span style="font-weight:700; color:#475569; font-size:0.85rem;">Enviar Imagen</span>
+            </div>
+            <div onclick="abrirRegaloPrivado(); toggleMenuChatPrivado();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer;">
+                <i class="fas fa-gift" style="color:#a855f7;"></i>
+                <span style="font-weight:700; color:#475569; font-size:0.85rem;">Regalar Puntos</span>
+            </div>
+        </div>
     </div>
-</div>
-<!-- 🖼️ MODAL PARA ELEGIR FOTO DE PORTADA -->
-<!-- 🖼️ VENTANA PARA SUBIR FOTO (SIN BLOQUEO) -->
+
+    <!-- Input oculto para galería -->
+    <input type="file" id="fileInputDirecto" accept="image/*" style="display:none;" onchange="procesarYEnviarFotoDirecto(this)">
+
+    <input type="text" id="inputPrivMsg" placeholder="Escribe un mensaje..." style="flex:1; background:#f1f5f9; border:none; padding:12px 16px; border-radius:22px; outline:none; font-size:0.9rem; color:#333;">
+
+    <button onclick="enviarMensajePrivado()" style="width:42px; height:42px; border-radius:50%; background:#0070ba; color:white; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+        <i class="fas fa-paper-plane"></i>
+    </button>
+</div> <!-- 1. Cierra barra blanca -->
+</div> <!-- 2. Cierra contenido del modal -->
+</div> <!-- 3. Cierra overlay del modal -->
 <div id="modalSubirPortada" class="modal-overlay" style="z-index:1000000; display:none; background: rgba(0,0,0,0.95);">
     <div class="modal-content" style="max-width:350px; text-align:center; background:#121212; color:white; border:1px solid #1DB954; border-radius:24px; padding:25px;">
         <h3 style="margin-bottom:15px; color:#1DB954;">🎨 Personaliza tu Post</h3>
@@ -6175,7 +6211,79 @@ function procesarPublicacionPendiente() {
         if (playerState === YT.PlayerState.PLAYING) audioPlayer.pauseVideo();
         else audioPlayer.playVideo();
     };
+// --- FUNCIONES DE CHAT PRIVADO ACTUALIZADAS ---
 
+window.toggleMenuChatPrivado = () => {
+    const menu = document.getElementById('boxMenuAcciones');
+    const icono = document.getElementById('iconoRotarPlus');
+    
+    if (menu.style.display === 'none' || menu.style.display === '') {
+        menu.style.display = 'block';
+        menu.classList.add('menu-privado-abierto');
+        icono.style.transform = 'rotate(45deg)';
+    } else {
+        menu.style.display = 'none';
+        menu.classList.remove('menu-privado-abierto');
+        icono.style.transform = 'rotate(0deg)';
+    }
+};
+
+window.clickGaleriaDirecta = () => {
+    const input = document.getElementById('fileInputDirecto');
+    if(input) input.click();
+    toggleMenuChatPrivado();
+};
+
+window.procesarYEnviarFotoDirecto = (input) => {
+    if (input.files && input.files[0]) {
+        notify("⏳ Enviando imagen...");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 700;
+                const scale = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scale;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const fotoFinal = canvas.toDataURL('image/jpeg', 0.6);
+                
+                // Envío a Firebase
+                if (currentChatId && targetUserUid) {
+                    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
+                    db.ref(`chats_privados/${currentChatId}`).push({
+                        uid: idAuditor,
+                        autor: miNombre,
+                        texto: "📷 Foto",
+                        foto: fotoFinal,
+                        esFoto: true,
+                        fecha: firebase.database.ServerValue.TIMESTAMP
+                    }).then(() => {
+                        db.ref(`users/${targetUserUid}/notifications`).push({
+                            from: idAuditor, fromName: miNombre, type: 'chat_privado',
+                            text: "📷 Te envió una foto privada", extra: idAuditor,
+                            timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
+                        });
+                        notify("✅ Imagen enviada");
+                    });
+                }
+            };
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+
+// Cierre automático al tocar fuera
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('boxMenuAcciones');
+    const btn = document.getElementById('btnAbrirMenuAcciones');
+    if (menu && menu.style.display === 'block' && !menu.contains(e.target) && !btn.contains(e.target)) {
+        toggleMenuChatPrivado();
+    }
+});
     function onPlayerStateChange(event) {
         const icon = document.getElementById('audioIcon');
         const btn = document.getElementById('btnAudioControl');
@@ -6430,8 +6538,42 @@ window.manejarAuth = async () => {
         // 🔥 INICIALIZAR BANDERAS PARA EL BRINCO (CRUCIAL)
         window._appInitialized = true; 
         window._lastNotiCount = 0;
+// ==========================================
+        // 🚪 DETECTAR INVITACIÓN A GRUPOS POR URL
+        // ==========================================
+        setTimeout(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const grupoInvitacionId = urlParams.get('grupo');
 
-        // 2. Inicializar cachés y heartbeat
+            if (grupoInvitacionId) {
+                notify("🔍 Buscando el grupo...");
+                
+                db.ref(`grupos_chat/${grupoInvitacionId}`).once('value').then(snap => {
+                    if (snap.exists()) {
+                        const info = snap.val().info;
+                        
+                        // Validar si tiene referidos antes de dejarlo entrar por link
+                        db.ref(`users/${idAuditor}/referidos`).once('value').then(refSnap => {
+                            const totalReferidos = refSnap.numChildren() || 0;
+                            if (totalReferidos >= 2 || isAdmin) {
+                                // Si cumple, vamos a la pestaña de mensajes y abrimos el grupo
+                                goToScreen(3);
+                                setTimeout(() => { cambiarPestanaChat('grupos'); }, 300);
+                                abrirChatDeGrupo(grupoInvitacionId, info.nombre, info.icono);
+                            } else {
+                                notify("🔒 Necesitas 2 referidos para unirse a grupos por enlace.");
+                            }
+                        });
+
+                    } else {
+                        notify("❌ Este grupo ya no existe.");
+                    }
+
+                    // Limpiar la URL para que no se vuelva a abrir si recarga la página
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                });
+            }
+        }, 2000); 
         setTimeout(() => { 
             if(typeof cachearUsuarios === "function") cachearUsuarios(); 
         }, 1000);
@@ -10372,7 +10514,7 @@ function combinarYRenderizarUsuarios() {
         // Buscar si tiene nube activa (menos de 24h)
         const nube = _cacheDataNubes[uid];
         let pensamientoFinal = "";
-        if (nube && (ahora - nube.timestamp < 86400000)) {
+        if (nube && (ahora - nube.timestamp < 43200000)) {
             pensamientoFinal = nube.texto;
         }
 
@@ -11083,35 +11225,71 @@ window.abrirPanelAdmin = () => {
 window.abrirAdminRetiros = () => {
     document.getElementById('modalAdminRetiros').style.display = 'flex';
     const lista = document.getElementById('listaSolicitudes');
+    
     if (!lista.dataset.listenerAttached) {
         lista.dataset.listenerAttached = '1';
         db.ref('solicitudes_retiro').on('value', snap => {
-        if (!snap.exists()) {
-            lista.innerHTML = '<div style="text-align: center; padding: 20px; color:#cbd5e1;">Nadie ha pedido dinero aún. 😴</div>';
-            return;
-        }
-        let html = "";
-        snap.forEach(child => {
-            const key = child.key; const d = child.val();
-            const fecha = new Date(d.fecha).toLocaleDateString();
-            html += `<div style="background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span style="background:#dbeafe; color:#1e40af; font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:bold;">${d.usuario}</span>
-                    <span style="font-size:0.7rem; color:#94a3b8;">${fecha}</span>
-                </div>
-                <div style="font-weight:900; color:#0070ba; font-size:1.2rem;">$${d.monto_usd} USD</div>
-                <div style="background:#f1f5f9; padding:8px; border-radius:6px; font-size:0.8rem; margin:10px 0; word-break: break-all;">📧 PayPal: <strong>${d.correo_paypal}</strong></div>
-                <div style="display:flex; gap:10px;">
-                    <button onclick="copiarTexto('${d.correo_paypal}')" style="flex:1; padding:8px; border:1px solid #cbd5e1; background:white; border-radius:8px;">📋 Copiar</button>
-                    <button onclick="marcarRetiroPagado('${key}')" style="flex:1; padding:8px; border:none; background:#10b981; color:white; font-weight:bold; border-radius:8px;">✅ Pagado</button>
-                </div>
-            </div>`;
+            if (!snap.exists()) {
+                lista.innerHTML = '<div style="text-align: center; padding: 20px; color:#cbd5e1;">Nadie ha pedido dinero aún. 😴</div>';
+                return;
+            }
+            
+            let html = "";
+            snap.forEach(child => {
+                const key = child.key; 
+                const d = child.val();
+                const fecha = new Date(d.fecha).toLocaleDateString();
+                
+                // --- LÓGICA PARA DETECTAR EL MÉTODO Y EL ÍCONO ---
+                let iconoMetodo = "📧 PayPal";
+                let colorFondo = "#dbeafe"; // Azul para PayPal
+                let colorTexto = "#1e40af";
+                
+                if (d.metodo_pago === 'binance') {
+                    iconoMetodo = "🪙 Binance ID";
+                    colorFondo = "#fef3c7"; // Amarillo para Binance
+                    colorTexto = "#92400e";
+                } else if (d.metodo_pago === 'tropipay') {
+                    iconoMetodo = "🌴 TropiPay";
+                    colorFondo = "#dcfce7"; // Verde para TropiPay
+                    colorTexto = "#166534";
+                }
+
+                // Usamos d.correo_paypal porque es donde guardamos el ID en la funcion anterior
+                const datoCuenta = d.correo_paypal || "No proporcionado";
+
+                html += `
+                <div style="background: white; padding: 15px; border-radius: 18px; border: 1px solid #e2e8f0; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="background:${colorFondo}; color:${colorTexto}; font-size:0.65rem; padding:4px 10px; border-radius:50px; font-weight:800; text-transform:uppercase;">
+                            ${d.usuario || 'Usuario'}
+                        </span>
+                        <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">${fecha}</span>
+                    </div>
+                    
+                    <div style="font-weight:900; color:#0f172a; font-size:1.4rem; margin-bottom:10px; text-align:center;">
+                        $${d.monto_usd} USD
+                    </div>
+                    
+                    <div style="background:#f8fafc; padding:10px; border-radius:12px; font-size:0.85rem; border:1px solid #f1f5f9; margin-bottom:12px; word-break: break-all;">
+                        <span style="color:#64748b; font-weight:bold; display:block; font-size:0.65rem; text-transform:uppercase; margin-bottom:2px;">${iconoMetodo}:</span>
+                        <strong style="color:#334155;">${datoCuenta}</strong>
+                    </div>
+                    
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="copiarTexto('${datoCuenta}')" style="flex:1; padding:10px; border:1.5px solid #e2e8f0; background:white; border-radius:10px; font-size:0.8rem; font-weight:700; color:#64748b; cursor:pointer;">
+                            📋 Copiar
+                        </button>
+                        <button onclick="marcarRetiroPagado('${key}')" style="flex:1.2; padding:10px; border:none; background:#10b981; color:white; font-weight:800; border-radius:10px; font-size:0.8rem; cursor:pointer; box-shadow:0 4px 12px rgba(16,185,129,0.2);">
+                            ✅ Pagado
+                        </button>
+                    </div>
+                </div>`;
+            });
+            lista.innerHTML = html;
         });
-        lista.innerHTML = html;
-    });
     }
 };
-
 window.marcarRetiroPagado = (key) => {
     if(!confirm("¿Ya enviaste el dinero por PayPal? Esto borrará la solicitud.")) return;
     db.ref(`solicitudes_retiro/${key}`).remove().then(() => {
@@ -13496,7 +13674,36 @@ window.crearNuevoGrupo = () => {
         abrirModalCreacionGrupo();
     });
 };
+// ==========================================
+// 🔗 COMPARTIR ENLACE DE GRUPO
+// ==========================================
+window.compartirLinkGrupo = () => {
+    if (!currentGrupoId) return;
 
+    const nombreGrupo = document.getElementById('grupoChatTitle').innerText;
+    // URL que usaremos para que entren (cambia el link si usas otro dominio)
+    const urlInvitacion = `https://codecash.space/?grupo=${currentGrupoId}`;
+const texto = `¡Únete a mi grupo "${nombreGrupo}" en PAGOCODE! 🚀\nEntra al chat aquí:\n${urlInvitacion}`;
+
+    // Si el celular soporta compartir nativo (WhatsApp, Facebook, etc)
+    if (navigator.share) {
+        navigator.share({
+            title: `Grupo: ${nombreGrupo}`,
+            text: `¡Únete a mi grupo en PAGOCODE! 🚀`,
+            url: urlInvitacion
+        }).catch(e => console.log("Compartir cancelado"));
+    } else {
+        // Fallback: Si están en PC, solo copia al portapapeles
+        const el = document.createElement('textarea');
+        el.value = texto;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        notify("✅ Enlace del grupo copiado. ¡Pégalo a tus amigos!");
+        try { window.playSound('coin'); } catch(e){}
+    }
+};
 // Función auxiliar para limpiar y abrir el modal
 function abrirModalCreacionGrupo() {
     document.getElementById('inputNombreGrupo').value = '';
