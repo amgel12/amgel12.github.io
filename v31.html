@@ -8940,6 +8940,7 @@ window.procesarFotoSeleccionada = () => {
 // =================================================================
 
 // 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN USANDO LA REDIRECCIÓN DE URL (SEGURO)
+// 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN (CORREGIDO)
 window.subirFotoReal = () => {
     if (!fotoBase64Actual) return notify("Elige una foto primero");
 
@@ -8949,12 +8950,12 @@ window.subirFotoReal = () => {
         btn.innerHTML = "Cargando anuncio...";
     }
 
-    // Enviamos la orden go:ad-foto a Kotlin (método ultra-estable)
-    if (typeof AndroidNative !== 'undefined') {
+    // ¡AQUÍ ESTABA EL ERROR! Ahora sí llama a la función nativa que creaste en Kotlin
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.publicarFotoConAnuncio) {
         notify("📺 Ve el anuncio para publicar tu foto...");
-        window.location.href = 'go:ad-foto';
+        AndroidNative.publicarFotoConAnuncio();
     } else {
-        // Fallback por si pruebas desde la computadora (fuera del APK)
+        // Fallback
         ejecutarSubidaFotoFirebase();
     }
 };
