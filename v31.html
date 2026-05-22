@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+window.finalizarPublicacion <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -2257,31 +2257,76 @@ window.procesarFotoPortada = (input) => {
     }
 };
 // 2. Función final (Al darle clic al botón verde)
+// =========================================================
+// 📚 LIBRERÍA PREMIUM - PUBLICAR CON ANUNCIO BONIFICADO
+// =========================================================
+
+// 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN
 window.finalizarPublicacionLibreria = () => {
+    // Verificamos que sí haya elegido foto
     if (!window.fElegida) return notify("⚠️ Primero debes elegir una foto");
 
-    const txt = document.getElementById('inputTextoLibreria').value || "¡Video Premium! 🔥";
     const btn = document.getElementById('btnFinalizarLibreria');
-    btn.innerText = "⏳ Procesando...";
-    btn.disabled = true;
+    if (btn) {
+        btn.innerText = "Cargando anuncio...";
+        btn.disabled = true;
+    }
 
-    // Guardar datos y lanzar interstitial
-    localStorage.setItem('pendingType', 'libreria');
-    localStorage.setItem('pendingLibreria', JSON.stringify({
-        uid: idAuditor,
-        autorClave: myCurrentKey,
-        texto: txt,
-        musica: window.vElegido,
-        fotoPortada: window.fElegida
-    }));
+    // Le ponemos una "etiqueta" para saber qué hacer cuando acabe el anuncio
+    window._accionPendienteRecompensa = 'publicar_libreria';
 
+    // Usamos el enlace directo a Kotlin (go:s7 llama a procesarPublicacionPendiente)
     if (typeof AndroidNative !== 'undefined') {
-        window.location = 'go:s7';
+        window.location.href = 'go:s7';
     } else {
-        procesarPublicacionPendiente();
+        ejecutarSubidaLibreriaFirebase();
     }
 };
 
+// 2. ESTO SE EJECUTA DESPUÉS DEL ANUNCIO PARA SUBIR EL VIDEO
+window.ejecutarSubidaLibreriaFirebase = () => {
+    const txt = document.getElementById('inputTextoLibreria').value || "¡Video Premium! 🔥";
+    const btn = document.getElementById('btnFinalizarLibreria');
+    
+    if (btn) btn.innerText = "⏳ SUBIENDO...";
+
+    db.ref('reportes').push({
+        uid: idAuditor,
+        autorClave: myCurrentKey,
+        texto: txt,
+        musica: window.vElegido, 
+        fotoPortada: window.fElegida,
+        conLogo: true, 
+        fecha: firebase.database.ServerValue.TIMESTAMP,
+        vCount: 0
+    }).then(() => {
+        // Recompensar al usuario con 0.50 PTS
+        db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) + 0.50);
+        registrarHistorial("Video de Librería", 0.50);
+
+        // Ocultar modal y avisar
+        document.getElementById('modalSubirPortada').style.display = 'none';
+        notify("✅ ¡Publicado con éxito!");
+
+        // Limpiar para la próxima vez
+        window.fElegida = "";
+        window.vElegido = "";
+        document.getElementById('inputTextoLibreria').value = "";
+        
+        if (btn) {
+            btn.innerText = "🚀 PUBLICAR EN EL MURO";
+            btn.disabled = false;
+        }
+
+        goToScreen(2); // Regresar al Feed principal
+    }).catch(err => {
+        alert("Error: " + err.message);
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = "🚀 PUBLICAR EN EL MURO";
+        }
+    });
+};
 function _publicarLibreriaPendiente() {
     const raw = localStorage.getItem('pendingLibreria');
     if (!raw) return;
@@ -6022,23 +6067,23 @@ window.abrirMision = () => {
     }
 };
 function procesarPublicacionPendiente() {
-    // Dispatcher: enrutar según el tipo de publicación de video pendiente
-    const tipo = localStorage.getItem('pendingType');
     
-    // 1. Si es de la Librería Premium (Video para el Feed)
-    if (tipo === 'libreria') {
-        _publicarLibreriaPendiente(); 
+    // 💡 NUEVO: Si la petición viene de la Librería Premium
+    if (window._accionPendienteRecompensa === 'publicar_libreria') {
+        window._accionPendienteRecompensa = null;
+        if (typeof window.ejecutarSubidaLibreriaFirebase === 'function') {
+            window.ejecutarSubidaLibreriaFirebase();
+        }
         return; 
     }
 
-    // 2. Flujo original: Misión del Feed (Video de YouTube / texto + música)
+    // --- Flujo original: Misión del Feed (Video de YouTube) ---
     const pending = localStorage.getItem('pendingPost');
     if (pending && idAuditor) {
         const data = JSON.parse(pending);
         
         // Limpiamos inmediatamente para que no se duplique al recargar
         localStorage.removeItem('pendingPost');
-
         db.ref(`users/${idAuditor}`).once('value').then(snap => {
             const u = snap.val() || {};
             const ahora = Date.now();
