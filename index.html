@@ -2028,7 +2028,7 @@
     };
     // Limpiar toda la caché de imágenes
     window.imgCacheClear = async function() {
-        try { await caches.delete(CACHE_NAME); notify('🗑️ Caché de imágenes limpiada'); }
+        try { await caches.delete(CACHE_NAME); notify('😔 Caché de imágenes limpiada'); }
         catch(e) {}
     };
 
@@ -2692,6 +2692,7 @@ window.activarAudioGlobal = () => {
 </head>
 
 <body>
+
 <script>
 // ==========================================
 // 🚀 BLOQUEO DE WEB PARA FORZAR DESCARGA
@@ -3651,7 +3652,7 @@ Cerrar
       </button>
 
       <button id="btnEliminarFoto" onclick="accionFoto('eliminar', event)" style="padding:15px; width:100%; border:none; background:#fee2e2; color:#ef4444; border-radius:12px; display:none; align-items:center; justify-content:center; gap:10px; font-weight:600;">
-        🗑️ Eliminar Foto
+        😔 Eliminar Foto
       </button>
     </div>
 
@@ -3686,7 +3687,7 @@ Cerrar
 
         <div id="modalConfirmDelete" class="modal-overlay" style="z-index: 1000002; display:none;">
             <div class="modal-content" style="border: 2px solid #ef4444; text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 10px;">🗑️</div>
+                <div style="font-size: 3rem; margin-bottom: 10px;"></div>
                 <h3 style="color:#b91c1c; margin-bottom: 10px;">¿Estás seguro?</h3>
                 <p style="font-size: 0.9rem; color:#64748b; margin-bottom: 20px;">
                     Esta foto se eliminará permanentemente para todos.
@@ -4495,35 +4496,50 @@ style="display:none;">
 <!-- PANTALLA 3: MENSAJES -->
 <div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #f8fafc; padding-bottom: 65px;">
 
-    <div id="areaSuperiorMensajes" style="flex-shrink: 0;">
-        <!-- Título y Campana -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 20px 5px; background: white;">
-            <h2 style="margin:0; font-size: 1.5rem; font-weight: 800; color: #1e293b;">Mensajes</h2>
-            <div class="noti-icon-box" onclick="abrirNotificaciones()">
-                <i class="fas fa-bell"></i>
-                <div id="badgeNotisMensajes" class="noti-badge">0</div>
+    <!-- TOP BAR: 4 botones iguales -->
+    <div style="flex-shrink:0; background:white; border-bottom:1px solid #e2e8f0; display:flex; align-items:stretch;">
+
+        <!-- 1. Pensar -->
+        <div id="btnPensarTab" onclick="abrirModalPensarOVer()"
+             style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+                    background:#faf5ff; border:none; border-right:1px solid #f1f5f9; padding:10px 4px;
+                    cursor:pointer; min-height:52px; transition:background 0.2s;">
+            <div id="pensarBtnInner" style="display:flex; flex-direction:column; align-items:center; gap:3px; pointer-events:none;">
+                <span style="font-size:1.2rem; line-height:1;">💭</span>
+                <span style="font-size:0.65rem; font-weight:800; color:#8b5cf6; white-space:nowrap;">Pensar</span>
             </div>
         </div>
-<!-- 1. LISTA HORIZONTAL (Espacio real para las nubes) -->
-<div class="stories-container" style="background: white; border-bottom: 1px solid #e2e8f0; padding: 10px 0; flex-shrink: 0; overflow: visible !important;">
-    <div class="stories-title" style="padding: 5px 15px 0; color: #64748b; font-size: 0.75rem; font-weight: bold;">Conectados reciente</div>
 
-    <!-- 🔥 AJUSTE VITAL: padding-top: 50px -->
-    <div id="listaUsuariosHorizontal" 
-         style="display:flex; gap:18px; padding: 50px 15px 15px; overflow-x:auto; overflow-y:visible !important; scrollbar-width:none; align-items: flex-start; position: relative;">
-        <!-- Usuarios... -->
+        <!-- 2. Mi Chat -->
+        <button id="tabMiChatBtn" onclick="cambiarPestanaChat('michat')"
+                style="flex:1; border:none; border-right:1px solid #f1f5f9; background:white; padding:10px 4px;
+                       cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                       gap:3px; min-height:52px; font-size:0.65rem; font-weight:800; color:#64748b; transition:.2s;">
+            <span style="font-size:1.2rem;">💬</span>
+            <span style="white-space:nowrap;">Mi Chat</span>
+        </button>
+
+        <!-- 3. Global -->
+        <button id="tabGlobalBtn" onclick="cambiarPestanaChat('global')"
+                style="flex:1; border:none; border-right:1px solid #f1f5f9; background:white; padding:10px 4px;
+                       cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                       gap:3px; min-height:52px; font-size:0.65rem; font-weight:800; color:#64748b; transition:.2s;">
+            <span style="font-size:1.2rem;">🌍</span>
+            <span style="white-space:nowrap;">Global</span>
+        </button>
+
+        <!-- 4. Grupos -->
+        <button id="tabGruposBtn" onclick="cambiarPestanaChat('grupos')"
+                style="flex:1; border:none; background:white; padding:10px 4px;
+                       cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                       gap:3px; min-height:52px; font-size:0.65rem; font-weight:800; color:#64748b; transition:.2s;">
+            <span style="font-size:1.2rem;">👥</span>
+            <span style="white-space:nowrap;">Grupos</span>
+        </button>
     </div>
-</div>
-</div>
-    <!-- 2. PESTAÑAS -->
-<div class="chat-tabs-container" style="flex-shrink: 0;">
-    <button id="tabMensajesBtn" class="chat-tab-btn active" onclick="cambiarPestanaChat('mensajes')">💬 Mensajes</button>
-    <button id="tabGlobalBtn" class="chat-tab-btn" onclick="cambiarPestanaChat('global')">🌍 Global</button>
-    <button id="tabGruposBtn" class="chat-tab-btn" onclick="cambiarPestanaChat('grupos')">👥 Grupos</button>
-</div>
 
-    <!-- 3. CONTENEDOR GLOBAL -->
-    <div id="chatListContainer" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+    <!-- CONTENEDOR GLOBAL (oculto por defecto) -->
+    <div id="chatListContainer" style="flex: 1; display: none; flex-direction: column; overflow: hidden;">
 
         <div id="chatList" class="chat-messages-area" style="flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 10px;">
              <div style="text-align:center; padding:20px; color:#94a3b8;">Cargando chat...</div>
@@ -4542,22 +4558,23 @@ style="display:none;">
              <button onclick="cancelarRespuesta()" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.2rem; padding: 0 5px;">×</button>
         </div>
 
-        <!-- Input del chat global (Corregido el padding) -->
+        <!-- Input del chat global -->
         <div style="background: white; width: 100%; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding: 10px 15px; z-index: 200;">
                <input type="text" id="inputChatMsg" placeholder="Escribe en el global..." autocomplete="off" style="background:#f0f2f5; border:none; border-radius:20px; flex:1; margin:0; padding: 0 15px; height: 40px; color: #333;">
                <button onclick="enviarTexto()" class="btn-blue" style="width: 40px; height: 40px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: #0070ba; color: white; border: none; margin-left: 10px;">➤</button>
         </div>
     </div>
-<div id="mensajesPrivadosContainer" style="flex: 1; overflow-y: auto; padding: 15px; display: none; background: #f8fafc;">
-    <div style="text-align:center; padding:40px; color:#94a3b8;">
-        <i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i>
-        <div style="margin-top:15px;">Cargando conversaciones...</div>
+
+    <!-- LISTA VERTICAL DE USUARIOS (vista principal, siempre visible por defecto) -->
+    <div id="mensajesPrivadosContainer" style="flex: 1; overflow-y: auto; padding: 15px; display: block; background: #f8fafc;">
+        <div style="text-align:center; padding:40px; color:#94a3b8;">
+            <i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i>
+            <div style="margin-top:15px;">Cargando conversaciones...</div>
+        </div>
     </div>
 
-</div>
-    <!-- 4. CONTENEDOR GRUPOS -->
+    <!-- GRUPOS -->
     <div id="gruposListContainer" style="flex: 1; overflow-y: auto; padding: 15px; display: none; background: #f8fafc;">
-
         <button onclick="crearNuevoGrupo()" style="width: 100%; padding: 15px; border-radius: 16px; border: 2px dashed #6366f1; background: #eef2ff; color: #6366f1; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; cursor: pointer;">
             ➕ Crear Nuevo Grupo
         </button>
@@ -4780,7 +4797,7 @@ style="display:none;">
         </h3>
 
         <button id="btnEliminarPost" onclick="eliminarPostActual()" class="btn-blue" style="display:none; margin:15px 15px 5px; background:#fee2e2; color:#ef4444; border:1px solid #fca5a5; display:flex; align-items:center; justify-content:center; gap:10px;">
-            🗑️ Eliminar publicación
+            �😱️ Eliminar publicación
         </button>
 
         <button onclick="verEstadisticasPost()" class="btn-blue" style="margin:5px 15px 5px; background:white; color:#0070ba; border:1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; gap:10px;">
@@ -4803,30 +4820,10 @@ style="display:none;">
         <button onclick="copiarTextoSeleccionado()" class="btn-blue" style="margin: 15px 15px 5px; background: white; color: #334155; border: 1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; gap:10px;">
             📋 Copiar Texto
         </button>
-        <button id="btnBorrarMensaje" onclick="borrarMensajeSeleccionado()" class="btn-blue" style="margin: 5px 15px 15px; background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; display:flex; align-items:center; justify-content:center; gap:10px;">
-            🗑️ Borrar para todos
-        </button>
-        <div style="height:10px; background:#f1f5f9; border-top:1px solid #e2e8f0;"></div>
-        <button onclick="document.getElementById('modalChatOptions').style.display='none'" style="width:100%; padding:15px; border:none; background:white; font-weight:bold; color:#64748b; cursor:pointer;">
-            Cancelar
-        </button>
+   
     </div>
 </div>
-<div id="modalConfirmDeletePrivado" class="modal-overlay" style="z-index: 30500; display:none;">
-    <div class="modal-content" style="border: 2px solid #ef4444; text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 10px;">🗑️</div>
-        <h3 style="color:#b91c1c; margin-bottom: 10px;">¿Eliminar para todos?</h3>
-        <p style="font-size: 0.9rem; color:#64748b; margin-bottom: 20px;">
-            Esta acción eliminará el mensaje para ambos usuarios permanentemente.
-        </p>
 
-        <div style="display: flex; gap: 10px;">
-            <button onclick="cerrarConfirmacionBorradoPrivado()" class="btn-blue" style="background: #e2e8f0; color: #475569; flex: 1;">
-                Cancelar
-            </button>
-            <button onclick="confirmarBorradoPrivado()" class="btn-blue" style="background: #ef4444; color: white; flex: 1; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);">
-                Sí, Borrar
-            </button>
         </div>
     </div>
 </div>
@@ -5593,9 +5590,8 @@ window.goToScreen = (index, userAction = false) => {
         if (badgeMsg) badgeMsg.style.display = 'none';
 
         setTimeout(() => {
-            // Mostrar pestaña Mensajes por defecto al entrar al chat
-            if (typeof cambiarPestanaChat === 'function') cambiarPestanaChat('mensajes');
-            if (typeof scrollToBottom === 'function') scrollToBottom();
+            // Cargar la lista de usuarios al entrar al chat
+            if (typeof cargarChatsPrivadosNoLeidos === 'function') cargarChatsPrivadosNoLeidos();
         }, 200);
     }
 
@@ -6263,68 +6259,84 @@ window.clickGaleriaDirecta = () => {
 };
 
 window.procesarYEnviarFotoDirecto = (input) => {
-    // 1. Verificación de saldo antes de empezar a procesar
+    // 1. Verificación de saldo rápida
     if (currentEarnings < 2) {
-        notify("❌ Necesitas al menos 2.00 PTS para enviar fotos");
-        input.value = ""; // Limpiar el archivo elegido
+        notify("❌ Necesitas al menos 2.00 PTS");
+        input.value = ""; 
         return;
     }
 
     if (input.files && input.files[0]) {
-        notify("⏳ Enviando imagen...");
+        // --- FEEDBACK INMEDIATO PARA QUE NO PAREZCA TRABADA ---
+        notify("⏳ Procesando imagen... espera un momento");
+        
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = new Image();
             img.src = e.target.result;
             img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 700;
-                const scale = MAX_WIDTH / img.width;
-                canvas.width = MAX_WIDTH;
-                canvas.height = img.height * scale;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                const fotoFinal = canvas.toDataURL('image/jpeg', 0.6);
-                
-                // --- INICIO DEL ENVÍO Y COBRO ---
-                if (currentChatId && targetUserUid) {
-                    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
+                // Usamos un pequeño retraso para dejar que la UI se refresque
+                setTimeout(() => {
+                    const canvas = document.createElement('canvas');
+                    // Bajamos un poco la resolución para que vuele (600px es ideal)
+                    const MAX_WIDTH = 600; 
+                    const scale = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scale;
                     
-                    db.ref(`chats_privados/${currentChatId}`).push({
-                        uid: idAuditor,
-                        autor: miNombre,
-                        texto: "📷 Foto",
-                        foto: fotoFinal,
-                        esFoto: true,
-                        fecha: firebase.database.ServerValue.TIMESTAMP
-                    }).then(() => {
-                        // 💰 DESCONTAR LOS 2 PUNTOS EN FIREBASE
-                        db.ref(`users/${idAuditor}/earnings`).transaction(current => {
-                            return (current || 0) - 2.00;
-                        });
-
-                        // 📋 REGISTRAR EN EL HISTORIAL DEL USUARIO
-                        if(typeof registrarHistorial === 'function') {
-                            registrarHistorial("Envío de foto privada", -2.00);
-                        }
-
-                        // 🔔 NOTIFICAR AL RECEPTOR
-                        db.ref(`users/${targetUserUid}/notifications`).push({
-                            from: idAuditor, fromName: miNombre, type: 'chat_privado',
-                            text: "📷 Te envió una foto privada", extra: idAuditor,
-                            timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
-                        });
-
-                        notify("✅ Foto enviada (-2.00 PTS)");
-                        try { window.playSound('coin'); } catch(e){}
-                        input.value = ""; // Resetear input
-                    });
-                }
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Comprimimos un poco más (50%) para que la subida sea instantánea
+                    const fotoFinal = canvas.toDataURL('image/jpeg', 0.5);
+                    
+                    if (currentChatId && targetUserUid) {
+                        subirYCobrarFoto(fotoFinal);
+                    }
+                    input.value = ""; // Limpiar selector
+                }, 100);
             };
         };
         reader.readAsDataURL(input.files[0]);
     }
 };
+
+// Función separada para que el envío no bloquee la pantalla
+function subirYCobrarFoto(base64) {
+    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
+    const updates = {};
+    const chatKey = db.ref(`chats_privados/${currentChatId}`).push().key;
+
+    // Preparamos todo en un solo paquete para Firebase
+    updates[`chats_privados/${currentChatId}/${chatKey}`] = {
+        uid: idAuditor,
+        autor: miNombre,
+        texto: "📷 Foto",
+        foto: base64,
+        esFoto: true,
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    // Subida y notificación en un solo paso
+    db.ref().update(updates).then(() => {
+        // EL COBRO SE HACE DESPUÉS PARA NO TRABAR EL ENVÍO
+        db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) - 2.00);
+        
+        // Notificación al otro usuario
+        db.ref(`users/${targetUserUid}/notifications`).push({
+            from: idAuditor, fromName: miNombre, type: 'chat_privado',
+            text: "📷 Te envió una foto privada", extra: idAuditor,
+            timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
+        });
+
+        if(typeof registrarHistorial === 'function') {
+            registrarHistorial("Foto privada enviada", -2.00);
+        }
+
+        notify("✅ Enviada (-2.00 PTS)");
+        try { window.playSound('coin'); } catch(e){}
+    });
+}
 // Cierre automático al tocar fuera
 document.addEventListener('click', (e) => {
     const menu = document.getElementById('boxMenuAcciones');
@@ -6882,19 +6894,35 @@ window.manejarAuth = async () => {
                  });
                  document.getElementById('historialList').innerHTML = hHist;
              }
-        }); // <--- CIERRE DEL LISTENER .on('value')
+        }); 
+        // 1. Lo urgente (Lo que el usuario ve al segundo 1)
+        if (typeof cargarLeaderboard === "function") cargarLeaderboard();
+        if (typeof renderizarMisionesAprender === "function") renderizarMisionesAprender();
+        if (typeof goToScreen === "function") goToScreen(2); // Mandarlo al Feed nativo
 
-        // Cargas iniciales únicas
-        if(typeof cargarLeaderboard === "function") cargarLeaderboard();
-        cargarMuro(); // ✅ feed nativo — unificado
-        if(typeof iniciarChat === "function") iniciarChat();
-        if(typeof procesarPublicacionPendiente === "function") procesarPublicacionPendiente();
-        if(typeof cargarGaleriaComunidad === "function") cargarGaleriaComunidad();
-        if(typeof cachearFotosPerfiles === "function") cachearFotosPerfiles();
-        if(typeof renderizarMisionesAprender === "function") renderizarMisionesAprender();
-        if(typeof cargarListaDeGrupos === "function") cargarListaDeGrupos();
-        // Cargar feed automáticamente (screen 2)
-        if (typeof goToScreen === "function") goToScreen(2);
+        // 2. Esperamos 800ms para cargar el Feed (Para que la UI no se trabe)
+        setTimeout(() => {
+            cargarMuro(); // El Feed de videos principal
+        }, 800);
+
+        // 3. Esperamos 1.5 segundos para cargar cosas "pesadas" de otras pestañas
+        setTimeout(() => {
+            if (typeof cargarGaleriaComunidad === "function") cargarGaleriaComunidad();
+            if (typeof cargarListaDeGrupos === "function") cargarListaDeGrupos();
+            if (typeof procesarPublicacionPendiente === "function") procesarPublicacionPendiente();
+            
+            // Lógica Maestra (Usuarios Activos y Pensamientos)
+            if (typeof iniciarMonitorDeBadges === "function") iniciarMonitorDeBadges();
+            if (typeof cargarListaUsuariosHorizontal === "function") cargarListaUsuariosHorizontal();
+            if (typeof cargarPensamientosPublicos === "function") cargarPensamientosPublicos();
+        }, 1500);
+
+        // 4. Esperamos 2.5 segundos para el Chat Global y perfiles
+        setTimeout(() => {
+            if (typeof iniciarChat === "function") iniciarChat();
+            if (typeof cachearFotosPerfiles === "function") cachearFotosPerfiles();
+            if (typeof limpiarChatGlobal === "function") limpiarChatGlobal();
+        }, 2500);
 
 setTimeout(() => {
     if (!idAuditor) return;
@@ -7171,102 +7199,126 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
     detectarYEnvarMenciones(t, "chat");
 };
 
-    // --- FUNCIÓN CHAT MEJORADA (CON FOTOS REALES) ---
-    function iniciarChat() {
-         const list = document.getElementById('chatList');
+// ==========================================
+// 🌍 CHAT GLOBAL (CON CACHÉ INSTANTÁNEO)
+// ==========================================
+function iniciarChat() {
+    const list = document.getElementById('chatList');
+    const CACHE_GLOBAL_KEY = 'pgc_cache_global_v1';
 
-         // 1. Escuchar mensajes nuevos
-         db.ref('chat_global').limitToLast(50).on('child_added', s => {
-             const m = s.val();
-             const msgKey = s.key;
-             const esMio = m.uid === idAuditor;
-
-// URL por defecto (Robot)
-              const avatarDefault = getUserProfilePhoto(m.uid);
-              const nombreMostrar = getDisplayName(m.uid, m.autor);
-
-              // Crear contenedor de fila (Flexbox)
-              const row = document.createElement('div');
-              row.className = `chat-row ${esMio ? 'mine' : 'other'}`;
-              row.id = `msg-row-${msgKey}`;
-
-              // HTML INTERNO: Foto + Burbuja
-               // Nota: Usamos un ID único en la imagen (img-uid-key) para actualizarla luego
-               const replyHtml = m.replyTo ? `
-                  <div class="quoted-msg" onclick="scrollToMessage('${m.replyTo.key}')">
-                      <span class="quoted-author">${escapeHtml(m.replyTo.author || 'Usuario')}</span>
-                      <span class="quoted-text">${escapeHtml(m.replyTo.text || '')}</span>
-                  </div>
-               ` : '';
-
-               row.innerHTML = `
-                  <img id="img-chat-${msgKey}" src="${avatarDefault}" class="chat-avatar-img" data-uid="${m.uid}" onclick="mostrarPerfilUsuario('${m.uid}', '${nombreMostrar}')">
-
-                   <div id="msg-${msgKey}" class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}">
-                       <div><span class="msg-user">${escapeHtml(nombreMostrar)}</span></div>
-                       ${replyHtml}
-                       <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
-                       <div class="msg-time">${new Date(m.fecha).toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-                    </div>
-                 `;
-
-                // Eventos de "Mantener presionado" y swipe en la burbuja
-                const burbuja = row.querySelector(`#msg-${msgKey}`);
-                burbuja.onmousedown = (e) => { startPress(msgKey, m.texto, m.uid, false); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
-                burbuja.ontouchstart = (e) => { startPress(msgKey, m.texto, m.uid, false); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
-                burbuja.onmouseup = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
-                burbuja.onmouseleave = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
-                burbuja.ontouchend = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
-                burbuja.ontouchmove = (e) => { handleSwipeMove(e, msgKey); };
-                burbuja.onmousemove = (e) => { if(e.buttons === 1) handleSwipeMove(e, msgKey); };
-
-              list.appendChild(row);
-             scrollToBottom();
-
-             // Notificación de sonido si no es mío
-             if (m.uid !== idAuditor && typeof currentScreen !== 'undefined' && currentScreen !== 3) { // 3 es índice de msjs si aplica
-                const badge = document.getElementById('msgBadge');
-                if (badge) {
-                    badge.style.display = 'flex';
-                    let num = parseInt(badge.textContent) || 0;
-                    badge.textContent = num + 1;
-                }
-             }
-
-             // 🔥 TRUCO MAGISTRAL: BUSCAR FOTO REAL EN SEGUNDO PLANO
-             // Consultamos solo la foto de este usuario para no saturar
-             // Solo buscar foto en Firebase si no está en caché ya
-             if (!cacheFotosPerfil[m.uid]) {
-                 db.ref(`users/${m.uid}/fotoPerfil`).once('value').then(snap => {
-                     if (snap.exists()) {
-                         const fotoReal = snap.val();
-                         cacheFotosPerfil[m.uid] = fotoReal; // Guardar en caché para mensajes futuros
-                         // Actualizar SOLO el avatar de este mensaje por su ID único
-                         const imgTag = document.getElementById(`img-chat-${msgKey}`);
-                         if (imgTag) imgTag.src = fotoReal;
-                         // Actualizar otros mensajes visibles del mismo usuario en el chat global
-                         document.querySelectorAll(`#chatList .chat-avatar-img[data-uid="${m.uid}"]`).forEach(img => {
-                             img.src = fotoReal;
-                         });
-                     }
-                 });
-             } else {
-                 // Ya tenemos la foto en caché: aplicar directamente sin llamada Firebase
-                 const imgTag = document.getElementById(`img-chat-${msgKey}`);
-                 if (imgTag) imgTag.src = cacheFotosPerfil[m.uid];
-             }
-         });
-
-         // 2. Escuchar borrados
-        db.ref('chat_global').on('child_removed', s => {
-            const row = document.getElementById(`msg-row-${s.key}`);
-            if (row) {
-                row.style.transition = "0.3s";
-                row.style.opacity = "0";
-                setTimeout(() => row.remove(), 300);
-            }
-        });
+    // 1. CARGA INSTANTÁNEA DESDE CACHÉ (Evita el "Cargando chat...")
+    try {
+        const cached = localStorage.getItem(CACHE_GLOBAL_KEY);
+        if (cached && cached.trim() !== "") {
+            list.innerHTML = cached;
+            list.scrollTop = list.scrollHeight;
+        } else {
+            // Solo si está vacío de verdad, mostramos el "Cargando..."
+            list.innerHTML = '<div class="global-loading" style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando chat...</div>';
+        }
+    } catch (e) {
+        list.innerHTML = '<div class="global-loading" style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i></div>';
     }
+
+    // 2. ESCUCHAR MENSAJES NUEVOS DE FIREBASE
+    db.ref('chat_global').limitToLast(50).on('child_added', s => {
+        const m = s.val();
+        const msgKey = s.key;
+        
+        // Quitar el texto de "Cargando" si aún estaba ahí
+        const spinner = list.querySelector('.global-loading');
+        if (spinner) spinner.remove();
+
+        // 🛑 EVITAR DUPLICADOS: Si el mensaje ya estaba en el caché, lo saltamos
+        if (document.getElementById(`msg-row-${msgKey}`)) return;
+
+        const esMio = m.uid === idAuditor;
+        const avatarDefault = getUserProfilePhoto(m.uid);
+        const nombreMostrar = getDisplayName(m.uid, m.autor);
+
+        // Crear contenedor
+        const row = document.createElement('div');
+        row.className = `chat-row ${esMio ? 'mine' : 'other'}`;
+        row.id = `msg-row-${msgKey}`;
+
+        const replyHtml = m.replyTo ? `
+            <div class="quoted-msg" onclick="scrollToMessage('${m.replyTo.key}')">
+                <span class="quoted-author">${escapeHtml(m.replyTo.author || 'Usuario')}</span>
+                <span class="quoted-text">${escapeHtml(m.replyTo.text || '')}</span>
+            </div>
+        ` : '';
+
+        row.innerHTML = `
+            <img id="img-chat-${msgKey}" src="${avatarDefault}" class="chat-avatar-img" data-uid="${m.uid}" onclick="mostrarPerfilUsuario('${m.uid}', '${nombreMostrar}')">
+            <div id="msg-${msgKey}" class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}">
+                <div><span class="msg-user">${escapeHtml(nombreMostrar)}</span></div>
+                ${replyHtml}
+                <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
+                <div class="msg-time">${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+            </div>
+        `;
+
+        // Eventos de mantener presionado y swipe
+        const burbuja = row.querySelector(`#msg-${msgKey}`);
+        burbuja.onmousedown = (e) => { startPress(msgKey, m.texto, m.uid, false); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
+        burbuja.ontouchstart = (e) => { startPress(msgKey, m.texto, m.uid, false); handleSwipeStart(e, msgKey, m.texto, nombreMostrar); };
+        burbuja.onmouseup = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+        burbuja.onmouseleave = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+        burbuja.ontouchend = (e) => { cancelPress(false); handleSwipeEnd(e, msgKey, m.texto, nombreMostrar, m.uid); };
+        burbuja.ontouchmove = (e) => { handleSwipeMove(e, msgKey); };
+        burbuja.onmousemove = (e) => { if(e.buttons === 1) handleSwipeMove(e, msgKey); };
+
+        list.appendChild(row);
+        list.scrollTop = list.scrollHeight;
+
+        // --- ACTUALIZAR CACHÉ DE FORMA SEGURA ---
+        setTimeout(() => {
+            try {
+                if (list.innerHTML.length < 500000) {
+                    localStorage.setItem(CACHE_GLOBAL_KEY, list.innerHTML);
+                }
+            } catch(e) {}
+        }, 300);
+
+        // Notificación visual de chat nuevo (solo si no es mío)
+        if (!esMio && typeof currentScreen !== 'undefined' && currentScreen !== 3) {
+            const badge = document.getElementById('msgBadge');
+            if (badge) {
+                badge.style.display = 'flex';
+                let num = parseInt(badge.textContent) || 0;
+                badge.textContent = num + 1;
+            }
+        }
+
+        // Buscar foto real en segundo plano
+        if (!cacheFotosPerfil[m.uid]) {
+            db.ref(`users/${m.uid}/fotoPerfil`).once('value').then(snap => {
+                if (snap.exists()) {
+                    const fotoReal = snap.val();
+                    cacheFotosPerfil[m.uid] = fotoReal; 
+                    const imgTag = document.getElementById(`img-chat-${msgKey}`);
+                    if (imgTag) imgTag.src = fotoReal;
+                }
+            });
+        } else {
+            const imgTag = document.getElementById(`img-chat-${msgKey}`);
+            if (imgTag) imgTag.src = cacheFotosPerfil[m.uid];
+        }
+    });
+
+    // 3. ESCUCHAR BORRADOS (Y LIMPIAR CACHÉ)
+    db.ref('chat_global').on('child_removed', s => {
+        const row = document.getElementById(`msg-row-${s.key}`);
+        if (row) {
+            row.style.transition = "0.3s";
+            row.style.opacity = "0";
+            setTimeout(() => {
+                row.remove();
+                localStorage.setItem(CACHE_GLOBAL_KEY, list.innerHTML);
+            }, 300);
+        }
+    });
+}
     // --- LÓGICA DE PRESIONAR ---
     let deletePressTimer = null;
     let pressStartTime = 0;
@@ -7339,20 +7391,98 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
         if (navigator.vibrate) navigator.vibrate(50);
     }
 
-    window.eliminarMensajePrivadoDirecto = (msgKey) => {
-        if (msgKey && currentChatId) {
-            db.ref(`chats_privados/${currentChatId}/${msgKey}`).remove()
-                .catch(e => notify("❌ Error al borrar"));
-        }
-        const icon = document.getElementById(`del-icon-${msgKey}`);
-        if (icon) icon.style.display = 'none';
-    };
+    window.idMensajeParaBorrar = null;
 
+// 1. Esta función la llama el bote de basura (Abre el cuadro)
+async function eliminarMensajePrivadoDirecto(key) {
+
+    try {
+
+        const fila = document.getElementById(`priv-row-${key}`);
+
+        // Animación visual
+        if (fila) {
+            fila.style.transition = "0.25s";
+            fila.style.opacity = "0";
+            fila.style.transform = "translateX(40px) scale(0.9)";
+        }
+
+        // Esperar animación
+        await new Promise(resolve => setTimeout(resolve, 250));
+
+        // Eliminar SOLO el mensaje
+        await remove(
+            ref(
+                db,
+                `chatsPrivados/${chatPrivadoActual}/mensajes/${key}`
+            )
+        );
+
+        // Eliminar del DOM
+        if (fila) fila.remove();
+
+    } catch(err) {
+
+        console.error("Error eliminando:", err);
+        alert("No se pudo eliminar");
+
+    }
+}
+// 2. Esta función ejecuta la acción
+window.confirmarAccionBorrado = (tipo) => {
+    const key = window.idMensajeParaBorrar;
+    const modal = document.getElementById('modalConfirmarBorrar');
+
+    if (tipo === 'todos') {
+        // Borrar de la nube (Comillas invertidas obligatorias aquí)
+        db.ref(`chats_privados/${currentChatId}/${key}`).remove();
+    } else {
+        // Borrar solo de mi pantalla
+        const fila = document.getElementById(`priv-row-${key}`);
+        if (fila) fila.remove();
+        actualizarMemoriaPrivada();
+    }
+    
+    if (modal) modal.style.display = "none";
+};
+
+// 3. Guardar en memoria sin que se trabe
+function actualizarMemoriaPrivada() {
+    const list = document.getElementById('privChatList');
+    if (!list) return;
+    const LLAVE = `pgc_v5_cache_${currentChatId}`;
+
+    setTimeout(() => {
+        try {
+            const contenido = list.innerHTML;
+            if (contenido.length < 500000) localStorage.setItem(LLAVE, contenido);
+        } catch (e) {}
+    }, 1000); 
+}
+// 3. Función para guardar caché sin que la App se trabe
+function actualizarCacheChatSilencioso() {
+    const list = document.getElementById('privChatList');
+    const LLAVE = 'pgc_v4_cache_' + currentChatId;
+    
+    // Usamos requestIdleCallback para que el cel guarde cuando esté libre
+    if (window.requestIdleCallback) {
+        requestIdleCallback(() => {
+            try {
+                const html = list.innerHTML;
+                if (html.length < 400000) localStorage.setItem(LLAVE, html);
+            } catch(e) {}
+        });
+    } else {
+        setTimeout(() => {
+            localStorage.setItem(LLAVE, list.innerHTML);
+        }, 1000);
+    }
+}
     window.confirmarBorradoPrivado = () => {
         if (selectedMsgId && currentChatId) {
             db.ref(`chats_privados/${currentChatId}/${selectedMsgId}`).remove()
                 .then(() => {
-                    notify("🗑️ Mensaje eliminado para todos");
+                    notify("👉 Mensaje eliminado para todos");
                     try { window.playSound('click'); } catch(e){}
                 })
                 .catch(e => notify("❌ Error al borrar"));
@@ -7569,18 +7699,30 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
             const esPrivado = document.getElementById(`priv-msg-${selectedMsgId}`);
             const esGrupo = document.getElementById(`grp-msg-${selectedMsgId}`);
 
+            if (esPrivado) {
+                // Mensajes privados: siempre pedir confirmación
+                document.getElementById('modalChatOptions').style.display = 'none';
+                window.idMensajeParaBorrar = selectedMsgId;
+                const modal = document.getElementById('modalConfirmarBorrar');
+                const btnTodos = document.getElementById('btnEliminarParaTodos');
+                if (btnTodos) btnTodos.style.display = 'block';
+                if (modal) {
+                    document.body.appendChild(modal);
+                    modal.style.display = 'flex';
+                }
+                return;
+            }
+
             let ruta;
             if (esGrupo && currentGrupoId) {
                 ruta = `grupos_chat/${currentGrupoId}/mensajes/${selectedMsgId}`;
-            } else if (esPrivado) {
-                ruta = `chats_privados/${currentChatId}/${selectedMsgId}`;
             } else {
                 ruta = `chat_global/${selectedMsgId}`;
             }
 
             db.ref(ruta).remove()
                 .then(() => {
-                    notify("🗑️ Mensaje eliminado");
+                    notify("☺️ Mensaje eliminado");
                     try { window.playSound('click'); } catch(e){}
                 })
                 .catch(e => notify("❌ Error al borrar"));
@@ -7594,7 +7736,7 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
 
         db.ref(`chats_privados/${currentChatId}/${msgKey}`).remove()
             .then(() => {
-                notify("🗑️ Mensaje eliminado para todos");
+                notify("🗑️1 Mensaje eliminado para todos");
                 try { window.playSound('click'); } catch(e){}
             })
             .catch(e => notify("❌ Error al borrar"));
@@ -7603,7 +7745,6 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
     function scrollToBottom() { const d = document.getElementById('chatList'); setTimeout(() => d.scrollTop = d.scrollHeight, 100); }
     // Enviar texto se mantiene igual, no hace falta cambiarlo
     // ...
-    function scrollToBottom() { const d = document.getElementById('chatList'); setTimeout(() => d.scrollTop = d.scrollHeight, 100); }
 
     // MENCIONES
     // --- FUNCIÓN PARA DETECTAR Y NOTIFICAR MENCIONES (@) ---
@@ -7674,7 +7815,7 @@ window.limpiarChatGlobal = () => {
             updates[child.key] = null;
         });
         db.ref('chat_global').update(updates)
-            .then(() => console.log(`🗑️ Chat global: ${Object.keys(updates).length} mensajes antiguos eliminados`))
+            .then(() => console.log(`🗑😂️ Chat global: ${Object.keys(updates).length} mensajes antiguos eliminados`))
             .catch(e => console.error('Error limpiando chat global:', e));
     });
 };
@@ -9271,36 +9412,30 @@ let galeriaFotosArray = [];
 let galeriaIndexActual = 0;
 
 const CACHE_MURO_KEY = 'pgc_muro_fotos_cache_v2';
+// ==========================================
+// 📸 MURO DE FOTOS - CARGA ULTRA-RÁPIDA (CACHÉ)
+// ==========================================
+window._galeriaCargada = false;
 
-// Candado para evitar doble inicialización de la galería
-window._galeriaIniciada = false;
 function cargarGaleriaComunidad() {
-    // 🔥 2. SI YA SE CARGÓ UNA VEZ, DETENEMOS LA FUNCIÓN. 
-    // Las fotos ya están en la pantalla, no hay que hacer nada más.
-    if (window._galeriaIniciada) return;
-    
-    // Marcamos el candado como cerrado
-    window._galeriaIniciada = true;
+    if (window._galeriaCargada) return;
+    window._galeriaCargada = true;
 
     const contenedor = document.getElementById('muroFotosGrid');
     if (!contenedor) return;
 
-    // 3. RENDERIZADO INSTANTÁNEO DESDE CACHÉ (0 SEGUNDOS)
-    try {
-        const cacheRaw = localStorage.getItem(CACHE_MURO_KEY);
-        if (cacheRaw) {
-            const fotosCacheadas = JSON.parse(cacheRaw);
-            galeriaFotosArray = fotosCacheadas; 
-            renderizarHtmlMuro(fotosCacheadas, contenedor);
-        } else {
-            contenedor.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1; grid-column:span 2; width:100%;"><i class="fas fa-spinner fa-spin" style="font-size:2rem; margin-bottom:10px;"></i><br>Cargando fotos...</div>';
-        }
-    } catch(e) {}
+    // 1. CARGA INSTANTÁNEA DESDE CACHÉ
+    const cacheMuro = localStorage.getItem(CACHE_MURO_KEY);
+    if (cacheMuro && cacheMuro.length > 100) {
+        contenedor.innerHTML = cacheMuro;
+    } else {
+        contenedor.innerHTML = '<div id="spinnerMuro" style="text-align:center; padding:40px; color:#cbd5e1; grid-column:span 2; width:100%;"><i class="fas fa-spinner fa-spin" style="font-size:2rem; margin-bottom:10px;"></i><br>Cargando fotos...</div>';
+    }
 
-    // 4. ESCUCHAR FIREBASE EN SEGUNDO PLANO
-    db.ref('galeria_comunidad').on('value', snap => {
+    // 2. SINCRONIZACIÓN CON FIREBASE (limitado para no descargar todo)
+    db.ref('galeria_comunidad').orderByChild('fecha').limitToLast(40).on('value', snap => {
         if (!snap.exists()) {
-            contenedor.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1; grid-column:span 2; width:100%;">Sé el primero en subir una foto.</div>';
+            contenedor.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1; grid-column:span 2;">Sé el primero en subir una foto.</div>';
             return;
         }
 
@@ -9309,7 +9444,7 @@ function cargarGaleriaComunidad() {
             fotos.push({ k: child.key, ...child.val() });
         });
 
-        // Ordenamiento (Fijados primero, luego fecha descendente)
+        // Ordenar (Fijados arriba, luego más recientes)
         fotos.sort((a, b) => {
             if (a.pinned && !b.pinned) return -1;
             if (!a.pinned && b.pinned) return 1;
@@ -9318,61 +9453,46 @@ function cargarGaleriaComunidad() {
 
         galeriaFotosArray = fotos;
 
-        try {
-            localStorage.setItem(CACHE_MURO_KEY, JSON.stringify(fotos.slice(0, 10)));
-        } catch (e) {}
+        // Generar HTML nuevo
+        let htmlFinal = "";
+        fotos.forEach((f, index) => {
+            const nombre = getDisplayName(f.uid, f.autor || "Anónimo");
+            const esFijado = f.pinned ? '<div style="position:absolute; top:8px; right:8px; background:rgba(251, 191, 36, 0.9); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem;">📌</div>' : '';
+            const isLiked = f.likes && idAuditor && f.likes[idAuditor];
+            const commentCount = f.comentarios ? Object.keys(f.comentarios).length : 0;
 
-        // Pintamos el muro con los datos reales
-        renderizarHtmlMuro(fotos, contenedor);
+            htmlFinal += `
+            <div id="photo-${f.k}" class="photo-card" data-index="${index}" data-key="${f.k}" data-uid="${f.uid}" data-pinned="${f.pinned}">
+                <div style="position:relative;">
+                    ${esFijado}
+                    <img src="${f.foto}" class="photo-img-content" loading="lazy" style="width:100%; display:block; border-radius:12px;">
+                </div>
+                <div style="padding:10px; display:flex; align-items:center; gap:8px;">
+                    <div style="width:22px; height:22px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; border:1px solid #eee;"></div>
+                    <span style="font-weight:700; font-size:0.75rem; color:#334155; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(nombre)}</span>
+                </div>
+                <div style="padding:0 10px 10px; display:flex; align-items:center; gap:8px;">
+                    <button onclick="event.stopPropagation(); abrirComentariosFoto('${f.k}')" style="background:#f1f5f9; border:none; color:#475569; font-size:0.72rem; font-weight:700; padding:6px 10px; border-radius:20px; cursor:pointer;">
+                        💬 <span id="cc-foto-${f.k}">${commentCount}</span>
+                    </button>
+                    <button onclick="event.stopPropagation(); likePhoto('${f.k}', '${f.uid}', this)" style="background:#f1f5f9; border:none; color:#475569; font-size:0.72rem; font-weight:700; padding:6px 10px; border-radius:20px; cursor:pointer;">
+                        <i class="${isLiked ? 'fas fa-heart liked' : 'far fa-heart'}" style="color:${isLiked ? '#e11d48' : '#94a3b8'};"></i>
+                        <span>${f.vCount || 0}</span>
+                    </button>
+                </div>
+            </div>`;
+        });
+
+        // Solo actualizar si hay cambios reales para evitar el parpadeo
+        if (contenedor.innerHTML !== htmlFinal) {
+            contenedor.innerHTML = htmlFinal;
+            localStorage.setItem(CACHE_MURO_KEY, htmlFinal);
+        }
+        
+        const spin = document.getElementById('spinnerMuro');
+        if(spin) spin.remove();
     });
 }
-
-// Función auxiliar para pintar las fotos
-function renderizarHtmlMuro(fotos, contenedor) {
-    let html = "";
-    
-    fotos.forEach((f, index) => {
-        const imagenSrc = f.foto || "";
-        const nombre = getDisplayName(f.uid, f.autor || "Anónimo");
-        const esFijado = f.pinned ? '<div style="position:absolute; top:8px; right:8px; background:rgba(251, 191, 36, 0.9); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); font-size:0.8rem;">📌</div>' : '';
-
-        const divId = `photo-${f.k}`;
-        const commentCount = f.comentarios ? Object.keys(f.comentarios).length : 0;
-        const isLiked = f.likes && idAuditor && f.likes[idAuditor];
-
-        html += `
-        <div id="${divId}" class="photo-card" 
-             data-index="${index}" data-key="${f.k}" data-uid="${f.uid}" data-pinned="${f.pinned}"
-             style="display:inline-block; width:100%; margin-bottom:10px; break-inside: avoid;">
-
-            <div style="position:relative;">
-                ${esFijado}
-                <img src="${imagenSrc}" class="photo-img-content" loading="lazy" style="width:100%; display:block; border-radius:12px; pointer-events:none;">
-            </div>
-            <div style="padding:6px 10px; display:flex; align-items:center; gap:6px;">
-                <div style="width:22px; height:22px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; border:1px solid #e2e8f0; flex-shrink:0;"></div>
-                <span style="font-weight:600; font-size:0.75rem; color:#334155; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(nombre)}</span>
-                ${f.uid === idAuditor ? '<span style="color:#ef4444; font-size:0.65rem; font-weight:600;">tu foto</span>' : ''}
-            </div>
-            <div style="padding:0 10px 10px; display:flex; align-items:center; gap:8px;">
-                <button
-                    onclick="event.stopPropagation(); abrirComentariosFoto('${f.k}')"
-                    style="display:flex; align-items:center; gap:5px; background:#f1f5f9; border:none; color:#475569; font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:background 0.15s;">
-                    💬 <span id="cc-foto-${f.k}">${commentCount}</span> Comentar
-                </button>
-                <button
-                    onclick="event.stopPropagation(); likePhoto('${f.k}', '${f.uid}', this)"
-                    style="display:flex; align-items:center; gap:5px; background:#f1f5f9; border:none; color:#475569; font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:background 0.15s;">
-                    <i class="${isLiked ? 'fas fa-heart liked' : 'far fa-heart'}" style="color:${isLiked ? '#e11d48' : '#94a3b8'};"></i>
-                    <span>${f.vCount || 0}</span>
-                </button>
-            </div>
-        </div>`;
-    });
-
-    contenedor.innerHTML = html;
-}
-
 // Inicializar manejadores de eventos para el muro de fotos (solo una vez)
 if (!window._fotoMuroInit) {
     window._fotoMuroInit = true;
@@ -9740,6 +9860,7 @@ window.abrirChatPrivado = (targetUid, targetName) => {
     targetUserUid = targetUid;
     currentChatTargetUid = targetUid;
     chatPrivadoActivo = true; // Marcar chat como activo
+    window._enChatPrivado = true; // Evitar re-render de Mi Chat mientras estamos aquí
 
     // Generar ID único del chat (Orden alfabético)
     currentChatId = [idAuditor, targetUid].sort().join('_');
@@ -9850,7 +9971,7 @@ function crearFilaMensajePrivado(s) {
     row.id = `priv-row-${key}`;
     row.innerHTML = `
         <img src="${fotoMsg}" class="chat-avatar-img" style="display:block;" data-uid="${m.uid}" onclick="mostrarPerfilUsuario(this, '${autorNombre}')">
-        ${esMio ? `<span id="del-icon-${key}" class="delete-msg-trigger" onclick="event.stopPropagation();eliminarMensajePrivadoDirecto('${key}')">🗑️</span>` : ''}
+        ${esMio ? `<span id="del-icon-${key}" class="delete-msg-trigger" onclick="event.stopPropagation();eliminarMensajePrivadoDirecto('${key}')">🗑</span>` : ''}
         <div id="priv-msg-${key}"
              class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}"
              style="max-width:75%; cursor:grab; transition: transform 0.2s ease-out;"
@@ -9872,17 +9993,18 @@ function crearFilaMensajePrivado(s) {
         </div>`;
     return row;
 }
+let timerGuardadoCache = null;
 
 function cargarMensajesPrivados() {
     if (!currentChatId) return;
 
     if (privChatRef) privChatRef.off();
-    if (window._privChatRemovedRef) { window._privChatRemovedRef.off(); window._privChatRemovedRef = null; }
+    if (window._privChatRemovedRef) window._privChatRemovedRef.off();
 
     const list = document.getElementById('privChatList');
-    const LLAVE_MEMORIA = 'cache_v2_' + currentChatId;
+    const LLAVE_MEMORIA = 'pgc_v4_cache_' + currentChatId;
 
-    // 1. CARGA INSTANTÁNEA DESDE CACHÉ
+    // 1. CARGA INSTANTÁNEA
     const cached = localStorage.getItem(LLAVE_MEMORIA);
     if (cached) {
         list.innerHTML = cached;
@@ -9891,40 +10013,46 @@ function cargarMensajesPrivados() {
         list.innerHTML = '<div class="priv-loading" style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i></div>';
     }
 
-    privChatRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(15); // Bajamos a 15 para ahorrar espacio
-
+    // 2. ESCUCHAR MENSAJES NUEVOS
+    privChatRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(15);
     privChatRef.on('child_added', snap => {
         const spinner = list.querySelector('.priv-loading');
         if (spinner) spinner.remove();
 
         if (document.getElementById(`priv-row-${snap.key}`)) return;
+        if (list.innerHTML.includes('🔒')) list.innerHTML = '';
 
         const row = crearFilaMensajePrivado(snap);
         list.appendChild(row);
         list.scrollTop = list.scrollHeight;
 
-        // 2. GUARDADO SEGURO (LIMITADO)
-        try {
-            // Guardamos solo si el chat no es exageradamente largo
-            if (list.innerHTML.length < 500000) { // Límite de medio mega por chat
-                localStorage.setItem(LLAVE_MEMORIA, list.innerHTML);
-            }
-        } catch (e) {
-            console.warn("⚠️ Memoria llena, limpiando chats antiguos...");
-            // Si se llena, borramos los cachés viejos para hacer espacio
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('cache_v2_')) localStorage.removeItem(key);
-            }
-        }
+        // --- GUARDADO INTELIGENTE (DEBOUNCE) ---
+        if (timerGuardadoCache) clearTimeout(timerGuardadoCache);
+        timerGuardadoCache = setTimeout(() => {
+            try {
+                const html = list.innerHTML;
+                if (html.length < 500000) localStorage.setItem(LLAVE_MEMORIA, html);
+            } catch (e) {}
+        }, 2000); // Espera 2 segundos de calma para guardar
     });
 
-    // Placeholder si no hay nada
-    setTimeout(() => {
-        if (list.innerHTML === "" || list.innerHTML.includes('fa-spin')) {
-            list.innerHTML = '<div style="text-align:center; padding:20px; color:#cbd5e1;">🔒 Chat Privado.</div>';
+    // 3. ESCUCHAR BORRADOS (ANTITRABE)
+// Escuchar cuando se borra un mensaje en la nube (Eliminar para todos)
+    window._privChatRemovedRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(50);
+    window._privChatRemovedRef.on('child_removed', snap => {
+        const fila = document.getElementById(`priv-row-${snap.key}`);
+        if (fila) {
+            fila.style.transition = "opacity 0.3s ease";
+            fila.style.opacity = "0";
+            setTimeout(() => {
+                fila.remove();
+                // Si tienes la función de caché silencioso, la llama
+                if (typeof actualizarCacheChatSilencioso === 'function') {
+                    actualizarCacheChatSilencioso(); 
+                }
+            }, 300);
         }
-    }, 2000);
+    });
 }
 // ==========================================
 // 👆 SWIPE PARA RESPONDER (CHAT PRIVADO)
@@ -10272,6 +10400,7 @@ window.cerrarChatPrivado = () => {
         privUserRef = null;
     }
     currentChatId = null;
+    window._enChatPrivado = false; // Permitir re-render de Mi Chat de nuevo
 };
 
 window.cerrarChatGrupo = () => {
@@ -10519,16 +10648,9 @@ function iniciarMonitorDeBadges() {
 let _cacheDataUsers = null;
 let _cacheDataNubes = {};
 let _listenersUsuariosIniciados = false;
+let _ultimoPensamiento = null; // { uid, autor, texto, avatar }
 
 function cargarListaUsuariosHorizontal() {
-    const contenedor = document.getElementById('listaUsuariosHorizontal');
-    if (!contenedor) return;
-
-    // Pintar el botón de "Pensar" INMEDIATAMENTE para que la UI no se vea vacía ni un milisegundo
-    if (!listaUsuariosCacheReal || listaUsuariosCacheReal.length === 0) {
-        renderizarUsuariosHorizontal(); 
-    }
-
     // Evitar duplicar los escuchadores si ya se iniciaron
     if (_listenersUsuariosIniciados) return;
     _listenersUsuariosIniciados = true;
@@ -10582,12 +10704,24 @@ function combinarYRenderizarUsuarios() {
         return b.rawTime - a.rawTime;
     });
 
-    // Enviar a pintar al HTML
+    // Actualizar el botón Pensar con el pensamiento más reciente
+    actualizarBotonPensar();
+
+    // Refrescar Mi Chat si está visible y no hay chat privado abierto
+    const _miChatCont = document.getElementById('mensajesPrivadosContainer');
+    if (_miChatCont && _miChatCont.style.display !== 'none' && !window._enChatPrivado) {
+        clearTimeout(window._miChatDebounce);
+        window._miChatDebounce = setTimeout(() => {
+            if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
+        }, 600);
+    }
+
+    // Enviar a pintar al HTML (si el contenedor existe)
     renderizarUsuariosHorizontal();
 }
 function renderizarUsuariosHorizontal() {
     const contenedor = document.getElementById('listaUsuariosHorizontal');
-    if (!contenedor) return;
+    if (!contenedor) return; // El contenedor fue removido; solo actualizamos el botón Pensar
 
     // --- 1. BOTÓN "PENSAR" (Siempre de primero) ---
     let html = `
@@ -10680,6 +10814,95 @@ function renderizarUsuariosHorizontal() {
 
     contenedor.innerHTML = html;
 }
+
+// ==========================================
+// 💭 BOTÓN PENSAR DINÁMICO
+// ==========================================
+function actualizarBotonPensar() {
+    const btn = document.getElementById('pensarBtnInner');
+    if (!btn) return;
+
+    const ahora = Date.now();
+
+    // Buscar el pensamiento más reciente de alguien que NO sea yo (menos de 12h)
+    let mejor = null;
+    if (listaUsuariosCacheReal) {
+        for (const u of listaUsuariosCacheReal) {
+            if (u.key === idAuditor) continue;
+            if (!u.pensamiento || u.pensamiento.trim() === '') continue;
+            // Verificar que el pensamiento siga vigente
+            const nube = _cacheDataNubes[u.key];
+            if (!nube || (ahora - nube.timestamp > 43200000)) continue;
+            mejor = u;
+            break; // Ya ordenados: primero los más recientes
+        }
+    }
+
+    if (mejor) {
+        _ultimoPensamiento = {
+            uid: mejor.key,
+            autor: mejor.nombre,
+            texto: mejor.pensamiento,
+            avatar: mejor.avatar
+        };
+        const textoCorto = mejor.pensamiento.length > 22 ? mejor.pensamiento.substring(0, 20) + '…' : mejor.pensamiento;
+        btn.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+                <img src="${mejor.avatar}" style="width:32px; height:32px; border-radius:50%; border:2px solid #8b5cf6; object-fit:cover; flex-shrink:0;">
+                <span style="font-size:0.6rem; font-weight:700; color:#7c3aed; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:68px; text-align:center;">${escapeHtml(textoCorto)}</span>
+            </div>`;
+    } else {
+        // Verificar si YO tengo un pensamiento activo
+        const miNube = _cacheDataNubes[idAuditor];
+        if (miNube && (ahora - miNube.timestamp < 43200000)) {
+            _ultimoPensamiento = null; // Es mío, no mostrar modal de ver
+        } else {
+            _ultimoPensamiento = null;
+        }
+        btn.innerHTML = `
+            <span style="font-size:1.3rem; line-height:1;">💭</span>
+            <span style="font-size:0.68rem; font-weight:800; color:#8b5cf6; white-space:nowrap;">Pensar</span>`;
+    }
+}
+
+window.abrirModalPensarOVer = () => {
+    // El botón Pensar SIEMPRE abre el modal para escribir tu propio pensamiento
+    if (!idAuditor) return notify("Inicia sesión");
+    _ultimoPensamiento = null; // Limpiar para no confundir estados
+    document.getElementById('modalPensamiento').style.display = 'flex';
+    setTimeout(() => {
+        const inp = document.getElementById('inputPensamiento');
+        if (inp) inp.focus();
+    }, 100);
+};
+
+window.enviarComentarioPensamiento = () => {
+    if (!_ultimoPensamiento || !_ultimoPensamiento.uid) return;
+    if (!idAuditor) return notify("❌ Inicia sesión");
+    const texto = document.getElementById('inputComentarioPensamiento').value.trim();
+    if (!texto) return notify("📝 Escribe algo");
+
+    const targetUid = _ultimoPensamiento.uid;
+    const chatId = [idAuditor, targetUid].sort().join('_');
+    const msgKey = db.ref(`chats_privados/${chatId}`).push().key;
+
+    const msgData = {
+        texto: '💭 ' + texto,
+        tipo: 'texto',
+        uid: idAuditor,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    db.ref(`chats_privados/${chatId}/${msgKey}`).set(msgData)
+        .then(() => {
+            notify('💬 Comentario enviado a ' + _ultimoPensamiento.autor);
+            document.getElementById('inputComentarioPensamiento').value = '';
+            document.getElementById('modalVerPensamiento').style.display = 'none';
+            try { window.playSound('click'); } catch(e){}
+        })
+        .catch(e => notify('❌ Error al enviar: ' + e.message));
+};
+
 window.formatTimeAgo = (timestamp) => {
     if (!timestamp) return "Reciente";
     const ahora = Date.now();
@@ -11595,7 +11818,7 @@ window.eliminarPostActual = () => {
     if (postSeleccionadoData.uid !== idAuditor && !isAdmin) return notify("❌ No puedes eliminar esta publicación");
     db.ref(`reportes/${postSeleccionadoKey}`).remove().then(() => {
         document.getElementById('modalPostOptions').style.display = 'none';
-        notify("🗑️ Publicación eliminada");
+        notify("☹️ Publicación eliminada");
         try { window.playSound('gameover'); } catch(e){}
     }).catch(err => { notify("❌ Error al eliminar: " + err.message); });
 };
@@ -12409,7 +12632,7 @@ window.ejecutarBorradoFoto = () => {
         const key = fotoSeleccionadaKey;
         db.ref(`galeria_comunidad/${key}`).remove()
             .then(() => {
-                notify("🗑️ Foto eliminada correctamente");
+                notify("�🤤️ Foto eliminada correctamente");
                 cerrarFotoDetalle();
                 galeriaFotosArray = galeriaFotosArray.filter(f => f.k !== key);
                 const photoCard = document.getElementById('photo-' + key);
@@ -13398,67 +13621,55 @@ window.onCompraMensajesExitosa = (cantidadMensajes) => {
         });
     });
 };
+// Estilos activos para los 4 botones del top bar de mensajes
+const _TAB_ACTIVE_STYLE  = 'color:#6366f1; border-bottom:3px solid #6366f1; background:#f5f3ff;';
+const _TAB_NORMAL_STYLE  = 'color:#64748b; border-bottom:3px solid transparent; background:white;';
+
+function _setTabActivo(idActivo) {
+    ['tabMiChatBtn','tabGlobalBtn','tabGruposBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        // reset inline border-bottom y color preservando el resto
+        el.style.color = id === idActivo ? '#6366f1' : '#64748b';
+        el.style.borderBottom = id === idActivo ? '3px solid #6366f1' : '3px solid transparent';
+        el.style.background = id === idActivo ? '#f5f3ff' : 'white';
+    });
+}
+
 window.cambiarPestanaChat = (pestana) => {
-    const btnGlobal = document.getElementById('tabGlobalBtn');
-    const btnMensajes = document.getElementById('tabMensajesBtn');
-    const btnGrupos = document.getElementById('tabGruposBtn');
+    const contGlobal    = document.getElementById('chatListContainer');
+    const contMensajes  = document.getElementById('mensajesPrivadosContainer');
+    const contGrupos    = document.getElementById('gruposListContainer');
 
-    const contGlobal = document.getElementById('chatListContainer');
-    const contMensajes = document.getElementById('mensajesPrivadosContainer');
-    const contGrupos = document.getElementById('gruposListContainer');
+    // Ocultar todo sin borrar contenido (mensajes quedan en DOM)
+    if (contGlobal)   contGlobal.style.display   = 'none';
+    if (contMensajes) contMensajes.style.display  = 'none';
+    if (contGrupos)   contGrupos.style.display    = 'none';
 
-    // 1. Ocultar todos los contenedores
-    if(contGlobal) contGlobal.style.display = 'none';
-    if(contMensajes) contMensajes.style.display = 'none';
-    if(contGrupos) contGrupos.style.display = 'none';
-
-    // 2. Quitar clase active de todos los botones
-    if(btnGlobal) btnGlobal.classList.remove('active');
-    if(btnMensajes) btnMensajes.classList.remove('active');
-    if(btnGrupos) btnGrupos.classList.remove('active');
-
-    // 3. Activar el seleccionado
-    // Detener el intervalo de mensajes si salimos de esa pestaña
-    if (pestana !== 'mensajes') clearInterval(window._mensajesInterval);
+    clearInterval(window._mensajesInterval);
 
     if (pestana === 'global') {
-        if(btnGlobal) btnGlobal.classList.add('active');
-        if(contGlobal) contGlobal.style.display = 'flex';
+        _setTabActivo('tabGlobalBtn');
+        if (contGlobal) contGlobal.style.display = 'flex';
         setTimeout(() => scrollToBottom(), 100);
-    } 
-    else if (pestana === 'mensajes') {
-        if(btnMensajes) btnMensajes.classList.add('active');
-        if(contMensajes) contMensajes.style.display = 'block';
+    }
+    else if (pestana === 'grupos') {
+        _setTabActivo('tabGruposBtn');
+        if (contGrupos) contGrupos.style.display = 'block';
+        if (typeof cargarListaDeGrupos === 'function') cargarListaDeGrupos();
+    }
+    else {
+        // 'michat' → lista de TODOS los usuarios (tengan chat o no)
+        _setTabActivo('tabMiChatBtn');
+        if (contMensajes) contMensajes.style.display = 'block';
 
-        if(typeof cargarChatsPrivadosNoLeidos === "function") {
-            cargarChatsPrivadosNoLeidos();
-        } else {
-            contMensajes.innerHTML = '<div style="padding:20px; text-align:center; color:red;">Error: Función de carga no encontrada.</div>';
+        // Arrancar listener de Firebase para badges (solo una vez)
+        if (!window._chatsPrivadosRef && typeof cargarChatsPrivadosNoLeidos === 'function') {
+            cargarChatsPrivadosNoLeidos(); // configura el listener silenciosamente
         }
 
-        // Actualización cada 3 segundos mientras la pestaña está activa
-        clearInterval(window._mensajesInterval);
-        window._mensajesInterval = setInterval(() => {
-            if (!window._chatsPrivadosRef || !idAuditor) return;
-            window._chatsPrivadosRef.once('value', snap => {
-                const chats = procesarSnapshotChats(snap);
-                try {
-                    localStorage.setItem(CHATS_CACHE_KEY(), JSON.stringify(chats));
-                    localStorage.setItem(CHATS_TS_KEY(), String(Date.now()));
-                } catch(e){}
-                const cont = document.getElementById('mensajesPrivadosContainer');
-                if (cont && cont.style.display !== 'none') {
-                    renderChatsHTML(chats, cont);
-                    actualizarNombresEnDOM(chats);
-                }
-                sincronizarBadgesDesdeChats(chats);
-            });
-        }, 3000);
-    } 
-    else { // grupos
-        if(btnGrupos) btnGrupos.classList.add('active');
-        if(contGrupos) contGrupos.style.display = 'block';
-        if(typeof cargarListaDeGrupos === "function") cargarListaDeGrupos();
+        // Renderizar TODOS los usuarios ahora
+        cargarTodosLosUsuariosParaMiChat();
     }
 };
 // Funciones vacías para que no te dé error al tocar los botones de ejemplo
@@ -13928,40 +14139,100 @@ const CHATS_TTL        = 5 * 60 * 1000; // re-fetch cada 5 min como máximo
 
 function renderChatsHTML(chats, container) {
     if (!chats || chats.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-check-circle" style="font-size:3rem; margin-bottom:15px; opacity:0.5;"></i><div>¡Todo al día! No hay mensajes nuevos.</div></div>';
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-comment-dots" style="font-size:3rem; margin-bottom:15px; opacity:0.4;"></i><div>Sin conversaciones aún</div></div>';
         return;
     }
     // Leer caché de nombres
     let namesCache = {};
     try { namesCache = JSON.parse(localStorage.getItem(NAMES_CACHE_KEY()) || '{}'); } catch(e){}
 
+    const ahora = Date.now();
     let html = '';
     chats.forEach(chat => {
         const msg  = chat.ultimoMsg;
         const uid  = chat.otroUid;
-        const diffMin = Math.floor((Date.now() - (msg.fecha || Date.now())) / 60000);
+        const diffMin = Math.floor((ahora - (msg.fecha || ahora)) / 60000);
         const tiempo  = diffMin < 1 ? 'Ahora' : diffMin < 60 ? `${diffMin} min` : `${Math.floor(diffMin/60)} h`;
         let texto = msg.texto || (msg.esFoto ? '📷 Foto' : '...');
-        if (texto.length > 40) texto = texto.substring(0, 40) + '...';
-        const borde   = chat.mensajesNoLeidos > 0 ? 'border-left:4px solid #ef4444;background:#fff5f5;' : '';
-        const badge   = chat.mensajesNoLeidos > 0
-            ? `<div style="background:#ef4444;color:white;font-size:0.7rem;font-weight:800;padding:2px 8px;border-radius:10px;">${chat.mensajesNoLeidos} nuevo(s)</div>` : '';
-        const nombre  = namesCache[uid] || 'Cargando...';
-        html += `<div onclick="abrirChatPrivado('${uid}','${escapeHtml(nombre)}')"
-                      style="background:white;padding:15px;border-radius:16px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer;transition:.2s;${borde}">
-                   <div style="display:flex;align-items:center;gap:12px;">
-                     <div style="width:50px;height:50px;border-radius:50%;background:#e2e8f0;background-size:cover;background-image:url('${getUserProfilePhoto(uid)}');flex-shrink:0;"></div>
-                     <div style="flex:1;min-width:0;">
-                       <div id="name-chat-${uid}" style="font-weight:700;color:#1e293b;font-size:1rem;">${escapeHtml(nombre)}</div>
-                       <div style="font-size:.85rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">${escapeHtml(texto)}</div>
-                       ${badge}
-                     </div>
-                     <div style="font-size:.75rem;color:#94a3b8;font-weight:600;">${tiempo}</div>
-                   </div>
-                 </div>`;
+        if (texto.length > 38) texto = texto.substring(0, 36) + '...';
+        const nombre = namesCache[uid] || 'Cargando...';
+
+        // --- Estado del usuario ---
+        const userCache = listaUsuariosCacheReal ? listaUsuariosCacheReal.find(u => u.key === uid) : null;
+        const isOnline = userCache ? userCache.online : false;
+        const nube = (_cacheDataNubes && _cacheDataNubes[uid]);
+        const hasPensamiento = nube && (ahora - nube.timestamp < 43200000) && nube.texto;
+        const tieneNuevos = chat.mensajesNoLeidos > 0;
+
+        // --- Color del borde del avatar (prioridad: rojo > azul > verde > gris) ---
+        let borderColor, borderGlow;
+        if (tieneNuevos) {
+            borderColor = '#ef4444'; borderGlow = 'rgba(239,68,68,0.3)';
+        } else if (hasPensamiento) {
+            borderColor = '#3b82f6'; borderGlow = 'rgba(59,130,246,0.3)';
+        } else if (isOnline) {
+            borderColor = '#10b981'; borderGlow = 'rgba(16,185,129,0.3)';
+        } else {
+            borderColor = '#94a3b8'; borderGlow = 'transparent';
+        }
+
+        // --- Badge de nuevos mensajes ---
+        const badge = tieneNuevos
+            ? `<div style="background:#ef4444;color:white;font-size:0.65rem;font-weight:800;padding:2px 10px;border-radius:10px;margin-top:4px;display:inline-block;">${chat.mensajesNoLeidos} nuevo(s)</div>` : '';
+
+        // --- Al tocar la foto: muestra pensamiento si tiene, sino abre chat ---
+        const pensamientoTextoEscapado = hasPensamiento ? escapeHtml(nube.texto).replace(/'/g, "\\'") : '';
+        const nombreEscapado = escapeHtml(nombre).replace(/'/g, "\\'");
+        const avatarFoto = getUserProfilePhoto(uid);
+        const avatarOnClick = hasPensamiento
+            ? `event.stopPropagation(); mostrarPensamientoDeUsuario('${uid}','${nombreEscapado}','${pensamientoTextoEscapado}','${avatarFoto}')`
+            : `abrirChatPrivado('${uid}','${nombreEscapado}')`;
+
+        html += `
+        <div onclick="abrirChatPrivado('${uid}','${nombreEscapado}')"
+             style="background:white; padding:14px 15px; border-radius:16px; margin-bottom:10px;
+                    box-shadow:0 2px 8px rgba(0,0,0,.05); cursor:pointer; transition:.15s;
+                    ${tieneNuevos ? 'border-left:4px solid #ef4444; background:#fff5f5;' : ''}">
+            <div style="display:flex; align-items:center; gap:14px;">
+
+                <!-- FOTO: clic muestra pensamiento; color del borde indica estado -->
+                <div onclick="${avatarOnClick}"
+                     style="flex-shrink:0; width:56px; height:56px; border-radius:50%;
+                            background:#e2e8f0 url('${avatarFoto}') center/cover;
+                            border:3px solid ${borderColor};
+                            box-shadow:0 0 0 3px ${borderGlow};
+                            cursor:pointer; transition:.2s;">
+                </div>
+
+                <!-- INFO -->
+                <div style="flex:1; min-width:0;">
+                    <div id="name-chat-${uid}" style="font-weight:800; color:#1e293b; font-size:0.95rem;">${escapeHtml(nombre)}</div>
+                    <div style="font-size:.82rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(texto)}</div>
+                    ${badge}
+                </div>
+
+                <!-- TIEMPO -->
+                <div style="font-size:.72rem; color:#94a3b8; font-weight:600; flex-shrink:0;">${tiempo}</div>
+            </div>
+        </div>`;
     });
     container.innerHTML = html;
 }
+
+// Muestra el pensamiento de un usuario en el modal grande
+window.mostrarPensamientoDeUsuario = (uid, nombre, texto, avatar) => {
+    const el = document.getElementById('verPensamientoAvatar');
+    const elNombre = document.getElementById('verPensamientoNombre');
+    const elTexto = document.getElementById('verPensamientoTexto');
+    const elInput = document.getElementById('inputComentarioPensamiento');
+    if (el) el.style.backgroundImage = `url('${avatar}')`;
+    if (elNombre) elNombre.textContent = nombre;
+    if (elTexto) elTexto.textContent = '"' + texto + '"';
+    if (elInput) elInput.value = '';
+    // Guardar el pensamiento activo para el comentario
+    _ultimoPensamiento = { uid, autor: nombre, texto, avatar };
+    document.getElementById('modalVerPensamiento').style.display = 'flex';
+};
 
 function actualizarNombresEnDOM(chats) {
     let namesCache = {};
@@ -14022,6 +14293,111 @@ function sincronizarBadgesDesdeChats(chats) {
     if (typeof renderizarUsuariosHorizontal === 'function') renderizarUsuariosHorizontal();
 }
 
+// ─── MI CHAT: muestra TODOS los usuarios (con o sin conversación) ────────────
+window.cargarTodosLosUsuariosParaMiChat = () => {
+    const container = document.getElementById('mensajesPrivadosContainer');
+    if (!container) return;
+
+    const ahora = Date.now();
+
+    // Combinar: todos los usuarios + datos de chats si existen
+    let chatsCache = [];
+    try { chatsCache = JSON.parse(localStorage.getItem(CHATS_CACHE_KEY()) || '[]'); } catch(e){}
+    const chatsByUid = {};
+    chatsCache.forEach(c => { chatsByUid[c.otroUid] = c; });
+
+    // Usar listaUsuariosCacheReal (todos, ya filtrados y ordenados por Firebase)
+    const todos = (listaUsuariosCacheReal || []).filter(u => u.key !== idAuditor);
+
+    if (todos.length === 0) {
+        container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#94a3b8;">
+            <div style="font-size:3rem;margin-bottom:12px;">👥</div>
+            <div style="font-size:0.9rem;font-weight:600;">Cargando usuarios…</div>
+            <div style="font-size:0.75rem;margin-top:6px;">Espera un momento</div>
+        </div>`;
+        return;
+    }
+
+    // Ordenar: nuevos mensajes > online > tiene pensamiento > último visto
+    todos.sort((a, b) => {
+        const cA = chatsByUid[a.key], cB = chatsByUid[b.key];
+        const nA = cA && cA.mensajesNoLeidos > 0 ? 1 : 0;
+        const nB = cB && cB.mensajesNoLeidos > 0 ? 1 : 0;
+        if (nA !== nB) return nB - nA;
+        if (a.online !== b.online) return a.online ? -1 : 1;
+        if (a.pensamiento && !b.pensamiento) return -1;
+        if (!a.pensamiento && b.pensamiento) return 1;
+        return b.rawTime - a.rawTime;
+    });
+
+    let html = '';
+    todos.forEach(u => {
+        const uid = u.key;
+        const nombre = u.nombre || 'Usuario';
+        const chat = chatsByUid[uid];
+        const nube = _cacheDataNubes && _cacheDataNubes[uid];
+        const hasPensamiento = nube && (ahora - nube.timestamp < 43200000) && nube.texto;
+        const tieneNuevos = chat && chat.mensajesNoLeidos > 0;
+
+        // Color del borde: rojo > azul > verde > gris
+        let borderColor, borderGlow;
+        if (tieneNuevos)        { borderColor = '#ef4444'; borderGlow = 'rgba(239,68,68,0.25)'; }
+        else if (hasPensamiento){ borderColor = '#3b82f6'; borderGlow = 'rgba(59,130,246,0.25)'; }
+        else if (u.online)      { borderColor = '#10b981'; borderGlow = 'rgba(16,185,129,0.25)'; }
+        else                    { borderColor = '#94a3b8'; borderGlow = 'transparent'; }
+
+        // Preview del último mensaje
+        let textoUltimo = '';
+        let tiempoStr  = '';
+        if (chat && chat.ultimoMsg) {
+            const m = chat.ultimoMsg;
+            textoUltimo = m.texto || (m.esFoto ? '📷 Foto' : '...');
+            if (textoUltimo.length > 38) textoUltimo = textoUltimo.substring(0, 36) + '…';
+            const diffMin = Math.floor((ahora - (m.fecha || ahora)) / 60000);
+            tiempoStr = diffMin < 1 ? 'Ahora' : diffMin < 60 ? `${diffMin} min` : `${Math.floor(diffMin/60)} h`;
+        } else if (hasPensamiento) {
+            const t = nube.texto;
+            textoUltimo = '💭 ' + (t.length > 32 ? t.substring(0,30) + '…' : t);
+        } else {
+            textoUltimo = u.online ? '🟢 En línea' : 'Toca para chatear';
+        }
+
+        const badge = tieneNuevos
+            ? `<div style="background:#ef4444;color:white;font-size:0.65rem;font-weight:800;padding:2px 10px;border-radius:10px;margin-top:4px;display:inline-block;">${chat.mensajesNoLeidos} nuevo(s)</div>` : '';
+
+        const nombreE = escapeHtml(nombre).replace(/'/g, "\\'");
+        const fotoUrl = u.avatar || getUserProfilePhoto(uid);
+        const penE    = hasPensamiento ? escapeHtml(nube.texto).replace(/'/g, "\\'") : '';
+        const avatarClick = hasPensamiento
+            ? `event.stopPropagation(); mostrarPensamientoDeUsuario('${uid}','${nombreE}','${penE}','${fotoUrl}')`
+            : `abrirChatPrivado('${uid}','${nombreE}')`;
+
+        html += `
+        <div onclick="abrirChatPrivado('${uid}','${nombreE}')"
+             style="background:white; padding:13px 15px; border-radius:16px; margin-bottom:9px;
+                    box-shadow:0 2px 8px rgba(0,0,0,.05); cursor:pointer;
+                    ${tieneNuevos ? 'border-left:4px solid #ef4444; background:#fff5f5;' : ''}">
+            <div style="display:flex; align-items:center; gap:13px;">
+                <div onclick="${avatarClick}"
+                     style="flex-shrink:0; width:54px; height:54px; border-radius:50%;
+                            background:#e2e8f0 url('${fotoUrl}') center/cover no-repeat;
+                            border:3px solid ${borderColor};
+                            box-shadow:0 0 0 3px ${borderGlow};
+                            cursor:pointer;">
+                </div>
+                <div style="flex:1; min-width:0;">
+                    <div style="font-weight:800; color:#1e293b; font-size:0.93rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(nombre)}</div>
+                    <div style="font-size:.81rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(textoUltimo)}</div>
+                    ${badge}
+                </div>
+                ${tiempoStr ? `<div style="font-size:.7rem; color:#94a3b8; font-weight:600; flex-shrink:0;">${tiempoStr}</div>` : ''}
+            </div>
+        </div>`;
+    });
+
+    container.innerHTML = html || `<div style="text-align:center;padding:40px;color:#94a3b8;">Sin usuarios aún</div>`;
+};
+
 window.cargarChatsPrivadosNoLeidos = () => {
     const container = document.getElementById('mensajesPrivadosContainer');
     if (!container || !idAuditor) return;
@@ -14050,19 +14426,29 @@ window.cargarChatsPrivadosNoLeidos = () => {
             localStorage.setItem(CHATS_CACHE_KEY(), JSON.stringify(chats));
             localStorage.setItem(CHATS_TS_KEY(), String(Date.now()));
         } catch(e){}
-        const cont = document.getElementById('mensajesPrivadosContainer');
-        if (cont && cont.style.display !== 'none') {
-            renderChatsHTML(chats, cont);
-            actualizarNombresEnDOM(chats);
-        }
         // Siempre actualizar los círculos rojos de stories
         sincronizarBadgesDesdeChats(chats);
+        // Refrescar Mi Chat solo si visible Y no hay chat privado abierto
+        const cont = document.getElementById('mensajesPrivadosContainer');
+        if (cont && cont.style.display !== 'none' && !window._enChatPrivado) {
+            clearTimeout(window._miChatDebounce);
+            window._miChatDebounce = setTimeout(() => {
+                if (typeof cargarTodosLosUsuariosParaMiChat === 'function') {
+                    cargarTodosLosUsuariosParaMiChat();
+                }
+            }, 600);
+        }
     };
 
     // child_changed → solo chats que tuvieron actividad nueva (NO recarga todo)
+    // Debounce para evitar recargas múltiples al borrar mensajes/fotos
+    let _chatsChangedDebounce = null;
     window._chatsPrivadosRef.on('child_changed', () => {
-        // Re-leer snapshot completo para recalcular orden y conteos
-        window._chatsPrivadosRef.once('value', procesarYGuardar);
+        clearTimeout(_chatsChangedDebounce);
+        _chatsChangedDebounce = setTimeout(() => {
+            // Re-leer snapshot completo para recalcular orden y conteos
+            window._chatsPrivadosRef.once('value', procesarYGuardar);
+        }, 500);
     });
 
     // Primera carga completa
@@ -14279,6 +14665,49 @@ function reproducirVideo(card) {
 
 <!-- 3. AL FINAL: Cerrar etiquetas HTML -->
 
+<!-- 💭 MODAL VER PENSAMIENTO EN GRANDE + COMENTAR -->
+<div id="modalVerPensamiento" class="modal-overlay" style="z-index: 43000; display:none;">
+    <div class="modal-content" style="max-width: 360px; text-align:center; padding: 28px 24px;">
+
+        <!-- Avatar del autor -->
+        <div id="verPensamientoAvatar"
+             style="width:72px; height:72px; border-radius:50%; background-size:cover; background-position:center; margin:0 auto 10px; border:3px solid #8b5cf6; box-shadow: 0 4px 16px rgba(139,92,246,0.3);">
+        </div>
+
+        <div id="verPensamientoNombre" style="font-weight:900; color:#1e293b; font-size:1rem; margin-bottom:14px;"></div>
+
+        <!-- Burbuja de pensamiento grande -->
+        <div style="background:linear-gradient(135deg,#f3e8ff,#ede9fe); border-radius:20px; padding:18px 20px; margin-bottom:18px; border:1.5px solid #c4b5fd; position:relative;">
+            <div id="verPensamientoTexto"
+                 style="font-size:1rem; color:#6d28d9; font-style:italic; line-height:1.6; font-weight:600; text-align:left;">
+            </div>
+            <!-- Puntitos estilo cómic -->
+            <div style="display:flex; justify-content:flex-start; gap:3px; margin-top:10px; padding-left:4px;">
+                <div style="width:7px;height:7px;border-radius:50%;background:#8b5cf6;opacity:0.8;"></div>
+                <div style="width:5px;height:5px;border-radius:50%;background:#8b5cf6;opacity:0.6;margin-top:2px;"></div>
+                <div style="width:3px;height:3px;border-radius:50%;background:#8b5cf6;opacity:0.4;margin-top:4px;"></div>
+            </div>
+        </div>
+
+        <!-- Input comentario -->
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+            <input type="text" id="inputComentarioPensamiento"
+                   placeholder="Escribe un comentario..."
+                   maxlength="200"
+                   onkeydown="if(event.key==='Enter') window.enviarComentarioPensamiento()"
+                   style="flex:1; background:#f0f2f5; border:none; border-radius:20px; padding:11px 16px; font-size:0.9rem; color:#333; font-family:'Poppins',sans-serif; outline:none;">
+            <button onclick="window.enviarComentarioPensamiento()"
+                    style="background:linear-gradient(135deg,#8b5cf6,#a855f7); color:white; border:none; border-radius:50%; width:42px; height:42px; font-size:1.1rem; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(139,92,246,0.4);">
+                ➤
+            </button>
+        </div>
+
+        <button onclick="document.getElementById('modalVerPensamiento').style.display='none'"
+                style="background:none; border:none; color:#94a3b8; width:100%; cursor:pointer; padding:8px; font-size:0.85rem;">
+            Cerrar
+        </button>
+    </div>
+</div>
 
 </body>
 </html>
