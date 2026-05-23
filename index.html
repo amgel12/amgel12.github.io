@@ -6251,12 +6251,25 @@ window.toggleMenuChatPrivado = () => {
 };
 
 window.clickGaleriaDirecta = () => {
+    // Verificamos si tiene saldo suficiente (2 puntos)
+    if (currentEarnings < 2) {
+        notify("❌ Necesitas al menos 2.00 PTS para enviar fotos");
+        return;
+    }
+    
     const input = document.getElementById('fileInputDirecto');
     if(input) input.click();
     toggleMenuChatPrivado();
 };
 
 window.procesarYEnviarFotoDirecto = (input) => {
+    // 1. Verificación de saldo antes de empezar a procesar
+    if (currentEarnings < 2) {
+        notify("❌ Necesitas al menos 2.00 PTS para enviar fotos");
+        input.value = ""; // Limpiar el archivo elegido
+        return;
+    }
+
     if (input.files && input.files[0]) {
         notify("⏳ Enviando imagen...");
         const reader = new FileReader();
@@ -6273,9 +6286,10 @@ window.procesarYEnviarFotoDirecto = (input) => {
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 const fotoFinal = canvas.toDataURL('image/jpeg', 0.6);
                 
-                // Envío a Firebase
+                // --- INICIO DEL ENVÍO Y COBRO ---
                 if (currentChatId && targetUserUid) {
                     const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
+                    
                     db.ref(`chats_privados/${currentChatId}`).push({
                         uid: idAuditor,
                         autor: miNombre,
@@ -6284,12 +6298,26 @@ window.procesarYEnviarFotoDirecto = (input) => {
                         esFoto: true,
                         fecha: firebase.database.ServerValue.TIMESTAMP
                     }).then(() => {
+                        // 💰 DESCONTAR LOS 2 PUNTOS EN FIREBASE
+                        db.ref(`users/${idAuditor}/earnings`).transaction(current => {
+                            return (current || 0) - 2.00;
+                        });
+
+                        // 📋 REGISTRAR EN EL HISTORIAL DEL USUARIO
+                        if(typeof registrarHistorial === 'function') {
+                            registrarHistorial("Envío de foto privada", -2.00);
+                        }
+
+                        // 🔔 NOTIFICAR AL RECEPTOR
                         db.ref(`users/${targetUserUid}/notifications`).push({
                             from: idAuditor, fromName: miNombre, type: 'chat_privado',
                             text: "📷 Te envió una foto privada", extra: idAuditor,
                             timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
                         });
-                        notify("✅ Imagen enviada");
+
+                        notify("✅ Foto enviada (-2.00 PTS)");
+                        try { window.playSound('coin'); } catch(e){}
+                        input.value = ""; // Resetear input
                     });
                 }
             };
@@ -6297,7 +6325,6 @@ window.procesarYEnviarFotoDirecto = (input) => {
         reader.readAsDataURL(input.files[0]);
     }
 };
-
 // Cierre automático al tocar fuera
 document.addEventListener('click', (e) => {
     const menu = document.getElementById('boxMenuAcciones');
@@ -9847,62 +9874,58 @@ function crearFilaMensajePrivado(s) {
 }
 
 function cargarMensajesPrivados() {
+    if (!currentChatId) return;
+
     if (privChatRef) privChatRef.off();
     if (window._privChatRemovedRef) { window._privChatRemovedRef.off(); window._privChatRemovedRef = null; }
 
     const list = document.getElementById('privChatList');
-    // Vaciar y mostrar indicador de carga solo al abrir un chat nuevo
-    list.innerHTML = '';
-    let mensajesCargados = false;
+    const LLAVE_MEMORIA = 'cache_v2_' + currentChatId;
 
-    privChatRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(30);
+    // 1. CARGA INSTANTÁNEA DESDE CACHÉ
+    const cached = localStorage.getItem(LLAVE_MEMORIA);
+    if (cached) {
+        list.innerHTML = cached;
+        list.scrollTop = list.scrollHeight;
+    } else {
+        list.innerHTML = '<div class="priv-loading" style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i></div>';
+    }
 
-    // child_added: agrega cada mensaje individualmente al DOM (sin reconstruir todo)
+    privChatRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(15); // Bajamos a 15 para ahorrar espacio
+
     privChatRef.on('child_added', snap => {
-        // Primera vez que llegan mensajes: quitar el spinner si existe
-        if (!mensajesCargados) {
-            mensajesCargados = true;
-            const spinner = list.querySelector('.priv-loading');
-            if (spinner) spinner.remove();
-        }
+        const spinner = list.querySelector('.priv-loading');
+        if (spinner) spinner.remove();
 
-        // Si el mensaje ya está en el DOM (reapertura del mismo chat), saltar
         if (document.getElementById(`priv-row-${snap.key}`)) return;
 
         const row = crearFilaMensajePrivado(snap);
         list.appendChild(row);
+        list.scrollTop = list.scrollHeight;
 
-        // Solo scroll automático si ya estamos cerca del fondo (evita interrumpir lectura)
-        const distanciaFondo = list.scrollHeight - list.scrollTop - list.clientHeight;
-        if (distanciaFondo < 150) {
-            list.scrollTop = list.scrollHeight;
-        }
-    }, err => {
-        list.innerHTML = '<div style="text-align:center; padding:20px; color:#ef4444; font-size:0.8rem;">Error al cargar mensajes.</div>';
-    });
-
-    // Mostrar placeholder vacío solo si no llegan mensajes tras 800ms
-    const placeholderTimer = setTimeout(() => {
-        if (!mensajesCargados) {
-            list.innerHTML = '<div style="text-align:center; padding:20px; color:#cbd5e1; font-size:0.8rem;">🔒 Chat Privado y Seguro.<br>Empieza a escribir.</div>';
-        }
-    }, 800);
-
-    // Limpiar el timer si ya llegaron mensajes
-    privChatRef.once('value', () => { clearTimeout(placeholderTimer); });
-
-    // child_removed: eliminar mensajes borrados del DOM sin reconstruir la lista
-    window._privChatRemovedRef = db.ref(`chats_privados/${currentChatId}`);
-    window._privChatRemovedRef.on('child_removed', snap => {
-        const row = document.getElementById(`priv-row-${snap.key}`);
-        if (row) {
-            row.style.transition = 'opacity 0.25s';
-            row.style.opacity = '0';
-            setTimeout(() => row.remove(), 250);
+        // 2. GUARDADO SEGURO (LIMITADO)
+        try {
+            // Guardamos solo si el chat no es exageradamente largo
+            if (list.innerHTML.length < 500000) { // Límite de medio mega por chat
+                localStorage.setItem(LLAVE_MEMORIA, list.innerHTML);
+            }
+        } catch (e) {
+            console.warn("⚠️ Memoria llena, limpiando chats antiguos...");
+            // Si se llena, borramos los cachés viejos para hacer espacio
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('cache_v2_')) localStorage.removeItem(key);
+            }
         }
     });
+
+    // Placeholder si no hay nada
+    setTimeout(() => {
+        if (list.innerHTML === "" || list.innerHTML.includes('fa-spin')) {
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:#cbd5e1;">🔒 Chat Privado.</div>';
+        }
+    }, 2000);
 }
-
 // ==========================================
 // 👆 SWIPE PARA RESPONDER (CHAT PRIVADO)
 // ==========================================
