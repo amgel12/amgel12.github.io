@@ -2694,22 +2694,44 @@ window.activarAudioGlobal = () => {
 <body>
 <script>
 // ==========================================
-// 📥 BANNER DE DESCARGA (Solo para navegadores)
+// 🚀 BLOQUEO DE WEB PARA FORZAR DESCARGA
 // ==========================================
-if (typeof AndroidNative === 'undefined') {
-    const banner = document.createElement('div');
-    banner.style.cssText = "position:fixed; top:0; left:0; width:100%; background:#1e293b; color:white; padding:15px; text-align:center; z-index:100000; font-size:0.9rem; box-shadow:0 4px 15px rgba(0,0,0,0.3); display:flex; flex-direction:column; gap:10px; border-bottom:3px solid #6366f1;";
-    
-    banner.innerHTML = `
-        <div><strong style="color:#fbbf24;">¡Atención!</strong> Para entrar a este grupo debes usar la aplicación oficial.</div>
-        <a href="https://play.google.com/store/apps/details?id=com.pagocode.app" 
-           style="background:linear-gradient(135deg, #6366f1, #4f46e5); color:white; padding:12px 25px; border-radius:50px; text-decoration:none; font-weight:800; display:inline-block; align-self:center; box-shadow:0 4px 10px rgba(99,102,241,0.3);">
-           🚀 DESCARGAR APP GRATIS
-        </a>
-    `;
-    document.body.prepend(banner);
-    document.body.style.paddingTop = "110px";
+function forzarDescargaApp() {
+    // Esperamos un momento para confirmar que no es la App
+    setTimeout(() => {
+        if (typeof AndroidNative === 'undefined') {
+            // 1. Creamos el fondo oscuro que cubre toda la pantalla
+            const overlay = document.createElement('div');
+            overlay.id = "overlayDescarga";
+            overlay.style.cssText = "position:fixed; inset:0; background:rgba(15, 23, 42, 0.95); backdrop-filter:blur(10px); z-index:1000000; display:flex; align-items:center; justify-content:center; padding:20px; text-align:center; color:white; font-family:'Poppins', sans-serif;";
+            
+            // 2. Creamos la tarjeta central
+            overlay.innerHTML = `
+                <div style="background:white; color:#1e293b; padding:40px 30px; border-radius:30px; max-width:350px; width:100%; box-shadow:0 25px 50px rgba(0,0,0,0.5); animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                    <div style="font-size:4rem; margin-bottom:20px;">📱</div>
+                    <h2 style="font-size:1.5rem; font-weight:900; margin-bottom:15px; line-height:1.2;">¡Mejor experiencia en la App!</h2>
+                    <p style="font-size:0.9rem; color:#64748b; margin-bottom:30px; line-height:1.6;">
+                        Para unirte a este grupo, chatear en tiempo real y <b>ganar puntos por ver videos</b>, descarga nuestra aplicación oficial.
+                    </p>
+                    
+                    <a href="https://play.google.com/store/apps/details?id=com.pagocode.app" 
+                       style="background:linear-gradient(135deg, #6366f1, #4f46e5); color:white; padding:18px; border-radius:15px; text-decoration:none; font-weight:800; display:block; margin-bottom:15px; font-size:1rem; box-shadow:0 10px 20px rgba(99,102,241,0.3);">
+                       🚀 INSTALAR GRATIS
+                    </a>
+                    
+                    <button onclick="document.getElementById('overlayDescarga').remove()" 
+                            style="background:none; border:none; color:#94a3b8; font-size:0.8rem; font-weight:600; cursor:pointer; text-decoration:underline;">
+                            Continuar en la web (limitado)
+                    </button>
+                </div>
+            `;
+            
+            document.body.prepend(overlay);
+        }
+    }, 1000); 
 }
+
+window.addEventListener('load', forzarDescargaApp);
 </script>
 <script>
 
@@ -6524,6 +6546,8 @@ window.manejarAuth = async () => {
         // 1. Configuración Inicial
         idAuditor = user.uid;
         document.getElementById('authScreen').style.display = 'none';
+        // 🔥 CARGA ANTICIPADA DE GRUPOS (Para que no tarden 4 segundos)
+        if(typeof cargarListaDeGrupos === 'function') cargarListaDeGrupos();
 
         // Ocultar pantalla de carga
         const loadingOverlay = document.getElementById('loadingOverlay');
@@ -13762,14 +13786,26 @@ window.guardarNuevoGrupo = () => {
         }
     });
 };
-// 3. CARGAR LA LISTA DE GRUPOS EN TIEMPO REAL
-window.cargarListaDeGrupos = () => {
-    db.ref('grupos_chat').on('value', snap => {
-        const lista = document.getElementById('listaDeGrupos');
-        if (!lista) return;
 
+const GRUPOS_CACHE_KEY = 'pgc_cache_grupos_v1';
+
+window.cargarListaDeGrupos = () => {
+    const lista = document.getElementById('listaDeGrupos');
+    if (!lista) return;
+
+    // 1. CARGA INSTANTÁNEA: Leer de la memoria del teléfono
+    const gruposGuardados = localStorage.getItem(GRUPOS_CACHE_KEY);
+    if (gruposGuardados) {
+        lista.innerHTML = gruposGuardados; // Los muestra en 0.1 segundos
+    } else {
+        lista.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando grupos...</div>';
+    }
+
+    // 2. SEGUNDO PLANO: Sincronizar con Firebase para ver si hay grupos nuevos
+    db.ref('grupos_chat').on('value', snap => {
         if (!snap.exists()) {
-            lista.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:20px;">No hay grupos aún. ¡Crea el primero!</div>';
+            lista.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">No hay grupos aún. ¡Crea el primero!</div>';
+            localStorage.removeItem(GRUPOS_CACHE_KEY);
             return;
         }
 
@@ -13780,33 +13816,27 @@ window.cargarListaDeGrupos = () => {
 
             const g = data.info;
             const key = child.key;
-
-            const nombreSeguro = g.nombre ? g.nombre.replace(/'/g, "\\'") : 'Grupo';
-            const iconoSeguro = g.icono ? g.icono.replace(/'/g, "\\'") : '💬';
-            const creadorSeguro = g.creador ? g.creador.replace(/'/g, "\\'") : '';
+            const nombreSeguro = (g.nombre || 'Grupo').replace(/'/g, "\\'");
+            const iconoSeguro = (g.icono || '💬').replace(/'/g, "\\'");
+            const creadorSeguro = (g.creador || '').replace(/'/g, "\\'");
 
             html += `
             <div class="grupo-card" data-key="${key}" data-creador="${creadorSeguro}"
                  onclick="handleGrupoClick(event, '${key}', '${nombreSeguro}', '${iconoSeguro}')"
-                 ontouchstart="iniciarHoldGrupo(event, '${key}')"
-                 ontouchend="cancelarHoldGrupo(event)"
-                 ontouchmove="cancelarHoldGrupo(event)"
-                 onmousedown="iniciarHoldGrupo(event, '${key}')"
-                 onmouseup="cancelarHoldGrupo(event)"
-                 onmouseleave="cancelarHoldGrupo(event)">
-                <div class="grupo-icon">${g.icono || '💬'}</div>
+                 style="display: flex; align-items: center; background: white; padding: 15px; border-radius: 18px; margin-bottom: 12px; border: 1px solid #f1f5f9; box-shadow: 0 4px 15px rgba(0,0,0,0.03); cursor: pointer;">
+                <div class="grupo-icon" style="width:50px; height:50px; border-radius:14px; background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; display:flex; align-items:center; justify-content:center; font-size:1.5rem; margin-right:15px; box-shadow:0 4px 10px rgba(99,102,241,0.2);">${g.icono || '💬'}</div>
                 <div style="flex: 1; text-align: left;">
                     <div style="font-weight: 800; color: #1e293b; font-size: 1rem;">${g.nombre || 'Grupo'}</div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Toca para entrar al chat</div>
+                    <div style="font-size: 0.8rem; color: #10b981; font-weight: 700;">Entrar ahora ᐳ</div>
                 </div>
-                <div style="color: #cbd5e1; font-size: 1.2rem;">ᐳ</div>
             </div>`;
         });
 
+        // Actualizamos la pantalla y guardamos en la memoria para la próxima vez
         lista.innerHTML = html;
+        localStorage.setItem(GRUPOS_CACHE_KEY, html);
     });
 };
-
 // LONG-PRESS PARA ELIMINAR GRUPOS
 let holdGrupoActivado = false;
 let holdGrupoTimer = null;
