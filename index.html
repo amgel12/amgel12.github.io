@@ -3622,7 +3622,6 @@ Cerrar
       <button id="btnSaludarFoto" class="btn-blue" style="width:auto; padding:10px 20px; background:linear-gradient(135deg,#a855f7,#8b5cf6); border-radius:50px; font-size:0.9rem; display:flex; align-items:center; gap:8px; box-shadow:0 4px 15px rgba(168,85,247,0.4);">
         <i class="fas fa-comment"></i> Hola
       </button>
-
 <button onclick="event.stopPropagation(); abrirMenuFoto(event, currentPhotoKey, currentPhotoOwner, false)" 
         style="background:rgba(255,255,255,0.2); border:none; color:white; padding:10px 15px; border-radius:20px; cursor:pointer;">
     ⋮
@@ -3639,7 +3638,7 @@ Cerrar
   <div class="modal-content" style="width:100%; max-width:100%; border-radius:20px 20px 0 0; padding:0; margin:0; background:#f8fafc; animation:slideUp 0.2s;">
 
     <h3 style="padding:15px; margin:0; font-size:1rem; border-bottom:1px solid #e2e8f0; text-align:center;">
-      Opciones de Foto
+      Opciones de Fotografía
     </h3>
 
     <div style="padding:12px 15px; display:flex; flex-direction:column; gap:10px;">
@@ -3662,33 +3661,10 @@ Cerrar
   </div>
 </div>
 
-        <!-- 🔴 BOTÓN DE RESET INMEDIATO (SOLO PARA PRUEBAS) -->
-        <div id="resetDebug" style="position:fixed; bottom:80px; right:10px; z-index:9999;">
-
-        </div>
-
-        <div id="modalConfirmarNavegador" class="modal-overlay" style="z-index: 30000; display:none;">
-            <div class="modal-content" style="text-align: center; border: 2px solid #0070ba;">
-                <div style="font-size: 3rem; margin-bottom: 10px;">🌐</div>
-                <h3 style="color:#0070ba; margin-bottom: 10px;">¿Abrir en Chrome?</h3>
-                <p style="font-size: 0.9rem; color:#64748b; margin-bottom: 20px;">
-                    Para que la voz en inglés funcione perfecto, abriremos la academia en tu navegador externo.<br><br>¿Seguro que deseas salir de la app?
-                </p>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="document.getElementById('modalConfirmarNavegador').style.display='none'" class="btn-blue" style="background: #e2e8f0; color: #475569; flex: 1;">
-                        Cancelar
-                    </button>
-                    <button onclick="ejecutarSalidaNavegador()" class="btn-blue" style="background: #0070ba; color: white; flex: 1; box-shadow: 0 4px 10px rgba(0, 112, 186, 0.3);">
-                        Sí, Continuar
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div id="modalConfirmDelete" class="modal-overlay" style="z-index: 1000002; display:none;">
             <div class="modal-content" style="border: 2px solid #ef4444; text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 10px;"></div>
-                <h3 style="color:#b91c1c; margin-bottom: 10px;">¿Estás seguro?</h3>
+                <h3 style="color:#b91c1c; margin-bottom: 10px;">¿Estás b91c1c, (modal para eliminar fotos muro </h3>
                 <p style="font-size: 0.9rem; color:#64748b; margin-bottom: 20px;">
                     Esta foto se eliminará permanentemente para todos.
                 </p>
@@ -3698,7 +3674,7 @@ Cerrar
                         Cancelar
                     </button>
                     <button onclick="ejecutarBorradoFoto()" class="btn-blue" style="background: #ef4444; color: white; flex: 1; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);">
-                        Sí, Borrar
+                        siSí, Borrar
                     </button>
                 </div>
             </div>
@@ -4821,9 +4797,31 @@ style="display:none;">
             📋 Copiar Texto
         </button>
    
+        <button id="btnBorrarMensaje" onclick="borrarMensajeSeleccionado()" class="btn-blue" style="margin: 5px 15px 15px; background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; display:flex; align-items:center; justify-content:center; gap:10px;">
+            🗑️ Borrar para todos
+        </button>
+        <div style="height:10px; background:#f1f5f9; border-top:1px solid #e2e8f0;"></div>
+        <button onclick="document.getElementById('modalChatOptions').style.display='none'" style="width:100%; padding:15px; border:none; background:white; font-weight:bold; color:#64748b; cursor:pointer;">
+            Cancelar
+        </button>
     </div>
 </div>
+<div id="modalConfirmDeletePrivado" class="modal-overlay" style="z-index: 30500; display:none;">
+    <div class="modal-content" style="border: 2px solid #ef4444; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🗑️</div>
+        <h3 style="color:#b91c1c; margin-bottom: 10px;">¿Eliminar para todoos?</h3>
+        <p style="font-size: 0.9rem; color:#64748b; margin-bottom: 20px;">
+            Esta acción eliminará el mensaje para ambos usuarios permanentemente.
+        </p>
 
+        <div style="display: flex; gap: 10px;">
+            <button onclick="confirmarBorradoPrivado()"
+style="background:#ef4444; color:white;">
+    Sí, Borrar
+</button>
+<button onclick="cerrarConfirmacionBorradoPrivado()">
+    Cancelar
+</button>
         </div>
     </div>
 </div>
@@ -7394,40 +7392,7 @@ function iniciarChat() {
     window.idMensajeParaBorrar = null;
 
 // 1. Esta función la llama el bote de basura (Abre el cuadro)
-async function eliminarMensajePrivadoDirecto(key) {
 
-    try {
-
-        const fila = document.getElementById(`priv-row-${key}`);
-
-        // Animación visual
-        if (fila) {
-            fila.style.transition = "0.25s";
-            fila.style.opacity = "0";
-            fila.style.transform = "translateX(40px) scale(0.9)";
-        }
-
-        // Esperar animación
-        await new Promise(resolve => setTimeout(resolve, 250));
-
-        // Eliminar SOLO el mensaje
-        await remove(
-            ref(
-                db,
-                `chatsPrivados/${chatPrivadoActual}/mensajes/${key}`
-            )
-        );
-
-        // Eliminar del DOM
-        if (fila) fila.remove();
-
-    } catch(err) {
-
-        console.error("Error eliminando:", err);
-        alert("No se pudo eliminar");
-
-    }
-}
 // 2. Esta función ejecuta la acción
 window.confirmarAccionBorrado = (tipo) => {
     const key = window.idMensajeParaBorrar;
@@ -7478,11 +7443,19 @@ function actualizarCacheChatSilencioso() {
         }, 1000);
     }
 }
-    window.confirmarBorradoPrivado = () => {
+window.eliminarMensajePrivadoDirecto = (msgKey) => {
+        if (msgKey && currentChatId) {
+            db.ref(`chats_privados/${currentChatId}/${msgKey}`).remove()
+                .catch(e => notify("❌ Error al borrar"));
+        }
+        const icon = document.getElementById(`del-icon-${msgKey}`);
+        if (icon) icon.style.display = 'none';
+    };
+  window.confirmarBorradoPrivado = () => {
         if (selectedMsgId && currentChatId) {
             db.ref(`chats_privados/${currentChatId}/${selectedMsgId}`).remove()
                 .then(() => {
-                    notify("👉 Mensaje eliminado para todos");
+                    notify("🗑️ Mensaje eliminado para todos");
                     try { window.playSound('click'); } catch(e){}
                 })
                 .catch(e => notify("❌ Error al borrar"));
@@ -7501,7 +7474,16 @@ function actualizarCacheChatSilencioso() {
             }
         }
     };
+function ejecutarBorradoPrivadoParaTodos(msgKey) {
+        if (!msgKey || !currentChatId) return;
 
+        db.ref(`chats_privados/${currentChatId}/${msgKey}`).remove()
+            .then(() => {
+                notify("🗑️ Mensaje eliminado para todos");
+                try { window.playSound('click'); } catch(e){}
+            })
+            .catch(e => notify("❌ Error al borrar"));
+    }
     // --- LÓGICA DE SWIPE PARA RESPONDER ---
     let swipeStartX = 0;
     let swipeStartY = 0;
@@ -7732,22 +7714,34 @@ function actualizarCacheChatSilencioso() {
 
     // --- BORRADO AUTOMÁTICO TRAS 4 SEGUNDOS (PRIVADO) ---
     function ejecutarBorradoPrivadoParaTodos(msgKey) {
-        if (!msgKey || !currentChatId) return;
+    if (!msgKey || !currentChatId) return;
 
-        db.ref(`chats_privados/${currentChatId}/${msgKey}`).remove()
-            .then(() => {
-                notify("🗑️1 Mensaje eliminado para todos");
-                try { window.playSound('click'); } catch(e){}
-            })
-            .catch(e => notify("❌ Error al borrar"));
-    }
+    db.ref(`chats_privados/${currentChatId}/${msgKey}`)
+        .remove()
+        .then(() => {
+            notify("🗑️ Mensaje eliminado para todos");
 
-    function scrollToBottom() { const d = document.getElementById('chatList'); setTimeout(() => d.scrollTop = d.scrollHeight, 100); }
-    // Enviar texto se mantiene igual, no hace falta cambiarlo
-    // ...
+            try {
+                window.playSound('click');
+            } catch(e){}
+        })
+        .catch(() => {
+            notify("❌ Error al borrar");
+        });
+}
 
-    // MENCIONES
-    // --- FUNCIÓN PARA DETECTAR Y NOTIFICAR MENCIONES (@) ---
+function scrollToBottom() {
+    const d = document.getElementById('chatList');
+
+    if (!d) return;
+
+    setTimeout(() => {
+        d.scrollTop = d.scrollHeight;
+    }, 100);
+}
+
+// MENCIONES
+// --- FUNCIÓN PARA DETECTAR Y NOTIFICAR MENCIONES (@) ---
 function detectarYEnvarMenciones(txt, type) {
     const regex = /@(\w+)/gi;
     const menciones = txt.match(regex);
@@ -9410,155 +9404,136 @@ let pressTimerFoto;
 let pressTimerFotoDetalle = null;
 let galeriaFotosArray = [];
 let galeriaIndexActual = 0;
+// --- FUNCIONES DE PRESIÓN LARGA ---
 
-const CACHE_MURO_KEY = 'pgc_muro_fotos_cache_v2';
-// ==========================================
-// 📸 MURO DE FOTOS - CARGA ULTRA-RÁPIDA (CACHÉ)
-// ==========================================
-window._galeriaCargada = false;
+let toqueLargoActivo = false;
+let timerToque;
+
+window.iniciarPresionFoto = (ev, key, uid, pinned) => {
+    toqueLargoActivo = false; // Reset
+    fotoSeleccionadaKey = key; // Guardamos ID de la foto
+    
+    // Tiempo para que salga el menú (0.6 segundos)
+    timerToque = setTimeout(() => {
+        toqueLargoActivo = true;
+        if (navigator.vibrate) navigator.vibrate(50); // Vibrar un poquito
+        abrirMenuFoto(ev, key, uid, pinned);
+    }, 600);
+};
+
+window.cancelarPresionFoto = () => {
+    clearTimeout(timerToque);
+};
+
+window.abrirFotoGrandeSegura = (ev, key, uid, nombre, src) => {
+    // 1. Al hacer clic, lo primero es MATAR el cronómetro del menú
+    if (typeof timerSeguridad !== 'undefined') clearTimeout(timerSeguridad);
+
+    // 2. Si ya se había activado el menú (toque muy largo), no entramos a la foto
+    if (toqueLargoActivo) {
+        toqueLargoActivo = false;
+        return;
+    }
+
+    // 3. Si fue un toque normal, buscamos el índice y abrimos la galería
+    const index = galeriaFotosArray.findIndex(f => f.k === key);
+    if (index !== -1) {
+        window.abrirGaleriaFotos(index);
+    } else {
+        // Fallback: Si no está en el array, cargamos solo esa imagen
+        galeriaFotosArray = [{ k: key, uid: uid, autor: nombre, foto: src }];
+        window.abrirGaleriaFotos(0);
+    }
+};
+window.cancelarPresionFoto = () => {
+    clearTimeout(pressTimerFoto); // Detener el cronómetro si el usuario levanta el dedo
+};
 
 function cargarGaleriaComunidad() {
-    if (window._galeriaCargada) return;
-    window._galeriaCargada = true;
-
     const contenedor = document.getElementById('muroFotosGrid');
     if (!contenedor) return;
 
-    // 1. CARGA INSTANTÁNEA DESDE CACHÉ
-    const cacheMuro = localStorage.getItem(CACHE_MURO_KEY);
-    if (cacheMuro && cacheMuro.length > 100) {
-        contenedor.innerHTML = cacheMuro;
-    } else {
-        contenedor.innerHTML = '<div id="spinnerMuro" style="text-align:center; padding:40px; color:#cbd5e1; grid-column:span 2; width:100%;"><i class="fas fa-spinner fa-spin" style="font-size:2rem; margin-bottom:10px;"></i><br>Cargando fotos...</div>';
-    }
+    // Usamos .on('value') para que se actualice en tiempo real
+    db.ref('galeria_comunidad').on('value', snap => {
 
-    // 2. SINCRONIZACIÓN CON FIREBASE (limitado para no descargar todo)
-    db.ref('galeria_comunidad').orderByChild('fecha').limitToLast(40).on('value', snap => {
+        // 1. Si no hay fotos, mostrar mensaje
         if (!snap.exists()) {
-            contenedor.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1; grid-column:span 2;">Sé el primero en subir una foto.</div>';
+            contenedor.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1; grid-column:span 2; width:100%;">Sé el primero en subir una foto.</div>';
             return;
         }
 
+        // 2. Convertir los datos a una lista
         let fotos = [];
         snap.forEach(child => {
             fotos.push({ k: child.key, ...child.val() });
         });
 
-        // Ordenar (Fijados arriba, luego más recientes)
-        fotos.sort((a, b) => {
-            if (a.pinned && !b.pinned) return -1;
-            if (!a.pinned && b.pinned) return 1;
-            return (b.fecha || 0) - (a.fecha || 0);
-        });
-
+        // 2.1 Guardar array global para galería deslizable
         galeriaFotosArray = fotos;
 
-        // Generar HTML nuevo
-        let htmlFinal = "";
+        // 3. ORDENAMIENTO MAESTRO
+        // Prioridad 1: Pinned (Fijados)
+        // Prioridad 2: Fecha (Más reciente arriba)
+        fotos.sort((a, b) => {
+            // Si a está fijado y b no, a va primero (-1)
+            if (a.pinned && !b.pinned) return -1;
+            // Si b está fijado y a no, b va primero (1)
+            if (!a.pinned && b.pinned) return 1;
+
+            // Si ambos son iguales en fijado, gana el más nuevo
+            const fechaA = a.fecha || 0;
+            const fechaB = b.fecha || 0;
+            return fechaB - fechaA; // Descendente
+        });
+
+        // 4. GENERAR HTML
+        let html = "";
         fotos.forEach((f, index) => {
+            const imagenSrc = f.foto || "";
             const nombre = getDisplayName(f.uid, f.autor || "Anónimo");
-            const esFijado = f.pinned ? '<div style="position:absolute; top:8px; right:8px; background:rgba(251, 191, 36, 0.9); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem;">📌</div>' : '';
-            const isLiked = f.likes && idAuditor && f.likes[idAuditor];
+            const esFijado = f.pinned ? '<div style="position:absolute; top:8px; right:8px; background:rgba(251, 191, 36, 0.9); width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); font-size:0.8rem;">📌</div>' : '';
+
+            const divId = `photo-${f.k}`;
+
             const commentCount = f.comentarios ? Object.keys(f.comentarios).length : 0;
 
-            htmlFinal += `
-            <div id="photo-${f.k}" class="photo-card" data-index="${index}" data-key="${f.k}" data-uid="${f.uid}" data-pinned="${f.pinned}">
-                <div style="position:relative;">
+            html += `
+            <div id="${divId}" class="photo-card" 
+                 data-index="${index}" data-key="${f.k}" data-uid="${f.uid}" data-pinned="${f.pinned}"
+                 style="display:inline-block; width:100%; margin-bottom:10px; break-inside: avoid;">
+
+                <div style="position:relative; cursor:pointer;" 
+                     onclick="window.abrirFotoGrandeSegura(event, '${f.k}', '${f.uid}', '${nombre.replace(/'/g, "\\'")}', '${imagenSrc}')">
+                    
                     ${esFijado}
-                    <img src="${f.foto}" class="photo-img-content" loading="lazy" style="width:100%; display:block; border-radius:12px;">
+                    <img src="${imagenSrc}" class="photo-img-content" loading="lazy" style="width:100%; display:block; border-radius:12px; pointer-events:none;">
                 </div>
-                <div style="padding:10px; display:flex; align-items:center; gap:8px;">
-                    <div style="width:22px; height:22px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; border:1px solid #eee;"></div>
-                    <span style="font-weight:700; font-size:0.75rem; color:#334155; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(nombre)}</span>
+
+
+                <div style="padding:6px 10px; display:flex; align-items:center; gap:6px;">
+                    <div style="width:22px; height:22px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; border:1px solid #e2e8f0; flex-shrink:0;"></div>
+                    <span style="font-weight:600; font-size:0.75rem; color:#334155; flex:1;">${nombre}</span>
+                    ${f.uid === idAuditor ? '<span style="color:#ef4444; font-size:0.65rem; font-weight:600;">tu foto</span>' : ''}
                 </div>
                 <div style="padding:0 10px 10px; display:flex; align-items:center; gap:8px;">
-                    <button onclick="event.stopPropagation(); abrirComentariosFoto('${f.k}')" style="background:#f1f5f9; border:none; color:#475569; font-size:0.72rem; font-weight:700; padding:6px 10px; border-radius:20px; cursor:pointer;">
-                        💬 <span id="cc-foto-${f.k}">${commentCount}</span>
+                    <button
+                        onclick="event.stopPropagation(); abrirComentariosFoto('${f.k}')"
+                        style="display:flex; align-items:center; gap:5px; background:#f1f5f9; border:none; color:#475569; font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:background 0.15s;">
+                        💬 <span id="cc-foto-${f.k}">${commentCount}</span> Comentar
                     </button>
-                    <button onclick="event.stopPropagation(); likePhoto('${f.k}', '${f.uid}', this)" style="background:#f1f5f9; border:none; color:#475569; font-size:0.72rem; font-weight:700; padding:6px 10px; border-radius:20px; cursor:pointer;">
-                        <i class="${isLiked ? 'fas fa-heart liked' : 'far fa-heart'}" style="color:${isLiked ? '#e11d48' : '#94a3b8'};"></i>
+                    <button
+                        onclick="event.stopPropagation(); likePhoto('${f.k}', '${f.uid}', this)"
+                        style="display:flex; align-items:center; gap:5px; background:#f1f5f9; border:none; color:#475569; font-size:0.78rem; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:background 0.15s;">
+                        <i class="${(f.likes && idAuditor && f.likes[idAuditor]) ? 'fas fa-heart' : 'far fa-heart'}" style="color:${(f.likes && idAuditor && f.likes[idAuditor]) ? '#e11d48' : '#94a3b8'};"></i>
                         <span>${f.vCount || 0}</span>
                     </button>
                 </div>
             </div>`;
         });
 
-        // Solo actualizar si hay cambios reales para evitar el parpadeo
-        if (contenedor.innerHTML !== htmlFinal) {
-            contenedor.innerHTML = htmlFinal;
-            localStorage.setItem(CACHE_MURO_KEY, htmlFinal);
-        }
-        
-        const spin = document.getElementById('spinnerMuro');
-        if(spin) spin.remove();
+        contenedor.innerHTML = html;
     });
 }
-// Inicializar manejadores de eventos para el muro de fotos (solo una vez)
-if (!window._fotoMuroInit) {
-    window._fotoMuroInit = true;
-
-    document.getElementById('muroFotosGrid').addEventListener('click', (e) => {
-        const card = e.target.closest('.photo-card');
-        if (!card) return;
-        const idx = parseInt(card.getAttribute('data-index'));
-        if (!isNaN(idx)) abrirGaleriaFotos(idx);
-    });
-
-    document.addEventListener('mousedown', (e) => {
-        const card = e.target.closest('.photo-card');
-        if (!card) return;
-        const key = card.getAttribute('data-key');
-        const uid = card.getAttribute('data-uid');
-        const pinned = card.getAttribute('data-pinned') === 'true';
-        pressTimerFoto = setTimeout(() => abrirMenuFoto(null, key, uid, pinned), 6000);
-    });
-    document.addEventListener('mouseup', (e) => {
-        if (e.target.closest('.photo-card')) clearTimeout(pressTimerFoto);
-    });
-    document.addEventListener('touchstart', (e) => {
-        const card = e.target.closest('.photo-card');
-        if (!card) return;
-        const key = card.getAttribute('data-key');
-        const uid = card.getAttribute('data-uid');
-        const pinned = card.getAttribute('data-pinned') === 'true';
-        pressTimerFoto = setTimeout(() => abrirMenuFoto(null, key, uid, pinned), 6000);
-    }, { passive: true });
-    document.addEventListener('touchend', (e) => {
-        if (e.target.closest('.photo-card')) clearTimeout(pressTimerFoto);
-    });
-
-
-    const detalleImg = document.getElementById('detalleFotoImg');
-    if (detalleImg) {
-        let startX = 0, startY = 0;
-        detalleImg.addEventListener('mousedown', (e) => {
-            startX = e.clientX; startY = e.clientY;
-            pressTimerFotoDetalle = setTimeout(() => {
-                if (currentPhotoKey) abrirMenuFoto(null, currentPhotoKey, currentPhotoOwner, false);
-            }, 6000);
-        });
-        detalleImg.addEventListener('mousemove', (e) => {
-            if (pressTimerFotoDetalle && (Math.abs(e.clientX - startX) > 20 || Math.abs(e.clientY - startY) > 20))
-                clearTimeout(pressTimerFotoDetalle);
-        });
-        detalleImg.addEventListener('mouseup', () => clearTimeout(pressTimerFotoDetalle));
-        detalleImg.addEventListener('mouseleave', () => clearTimeout(pressTimerFotoDetalle));
-        detalleImg.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].clientX; startY = e.touches[0].clientY;
-            pressTimerFotoDetalle = setTimeout(() => {
-                if (currentPhotoKey) abrirMenuFoto(null, currentPhotoKey, currentPhotoOwner, false);
-            }, 6000);
-        }, { passive: true });
-        detalleImg.addEventListener('touchmove', (e) => {
-            if (pressTimerFotoDetalle && (Math.abs(e.touches[0].clientX - startX) > 20 || Math.abs(e.touches[0].clientY - startY) > 20))
-                clearTimeout(pressTimerFotoDetalle);
-        }, { passive: true });
-        detalleImg.addEventListener('touchend', () => clearTimeout(pressTimerFotoDetalle));
-    }
-}
-
-
-
 
 // ==========================================
 // 📷 FUNCIONES PARA FOTO PRIVADA
@@ -9993,70 +9968,103 @@ function crearFilaMensajePrivado(s) {
         </div>`;
     return row;
 }
-let timerGuardadoCache = null;
-
 function cargarMensajesPrivados() {
-    if (!currentChatId) return;
-
     if (privChatRef) privChatRef.off();
-    if (window._privChatRemovedRef) window._privChatRemovedRef.off();
 
     const list = document.getElementById('privChatList');
-    const LLAVE_MEMORIA = 'pgc_v4_cache_' + currentChatId;
+    privChatRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(30);
 
-    // 1. CARGA INSTANTÁNEA
-    const cached = localStorage.getItem(LLAVE_MEMORIA);
-    if (cached) {
-        list.innerHTML = cached;
-        list.scrollTop = list.scrollHeight;
-    } else {
-        list.innerHTML = '<div class="priv-loading" style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i></div>';
+    privChatRef.on('value', snap => {
+        if (!snap.exists()) {
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:#cbd5e1; font-size:0.8rem;">🔒 Chat Privado y Seguro.<br>Empieza a escribir.</div>';
+            return;
+        }
+
+        let html = "";
+
+        snap.forEach(s => {
+            const m = s.val();
+            const esMio = m.uid === idAuditor;
+
+            let textoSeguro = escapeHtml(m.texto);
+            let textoFinal = hacerEnlacesClickeables(textoSeguro);
+
+            const fotoMsg = getUserProfilePhoto(m.uid);
+            const autorNombre = esMio ? (document.getElementById('profKey').textContent || myCurrentKey) : document.getElementById('privChatTitle').innerText;
+            const textoEscapado = escapeHtml(m.texto).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                let fotoHTML = "";
+    if (m.esFoto && m.foto) {
+        fotoHTML = `
+            <div style="margin:8px 0; cursor:pointer;" 
+                 onclick="if(!window.isPressing) mostrarFotoPrivada(this)" 
+                 data-foto="${m.foto.replace(/"/g, '&quot;')}">
+                
+                <img src="${m.foto}" 
+                     style="max-width:200px; max-height:200px; border-radius:12px; object-fit:cover; box-shadow:0 2px 8px rgba(0,0,0,0.15); 
+                            -webkit-touch-callout: none; 
+                            -webkit-user-select: none; 
+                            user-select: none; 
+                            pointer-events: none;" 
+                     loading="lazy">
+            </div>
+        `;
     }
 
-    // 2. ESCUCHAR MENSAJES NUEVOS
-    privChatRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(15);
-    privChatRef.on('child_added', snap => {
-        const spinner = list.querySelector('.priv-loading');
-        if (spinner) spinner.remove();
 
-        if (document.getElementById(`priv-row-${snap.key}`)) return;
-        if (list.innerHTML.includes('🔒')) list.innerHTML = '';
+            // Mostrar mensaje citado si existe
+            let replyHTML = "";
+            if (m.replyTo) {
+                replyHTML = `
+                    <div style="background:rgba(0,0,0,0.08); border-left:3px solid #6366f1; 
+                                padding:6px 10px; border-radius:6px; margin-bottom:6px; font-size:0.78rem;">
+                        <div style="font-weight:800; color:#6366f1;">${escapeHtml(m.replyTo.author || 'Usuario')}</div>
+                        <div style="opacity:0.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">
+                            ${escapeHtml(m.replyTo.text || '')}
+                        </div>
+                    </div>
+                `;
+            }
 
-        const row = crearFilaMensajePrivado(snap);
-        list.appendChild(row);
+            html += `
+            <div class="chat-row ${esMio ? 'mine' : 'other'}">
+
+                <img 
+                    src="${fotoMsg}" 
+                    class="chat-avatar-img"
+                    style="display:block;"
+                    data-uid="${m.uid}"
+                    onclick="mostrarPerfilUsuario(this, '${autorNombre}')">
+
+                ${esMio ? `<span id="del-icon-${s.key}" class="delete-msg-trigger" onclick="event.stopPropagation();eliminarMensajePrivadoDirecto('${s.key}')">🗑️</span>` : ''}
+
+                <div id="priv-msg-${s.key}" 
+                     class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}" 
+                     style="max-width:75%; cursor:grab; transition: transform 0.2s ease-out;"
+                     data-msg-key="${s.key}"
+                     data-msg-text="${escapeHtml(m.texto).replace(/"/g, '&quot;')}"
+                     data-msg-uid="${m.uid}"
+                     ontouchstart="startPressFromElement(this, true); privSwipeStart(event, '${s.key}')"
+                     ontouchmove="privSwipeMove(event, '${s.key}')"
+                     ontouchend="privSwipeEnd(event, '${s.key}', '${textoEscapado}', '${autorNombre}', '${m.uid}'); cancelPress(true)"
+                     onmousedown="startPressFromElement(this, true)"
+                     onmouseup="cancelPress(true)"
+                     onmouseleave="cancelPress(true)">
+                    ${replyHTML}
+                    ${fotoHTML}
+                    <div>${textoFinal}</div>
+                    <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
+                        ${new Date(m.fecha).toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        list.innerHTML = html;
         list.scrollTop = list.scrollHeight;
-
-        // --- GUARDADO INTELIGENTE (DEBOUNCE) ---
-        if (timerGuardadoCache) clearTimeout(timerGuardadoCache);
-        timerGuardadoCache = setTimeout(() => {
-            try {
-                const html = list.innerHTML;
-                if (html.length < 500000) localStorage.setItem(LLAVE_MEMORIA, html);
-            } catch (e) {}
-        }, 2000); // Espera 2 segundos de calma para guardar
-    });
-
-    // 3. ESCUCHAR BORRADOS (ANTITRABE)
-// Escuchar cuando se borra un mensaje en la nube (Eliminar para todos)
-    window._privChatRemovedRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(50);
-    window._privChatRemovedRef.on('child_removed', snap => {
-        const fila = document.getElementById(`priv-row-${snap.key}`);
-        if (fila) {
-            fila.style.transition = "opacity 0.3s ease";
-            fila.style.opacity = "0";
-            setTimeout(() => {
-                fila.remove();
-                // Si tienes la función de caché silencioso, la llama
-                if (typeof actualizarCacheChatSilencioso === 'function') {
-                    actualizarCacheChatSilencioso(); 
-                }
-            }, 300);
-        }
     });
 }
-// ==========================================
-// 👆 SWIPE PARA RESPONDER (CHAT PRIVADO)
-// ==========================================
+
 let privSwipeStartX = 0;
 let privSwipeStartY = 0;
 let privSwiping = false;
@@ -10244,7 +10252,7 @@ function checkLimiteDiario(uid) {
         const hoy = new Date().toISOString().split('T')[0];
         let conteo = (chatData.fecha === hoy) ? (chatData.count || 0) : 0;
         const total = LIMITE_DIARIO_MSGS + extras;
-
+        
         const label = document.getElementById('privDailyCount');
         if(label) {
             if (extras > 0) {
@@ -10257,7 +10265,50 @@ function checkLimiteDiario(uid) {
         }
     });
 }
+let mensajePrivadoSeleccionado = null;
 
+function eliminarMensajePrivadoDirecto(msgKey) {
+    mensajePrivadoSeleccionado = msgKey;
+
+    const modal = document.getElementById('modalConfirmDeletePrivado');
+
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function cerrarConfirmacionBorradoPrivado() {
+    mensajePrivadoSeleccionado = null;
+
+    const modal = document.getElementById('modalConfirmDeletePrivado');
+
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function confirmarBorradoPrivado() {
+    if (!mensajePrivadoSeleccionado || !currentChatId) return;
+
+    db.ref(`chats_privados/${currentChatId}/${mensajePrivadoSeleccionado}`)
+        .remove()
+        .then(() => {
+
+            notify("🗑️ Mensaje eliminado para todos");
+
+            try {
+                window.playSound('click');
+            } catch(e){}
+
+            cerrarConfirmacionBorradoPrivado();
+
+        })
+        .catch(() => {
+
+            notify("❌ Error al borrar");
+
+        });
+}
 // ==========================================
 // 💎 COMPRAR / DESBLOQUEAR MÁS MENSAJES PRIVADOS
 
@@ -11063,7 +11114,16 @@ let touchEndX = 0;
 window.abrirGaleriaFotos = (index) => {
     if (!galeriaFotosArray || !galeriaFotosArray[index]) return;
 
+    // 1. ¡IMPORTANTE! Detenemos cualquier cronómetro de menú que viniera del muro
+    if (typeof timerSeguridad !== 'undefined') clearTimeout(timerSeguridad);
+    
+    // 2. Ocultamos el menú de opciones por si acaso se quedó pegado
+    const menuOpciones = document.getElementById('modalFotoOptions');
+    if (menuOpciones) menuOpciones.style.display = 'none';
+
     galeriaIndexActual = index;
+    
+    // 3. Mostramos la foto
     mostrarFotoGaleria();
     document.getElementById('modalFotoDetalle').style.display = 'flex';
 
@@ -12623,20 +12683,21 @@ window.accionFoto = (tipo, ev) => {
     }
 };
 window.ejecutarBorradoFoto = () => {
+    // 1. CERRAR TODAS LAS CAPAS POSIBLES (Evita que la pantalla quede bloqueada)
     const modalConfirm = document.getElementById('modalConfirmDelete');
-    if (modalConfirm) {
-        modalConfirm.style.display = 'none';
-    }
+    if (modalConfirm) modalConfirm.style.display = 'none';
+    
+    const modalOpciones = document.getElementById('modalFotoOptions');
+    if (modalOpciones) modalOpciones.style.display = 'none';
 
+    const modalDetalle = document.getElementById('modalFotoDetalle');
+    if (modalDetalle) modalDetalle.style.display = 'none';
+
+    // 2. EJECUTAR EL BORRADO EN FIREBASE
     if (fotoSeleccionadaKey) {
-        const key = fotoSeleccionadaKey;
-        db.ref(`galeria_comunidad/${key}`).remove()
+        db.ref(`galeria_comunidad/${fotoSeleccionadaKey}`).remove()
             .then(() => {
-                notify("�🤤️ Foto eliminada correctamente");
-                cerrarFotoDetalle();
-                galeriaFotosArray = galeriaFotosArray.filter(f => f.k !== key);
-                const photoCard = document.getElementById('photo-' + key);
-                if (photoCard) photoCard.remove();
+                notify("🗑️ Foto eliminada correctamente");
                 try { window.playSound('gameover'); } catch(e){}
             })
             .catch(e => notify("❌ Error: " + e.message));
