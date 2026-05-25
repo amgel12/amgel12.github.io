@@ -5597,9 +5597,9 @@ window.goToScreen = (index, userAction = false) => {
         if (badgeMsg) badgeMsg.style.display = 'none';
 
         setTimeout(() => {
-            // Cargar la lista de usuarios al entrar al chat
-            if (typeof cargarChatsPrivadosNoLeidos === 'function') cargarChatsPrivadosNoLeidos();
-        }, 200);
+            // Simular clic en la pestaña para que cargue la lista completa correctamente
+            if (typeof cambiarPestanaChat === 'function') cambiarPestanaChat('michat');
+        }, 50);
     }
 
     if (index === 0 && typeof renderizarMisionesAprender === "function") {
@@ -8956,6 +8956,13 @@ window.abrirRetiro = () => {
     };
 // --- VARIABLE GLOBAL PARA USUARIOS (ESTO TE FALTABA) ---
 let listaUsuariosCache = [];
+let listaUsuariosCacheReal = []; // para todos los usuarios con estado online
+let _cacheDataNubes = {}; // para pensamientos públicos
+
+// 🟢 VERDE: Usuario en línea sin actividad
+// 🔵 AZUL: Usuario publicó pensamiento/contenido
+// 🔴 ROJO: Hay mensajes sin leer de este usuario
+// ⚫ GRIS: Usuario desconectado
 
 function cachearUsuarios() {
     console.log("🔄 Cargando lista de usuarios para menciones...");
@@ -8972,6 +8979,77 @@ function cachearUsuarios() {
             });
         });
         console.log("✅ Usuarios cargados:", listaUsuariosCache.length);
+    });
+}
+
+function cargarListaUsuariosHorizontal() {
+    if (window._usuariosListenerActivo) return; 
+    window._usuariosListenerActivo = true;
+
+    // Escuchar cambios de estado (online/offline + lastSeen)
+    db.ref('users').on('value', snap => {
+        listaUsuariosCacheReal = [];
+        const ahora = Date.now();
+        const doceHoras = 12 * 60 * 60 * 1000;
+
+        snap.forEach(child => {
+            const u = child.val();
+            if (!u) return;
+            if (child.key === idAuditor) return; // No incluir al usuario actual
+
+            const nombre = u.apodo || u.myInviteKey || "Usuario";
+            const avatar = u.fotoPerfil || getAvatarUrl(child.key);
+            const lastSeen = u.lastSeen || 0;
+            const tiempoDesdeUltima = ahora - lastSeen;
+            const online = tiempoDesdeUltima < 30000; // Menos de 30 segundos = en línea
+
+            listaUsuariosCacheReal.push({
+                key: child.key,
+                nombre: nombre,
+                avatar: avatar,
+                online: online,
+                lastSeen: lastSeen,
+                rawTime: lastSeen
+            });
+        });
+
+        // Ordenar: online primero, luego por último visto
+        listaUsuariosCacheReal.sort((a, b) => {
+            if (a.online && !b.online) return -1;
+            if (!a.online && b.online) return 1;
+            return b.rawTime - a.rawTime;
+        });
+
+        // Renderizar el listado
+        if (typeof renderizarUsuariosHorizontal === 'function') {
+            renderizarUsuariosHorizontal();
+        }
+    });
+}
+
+function renderizarUsuariosHorizontal() {
+    // Este será el visor de usuarios en línea (si lo tienes en HTML)
+    // Actualiza los colores basado en estados
+}
+
+function iniciarMonitorDeBadges() {
+    // Monitor de badges de mensajes y estados de usuarios
+    if (window._badgesMonitorActivo) return;
+    window._badgesMonitorActivo = true;
+
+    // Escuchar pensamientos públicos
+    db.ref('pensamientos').on('value', snap => {
+        _cacheDataNubes = {};
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const p = child.val();
+                _cacheDataNubes[child.key] = {
+                    texto: p.texto || '',
+                    timestamp: p.timestamp || Date.now(),
+                    uid: child.key
+                };
+            });
+        }
     });
 }
 document.addEventListener('keyup', (e) => {
@@ -9791,9 +9869,11 @@ window.abrirChatPrivado = (targetUid, targetName) => {
     });
 
     // 🔥 NUEVO: Forzar limpieza del círculo rojo inmediatamente
+    // 🔥 NUEVO: Forzar limpieza del círculo rojo inmediatamente
     if (window.mapaMensajesSinLeer && window.mapaMensajesSinLeer[targetUid]) {
         delete window.mapaMensajesSinLeer[targetUid];
         if (typeof renderizarUsuariosHorizontal === 'function') renderizarUsuariosHorizontal();
+        if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat(); // 🔥 QUITA EL ROJO AL INSTANTE
     }
     // Configurar UI
     document.getElementById('privChatTitle').innerText = targetName;
@@ -10464,8 +10544,8 @@ window.abrirHistorial = () => {
 // 🔴 LÓGICA MAESTRA: USUARIOS + ONLINE + BADGES
 // ==========================================
 
-let mapaMensajesSinLeer = {}; 
-let listaUsuariosCacheReal = []; 
+window.mapaMensajesSinLeer = {}; 
+// listaUsuariosCacheReal ya está declarada más arriba, no usar "let" de nuevo
 
 // 1. INICIAR MONITOR
 // ==========================================
@@ -10574,11 +10654,16 @@ function iniciarMonitorDeBadges() {
                 if (navIcon) navIcon.classList.remove('nav-jumping');
             }
         }
+
+        // 🔥 ESTO OBLIGA A LA LISTA A PINTAR EL ROJO AL INSTANTE
+        if (typeof cargarTodosLosUsuariosParaMiChat === 'function') {
+            cargarTodosLosUsuariosParaMiChat();
+        }
     });
 }
 // 2. CARGAR USUARIOS (OPTIMIZADO Y EN PARALELO)
 let _cacheDataUsers = null;
-let _cacheDataNubes = {};
+_cacheDataNubes = {};
 let _listenersUsuariosIniciados = false;
 let _ultimoPensamiento = null; // { uid, autor, texto, avatar }
 
@@ -10639,13 +10724,13 @@ function combinarYRenderizarUsuarios() {
     // Actualizar el botón Pensar con el pensamiento más reciente
     actualizarBotonPensar();
 
-    // Refrescar Mi Chat si está visible y no hay chat privado abierto
+ // Refrescar Mi Chat en tiempo real
     const _miChatCont = document.getElementById('mensajesPrivadosContainer');
-    if (_miChatCont && _miChatCont.style.display !== 'none' && !window._enChatPrivado) {
+    if (_miChatCont && !window._enChatPrivado) {
         clearTimeout(window._miChatDebounce);
         window._miChatDebounce = setTimeout(() => {
             if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
-        }, 600);
+        }, 50); // 🔥 De 600ms a 50ms para que se vea en tiempo real
     }
 
     // Enviar a pintar al HTML (si el contenedor existe)
@@ -14114,88 +14199,6 @@ const NAMES_CACHE_KEY  = () => 'pgc_names_' + (idAuditor || '');
 const CHATS_TS_KEY     = () => 'pgc_chats_ts_' + (idAuditor || '');
 const CHATS_TTL        = 5 * 60 * 1000; // re-fetch cada 5 min como máximo
 
-function renderChatsHTML(chats, container) {
-    if (!chats || chats.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><i class="fas fa-comment-dots" style="font-size:3rem; margin-bottom:15px; opacity:0.4;"></i><div>Sin conversaciones aún</div></div>';
-        return;
-    }
-    // Leer caché de nombres
-    let namesCache = {};
-    try { namesCache = JSON.parse(localStorage.getItem(NAMES_CACHE_KEY()) || '{}'); } catch(e){}
-
-    const ahora = Date.now();
-    let html = '';
-    chats.forEach(chat => {
-        const msg  = chat.ultimoMsg;
-        const uid  = chat.otroUid;
-        const diffMin = Math.floor((ahora - (msg.fecha || ahora)) / 60000);
-        const tiempo  = diffMin < 1 ? 'Ahora' : diffMin < 60 ? `${diffMin} min` : `${Math.floor(diffMin/60)} h`;
-        let texto = msg.texto || (msg.esFoto ? '📷 Foto' : '...');
-        if (texto.length > 38) texto = texto.substring(0, 36) + '...';
-        const nombre = namesCache[uid] || 'Cargando...';
-
-        // --- Estado del usuario ---
-        const userCache = listaUsuariosCacheReal ? listaUsuariosCacheReal.find(u => u.key === uid) : null;
-        const isOnline = userCache ? userCache.online : false;
-        const nube = (_cacheDataNubes && _cacheDataNubes[uid]);
-        const hasPensamiento = nube && (ahora - nube.timestamp < 43200000) && nube.texto;
-        const tieneNuevos = chat.mensajesNoLeidos > 0;
-
-        // --- Color del borde del avatar (prioridad: rojo > azul > verde > gris) ---
-        let borderColor, borderGlow;
-        if (tieneNuevos) {
-            borderColor = '#ef4444'; borderGlow = 'rgba(239,68,68,0.3)';
-        } else if (hasPensamiento) {
-            borderColor = '#3b82f6'; borderGlow = 'rgba(59,130,246,0.3)';
-        } else if (isOnline) {
-            borderColor = '#10b981'; borderGlow = 'rgba(16,185,129,0.3)';
-        } else {
-            borderColor = '#94a3b8'; borderGlow = 'transparent';
-        }
-
-        // --- Badge de nuevos mensajes ---
-        const badge = tieneNuevos
-            ? `<div style="background:#ef4444;color:white;font-size:0.65rem;font-weight:800;padding:2px 10px;border-radius:10px;margin-top:4px;display:inline-block;">${chat.mensajesNoLeidos} nuevo(s)</div>` : '';
-
-        // --- Al tocar la foto: muestra pensamiento si tiene, sino abre chat ---
-        const pensamientoTextoEscapado = hasPensamiento ? escapeHtml(nube.texto).replace(/'/g, "\\'") : '';
-        const nombreEscapado = escapeHtml(nombre).replace(/'/g, "\\'");
-        const avatarFoto = getUserProfilePhoto(uid);
-        const avatarOnClick = hasPensamiento
-            ? `event.stopPropagation(); mostrarPensamientoDeUsuario('${uid}','${nombreEscapado}','${pensamientoTextoEscapado}','${avatarFoto}')`
-            : `abrirChatPrivado('${uid}','${nombreEscapado}')`;
-
-        html += `
-        <div onclick="abrirChatPrivado('${uid}','${nombreEscapado}')"
-             style="background:white; padding:14px 15px; border-radius:16px; margin-bottom:10px;
-                    box-shadow:0 2px 8px rgba(0,0,0,.05); cursor:pointer; transition:.15s;
-                    ${tieneNuevos ? 'border-left:4px solid #ef4444; background:#fff5f5;' : ''}">
-            <div style="display:flex; align-items:center; gap:14px;">
-
-                <!-- FOTO: clic muestra pensamiento; color del borde indica estado -->
-                <div onclick="${avatarOnClick}"
-                     style="flex-shrink:0; width:56px; height:56px; border-radius:50%;
-                            background:#e2e8f0 url('${avatarFoto}') center/cover;
-                            border:3px solid ${borderColor};
-                            box-shadow:0 0 0 3px ${borderGlow};
-                            cursor:pointer; transition:.2s;">
-                </div>
-
-                <!-- INFO -->
-                <div style="flex:1; min-width:0;">
-                    <div id="name-chat-${uid}" style="font-weight:800; color:#1e293b; font-size:0.95rem;">${escapeHtml(nombre)}</div>
-                    <div style="font-size:.82rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(texto)}</div>
-                    ${badge}
-                </div>
-
-                <!-- TIEMPO -->
-                <div style="font-size:.72rem; color:#94a3b8; font-weight:600; flex-shrink:0;">${tiempo}</div>
-            </div>
-        </div>`;
-    });
-    container.innerHTML = html;
-}
-
 // Muestra el pensamiento de un usuario en el modal grande
 window.mostrarPensamientoDeUsuario = (uid, nombre, texto, avatar) => {
     const el = document.getElementById('verPensamientoAvatar');
@@ -14255,21 +14258,6 @@ function procesarSnapshotChats(snap) {
     return chats;
 }
 
-// ─── Helper: actualiza círculos rojos de stories desde lista de chats ────────
-function sincronizarBadgesDesdeChats(chats) {
-    if (!chats || !chats.length) return;
-    chats.forEach(chat => {
-        if (chat.mensajesNoLeidos > 0 && chat.otroUid) {
-            window.mapaMensajesSinLeer = window.mapaMensajesSinLeer || {};
-            const prev = window.mapaMensajesSinLeer[chat.otroUid] || 0;
-            if (prev !== chat.mensajesNoLeidos) {
-                window.mapaMensajesSinLeer[chat.otroUid] = chat.mensajesNoLeidos;
-            }
-        }
-    });
-    if (typeof renderizarUsuariosHorizontal === 'function') renderizarUsuariosHorizontal();
-}
-
 // ─── MI CHAT: muestra TODOS los usuarios (con o sin conversación) ────────────
 window.cargarTodosLosUsuariosParaMiChat = () => {
     const container = document.getElementById('mensajesPrivadosContainer');
@@ -14311,36 +14299,62 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
     todos.forEach(u => {
         const uid = u.key;
         const nombre = u.nombre || 'Usuario';
-        const chat = chatsByUid[uid];
+const chat = chatsByUid[uid];
         const nube = _cacheDataNubes && _cacheDataNubes[uid];
         const hasPensamiento = nube && (ahora - nube.timestamp < 43200000) && nube.texto;
-        const tieneNuevos = chat && chat.mensajesNoLeidos > 0;
+        
+        // 🔥 Usamos el radar oficial de notificaciones para GARANTIZAR el color rojo
+        const mensajesEnRadar = (window.mapaMensajesSinLeer && window.mapaMensajesSinLeer[uid]) ? window.mapaMensajesSinLeer[uid] : 0;
+        const tieneNuevos = (chat && chat.mensajesNoLeidos > 0) || (mensajesEnRadar > 0);
+        
+        // Para que el badge del chat muestre el número correcto
+        const numeroAviso = mensajesEnRadar > 0 ? mensajesEnRadar : (chat ? chat.mensajesNoLeidos : 0);
 
-        // Color del borde: rojo > azul > verde > gris
+        // 1. DETERMINAR EL COLOR DEL BORDE (Prioridades visuales)
         let borderColor, borderGlow;
-        if (tieneNuevos)        { borderColor = '#ef4444'; borderGlow = 'rgba(239,68,68,0.25)'; }
-        else if (hasPensamiento){ borderColor = '#3b82f6'; borderGlow = 'rgba(59,130,246,0.25)'; }
-        else if (u.online)      { borderColor = '#10b981'; borderGlow = 'rgba(16,185,129,0.25)'; }
-        else                    { borderColor = '#94a3b8'; borderGlow = 'transparent'; }
-
-        // Preview del último mensaje
-        let textoUltimo = '';
-        let tiempoStr  = '';
-        if (chat && chat.ultimoMsg) {
-            const m = chat.ultimoMsg;
-            textoUltimo = m.texto || (m.esFoto ? '📷 Foto' : '...');
-            if (textoUltimo.length > 38) textoUltimo = textoUltimo.substring(0, 36) + '…';
-            const diffMin = Math.floor((ahora - (m.fecha || ahora)) / 60000);
-            tiempoStr = diffMin < 1 ? 'Ahora' : diffMin < 60 ? `${diffMin} min` : `${Math.floor(diffMin/60)} h`;
+        if (tieneNuevos) {
+            // 🔴 ROJO (Prioridad 1: Mensaje sin leer)
+            borderColor = '#ef4444';
+            borderGlow = 'rgba(239,68,68,0.3)';
         } else if (hasPensamiento) {
-            const t = nube.texto;
-            textoUltimo = '💭 ' + (t.length > 32 ? t.substring(0,30) + '…' : t);
+            // 🔵 AZUL (Prioridad 2: Publicó un pensamiento)
+            borderColor = '#3b82f6';
+            borderGlow = 'rgba(59,130,246,0.3)';
+        } else if (u.online) {
+            // 🟢 VERDE (Prioridad 3: Solo conectado)
+            borderColor = '#10b981';
+            borderGlow = 'rgba(16,185,129,0.3)';
         } else {
-            textoUltimo = u.online ? '🟢 En línea' : 'Toca para chatear';
+            // ⚫ GRIS (Prioridad 4: Desconectado sin nada nuevo)
+            borderColor = '#94a3b8';
+            borderGlow = 'transparent';
         }
 
-        const badge = tieneNuevos
-            ? `<div style="background:#ef4444;color:white;font-size:0.65rem;font-weight:800;padding:2px 10px;border-radius:10px;margin-top:4px;display:inline-block;">${chat.mensajesNoLeidos} nuevo(s)</div>` : '';
+        // 2. DETERMINAR EL TEXTO DEL ESTADO (Totalmente independiente del color)
+        let textoEstadoDerecha = '';
+        if (u.online) {
+            // Si está online, SIEMPRE dice en línea, no importa el color
+            textoEstadoDerecha = '<span style="color:#10b981; font-weight:800;">🟢 En línea</span>';
+        } else {
+            // Si no está online, calculamos hace cuánto se fue
+            const diffMin = Math.floor((ahora - u.rawTime) / 60000);
+            textoEstadoDerecha = diffMin < 1 ? 'Hace un momento' : diffMin < 60 ? `Hace ${diffMin}m` : `Hace ${Math.floor(diffMin/60)}h`;
+        }
+
+        // 3. DETERMINAR QUÉ VA DEBAJO DEL NOMBRE (Resumen del chat o del pensamiento)
+        let textoResumen = '';
+        if (chat && chat.ultimoMsg) {
+            const m = chat.ultimoMsg;
+            textoResumen = m.texto || (m.esFoto ? '📷 Foto' : '...');
+        } else if (hasPensamiento) {
+            textoResumen = '💭 ' + nube.texto;
+        } else {
+            textoResumen = 'Toca para chatear';
+        }
+        if (textoResumen.length > 38) textoResumen = textoResumen.substring(0, 36) + '…';
+
+       const badge = tieneNuevos
+            ? `<div style="background:#ef4444;color:white;font-size:0.65rem;font-weight:800;padding:2px 10px;border-radius:10px;margin-top:4px;display:inline-block;">🔴 ${numeroAviso} sin leer</div>` : '';
 
         const nombreE = escapeHtml(nombre).replace(/'/g, "\\'");
         const fotoUrl = u.avatar || getUserProfilePhoto(uid);
@@ -14364,35 +14378,21 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
                 </div>
                 <div style="flex:1; min-width:0;">
                     <div style="font-weight:800; color:#1e293b; font-size:0.93rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(nombre)}</div>
-                    <div style="font-size:.81rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(textoUltimo)}</div>
+                    <div style="font-size:.81rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(textoResumen)}</div>
                     ${badge}
                 </div>
-                ${tiempoStr ? `<div style="font-size:.7rem; color:#94a3b8; font-weight:600; flex-shrink:0;">${tiempoStr}</div>` : ''}
+                <div style="font-size:.7rem; color:#94a3b8; font-weight:600; flex-shrink:0; text-align:right;">${textoEstadoDerecha}</div>
             </div>
         </div>`;
     });
 
-    container.innerHTML = html || `<div style="text-align:center;padding:40px;color:#94a3b8;">Sin usuarios aún</div>`;
+    container.innerHTML = html;
 };
 
 window.cargarChatsPrivadosNoLeidos = () => {
-    const container = document.getElementById('mensajesPrivadosContainer');
-    if (!container || !idAuditor) return;
+    // 1. Ya no borramos ni reescribimos el HTML aquí, esta función 
+    // ahora solo trabaja en segundo plano escuchando a Firebase.
 
-    // 1. Mostrar caché instantánea si existe (sin spinner)
-    let cached = null;
-    try { cached = JSON.parse(localStorage.getItem(CHATS_CACHE_KEY())); } catch(e){}
-
-    if (cached && cached.length >= 0) {
-        renderChatsHTML(cached, container);
-        actualizarNombresEnDOM(cached);
-        sincronizarBadgesDesdeChats(cached);
-    } else {
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i><div style="margin-top:15px;">Buscando chats...</div></div>';
-    }
-
-    // 2. Listener en tiempo real: solo re-ejecuta cuando un chat cambia (incremental)
-    //    Se configura UNA sola vez; los cambios posteriores la disparan solos.
     if (window._chatsPrivadosRef) return; // ya escuchando
 
     window._chatsPrivadosRef = db.ref('chats_privados');
@@ -14403,9 +14403,10 @@ window.cargarChatsPrivadosNoLeidos = () => {
             localStorage.setItem(CHATS_CACHE_KEY(), JSON.stringify(chats));
             localStorage.setItem(CHATS_TS_KEY(), String(Date.now()));
         } catch(e){}
-        // Siempre actualizar los círculos rojos de stories
+        
         sincronizarBadgesDesdeChats(chats);
-        // Refrescar Mi Chat solo si visible Y no hay chat privado abierto
+        
+        // Refrescar Mi Chat de forma segura
         const cont = document.getElementById('mensajesPrivadosContainer');
         if (cont && cont.style.display !== 'none' && !window._enChatPrivado) {
             clearTimeout(window._miChatDebounce);
@@ -14413,24 +14414,21 @@ window.cargarChatsPrivadosNoLeidos = () => {
                 if (typeof cargarTodosLosUsuariosParaMiChat === 'function') {
                     cargarTodosLosUsuariosParaMiChat();
                 }
-            }, 600);
+            }, 300);
         }
     };
 
-    // child_changed → solo chats que tuvieron actividad nueva (NO recarga todo)
-    // Debounce para evitar recargas múltiples al borrar mensajes/fotos
     let _chatsChangedDebounce = null;
     window._chatsPrivadosRef.on('child_changed', () => {
         clearTimeout(_chatsChangedDebounce);
         _chatsChangedDebounce = setTimeout(() => {
-            // Re-leer snapshot completo para recalcular orden y conteos
             window._chatsPrivadosRef.once('value', procesarYGuardar);
         }, 500);
     });
 
-    // Primera carga completa
     window._chatsPrivadosRef.once('value', procesarYGuardar);
 };
+
 // --- FUNCIÓN PARA DAR ESPACIO AL CHAT ---
 document.addEventListener('DOMContentLoaded', () => {
     const areaSuperior = document.getElementById('areaSuperiorMensajes');
