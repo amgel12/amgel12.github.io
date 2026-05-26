@@ -1303,6 +1303,22 @@
       height: 180px;
       object-fit: cover;
       display: block;
+      transition: filter 0.3s ease;
+  }
+
+  .photo-img-content.blurred {
+      filter: blur(12px);
+  }
+
+  .photo-price-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.3);
+      z-index: 5;
+      pointer-events: none;
   }
 
   /* Evitar menú nativo / touch-callout en imágenes de chat (privado, grupos, global) */
@@ -3405,6 +3421,46 @@ Cerrar
     <!-- =========================================
          💎 MODAL: COMPRAR / DESBLOQUEAR MENSAJES PRIVADOS
          ========================================= -->
+    <div id="modalComprarFoto" class="modal-overlay" style="z-index: 30100;">
+      <div class="modal-content" style="max-width: 360px; text-align:center; border-radius:18px; padding:22px;">
+        <div style="font-size:3rem; margin-bottom:6px;">🔓</div>
+        <h3 style="color:#f59e0b; margin:0 0 6px 0;">Comprar Foto</h3>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom:18px;">
+          Desbloquea esta foto para verla sin restricciones.
+        </p>
+
+        <!-- OPCIÓN 1: GOOGLE PLAY -->
+        <button onclick="iniciarCompraFotoGooglePlay()"
+          style="width:100%; padding:14px; border:none; border-radius:14px;
+                 background:linear-gradient(135deg,#0f9d58,#059669); color:white;
+                 font-weight:800; font-size:0.95rem; display:flex; align-items:center;
+                 justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(16,185,129,0.35);
+                 margin-bottom:12px; cursor:pointer;">
+          <i class="fab fa-google-play" style="font-size: 1.2rem;"></i>
+          Comprar con Google Play
+        </button>
+        <div style="font-size:0.7rem; color:#059669; margin-top:-6px; margin-bottom:14px;">
+          💵 Pago seguro con Google
+        </div>
+
+        <!-- OPCIÓN 2: PAYPAL -->
+        <button onclick="window.comprarFotoPayPal(window._fotoCompraPendienteKey || currentPhotoKey)"
+          style="width:100%; padding:14px; border:none; border-radius:14px;
+                 background:linear-gradient(135deg,#0070ba,#0ea5e9); color:white;
+                 font-weight:800; font-size:0.95rem; display:flex; align-items:center;
+                 justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(0,112,186,0.35);
+                 cursor:pointer;">
+          <i class="fab fa-paypal" style="font-size: 1.2rem;"></i>
+          Comprar con PayPal
+        </button>
+
+        <button onclick="document.getElementById('modalComprarFoto').style.display='none'"
+          style="background:none; border:none; color:#94a3b8; margin-top:14px; font-size:0.85rem; cursor:pointer;">
+          Cancelar
+        </button>
+      </div>
+    </div>
+
     <div id="modalComprarMensajes" class="modal-overlay" style="z-index: 30100;">
       <div class="modal-content" style="max-width: 360px; text-align:center; border-radius:18px; padding:22px;">
         <div style="font-size:3rem; margin-bottom:6px;">🚫</div>
@@ -3543,9 +3599,9 @@ Cerrar
 </div>
    <div id="modalSubirFoto" class="modal-overlay" style="z-index: 26000;">
     <div class="modal-content">
-        <h3 style="color:#10b981;">📸 Monetiza tu Foto</h3>
+        <h3 style="color:#10b981;">📸 Sube y Vende tu Foto</h3>
         <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
-            Gana <b style="color:#10b981;">+0.10 PTS</b> al instante.
+            Gana <b style="color:#10b981;">+0.10 PTS</b> al instante. <b>¡Véndela por hasta 500 PTS!</b>
         </p>
 
         <div style="background:#f0fdf4; border:2px dashed #10b981; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
@@ -3556,6 +3612,17 @@ Cerrar
                 <p style="font-size:0.65rem; opacity:0.8;">Selfie • Paisaje • Meme</p>
             </div>
             <input type="file" id="inputFotoArchivo" accept="image/*" onchange="procesarFotoSeleccionada()" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+        </div>
+
+        <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px; background:#fff7ed; border:1px solid #f59e0b; border-radius:12px; padding:10px;">
+            <input type="checkbox" id="chkVenderFoto" onchange="togglePrecioFoto()" style="width:18px; height:18px; margin:0; accent-color:#f59e0b;">
+            <label for="chkVenderFoto" style="font-size:0.8rem; font-weight:700; color:#92400e; flex:1;">Vender esta foto</label>
+        </div>
+
+        <div id="divPrecioFoto" style="display:none; margin-bottom:12px;">
+            <label style="font-size:0.75rem; font-weight:700; color:#64748b; display:block; margin-bottom:4px;">Precio en Puntos (1 - 500)</label>
+            <input type="number" id="inputPrecioFoto" min="1" max="500" value="10" placeholder="Ej. 50 puntos"
+                   style="text-align:center; font-weight:800; font-size:1.1rem; border:2px solid #f59e0b; background:#fffbeb;">
         </div>
 
         <div style="font-size:0.65rem; color:#ef4444; margin-bottom:15px; background: #fef2f2; padding: 8px; border-radius: 8px;">
@@ -3654,21 +3721,34 @@ Cerrar
     </button>
 
     <!-- BARRA INFERIOR -->
-    <div style="position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.9); padding:15px 20px; display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid rgba(255,255,255,0.1);">
+    <div style="position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.9); padding:10px 15px; display:flex; flex-direction:column; gap:6px; border-top:1px solid rgba(255,255,255,0.1);">
 
-      <div class="action-icon" id="btnShareFoto" style="cursor:pointer; display:flex; flex-direction:column; align-items:center;">
-        <i class="fas fa-share" style="font-size:1.5rem; color:white;"></i>
-        <span style="font-size:0.7rem; margin-top:4px; color:white;">Share</span>
+      <div id="barraCompraFoto" style="display:none; width:100%;">
+        <button id="btnComprarFotoDetalle" onclick="window.ejecutarCompraFoto(currentPhotoKey, currentPhotoOwner, this)"
+                style="width:100%; background:linear-gradient(135deg,#f59e0b,#d97706); border:none; color:white; padding:8px; border-radius:10px; font-weight:800; font-size:0.85rem; cursor:pointer; box-shadow:0 4px 15px rgba(245,158,11,0.4);">
+          🔓 Comprar por <span id="precioFotoLabel">0</span> PTS
+        </button>
+        <div id="msgPuntosInsuficientes" style="display:none; text-align:center; font-size:0.7rem; color:#fbbf24; margin-top:4px;">
+          No tienes suficientes puntos. <a href="#" onclick="window._fotoCompraPendienteKey = currentPhotoKey; document.getElementById('modalComprarFoto').style.display='flex'; return false;" style="color:#3b82f6; font-weight:700;">Compra con PayPal</a>
+        </div>
+        <div id="msgFotoYaComprada" style="display:none; text-align:center; font-size:0.7rem; color:#10b981; font-weight:700;">✔ Ya comprada</div>
       </div>
 
-      <button id="btnSaludarFoto" class="btn-blue" style="width:auto; padding:10px 20px; background:linear-gradient(135deg,#a855f7,#8b5cf6); border-radius:50px; font-size:0.9rem; display:flex; align-items:center; gap:8px; box-shadow:0 4px 15px rgba(168,85,247,0.4);">
-        <i class="fas fa-comment"></i> Hola
-      </button>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="action-icon" id="btnShareFoto" style="cursor:pointer; display:flex; flex-direction:column; align-items:center;">
+          <i class="fas fa-share" style="font-size:1.5rem; color:white;"></i>
+          <span style="font-size:0.7rem; margin-top:4px; color:white;">Share</span>
+        </div>
 
-<button onclick="event.stopPropagation(); abrirMenuFoto(event, currentPhotoKey, currentPhotoOwner, false)" 
-        style="background:rgba(255,255,255,0.2); border:none; color:white; padding:10px 15px; border-radius:20px; cursor:pointer;">
-    ⋮
-</button>
+        <button id="btnSaludarFoto" class="btn-blue" style="width:auto; padding:8px 16px; background:linear-gradient(135deg,#a855f7,#8b5cf6); border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:8px; box-shadow:0 4px 15px rgba(168,85,247,0.4);">
+          <i class="fas fa-comment"></i> Hola
+        </button>
+
+        <button onclick="event.stopPropagation(); abrirMenuFoto(event, currentPhotoKey, currentPhotoOwner, false)" 
+                style="background:rgba(255,255,255,0.2); border:none; color:white; padding:8px 12px; border-radius:20px; cursor:pointer;">
+          ⋮
+        </button>
+      </div>
     </div>
 
     <!-- INDICADORES (PUNTOS) -->
@@ -8451,7 +8531,7 @@ window.addEventListener('popstate', (e) => {
     'modalGiftReceived', 'modalCine', 'modalMusicSelector', 'modalComments', 
     'modalGameOver', 'modalLesson', 'modalNoVidas', 'modalRanking',
     'modalInvitar', 'modalSubirFoto', 'modalFotoOptions', 
-    'modalConfirmDelete', 'modalChatPrivado', 'modalComprarMensajes', 
+    'modalConfirmDelete', 'modalChatPrivado',     'modalComprarMensajes', 'modalComprarFoto',
     'modalRetiro',
     'modalFotoDetalle',
     'modalCompartir',
@@ -9217,6 +9297,15 @@ window.procesarFotoSeleccionada = () => {
     reader.readAsDataURL(file);
 };
 // =================================================================
+// 🏷️ FUNCIÓN PARA MOSTRAR/OCULTAR INPUT DE PRECIO
+// =================================================================
+window.togglePrecioFoto = () => {
+    const chk = document.getElementById('chkVenderFoto');
+    const div = document.getElementById('divPrecioFoto');
+    div.style.display = chk.checked ? 'block' : 'none';
+};
+
+// =================================================================
 // 📸 MONETIZAR FOTOS - MURO DE LA COMUNIDAD (CÓDIGO UNIFICADO FINAL)
 // =================================================================
 
@@ -9246,12 +9335,21 @@ window.ejecutarSubidaFotoFirebase = () => {
     const btn = document.getElementById('btnPublicarFoto');
     if (btn) btn.innerHTML = "Subiendo...";
 
-    db.ref('galeria_comunidad').push({
+    const chkVender = document.getElementById('chkVenderFoto');
+    const tienePrecio = chkVender && chkVender.checked;
+    const precioPts = tienePrecio ? parseInt(document.getElementById('inputPrecioFoto').value) || 0 : 0;
+
+    const fotoData = {
         uid: idAuditor,
         autor: myCurrentKey,
         foto: fotoBase64Actual,
         fecha: firebase.database.ServerValue.TIMESTAMP
-    }).then(() => {
+    };
+    if (tienePrecio && precioPts >= 1 && precioPts <= 500) {
+        fotoData.precio = precioPts;
+    }
+
+    db.ref('galeria_comunidad').push(fotoData).then(() => {
         notify("✅ Foto subida con éxito");
         cerrarModalFoto();
 
@@ -9271,6 +9369,9 @@ window.ejecutarSubidaFotoFirebase = () => {
 
         if (window.checarProgresoDiario) window.checarProgresoDiario();
         try { window.playSound('win'); } catch(e){}
+
+        // Refrescar el muro para que se vea la foto nueva con su precio
+        setTimeout(() => { cargarGaleriaComunidad(); }, 500);
         
     }).catch(err => {
         notify("Error al subir: " + err.message);
@@ -9288,6 +9389,9 @@ window.cerrarModalFoto = () => {
     document.getElementById('placeholderUpload').style.display = 'block';
     document.getElementById('placeholderUpload').innerHTML = '<i class="fas fa-camera" style="font-size:2.5rem; margin-bottom: 10px;"></i><p style="font-size:0.8rem; font-weight:bold;">Toca para subir</p><p style="font-size:0.65rem; opacity:0.8;">Selfie • Paisaje • Meme</p>';
     document.getElementById('inputFotoArchivo').value = "";
+    document.getElementById('chkVenderFoto').checked = false;
+    document.getElementById('divPrecioFoto').style.display = 'none';
+    document.getElementById('inputPrecioFoto').value = '10';
     fotoBase64Actual = "";
     
     // Restaurar el botón al estado inicial
@@ -9319,7 +9423,9 @@ let listenerMuroActual = null; // Guarda la función que escucha a Firebase
 let muroObserver = null;       // Guarda el detector de scroll
 
 
-const CACHE_MURO_KEY = 'pgc_muro_fotos_cache_v2';
+const CACHE_MURO_KEY = 'pgc_muro_fotos_cache_v3';
+// Forzar limpieza de caché vieja
+try { localStorage.removeItem('pgc_muro_fotos_cache_v2'); } catch(e){}; 
 function cargarGaleriaComunidad() {
     const contenedor = document.getElementById('muroFotosGrid');
     if (!contenedor) return;
@@ -9366,23 +9472,38 @@ function cargarGaleriaComunidad() {
             
             const lazyTag = index < 4 ? '' : 'loading="lazy"';
 
+            const esVendible = Number(f.precio) >= 1 && Number(f.precio) <= 500;
+            const yaComprada = f.compras && f.compras[idAuditor];
+            const mostrarBorrosa = esVendible && !yaComprada;
+
+            const blurStyle = mostrarBorrosa ? 'filter:blur(12px);' : '';
+            const precioBadge = esVendible ? `<div style="position:absolute; top:8px; left:8px; background:linear-gradient(135deg,#f59e0b,#d97706); color:white; font-size:0.65rem; font-weight:800; padding:4px 8px; border-radius:8px; box-shadow:0 2px 8px rgba(245,158,11,0.4); z-index:5;display:flex;align-items:center;gap:3px;">⭐ ${f.precio}</div>` : '';
+            const comprarBtn = (mostrarBorrosa) ? `
+                <button onclick="event.stopPropagation(); window.abrirCompraFoto('${f.k}')" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10; background:#6366f1; color:white; border:none; padding:10px 16px; border-radius:12px; font-weight:800; font-size:0.8rem; cursor:pointer; box-shadow:0 4px 15px rgba(99,102,241,0.5); white-space:nowrap;">
+                    🔓 Comprar
+                </button>
+            ` : '';
+
             htmlFinal += `
             <div id="photo-${f.k}" class="photo-card" data-index="${index}" data-key="${f.k}" data-uid="${f.uid}" data-pinned="${f.pinned}">
                 <div style="position:relative;">
                     ${esFijado}
-                    <img src="${f.foto}" class="photo-img-content" ${lazyTag} style="width:100%; display:block; border-radius:12px;">
+                    ${precioBadge}
+                    <img src="${f.foto}" class="photo-img-content" ${lazyTag} style="width:100%; display:block; border-radius:12px; ${blurStyle}">
+                    ${comprarBtn}
                 </div>
                 
-                <div style="padding:10px; display:flex; align-items:center; gap:8px;">
+                <div style="padding:10px 10px 0; display:flex; align-items:center; gap:8px;">
                     <div style="width:22px; height:22px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; border:1px solid #eee;"></div>
                     
                     <div style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                         <span style="font-weight:600; font-size:0.75rem; color:#334155;">${escapeHtml(nombre)}</span>
                         ${f.uid === idAuditor ? '<span style="color:#ef4444; font-size:0.65rem; font-weight:600; margin-left:4px;">tu foto</span>' : ''}
+                        ${yaComprada ? '<span style="color:#10b981; font-size:0.65rem; font-weight:600; margin-left:4px;">✔ comprada</span>' : ''}
                     </div>
                 </div>
 
-                <div style="padding:0 10px 10px; display:flex; align-items:center; gap:8px;">
+                <div style="padding:8px 10px 10px; display:flex; align-items:center; gap:8px;">
                     <button onclick="event.stopPropagation(); abrirComentariosFoto('${f.k}')" style="background:#f1f5f9; border:none; color:#475569; font-size:0.72rem; font-weight:700; padding:6px 10px; border-radius:20px; cursor:pointer;">
                         💬 <span id="cc-foto-${f.k}">${commentCount}</span>
                     </button>
@@ -11010,8 +11131,49 @@ function mostrarFotoGaleria() {
     const btnAnt = document.getElementById('btnGaleriaAnt');
     const btnSig = document.getElementById('btnGaleriaSig');
     const indicadores = document.getElementById('galeriaIndicadores');
+    const barraCompra = document.getElementById('barraCompraFoto');
 
     if (img) img.src = foto.foto || "";
+
+    // ── Lógica de compra (fotos con precio) ──
+    // Forzar lectura desde Firebase para tener datos frescos
+    if (foto.k) {
+      db.ref(`galeria_comunidad/${foto.k}`).once('value', snap => {
+        const fd = snap.val();
+        if (!fd) return;
+        const p = Number(fd.precio) || 0;
+        const esVendible = p >= 1 && p <= 500;
+        const esPropia = (fd.uid || foto.uid) === idAuditor;
+        const yaComprada = fd.compras && fd.compras[idAuditor];
+        const necesitaBlur = esVendible && !esPropia && !yaComprada;
+
+        if (img) {
+          img.style.filter = necesitaBlur ? 'blur(20px)' : 'none';
+          img.style.transition = 'filter 0.5s ease';
+        }
+        if (barraCompra) {
+          document.getElementById('barraCompraFoto').style.display = (necesitaBlur || (esVendible && yaComprada)) ? 'block' : 'none';
+          if (necesitaBlur) {
+            document.getElementById('precioFotoLabel').textContent = p;
+            document.getElementById('msgPuntosInsuficientes').style.display = 'none';
+            document.getElementById('msgFotoYaComprada').style.display = 'none';
+            document.getElementById('btnComprarFotoDetalle').style.display = 'block';
+            if (idAuditor) {
+              db.ref(`users/${idAuditor}/earnings`).once('value', s => {
+                if (Number(s.val() || 0) < p) {
+                  document.getElementById('msgPuntosInsuficientes').style.display = 'block';
+                }
+              });
+            }
+          } else if (esVendible && yaComprada) {
+            document.getElementById('btnComprarFotoDetalle').style.display = 'none';
+            document.getElementById('msgPuntosInsuficientes').style.display = 'none';
+            document.getElementById('msgFotoYaComprada').style.display = 'block';
+          }
+        }
+      });
+    }
+
     if (contador) contador.textContent = `${galeriaIndexActual + 1} / ${galeriaFotosArray.length}`;
     if (btnAnt) btnAnt.style.display = galeriaIndexActual > 0 ? 'flex' : 'none';
     if (btnSig) btnSig.style.display = galeriaIndexActual < galeriaFotosArray.length - 1 ? 'flex' : 'none';
@@ -11084,6 +11246,213 @@ window.touchEnd = () => {
             galeriaAnterior();
         }
     }
+};
+
+// ==========================================
+// 💳 COMPRAR FOTOS CON PRECIO
+// ==========================================
+
+// Abre la galería en la foto específica para comprar
+window.abrirCompraFoto = (key) => {
+    const idx = galeriaFotosArray.findIndex(f => f.k === key);
+    if (idx !== -1) {
+        abrirGaleriaFotos(idx);
+    } else {
+        notify("⏳ Cargando foto...");
+        db.ref(`galeria_comunidad/${key}`).once('value', snap => {
+            if (!snap.exists()) return notify("Foto no encontrada");
+            const f = { k: snap.key, ...snap.val() };
+            const idx2 = galeriaFotosArray.findIndex(x => x.k === key);
+            if (idx2 !== -1) {
+                abrirGaleriaFotos(idx2);
+            } else {
+                // Forzar apertura con datos directos
+                currentPhotoKey = f.k;
+                currentPhotoOwner = f.uid;
+                const modal = document.getElementById('modalFotoDetalle');
+                const img = document.getElementById('detalleFotoImg');
+                if (img) img.src = f.foto || "";
+                // Blur si aplica (solo otros usuarios ven borrosa)
+                if (Number(f.precio) >= 1 && f.uid !== idAuditor && (!f.compras || !f.compras[idAuditor])) {
+                    img.style.filter = 'blur(20px)';
+                } else {
+                    img.style.filter = 'none';
+                }
+                const barra = document.getElementById('barraCompraFoto');
+                if (barra && Number(f.precio) >= 1 && f.uid !== idAuditor && !(f.compras && f.compras[idAuditor])) {
+                    barra.style.display = 'block';
+                    document.getElementById('precioFotoLabel').textContent = f.precio;
+                    document.getElementById('msgPuntosInsuficientes').style.display = 'none';
+                    document.getElementById('msgFotoYaComprada').style.display = 'none';
+                    document.getElementById('btnComprarFotoDetalle').style.display = 'block';
+                    if (idAuditor) {
+                        db.ref(`users/${idAuditor}/earnings`).once('value', s => {
+                            if (parseFloat(s.val() || 0) < f.precio) {
+                                document.getElementById('msgPuntosInsuficientes').style.display = 'block';
+                            }
+                        });
+                    }
+                }
+                modal.style.display = 'flex';
+            }
+        });
+    }
+};
+
+// Ejecuta la compra restando puntos al comprador y acreditando al vendedor
+window.ejecutarCompraFoto = (key, ownerUid, btn) => {
+    if (!idAuditor) return notify("❌ Inicia sesión primero");
+    if (ownerUid === idAuditor) return notify("❌ Es tu propia foto");
+
+    if (btn) { btn.disabled = true; btn.textContent = "⏳ Procesando..."; }
+
+    db.ref(`galeria_comunidad/${key}`).once('value', snap => {
+        const foto = snap.val();
+        if (!foto) { notify("❌ Foto no encontrada"); if(btn) btn.disabled = false; return; }
+        const precio = foto.precio;
+        if (!precio || precio < 1 || precio > 500) { notify("❌ Esta foto no está a la venta"); if(btn) btn.disabled = false; return; }
+
+        // Verificar que no la haya comprado ya
+        if (foto.compras && foto.compras[idAuditor]) {
+            notify("✅ Ya compraste esta foto");
+            if(btn) btn.disabled = false;
+            mostrarFotoGaleria();
+            return;
+        }
+
+        // Verificar saldo del comprador
+        db.ref(`users/${idAuditor}/earnings`).once('value', s => {
+            const saldo = parseFloat(s.val() || 0);
+            if (saldo < precio) {
+                notify("❌ No tienes suficientes puntos");
+                if(btn) btn.disabled = false;
+                document.getElementById('msgPuntosInsuficientes').style.display = 'block';
+                return;
+            }
+
+            // Restar puntos al comprador
+            const compradorRef = db.ref(`users/${idAuditor}/earnings`);
+            // Sumar puntos al vendedor (80% para el vendedor, 20% comisión)
+            const gananciaVendedor = Math.round(precio * 0.8);
+            const comision = precio - gananciaVendedor;
+
+            compradorRef.set(firebase.database.ServerValue.increment(-precio)).then(() => {
+                // Acreditar al vendedor
+                const updates = {};
+                updates[`users/${ownerUid}/earnings`] = firebase.database.ServerValue.increment(gananciaVendedor);
+                // Marcar como comprada
+                updates[`galeria_comunidad/${key}/compras/${idAuditor}`] = true;
+                // Registrar historial
+                const ts = firebase.database.ServerValue.TIMESTAMP;
+                updates[`galeria_comunidad/${key}/historial_compra/${idAuditor}`] = { fecha: ts, pts: precio };
+
+                db.ref().update(updates).then(() => {
+                    notify(`✅ Foto comprada por ${precio} PTS`);
+                    registrarHistorial("Compra foto", -precio);
+                    // Actualizar array local
+                    const idx = galeriaFotosArray.findIndex(f => f.k === key);
+                    if (idx !== -1) {
+                        if (!galeriaFotosArray[idx].compras) galeriaFotosArray[idx].compras = {};
+                        galeriaFotosArray[idx].compras[idAuditor] = true;
+                    }
+                    mostrarFotoGaleria();
+                    // Recargar grid para quitar blur
+                    cargarGaleriaComunidad();
+                    try { window.playSound('win'); } catch(e){}
+                }).catch(err => {
+                    notify("Error: " + err.message);
+                    // Revertir descuento
+                    db.ref(`users/${idAuditor}/earnings`).set(firebase.database.ServerValue.increment(precio));
+                    if(btn) btn.disabled = false;
+                });
+            }).catch(err => {
+                notify("Error al procesar: " + err.message);
+                if(btn) btn.disabled = false;
+            });
+        });
+    });
+};
+
+// Compra con PayPal si no tiene puntos suficientes
+window.comprarFotoPayPal = (key) => {
+    window._fotoCompraPendienteKey = key || currentPhotoKey;
+    notify("💳 Abriendo PayPal para comprar puntos...");
+
+    // Registrar solicitud
+    if (idAuditor) {
+        db.ref(`compras_fotos_pendientes/${idAuditor}`).push({
+            fotoKey: window._fotoCompraPendienteKey,
+            fecha: firebase.database.ServerValue.TIMESTAMP,
+            estado: 'pendiente'
+        });
+    }
+
+    document.getElementById('modalComprarFoto').style.display = 'none';
+    setTimeout(() => {
+        window.open('https://www.paypal.com/ncp/payment/GJBMF2C7A6Y9J', '_blank');
+        notify("⏳ Tras pagar, la foto se desbloqueará cuando el administrador confirme");
+    }, 400);
+};
+
+// Comprar foto con Google Play
+window.iniciarCompraFotoGooglePlay = () => {
+    const key = window._fotoCompraPendienteKey || currentPhotoKey;
+    if (!key) return notify("Error: foto no identificada");
+
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.comprarFoto) {
+        notify("⏳ Abriendo Google Play...");
+        AndroidNative.comprarFoto("pack_compra_foto");
+        window._fotoCompraPendienteKey = key;
+    } else if (typeof AndroidNative !== 'undefined' && AndroidNative.comprarMensajes) {
+        notify("⏳ Abriendo Google Play...");
+        AndroidNative.comprarMensajes("pack_compra_foto");
+        window._fotoCompraPendienteKey = key;
+    } else {
+        notify("⚠️ Google Play no disponible. Usa PayPal.");
+    }
+};
+
+// Callback desde Kotlin cuando la compra Google Play de foto es exitosa
+window.onCompraFotoExitosa = (productId) => {
+    const key = window._fotoCompraPendienteKey;
+    if (!key) return notify("Error: no hay foto pendiente");
+
+    const updates = {};
+    updates[`galeria_comunidad/${key}/compras/${idAuditor}`] = true;
+    updates[`galeria_comunidad/${key}/historial_compra/${idAuditor}`] = {
+        fecha: firebase.database.ServerValue.TIMESTAMP,
+        metodo: 'google_play',
+        producto: productId
+    };
+
+    db.ref().update(updates).then(() => {
+        notify("✅ Foto desbloqueada gracias a tu compra");
+        cargarGaleriaComunidad();
+        mostrarFotoGaleria();
+        document.getElementById('modalComprarFoto').style.display = 'none';
+        try { window.playSound('win'); } catch(e){}
+    });
+};
+
+// Verificar compras de fotos pendientes (para acreditar después de PayPal)
+window.verificarComprasFotoPendientes = () => {
+    if (!idAuditor) return;
+    db.ref(`compras_fotos_pendientes/${idAuditor}`).once('value', snap => {
+        if (!snap.exists()) return;
+        snap.forEach(child => {
+            const c = child.val();
+            if (c.estado === 'completado' && c.fotoKey) {
+                // Marcar como comprada
+                const updates = {};
+                updates[`galeria_comunidad/${c.fotoKey}/compras/${idAuditor}`] = true;
+                db.ref().update(updates).then(() => {
+                    child.ref.update({ acreditado: true });
+                    notify("✅ Foto desbloqueada por compra PayPal");
+                    cargarGaleriaComunidad();
+                });
+            }
+        });
+    });
 };
 
 window.galeriaAnterior = () => {
