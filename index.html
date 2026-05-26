@@ -3423,13 +3423,12 @@ Cerrar
          ========================================= -->
     <div id="modalComprarFoto" class="modal-overlay" style="z-index: 30100;">
       <div class="modal-content" style="max-width: 360px; text-align:center; border-radius:18px; padding:22px;">
-        <div style="font-size:3rem; margin-bottom:6px;">🔓</div>
-        <h3 style="color:#f59e0b; margin:0 0 6px 0;">Comprar Foto</h3>
+        <div style="font-size:3rem; margin-bottom:6px;">⭐</div>
+        <h3 style="color:#f59e0b; margin:0 0 6px 0;">Recargar Puntos</h3>
         <p style="font-size:0.85rem; color:#64748b; margin-bottom:18px;">
-          Desbloquea esta foto para verla sin restricciones.
+          Compra 100 puntos por $2.00 para desbloquear fotos y más contenido.
         </p>
 
-        <!-- OPCIÓN 1: GOOGLE PLAY -->
         <button onclick="iniciarCompraFotoGooglePlay()"
           style="width:100%; padding:14px; border:none; border-radius:14px;
                  background:linear-gradient(135deg,#0f9d58,#059669); color:white;
@@ -3437,22 +3436,11 @@ Cerrar
                  justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(16,185,129,0.35);
                  margin-bottom:12px; cursor:pointer;">
           <i class="fab fa-google-play" style="font-size: 1.2rem;"></i>
-          Comprar con Google Play
+          100 Puntos — $2.00
         </button>
         <div style="font-size:0.7rem; color:#059669; margin-top:-6px; margin-bottom:14px;">
-          💵 Pago seguro con Google
+          💵 Pago seguro con Google · 100 pts = $2.00 USD
         </div>
-
-        <!-- OPCIÓN 2: PAYPAL -->
-        <button onclick="window.comprarFotoPayPal(window._fotoCompraPendienteKey || currentPhotoKey)"
-          style="width:100%; padding:14px; border:none; border-radius:14px;
-                 background:linear-gradient(135deg,#0070ba,#0ea5e9); color:white;
-                 font-weight:800; font-size:0.95rem; display:flex; align-items:center;
-                 justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(0,112,186,0.35);
-                 cursor:pointer;">
-          <i class="fab fa-paypal" style="font-size: 1.2rem;"></i>
-          Comprar con PayPal
-        </button>
 
         <button onclick="document.getElementById('modalComprarFoto').style.display='none'"
           style="background:none; border:none; color:#94a3b8; margin-top:14px; font-size:0.85rem; cursor:pointer;">
@@ -3729,7 +3717,7 @@ Cerrar
           🔓 Comprar por <span id="precioFotoLabel">0</span> PTS
         </button>
         <div id="msgPuntosInsuficientes" style="display:none; text-align:center; font-size:0.7rem; color:#fbbf24; margin-top:4px;">
-          No tienes suficientes puntos. <a href="#" onclick="window._fotoCompraPendienteKey = currentPhotoKey; document.getElementById('modalComprarFoto').style.display='flex'; return false;" style="color:#3b82f6; font-weight:700;">Compra con PayPal</a>
+          No tienes suficientes puntos.
         </div>
         <div id="msgFotoYaComprada" style="display:none; text-align:center; font-size:0.7rem; color:#10b981; font-weight:700;">✔ Ya comprada</div>
       </div>
@@ -9476,7 +9464,7 @@ function cargarGaleriaComunidad() {
             const yaComprada = f.compras && f.compras[idAuditor];
             const mostrarBorrosa = esVendible && !yaComprada;
 
-            const blurStyle = mostrarBorrosa ? 'filter:blur(12px);' : '';
+            const blurStyle = mostrarBorrosa ? 'filter:blur(9px);' : '';
             const precioBadge = esVendible ? `<div style="position:absolute; top:8px; left:8px; background:linear-gradient(135deg,#f59e0b,#d97706); color:white; font-size:0.65rem; font-weight:800; padding:4px 8px; border-radius:8px; box-shadow:0 2px 8px rgba(245,158,11,0.4); z-index:5;display:flex;align-items:center;gap:3px;">⭐ ${f.precio}</div>` : '';
             const comprarBtn = (mostrarBorrosa) ? `
                 <button onclick="event.stopPropagation(); window.abrirCompraFoto('${f.k}')" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10; background:#6366f1; color:white; border:none; padding:10px 16px; border-radius:12px; font-weight:800; font-size:0.8rem; cursor:pointer; box-shadow:0 4px 15px rgba(99,102,241,0.5); white-space:nowrap;">
@@ -9537,17 +9525,32 @@ function cargarGaleriaComunidad() {
 }
 
 function activarScrollInfinito() {
-    if (muroObserver) muroObserver.disconnect();
+    if (muroObserver) { muroObserver.disconnect(); muroObserver = null; }
     const centinela = document.getElementById('centinelaScrollMuro');
     if (!centinela) return;
-    muroObserver = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-            muroObserver.disconnect();
-            limiteFotosMuro += 20;
-            cargarGaleriaComunidad();
-        }
-    }, { rootMargin: '200px' });
-    muroObserver.observe(centinela);
+    const rootEl = centinela.closest('.screen');
+    if (!rootEl) return;
+    try {
+        muroObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                muroObserver.disconnect();
+                muroObserver = null;
+                limiteFotosMuro += 20;
+                cargarGaleriaComunidad();
+            }
+        }, { root: rootEl, rootMargin: '300px' });
+        muroObserver.observe(centinela);
+    } catch (e) {
+        // Fallback: scroll event si IntersectionObserver falla
+        const handler = function () {
+            if (rootEl.scrollTop + rootEl.clientHeight >= rootEl.scrollHeight - 400) {
+                rootEl.removeEventListener('scroll', handler);
+                limiteFotosMuro += 20;
+                cargarGaleriaComunidad();
+            }
+        };
+        rootEl.addEventListener('scroll', handler, { passive: true });
+    }
 }
 
 // Inicializar manejadores de eventos para el muro de fotos (solo una vez)
@@ -9565,7 +9568,14 @@ if (!window._fotoMuroInit) {
         const card = e.target.closest('.photo-card');
         if (!card) return;
         const idx = parseInt(card.getAttribute('data-index'));
-        if (!isNaN(idx)) abrirGaleriaFotos(idx);
+        if (isNaN(idx)) return;
+        const foto = galeriaFotosArray[idx];
+        // Si la foto está en venta y no ha sido comprada, NO abrir galería
+        if (foto && Number(foto.precio) >= 1 && Number(foto.precio) <= 500 && (!foto.compras || !foto.compras[idAuditor])) {
+            window.abrirCompraFoto(foto.k);
+            return;
+        }
+        abrirGaleriaFotos(idx);
     });
 }
 
@@ -11254,48 +11264,25 @@ window.touchEnd = () => {
 
 // Abre la galería en la foto específica para comprar
 window.abrirCompraFoto = (key) => {
-    const idx = galeriaFotosArray.findIndex(f => f.k === key);
-    if (idx !== -1) {
-        abrirGaleriaFotos(idx);
-    } else {
-        notify("⏳ Cargando foto...");
-        db.ref(`galeria_comunidad/${key}`).once('value', snap => {
-            if (!snap.exists()) return notify("Foto no encontrada");
-            const f = { k: snap.key, ...snap.val() };
-            const idx2 = galeriaFotosArray.findIndex(x => x.k === key);
-            if (idx2 !== -1) {
-                abrirGaleriaFotos(idx2);
-            } else {
-                // Forzar apertura con datos directos
-                currentPhotoKey = f.k;
-                currentPhotoOwner = f.uid;
-                const modal = document.getElementById('modalFotoDetalle');
-                const img = document.getElementById('detalleFotoImg');
-                if (img) img.src = f.foto || "";
-                // Blur si aplica (solo otros usuarios ven borrosa)
-                if (Number(f.precio) >= 1 && f.uid !== idAuditor && (!f.compras || !f.compras[idAuditor])) {
-                    img.style.filter = 'blur(20px)';
+    const foto = galeriaFotosArray.find(f => f.k === key);
+    if (foto && Number(foto.precio) >= 1 && foto.uid !== idAuditor && (!foto.compras || !foto.compras[idAuditor])) {
+        // Foto requiere compra — verificar saldo primero
+        if (idAuditor) {
+            db.ref(`users/${idAuditor}/earnings`).once('value', s => {
+                if (Number(s.val() || 0) < Number(foto.precio)) {
+                    window._fotoCompraPendienteKey = key;
+                    document.getElementById('modalComprarFoto').style.display = 'flex';
                 } else {
-                    img.style.filter = 'none';
+                    abrirGaleriaFotos(galeriaFotosArray.findIndex(f => f.k === key));
                 }
-                const barra = document.getElementById('barraCompraFoto');
-                if (barra && Number(f.precio) >= 1 && f.uid !== idAuditor && !(f.compras && f.compras[idAuditor])) {
-                    barra.style.display = 'block';
-                    document.getElementById('precioFotoLabel').textContent = f.precio;
-                    document.getElementById('msgPuntosInsuficientes').style.display = 'none';
-                    document.getElementById('msgFotoYaComprada').style.display = 'none';
-                    document.getElementById('btnComprarFotoDetalle').style.display = 'block';
-                    if (idAuditor) {
-                        db.ref(`users/${idAuditor}/earnings`).once('value', s => {
-                            if (parseFloat(s.val() || 0) < f.precio) {
-                                document.getElementById('msgPuntosInsuficientes').style.display = 'block';
-                            }
-                        });
-                    }
-                }
-                modal.style.display = 'flex';
-            }
-        });
+            });
+        } else {
+            abrirGaleriaFotos(galeriaFotosArray.findIndex(f => f.k === key));
+        }
+    } else {
+        // Foto gratis o propia o ya comprada — abrir galería normal
+        const idx = galeriaFotosArray.findIndex(f => f.k === key);
+        if (idx !== -1) abrirGaleriaFotos(idx);
     }
 };
 
@@ -11324,9 +11311,9 @@ window.ejecutarCompraFoto = (key, ownerUid, btn) => {
         db.ref(`users/${idAuditor}/earnings`).once('value', s => {
             const saldo = parseFloat(s.val() || 0);
             if (saldo < precio) {
-                notify("❌ No tienes suficientes puntos");
                 if(btn) btn.disabled = false;
-                document.getElementById('msgPuntosInsuficientes').style.display = 'block';
+                window._fotoCompraPendienteKey = key;
+                document.getElementById('modalComprarFoto').style.display = 'flex';
                 return;
             }
 
@@ -11394,43 +11381,33 @@ window.comprarFotoPayPal = (key) => {
     }, 400);
 };
 
-// Comprar foto con Google Play
+// Comprar 100 puntos con Google Play
 window.iniciarCompraFotoGooglePlay = () => {
     const key = window._fotoCompraPendienteKey || currentPhotoKey;
     if (!key) return notify("Error: foto no identificada");
 
     if (typeof AndroidNative !== 'undefined' && AndroidNative.comprarFoto) {
-        notify("⏳ Abriendo Google Play...");
-        AndroidNative.comprarFoto("pack_compra_foto");
-        window._fotoCompraPendienteKey = key;
-    } else if (typeof AndroidNative !== 'undefined' && AndroidNative.comprarMensajes) {
-        notify("⏳ Abriendo Google Play...");
-        AndroidNative.comprarMensajes("pack_compra_foto");
+        notify("⏳ Abriendo Google Play para recargar 100 puntos...");
+        AndroidNative.comprarFoto("100comprasdepuntos");
         window._fotoCompraPendienteKey = key;
     } else {
-        notify("⚠️ Google Play no disponible. Usa PayPal.");
+        notify("⚠️ Google Play no disponible.");
     }
 };
 
-// Callback desde Kotlin cuando la compra Google Play de foto es exitosa
+// Callback desde Kotlin cuando la compra Google Play es exitosa — acredita 100 puntos
 window.onCompraFotoExitosa = (productId) => {
     const key = window._fotoCompraPendienteKey;
     if (!key) return notify("Error: no hay foto pendiente");
 
-    const updates = {};
-    updates[`galeria_comunidad/${key}/compras/${idAuditor}`] = true;
-    updates[`galeria_comunidad/${key}/historial_compra/${idAuditor}`] = {
-        fecha: firebase.database.ServerValue.TIMESTAMP,
-        metodo: 'google_play',
-        producto: productId
-    };
-
-    db.ref().update(updates).then(() => {
-        notify("✅ Foto desbloqueada gracias a tu compra");
-        cargarGaleriaComunidad();
-        mostrarFotoGaleria();
+    const puntos = 100;
+    db.ref(`users/${idAuditor}/earnings`).set(firebase.database.ServerValue.increment(puntos)).then(() => {
+        notify(`✅ Recargaste ${puntos} puntos — ahora puedes comprar la foto con tus puntos`);
         document.getElementById('modalComprarFoto').style.display = 'none';
+        mostrarFotoGaleria();
         try { window.playSound('win'); } catch(e){}
+    }).catch(err => {
+        notify("Error al acreditar puntos: " + err.message);
     });
 };
 
