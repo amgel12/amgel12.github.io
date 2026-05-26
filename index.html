@@ -14404,8 +14404,6 @@ window.cargarChatsPrivadosNoLeidos = () => {
             localStorage.setItem(CHATS_TS_KEY(), String(Date.now()));
         } catch(e){}
         
-        sincronizarBadgesDesdeChats(chats);
-        
         // Refrescar Mi Chat de forma segura
         const cont = document.getElementById('mensajesPrivadosContainer');
         if (cont && cont.style.display !== 'none' && !window._enChatPrivado) {
