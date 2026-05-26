@@ -6439,7 +6439,13 @@ window.manejarAuth = async () => {
         // Ocultar pantalla de carga
         const loadingOverlay = document.getElementById('loadingOverlay');
         if(loadingOverlay) loadingOverlay.style.display = 'none';
-
+if (!localStorage.getItem('aviso_notis_mostrado')) {
+            setTimeout(() => {
+                const modalNotis = document.getElementById('modalPermisoNotis');
+                if (modalNotis) modalNotis.style.display = 'flex';
+                localStorage.setItem('aviso_notis_mostrado', '1');
+            }, 3000); 
+        }
         // 🔥 VITAL: AVISAR A KOTLIN QUIÉN ES EL USUARIO (Con reintento seguro)
         if (typeof AndroidNative !== 'undefined') {
             console.log("📡 Sincronizando UID con Kotlin para FCM...");
@@ -14425,7 +14431,32 @@ function reproducirVideo(card) {
         crearPlayer();
     }
 }
+window.pedirPermisoNotificaciones = () => {
+    // 1. Verificar si el navegador web soporta la petición estándar
+    if ("Notification" in window) {
+        if (Notification.permission === "granted") {
+            notify("✅ Las notificaciones ya están activas");
+            return;
+        } else if (Notification.permission !== "denied") {
+            // Pedir permiso en navegadores web normales
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    notify("🔔 Notificaciones activadas");
+                }
+            });
+            return;
+        }
+    }
 
+    // 2. Si estamos en la App de Android (Kotlin)
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirAjustesNotificaciones) {
+        notify("⚙️ Abriendo ajustes de tu teléfono...");
+        // Llamamos al puente nativo de Android
+        AndroidNative.abrirAjustesNotificaciones();
+    } else {
+        notify("⚠️ No se pudieron abrir los ajustes en este dispositivo");
+    }
+};
 </script>
 <!-- 📱 MENÚ DE OPCIONES AL TOCAR + -->
 <div id="modalMenuPublicar" class="modal-overlay" style="z-index: 40000; align-items: flex-end; display: none;">
@@ -14685,6 +14716,22 @@ function reproducirVideo(card) {
         </button>
     </div>
 </div>
+<!-- MODAL PARA PEDIR PERMISO DE NOTIFICACIONES -->
+<div id="modalPermisoNotis" class="modal-overlay" style="z-index: 100000; display: none;">
+    <div class="modal-content" style="text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 10px; animation: bounce 2s infinite;">🔔</div>
+        <h3 style="color: #1e293b; margin-bottom: 10px;">¡No te pierdas de nada!</h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">
+            Activa las notificaciones para saber cuándo recibes mensajes, regalos o ganas nuevos puntos.
+        </p>
+        
+        <button onclick="pedirPermisoNotificaciones(); document.getElementById('modalPermisoNotis').style.display='none';" 
+                class="btn-blue" style="background: linear-gradient(135deg, #10b981, #059669); margin-bottom: 15px; width: 100%; box-shadow: 0 4px 15px rgba(16,185,129,0.3);">
+            Activar Notificaciones
+        </button>
+        
 
+    </div>
+</div>
 </body>
 </html>
