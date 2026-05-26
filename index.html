@@ -11404,7 +11404,16 @@ window.onCompraFotoExitosa = (productId) => {
     db.ref(`users/${idAuditor}/earnings`).set(firebase.database.ServerValue.increment(puntos)).then(() => {
         notify(`✅ Recargaste ${puntos} puntos — ahora puedes comprar la foto con tus puntos`);
         document.getElementById('modalComprarFoto').style.display = 'none';
-        mostrarFotoGaleria();
+
+        // Enfocar la foto pendiente en la galería
+        const idx = galeriaFotosArray.findIndex(f => f.k === key);
+        if (idx !== -1) {
+            galeriaIndexActual = idx;
+            abrirGaleriaFotos(idx);
+        } else {
+            mostrarFotoGaleria();
+        }
+
         try { window.playSound('win'); } catch(e){}
     }).catch(err => {
         notify("Error al acreditar puntos: " + err.message);
@@ -13897,10 +13906,26 @@ window.iniciarCompraGooglePlay = () => {
         notify("⏳ Abriendo Google Play...");
 
         // 🔥 CAMBIO AQUÍ: Pon el ID EXACTO de tu producto de Google Play Console
-        AndroidNative.comprarMensajes("pack_20_mensajes"); 
+        AndroidNative.comprarMensajes("pack_20_mensajes");
 
     } else {
         notify("⚠️ Las compras integradas no están disponibles en este momento.");
+    }
+};
+
+// Callback desde Kotlin cuando falla la compra por Google Play
+window.onCompraGooglePlayError = (msg) => {
+    notify("⚠️ " + msg);
+    // Re-habilitar botones si es necesario
+    const m = document.getElementById('modalMensajesPremium');
+    if (m) {
+        const btn = m.querySelector('.btn-blue');
+        if (btn) btn.disabled = false;
+    }
+    const f = document.getElementById('modalComprarFoto');
+    if (f) {
+        const btn = f.querySelector('[onclick*="iniciarCompraFotoGooglePlay"]');
+        if (btn) btn.style.opacity = '1';
     }
 };
 
