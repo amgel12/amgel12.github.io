@@ -2757,7 +2757,10 @@ function forzarDescargaApp() {
                        🚀 INSTALAR GRATIS
                     </a>
                     
-
+                    <button onclick="document.getElementById('overlayDescarga').remove()" 
+                            style="background:none; border:none; color:#94a3b8; font-size:0.8rem; font-weight:600; cursor:pointer; text-decoration:underline;">
+                            Continuar en la web (limitado)
+                    </button>
                 </div>
             `;
             
@@ -14432,29 +14435,25 @@ function reproducirVideo(card) {
     }
 }
 window.pedirPermisoNotificaciones = () => {
-    // 1. Verificar si el navegador web soporta la petición estándar
-    if ("Notification" in window) {
-        if (Notification.permission === "granted") {
-            notify("✅ Las notificaciones ya están activas");
-            return;
-        } else if (Notification.permission !== "denied") {
-            // Pedir permiso en navegadores web normales
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    notify("🔔 Notificaciones activadas");
-                }
-            });
-            return;
+    // 1. Si estamos en la App de Android (Kotlin)
+    if (typeof AndroidNative !== 'undefined') {
+        try {
+            // Llamamos directo a la función nativa
+            AndroidNative.abrirAjustesNotificaciones();
+        } catch (e) {
+            // Si algo falla realmente en el puente
+            notify("⚠️ Error al conectar con el sistema");
+            console.log("Error puente:", e);
         }
-    }
-
-    // 2. Si estamos en la App de Android (Kotlin)
-    if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirAjustesNotificaciones) {
-        notify("⚙️ Abriendo ajustes de tu teléfono...");
-        // Llamamos al puente nativo de Android
-        AndroidNative.abrirAjustesNotificaciones();
     } else {
-        notify("⚠️ No se pudieron abrir los ajustes en este dispositivo");
+        // 2. Fallback para navegador web normal
+        if ("Notification" in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") notify("🔔 Notificaciones activadas");
+            });
+        } else {
+            notify("⚠️ Tu dispositivo no soporta esta función");
+        }
     }
 };
 </script>
