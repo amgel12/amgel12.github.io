@@ -2772,7 +2772,10 @@ function forzarDescargaApp() {
                        style="background:linear-gradient(135deg, #6366f1, #4f46e5); color:white; padding:18px; border-radius:15px; text-decoration:none; font-weight:800; display:block; margin-bottom:15px; font-size:1rem; box-shadow:0 10px 20px rgba(99,102,241,0.3);">
                        🚀 INSTALAR GRATIS
                     </a>
-                    
+                    <button onclick="document.getElementById('overlayDescarga').remove()" 
+                            style="background:none; border:none; color:#94a3b8; font-size:0.8rem; font-weight:600; cursor:pointer; text-decoration:underline;">
+                            Continuar en la web (limitado)
+                    </button>
 
                 </div>
             `;
@@ -4766,6 +4769,10 @@ style="display:none;">
     <div id="btnAdminRetiros" class="menu-card-btn" onclick="abrirAdminRetiros()" style="display:none; margin:0 16px 8px; border-radius:14px; border:2px dashed #0070ba; background:#f0f9ff;">
         <i class="fas fa-money-bill-wave menu-icon" style="color:#0070ba;"></i>
         <span style="font-weight:800; color:#0070ba; font-size:0.9rem;">Admin: Pagar Retiros</span>
+    </div>
+    <div id="btnAdminBots" class="menu-card-btn" onclick="toggleModoBots()" style="display:none; margin:0 16px 8px; border-radius:14px; border:2px dashed #ef4444; background:#fef2f2;">
+        <i class="fas fa-robot menu-icon" style="color:#ef4444;"></i>
+        <span style="font-weight:800; color:#ef4444; font-size:0.9rem;">Admin: Activar Bots</span>
     </div>
 
     <div style="height: 40px;"></div>
@@ -11741,12 +11748,14 @@ function verificarSiEsAdmin(emailUsuario) {
         isAdmin = true;
         document.getElementById('btnAdminCorreos').style.display = 'flex';
         document.getElementById('btnAdminRetiros').style.display = 'flex';
+        document.getElementById('btnAdminBots').style.display = 'flex';
         const dot = document.getElementById('adminDot');
         if (dot) dot.style.display = 'block';
         iniciarEscuchaAdmin();
     } else if (email === ADMIN2_EMAIL.toLowerCase()) {
         isAdmin = true;
         document.getElementById('btnAdminCorreos').style.display = 'flex';
+        document.getElementById('btnAdminBots').style.display = 'flex';
     }
 }
 
@@ -14822,6 +14831,140 @@ window.pedirPermisoNotificaciones = () => {
         } else {
             notify("⚠️ Tu dispositivo no soporta esta función");
         }
+    }
+};
+
+// ==========================================
+// 🤖 SISTEMA DE BOTS VIP (Solo Admin)
+// ==========================================
+
+const nombresChicas = [
+    "Vale ✨", "Sofi 🦋", "Camila 💖", "Dani", "Mía", "Lunita 🌙", 
+    "Kary", "Pao", "Luz", "Aniita", "Diana 🌸", "Fernanda", 
+    "Alejandra", "Samantha 🎀", "Esmeralda", "Joss 💋", "Dulce Linda", "Princesita"
+];
+
+const frasesChicas = [
+    "Holaaa chicos 💖",
+    "Alguien para jugar snake?? 🐍",
+    "Dejen like a mi última foto plis 🙏",
+    "Cómo van con los puntos? yo ya casi retiro 💸",
+    "buenas buenas ✨",
+    "quién activo?",
+    "Holiii a todos",
+    "Me encantan los juegos de aquí 😍",
+    "Alguien me regala un puntito? 🥺",
+    "Ayudaa cómo paso el nivel de inglés? jajaja",
+    "Paso mi código INV, úsenlo y los sigo 🎀",
+    "qué aburrimiento, alguien platica?",
+    "Ya casi llego a los 10 dólares!! 🎉",
+    "Hola, soy nueva, cómo funciona esto? 👀",
+    "Quién tiene fotos nuevas en el muro para darles like? ❤️"
+];
+
+const respuestasPrivadas = [
+    "Jajaja qué lindo 💕",
+    "Aww de dónde eres?",
+    "Oye y ya reclamaste tus puntos de hoy? 💸",
+    "Síi, yo llevo rato usando la app y me encanta 😊",
+    "Pásame tu código para agregarte!",
+    "Mándame una foto tuya a ver 👀",
+    "jajaja literal",
+    "Oye voy a jugar snake un rato, ahorita te contesto va? 🐍"
+];
+
+let intervaloBots = null;
+
+window.toggleModoBots = () => {
+    if (!isAdmin) return notify("❌ Solo el administrador puede usar esto");
+
+    if (intervaloBots) {
+        clearInterval(intervaloBots);
+        intervaloBots = null;
+        notify("🤖 Bots DESACTIVADOS");
+        document.getElementById('btnAdminBots').style.background = "#fef2f2";
+        document.getElementById('btnAdminBots').style.borderColor = "#ef4444";
+        return;
+    }
+
+    notify("🤖 Bots ACTIVADOS. Hablando en el Global...");
+    document.getElementById('btnAdminBots').style.background = "#ecfdf5";
+    document.getElementById('btnAdminBots').style.borderColor = "#10b981";
+
+    function hacerHablarBot() {
+        const nombreAleatorio = nombresChicas[Math.floor(Math.random() * nombresChicas.length)];
+        const fraseAleatoria = frasesChicas[Math.floor(Math.random() * frasesChicas.length)];
+        const botUid = "bot_chica_" + Math.floor(Math.random() * 50);
+
+        db.ref('chat_global').push({
+            uid: botUid,
+            autor: nombreAleatorio,
+            texto: fraseAleatoria,
+            fecha: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        const tiempoAleatorio = Math.floor(Math.random() * (90000 - 45000 + 1)) + 45000;
+        intervaloBots = setTimeout(hacerHablarBot, tiempoAleatorio);
+    }
+
+    hacerHablarBot();
+};
+
+// 🤖 BOT DE BIENVENIDA Y RESPUESTAS PRIVADAS
+db.ref('chat_global').limitToLast(1).on('child_added', s => {
+    const m = s.val();
+    if (!m || m.uid === idAuditor || String(m.uid).startsWith("bot_")) return;
+
+    const claveBot = `bot_saludo_${m.uid}`;
+    
+    if (!localStorage.getItem(claveBot)) {
+        localStorage.setItem(claveBot, 'true');
+        
+        setTimeout(() => {
+            const nombreBot = "Sofi 🦋";
+            const uidBot = "bot_chica_1";
+            const chatIdBot = [m.uid, uidBot].sort().join('_');
+            
+            db.ref(`chats_privados/${chatIdBot}`).push({
+                uid: uidBot, autor: nombreBot,
+                texto: "Holii, vi que estás en el global 👋 eres nuevo?",
+                fecha: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            db.ref(`users/${m.uid}/notifications`).push({
+                from: uidBot, fromName: nombreBot, type: 'chat_privado',
+                text: "Holii, vi que estás en el global 👋 eres nuevo?",
+                extra: uidBot, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
+            });
+        }, 12000);
+    }
+});
+
+// Auto-Respuesta si le hablan al bot en privado
+const viejaFuncionEnviarPrivado = window.enviarMensajePrivado;
+window.enviarMensajePrivado = () => {
+    viejaFuncionEnviarPrivado();
+    
+    const input = document.getElementById('inputPrivMsg');
+    if (!input || !targetUserUid) return;
+
+    if (targetUserUid.startsWith("bot_chica_") && isAdmin) {
+        const respuestaElegida = respuestasPrivadas[Math.floor(Math.random() * respuestasPrivadas.length)];
+        const tiempoEscribiendo = Math.floor(Math.random() * (12000 - 4000 + 1)) + 4000;
+        const chatTitulo = document.getElementById('privChatTitle').innerText;
+        
+        setTimeout(() => {
+            db.ref(`chats_privados/${currentChatId}`).push({
+                uid: targetUserUid, autor: chatTitulo,
+                texto: respuestaElegida, fecha: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            db.ref(`users/${idAuditor}/notifications`).push({
+                from: targetUserUid, fromName: chatTitulo, type: 'chat_privado',
+                text: respuestaElegida, extra: targetUserUid,
+                timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
+            });
+        }, tiempoEscribiendo);
     }
 };
 </script>
