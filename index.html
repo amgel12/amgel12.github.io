@@ -2605,8 +2605,9 @@ function crearCard(key, post, mediaId, type) {
         });
     }
 
-    // Lectura única del nodo reporte (combina vCount + likes en 1 solo viaje)
+    // Lectura única del nodo reporte (solo si el usuario no ha interactuado)
     db.ref(`reportes/${key}`).once('value', s => {
+        if (card.dataset.likeToggled === 'true') return;
         const val = s.val();
         if (!val) return;
         const el = document.getElementById(`l-count-${key}`);
@@ -2738,13 +2739,21 @@ window.feedToggleLike = (postKey, ownerUid) => {
     if (!idAuditor) return notify("Inicia sesión");
     const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
     const countRef = db.ref(`reportes/${postKey}/vCount`);
+    const heart = document.getElementById(`heart-${postKey}`);
+    const countEl = document.getElementById(`l-count-${postKey}`);
+    const card = document.getElementById(postKey);
+    if (card) card.dataset.likeToggled = 'true';
     ref.once('value', s => {
         if (s.exists()) {
             ref.remove();
             countRef.transaction(c => (c || 0) - 1);
+            if (heart) { heart.classList.remove('liked'); heart.style.color = ""; }
+            if (countEl) countEl.textContent = Math.max(0, (parseInt(countEl.textContent) || 0) - 1);
         } else {
             ref.set(true);
             countRef.transaction(c => (c || 0) + 1);
+            if (heart) { heart.classList.add('liked'); heart.style.color = "#e11d48"; }
+            if (countEl) countEl.textContent = (parseInt(countEl.textContent) || 0) + 1;
             try { window.playSound('coin'); } catch(e) {}
             if (ownerUid && ownerUid !== idAuditor) {
                 const miNombre = (typeof getMiNombre === "function") ? getMiNombre() : (myCurrentKey || "Usuario");
