@@ -4494,7 +4494,7 @@ style="display:none;">
             <span style="font-size:1.5rem;">🎮</span>
             <span style="font-size:0.55rem; font-weight:700; margin-top:2px;">Juegos</span>
         </button>
-        <button onclick="abrirListaChats()" style="min-width:62px; height:62px; border-radius:16px; background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3); flex-shrink:0;">
+        <button onclick="cambiarPestanaChat('michat')" style="min-width:62px; height:62px; border-radius:16px; background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3); flex-shrink:0;">
             <span style="font-size:1.5rem;">💬</span>
             <span style="font-size:0.55rem; font-weight:700; margin-top:2px;">Chats</span>
         </button>
@@ -6182,82 +6182,51 @@ window.clickGaleriaDirecta = () => {
 };
 
 window.procesarYEnviarFotoDirecto = (input) => {
-    // 1. Verificación de saldo rápida
     if (currentEarnings < 2) {
         notify("❌ Necesitas al menos 2.00 PTS");
         input.value = ""; 
         return;
     }
 
-    if (input.files && input.files[0]) {
-        // --- FEEDBACK INMEDIATO PARA QUE NO PAREZCA TRABADA ---
-        notify("⏳ Procesando imagen... espera un momento");
-        
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.src = e.target.result;
-            img.onload = () => {
-                // Usamos un pequeño retraso para dejar que la UI se refresque
-                setTimeout(() => {
-                    const canvas = document.createElement('canvas');
-                    // Bajamos un poco la resolución para que vuele (600px es ideal)
-                    const MAX_WIDTH = 600; 
-                    const scale = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scale;
-                    
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    // Comprimimos un poco más (50%) para que la subida sea instantánea
-                    const fotoFinal = canvas.toDataURL('image/jpeg', 0.5);
-                    
-                    if (currentChatId && targetUserUid) {
-                        subirYCobrarFoto(fotoFinal);
-                    }
-                    input.value = ""; // Limpiar selector
-                }, 100);
-            };
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    notify("⏳ Subiendo foto... espera un momento");
+
+    const nombreArchivo = "chat_" + Date.now() + "_" + idAuditor + ".jpg";
+    const storageRef = firebase.storage().ref().child('chat_fotos/' + nombreArchivo);
+
+    storageRef.put(file).then(snapshot => snapshot.ref.getDownloadURL()).then(downloadURL => {
+        const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
+        const updates = {};
+        const chatKey = db.ref(`chats_privados/${currentChatId}`).push().key;
+
+        updates[`chats_privados/${currentChatId}/${chatKey}`] = {
+            uid: idAuditor,
+            autor: miNombre,
+            texto: "📷 Foto",
+            foto: downloadURL,
+            esFoto: true,
+            fecha: firebase.database.ServerValue.TIMESTAMP
         };
-        reader.readAsDataURL(input.files[0]);
-    }
-};
 
-// Función separada para que el envío no bloquee la pantalla
-function subirYCobrarFoto(base64) {
-    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
-    const updates = {};
-    const chatKey = db.ref(`chats_privados/${currentChatId}`).push().key;
-
-    // Preparamos todo en un solo paquete para Firebase
-    updates[`chats_privados/${currentChatId}/${chatKey}`] = {
-        uid: idAuditor,
-        autor: miNombre,
-        texto: "📷 Foto",
-        foto: base64,
-        esFoto: true,
-        fecha: firebase.database.ServerValue.TIMESTAMP
-    };
-
-    // Subida y notificación en un solo paso
-    db.ref().update(updates).then(() => {
-        // EL COBRO SE HACE DESPUÉS PARA NO TRABAR EL ENVÍO
-        db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) - 2.00);
-        
-        // Notificación al otro usuario
-        db.ref(`users/${targetUserUid}/notifications`).push({
-            from: idAuditor, fromName: miNombre, type: 'chat_privado',
-            text: "📷 Te envió una foto privada", extra: idAuditor,
-            timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
+        return db.ref().update(updates).then(() => {
+            db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) - 2.00);
+            db.ref(`users/${targetUserUid}/notifications`).push({
+                from: idAuditor, fromName: miNombre, type: 'chat_privado',
+                text: "📷 Te envió una foto privada", extra: idAuditor,
+                timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
+            });
+            if (typeof registrarHistorial === 'function') {
+                registrarHistorial("Foto privada enviada", -2.00);
+            }
+            notify("✅ Enviada (-2.00 PTS)");
+            try { window.playSound('coin'); } catch(e){}
         });
-
-        if(typeof registrarHistorial === 'function') {
-            registrarHistorial("Foto privada enviada", -2.00);
-        }
-
-        notify("✅ Enviada (-2.00 PTS)");
-        try { window.playSound('coin'); } catch(e){}
+    }).catch(err => {
+        notify("Error al subir foto: " + err.message);
+    }).finally(() => {
+        input.value = "";
     });
 }
 // Cierre automático al tocar fuera
@@ -6592,50 +6561,7 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
             }
         }, 10000);
 
-        // --- 🔔 RADAR DE MENSAJES Y NOTIFICACIONES (PUNTOS ROJOS) ---
-        db.ref(`users/${idAuditor}/notifications`).on('value', snap => {
-            window.mapaMensajesSinLeer = {}; 
-            let totalMensajesNuevos = 0;
 
-            if (snap.exists()) {
-                snap.forEach(child => {
-                    const n = child.val();
-                    // Contamos chats privados no leídos
-                    if (n.type === 'chat_privado' && n.read === false) {
-                        const emisorUid = n.extra;
-                        if (emisorUid) {
-                            window.mapaMensajesSinLeer[emisorUid] = (window.mapaMensajesSinLeer[emisorUid] || 0) + 1;
-                            totalMensajesNuevos++;
-                        }
-                    }
-                });
-            }
-
-
-            // 1. Número rojo en el menú de abajo (Pestaña Mensajes)
-            const badgeMenu = document.getElementById('msgBadge');
-            if (badgeMenu) {
-                if (totalMensajesNuevos > 0) {
-                    badgeMenu.style.display = 'flex';
-                    badgeMenu.textContent = totalMensajesNuevos > 99 ? '99+' : totalMensajesNuevos;
-                    document.getElementById('nav3')?.querySelector('.nav-icon')?.classList.add('nav-jumping');
-                } else {
-                    badgeMenu.style.display = 'none';
-                    document.getElementById('nav3')?.querySelector('.nav-icon')?.classList.remove('nav-jumping');
-                }
-            }
-
-            // 2. Sincronizar campanas (arriba y pestaña mensajes)
-            const b1 = document.getElementById('badgeNotis');
-            const b2 = document.getElementById('badgeNotisMensajes');
-            if (b1) { b1.textContent = totalMensajesNuevos; b1.classList.toggle('active', totalMensajesNuevos > 0); }
-            if (b2) { b2.textContent = totalMensajesNuevos; b2.classList.toggle('active', totalMensajesNuevos > 0); }
-
-            // 3. 🔥 RE-DIBUJAR LA LISTA PARA QUE SALGAN LOS GLOBITOS ROJOS
-            if (typeof renderizarUsuariosHorizontal === 'function') {
-                renderizarUsuariosHorizontal();
-            }
-        });
         // 3. Verificar compras confirmadas pendientes de acreditar
         verificarComprasConfirmadas();
 
@@ -6847,7 +6773,6 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
         // Esto hace que los puntos rojos y las historias carguen al instante
         if (typeof iniciarMonitorDeBadges === "function") iniciarMonitorDeBadges();
         if (typeof cargarListaUsuariosHorizontal === "function") cargarListaUsuariosHorizontal();
-        if (typeof cachearFotosPerfiles === "function") cachearFotosPerfiles();
 
         // Mandar a la pantalla inicial
         if (typeof goToScreen === "function") goToScreen(2); 
@@ -8973,76 +8898,7 @@ function cachearUsuarios() {
     });
 }
 
-function cargarListaUsuariosHorizontal() {
-    if (window._usuariosListenerActivo) return; 
-    window._usuariosListenerActivo = true;
 
-    // Escuchar cambios de estado (online/offline + lastSeen)
-    db.ref('users').on('value', snap => {
-        listaUsuariosCacheReal = [];
-        const ahora = Date.now();
-        const doceHoras = 12 * 60 * 60 * 1000;
-
-        snap.forEach(child => {
-            const u = child.val();
-            if (!u) return;
-            if (child.key === idAuditor) return; // No incluir al usuario actual
-
-            const nombre = u.apodo || u.myInviteKey || "Usuario";
-            const avatar = u.fotoPerfil || getAvatarUrl(child.key);
-            const lastSeen = u.lastSeen || 0;
-            const tiempoDesdeUltima = ahora - lastSeen;
-            const online = tiempoDesdeUltima < 30000; // Menos de 30 segundos = en línea
-
-            listaUsuariosCacheReal.push({
-                key: child.key,
-                nombre: nombre,
-                avatar: avatar,
-                online: online,
-                lastSeen: lastSeen,
-                rawTime: lastSeen
-            });
-        });
-
-        // Ordenar: online primero, luego por último visto
-        listaUsuariosCacheReal.sort((a, b) => {
-            if (a.online && !b.online) return -1;
-            if (!a.online && b.online) return 1;
-            return b.rawTime - a.rawTime;
-        });
-
-        // Renderizar el listado
-        if (typeof renderizarUsuariosHorizontal === 'function') {
-            renderizarUsuariosHorizontal();
-        }
-    });
-}
-
-function renderizarUsuariosHorizontal() {
-    // Este será el visor de usuarios en línea (si lo tienes en HTML)
-    // Actualiza los colores basado en estados
-}
-
-function iniciarMonitorDeBadges() {
-    // Monitor de badges de mensajes y estados de usuarios
-    if (window._badgesMonitorActivo) return;
-    window._badgesMonitorActivo = true;
-
-    // Escuchar pensamientos públicos
-    db.ref('pensamientos').on('value', snap => {
-        _cacheDataNubes = {};
-        if (snap.exists()) {
-            snap.forEach(child => {
-                const p = child.val();
-                _cacheDataNubes[child.key] = {
-                    texto: p.texto || '',
-                    timestamp: p.timestamp || Date.now(),
-                    uid: child.key
-                };
-            });
-        }
-    });
-}
 document.addEventListener('keyup', (e) => {
     // Solo actuamos si se escribe en el chat
     if (e.target && e.target.id === 'inputChatMsg') {
@@ -9307,7 +9163,8 @@ window.togglePrecioFoto = () => {
 // 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN USANDO LA REDIRECCIÓN DE URL (SEGURO)
 // 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN (CORREGIDO)
 window.subirFotoReal = () => {
-    if (!fotoBase64Actual) return notify("Elige una foto primero");
+    const file = document.getElementById('inputFotoArchivo').files[0];
+    if (!file) return notify("Elige una foto primero");
 
     const btn = document.getElementById('btnPublicarFoto');
     if (btn) {
@@ -9315,65 +9172,54 @@ window.subirFotoReal = () => {
         btn.innerHTML = "Cargando anuncio...";
     }
 
-    // ¡AQUÍ ESTABA EL ERROR! Ahora sí llama a la función nativa que creaste en Kotlin
     if (typeof AndroidNative !== 'undefined' && AndroidNative.publicarFotoConAnuncio) {
         notify("📺 Ve el anuncio para publicar tu foto...");
         AndroidNative.publicarFotoConAnuncio();
     } else {
-        // Fallback
         ejecutarSubidaFotoFirebase();
     }
 };
 
 // 2. KOTLIN LLAMA A ESTA FUNCIÓN AL TERMINAR EL ANUNCIO CON ÉXITO
 window.ejecutarSubidaFotoFirebase = () => {
+    const file = document.getElementById('inputFotoArchivo').files[0];
+    if (!file) return notify("Error: No hay archivo");
+
     const btn = document.getElementById('btnPublicarFoto');
-    if (btn) btn.innerHTML = "Subiendo...";
+    if (btn) btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Subiendo foto...";
 
     const chkVender = document.getElementById('chkVenderFoto');
     const tienePrecio = chkVender && chkVender.checked;
     const precioPts = tienePrecio ? parseInt(document.getElementById('inputPrecioFoto').value) || 0 : 0;
 
-    const fotoData = {
-        uid: idAuditor,
-        autor: myCurrentKey,
-        foto: fotoBase64Actual,
-        fecha: firebase.database.ServerValue.TIMESTAMP
-    };
-    if (tienePrecio && precioPts >= 1 && precioPts <= 500) {
-        fotoData.precio = precioPts;
-    }
+    const nombreArchivo = "muro_" + Date.now() + ".jpg";
+    const storageRef = firebase.storage().ref().child('muro/' + nombreArchivo);
 
-    db.ref('galeria_comunidad').push(fotoData).then(() => {
-        notify("✅ Foto subida con éxito");
-        cerrarModalFoto();
-
-        // Verificar si la misión M4 de misiones diarias estaba activa
-        if (localStorage.getItem('mision_m4_activa') === '1') {
-            localStorage.setItem('mision_m4', '1');
-            localStorage.removeItem('mision_m4_activa');
-            sumarPuntosMision(8);
-            if (typeof renderizarMisionesAprender === 'function') renderizarMisionesAprender();
-            notify("✅ Misión completada");
+    storageRef.put(file).then(snapshot => {
+        return snapshot.ref.getDownloadURL();
+    }).then(downloadURL => {
+        const fotoData = {
+            uid: idAuditor,
+            autor: myCurrentKey,
+            foto: downloadURL,
+            fecha: firebase.database.ServerValue.TIMESTAMP
+        };
+        if (tienePrecio && precioPts >= 1 && precioPts <= 500) {
+            fotoData.precio = precioPts;
         }
 
-        // Acreditar la recompensa de +0.10 PTS
+        return db.ref('galeria_comunidad').push(fotoData);
+    }).then(() => {
+        notify("✅ Foto subida con éxito");
+        cerrarModalFoto();
         db.ref(`users/${idAuditor}`).update({
             earnings: firebase.database.ServerValue.increment(0.10)
         });
-
         if (window.checarProgresoDiario) window.checarProgresoDiario();
         try { window.playSound('win'); } catch(e){}
-
-        // Refrescar el muro para que se vea la foto nueva con su precio
-        setTimeout(() => { cargarGaleriaComunidad(); }, 500);
-        
     }).catch(err => {
         notify("Error al subir: " + err.message);
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = "💰 Publicar y Ganar";
-        }
+        if (btn) { btn.disabled = false; btn.innerHTML = "💰 Publicar y Ganar"; }
     });
 };
 
@@ -12136,31 +11982,7 @@ window.compartirPostWhatsapp = () => {
     window.open(url, '_blank');
 };
 
-function cachearFotosPerfiles() {
-    // Usar .on() en lugar de .once() para detectar cambios en tiempo real
-    db.ref('users').limitToLast(200).on('value', snap => {
-        if (!snap.exists()) return;
-        snap.forEach(child => {
-            const u = child.val() || {};
-            if (u.fotoPerfil) { 
-                cacheFotosPerfil[child.key] = u.fotoPerfil; 
-            }
-        });
-        // Actualizar avatares en chat privado si está abierto
-        if (document.getElementById('modalChatPrivado').style.display === 'flex') {
-            document.querySelectorAll('.chat-avatar-img').forEach(img => {
-                const uid = img.dataset.uid;
-                if (uid && cacheFotosPerfil[uid]) {
-                    img.src = cacheFotosPerfil[uid];
-                }
-            });
-        }
-        // Actualizar listas después de actualizar el cache
-        if (typeof renderizarUsuariosHorizontal === "function") renderizarUsuariosHorizontal();
-        cargarMuro(); // ✅ feed nativo unificado
-        if (typeof cargarGaleriaComunidad === "function") cargarGaleriaComunidad();
-    });
-}
+
 
 const sonidoClick = new Audio("");
 sonidoClick.volume = 0.4;
@@ -13063,149 +12885,6 @@ window.abrirJuego = () => {
     document.getElementById('modalJuegos').style.display = 'flex';
 };
 
-window.abrirListaChats = () => {
-    let modal = document.getElementById('modalListaChats');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'modalListaChats';
-        modal.className = 'modal-overlay';
-        modal.style.zIndex = '26000';
-        modal.style.display = 'flex';
-        modal.innerHTML = `
-        <div class="modal-content" style="max-height: 80vh; overflow-y: auto; position: relative;">
-             <!-- BOTÓN X PARA CERRAR -->
-             <button onclick="document.getElementById('modalListaChats').style.display='none'" 
-                    style="position: absolute; top: 15px; right: 15px; background: none; border: none; 
-                           font-size: 1.5rem; color: #94a3b8; cursor: pointer; padding: 5px; z-index: 10;">✕</button>
-            <h3 style="text-align: center; margin-bottom: 15px; margin-top: 10px;">💬 Chats Pendientes</h3>
-            <div id="listaChatsContainer" style="text-align: center; padding: 20px; color: #94a3b8;">
-                <i class="fas fa-spinner fa-spin"></i> Cargando...
-            </div>
-            <button onclick="document.getElementById('modalListaChats').style.display='none'" class="btn-blue" style="background: #94a3b8;">Cerrar</button>
-        </div>
-        `;
-        document.body.appendChild(modal);
-    }
-    document.getElementById('modalListaChats').style.display = 'flex';
-
-    const container = document.getElementById('listaChatsContainer');
-    container.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando chats...';
-
-    if (!idAuditor) return;
-
-    // 1. Obtenemos TODOS los chats privados
-    db.ref('chats_privados').once('value', snap => {
-        if (!snap.exists()) {
-            container.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1;">No hay conversaciones.</div>';
-            return;
-        }
-
-        let chatsPendientes = [];
-
-        snap.forEach(chatSnap => {
-            const chatId = chatSnap.key;
-            const partes = chatId.split('_');
-
-            // Verificamos si este chat es mío
-            if (partes.includes(idAuditor)) {
-                // Obtenemos el otro usuario
-                const otroUid = partes[0] === idAuditor ? partes[1] : partes[0];
-
-                // Obtenemos todos los mensajes de este chat para ver quién escribió último
-                const mensajes = [];
-                chatSnap.forEach(msgSnap => {
-                    mensajes.push(msgSnap.val());
-                });
-
-                if (mensajes.length > 0) {
-                    // Ordenamos por fecha para encontrar el último
-                    mensajes.sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
-                    const ultimoMsg = mensajes[0];
-
-                    // 🔥 FILTRO: Solo mostramos si el ÚLTIMO mensaje NO es mío (espero respuesta)
-                    if (ultimoMsg.uid !== idAuditor) {
-                        chatsPendientes.push({
-                            otroUid: otroUid,
-                            ultimoMsg: ultimoMsg,
-                            fecha: ultimoMsg.fecha
-                        });
-                    }
-                }
-            }
-        });
-
-        if (chatsPendientes.length === 0) {
-            container.innerHTML = '<div style="padding:20px; text-align:center; color:#64748b;">✅ ¡Todo al día!<br>No tienes mensajes pendientes de respuesta.</div>';
-            return;
-        }
-
-        // Ordenar chats pendientes por fecha (más reciente primero)
-        chatsPendientes.sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
-
-        // Renderizamos la lista con placeholders para nombres
-        let html = '';
-        chatsPendientes.forEach(chat => {
-            const msg = chat.ultimoMsg;
-            const uid = chat.otroUid;
-
-            // Calculamos tiempo
-            const ahora = Date.now();
-            const diffMin = Math.floor((ahora - (msg.fecha || Date.now())) / 60000);
-            let tiempoTexto = diffMin < 1 ? 'Ahora' : `${diffMin} min`;
-
-            // Texto del mensaje
-            let textoResumen = msg.texto || (msg.esFoto ? '📷 Foto' : '...');
-            if (textoResumen.length > 30) textoResumen = textoResumen.substring(0, 30) + '...';
-
-            html += `<div id="chat-item-${uid}" onclick="abrirChatPrivado('${uid}', 'Cargando...')" 
-                     style="padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 12px; background: white;">
-                <div style="width: 45px; height: 45px; border-radius: 50%; background: #e2e8f0; background-size: cover; background-image: url('${getUserProfilePhoto(uid)}'); flex-shrink: 0;"></div>
-                <div style="flex: 1; min-width: 0;">
-                    <div id="chat-name-${uid}" style="font-weight: 700; font-size: 0.95rem; color: #1e293b;">
-                        <i class="fas fa-spinner fa-spin" style="font-size:0.8rem"></i>
-                    </div>
-                    <div style="font-size: 0.8rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        ${escapeHtml(textoResumen)}
-                    </div>
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-                    <span style="font-size: 0.7rem; color: #ef4444; font-weight:bold;">Pendiente</span>
-                    <span style="font-size: 0.6rem; color: #94a3b8;">${tiempoTexto}</span>
-                </div>
-            </div>`;
-        });
-
-        container.innerHTML = html;
-
-        // 🔥 AQUÍ OBTENEMOS LOS NOMBRES REALES (Apodo o INV)
-        const uidsPendientes = chatsPendientes.map(c => c.otroUid);
-        const usersRef = db.ref('users');
-
-        // Promesa para esperar los datos de todos los usuarios
-        const promises = uidsPendientes.map(uid => {
-            return usersRef.child(uid).once('value').then(snap => {
-                const u = snap.val();
-                // LÓGICA: Primero busca Apodo, si no existe usa INV
-                const nombreReal = (u && u.apodo) ? u.apodo : (u && u.myInviteKey ? u.myInviteKey : 'Usuario');
-
-                const elName = document.getElementById(`chat-name-${uid}`);
-                const elItem = document.getElementById(`chat-item-${uid}`);
-
-                if (elName) {
-                    elName.textContent = escapeHtml(nombreReal);
-                }
-                if (elItem) {
-                    // Actualizar onclick con el nombre correcto
-                    elItem.setAttribute('onclick', `abrirChatPrivado('${uid}', '${nombreReal.replace(/'/g, "\\'")}')`);
-                }
-            });
-        });
-
-        Promise.all(promises).then(() => {
-            console.log("Nombres de chats actualizados con apodos reales");
-        });
-    });
-};
 window.abrirBusquedaUsuarios = () => {
     let modal = document.getElementById('modalBuscarUsuario');
     if (!modal) {
@@ -14567,8 +14246,29 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
     const chatsByUid = {};
     chatsCache.forEach(c => { chatsByUid[c.otroUid] = c; });
 
-    // Usar listaUsuariosCacheReal (todos, ya filtrados y ordenados por Firebase)
-    const todos = (listaUsuariosCacheReal || []).filter(u => u.key !== idAuditor);
+    // 🔥 FIX: Mezclar usuarios en línea/recientes con los que ya tenemos chat histórico
+    const todosMap = new Map();
+    
+    (listaUsuariosCacheReal || []).forEach(u => {
+        if (u.key !== idAuditor) todosMap.set(u.key, u);
+    });
+
+    chatsCache.forEach(c => {
+        if (!todosMap.has(c.otroUid)) {
+            let namesCache = {};
+            try { namesCache = JSON.parse(localStorage.getItem(NAMES_CACHE_KEY()) || '{}'); } catch(e){}
+            todosMap.set(c.otroUid, {
+                key: c.otroUid,
+                nombre: namesCache[c.otroUid] || 'Usuario',
+                avatar: getUserProfilePhoto(c.otroUid),
+                online: false,
+                rawTime: 0,
+                pensamiento: ''
+            });
+        }
+    });
+
+    const todos = Array.from(todosMap.values());
 
     if (todos.length === 0) {
         container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#94a3b8;">
@@ -14835,45 +14535,52 @@ window.pedirPermisoNotificaciones = () => {
 };
 
 // ==========================================
-// 🤖 SISTEMA DE BOTS VIP (Solo Admin)
+// 🤖 SISTEMA DE BOTS VIP (HUMANIZADOS)
 // ==========================================
 
-const nombresChicas = [
-    "Vale ✨", "Sofi 🦋", "Camila 💖", "Dani", "Mía", "Lunita 🌙", 
-    "Kary", "Pao", "Luz", "Aniita", "Diana 🌸", "Fernanda", 
-    "Alejandra", "Samantha 🎀", "Esmeralda", "Joss 💋", "Dulce Linda", "Princesita"
+const perfilesBots = [
+    { id: "bot_1", nombre: "Vale ✨", foto: "https://i.pravatar.cc/300?img=1" },
+    { id: "bot_2", nombre: "Sofi 🦋", foto: "https://i.pravatar.cc/300?img=5" },
+    { id: "bot_3", nombre: "Camila 💖", foto: "https://i.pravatar.cc/300?img=9" },
+    { id: "bot_4", nombre: "Dani", foto: "https://i.pravatar.cc/300?img=10" },
+    { id: "bot_5", nombre: "Mía", foto: "https://i.pravatar.cc/300?img=16" },
+    { id: "bot_6", nombre: "Lunita 🌙", foto: "https://i.pravatar.cc/300?img=20" },
+    { id: "bot_7", nombre: "Diana 🌸", foto: "https://i.pravatar.cc/300?img=24" },
+    { id: "bot_8", nombre: "Joss 💋", foto: "https://i.pravatar.cc/300?img=26" },
+    { id: "bot_9", nombre: "Dulce Linda", foto: "https://i.pravatar.cc/300?img=32" },
+    { id: "bot_10", nombre: "Princesita", foto: "https://i.pravatar.cc/300?img=35" }
 ];
 
 const frasesChicas = [
-    "Holaaa chicos 💖",
-    "Alguien para jugar snake?? 🐍",
-    "Dejen like a mi última foto plis 🙏",
-    "Cómo van con los puntos? yo ya casi retiro 💸",
-    "buenas buenas ✨",
-    "quién activo?",
-    "Holiii a todos",
-    "Me encantan los juegos de aquí 😍",
-    "Alguien me regala un puntito? 🥺",
-    "Ayudaa cómo paso el nivel de inglés? jajaja",
-    "Paso mi código INV, úsenlo y los sigo 🎀",
-    "qué aburrimiento, alguien platica?",
-    "Ya casi llego a los 10 dólares!! 🎉",
-    "Hola, soy nueva, cómo funciona esto? 👀",
-    "Quién tiene fotos nuevas en el muro para darles like? ❤️"
+    "Holaaa chicos 💖", "Alguien para jugar snake?? 🐍", "Dejen like a mi última foto plis 🙏",
+    "Cómo van con los puntos? yo ya casi retiro 💸", "buenas buenas ✨", "quién activo?",
+    "Holiii a todos", "Me encantan los juegos de aquí 😍", "Alguien me regala un puntito? 🥺",
+    "Paso mi código INV, úsenlo y los sigo 🎀", "qué aburrimiento, alguien platica?",
+    "Ya casi llego a los 10 dólares!! 🎉", "Hola, soy nueva, cómo funciona esto? 👀"
 ];
 
 const respuestasPrivadas = [
-    "Jajaja qué lindo 💕",
-    "Aww de dónde eres?",
-    "Oye y ya reclamaste tus puntos de hoy? 💸",
-    "Síi, yo llevo rato usando la app y me encanta 😊",
-    "Pásame tu código para agregarte!",
-    "Mándame una foto tuya a ver 👀",
-    "jajaja literal",
-    "Oye voy a jugar snake un rato, ahorita te contesto va? 🐍"
+    "Jajaja qué lindo 💕", "Aww de dónde eres?", "Oye y ya reclamaste tus puntos de hoy? 💸",
+    "Síi, yo llevo rato usando la app y me encanta 😊", "Pásame tu código para agregarte!",
+    "jajaja literal", "Oye voy a jugar snake un rato, ahorita te contesto va? 🐍"
 ];
 
 let intervaloBots = null;
+
+// Esta función CREA a las chicas en Firebase para que parezcan reales
+function registrarBotsEnFirebase() {
+    const updates = {};
+    const ahora = firebase.database.ServerValue.TIMESTAMP;
+    
+    perfilesBots.forEach(bot => {
+        updates[`users/${bot.id}/apodo`] = bot.nombre;
+        updates[`users/${bot.id}/fotoPerfil`] = bot.foto;
+        // Las mantenemos "En línea"
+        updates[`users/${bot.id}/lastSeen`] = ahora;
+    });
+    
+    db.ref().update(updates);
+}
 
 window.toggleModoBots = () => {
     if (!isAdmin) return notify("❌ Solo el administrador puede usar esto");
@@ -14887,18 +14594,24 @@ window.toggleModoBots = () => {
         return;
     }
 
+    // 1. Damos vida a las chicas en Firebase
+    registrarBotsEnFirebase();
+
     notify("🤖 Bots ACTIVADOS. Hablando en el Global...");
     document.getElementById('btnAdminBots').style.background = "#ecfdf5";
     document.getElementById('btnAdminBots').style.borderColor = "#10b981";
 
     function hacerHablarBot() {
-        const nombreAleatorio = nombresChicas[Math.floor(Math.random() * nombresChicas.length)];
+        // Elegimos un bot al azar de la lista oficial
+        const botAleatorio = perfilesBots[Math.floor(Math.random() * perfilesBots.length)];
         const fraseAleatoria = frasesChicas[Math.floor(Math.random() * frasesChicas.length)];
-        const botUid = "bot_chica_" + Math.floor(Math.random() * 50);
+
+        // Actualizamos su "lastSeen" para que el punto verde no se apague
+        db.ref(`users/${botAleatorio.id}/lastSeen`).set(firebase.database.ServerValue.TIMESTAMP);
 
         db.ref('chat_global').push({
-            uid: botUid,
-            autor: nombreAleatorio,
+            uid: botAleatorio.id,
+            autor: botAleatorio.nombre,
             texto: fraseAleatoria,
             fecha: firebase.database.ServerValue.TIMESTAMP
         });
@@ -14913,60 +14626,102 @@ window.toggleModoBots = () => {
 // 🤖 BOT DE BIENVENIDA Y RESPUESTAS PRIVADAS
 db.ref('chat_global').limitToLast(1).on('child_added', s => {
     const m = s.val();
-    if (!m || m.uid === idAuditor || String(m.uid).startsWith("bot_")) return;
+    if (!m || !isAdmin || m.uid === idAuditor || String(m.uid).startsWith("bot_")) return;
 
     const claveBot = `bot_saludo_${m.uid}`;
-    
     if (!localStorage.getItem(claveBot)) {
         localStorage.setItem(claveBot, 'true');
-        
         setTimeout(() => {
-            const nombreBot = "Sofi 🦋";
-            const uidBot = "bot_chica_1";
-            const chatIdBot = [m.uid, uidBot].sort().join('_');
+            const botSofi = perfilesBots.find(b => b.id === "bot_2"); // Elegimos a Sofi
+            const chatIdBot = [m.uid, botSofi.id].sort().join('_');
             
+            // Sofi se pone "en línea" justo antes de hablar
+            db.ref(`users/${botSofi.id}/lastSeen`).set(firebase.database.ServerValue.TIMESTAMP);
+
             db.ref(`chats_privados/${chatIdBot}`).push({
-                uid: uidBot, autor: nombreBot,
+                uid: botSofi.id, autor: botSofi.nombre,
                 texto: "Holii, vi que estás en el global 👋 eres nuevo?",
                 fecha: firebase.database.ServerValue.TIMESTAMP
             });
 
             db.ref(`users/${m.uid}/notifications`).push({
-                from: uidBot, fromName: nombreBot, type: 'chat_privado',
+                from: botSofi.id, fromName: botSofi.nombre, type: 'chat_privado',
                 text: "Holii, vi que estás en el global 👋 eres nuevo?",
-                extra: uidBot, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
+                extra: botSofi.id, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
             });
-        }, 12000);
+        }, 12000); 
     }
 });
-
 // Auto-Respuesta si le hablan al bot en privado
-const viejaFuncionEnviarPrivado = window.enviarMensajePrivado;
-window.enviarMensajePrivado = () => {
-    viejaFuncionEnviarPrivado();
-    
-    const input = document.getElementById('inputPrivMsg');
-    if (!input || !targetUserUid) return;
 
-    if (targetUserUid.startsWith("bot_chica_") && isAdmin) {
-        const respuestaElegida = respuestasPrivadas[Math.floor(Math.random() * respuestasPrivadas.length)];
-        const tiempoEscribiendo = Math.floor(Math.random() * (12000 - 4000 + 1)) + 4000;
-        const chatTitulo = document.getElementById('privChatTitle').innerText;
-        
-        setTimeout(() => {
-            db.ref(`chats_privados/${currentChatId}`).push({
-                uid: targetUserUid, autor: chatTitulo,
-                texto: respuestaElegida, fecha: firebase.database.ServerValue.TIMESTAMP
-            });
+// ESCUCHA MENSAJES PRIVADOS PARA AUTO-RESPUESTA DEL BOT
+// ======================================================
+// 🤖 CONTROLADOR ÚNICO DE AUTO-RESPUESTA (SISTEMA BOT)
+// ======================================================
+db.ref('chats_privados').on('child_changed', snap => {
+    // Solo el celular del Admin procesa las respuestas de los bots
+    if (!isAdmin) return;
 
-            db.ref(`users/${idAuditor}/notifications`).push({
-                from: targetUserUid, fromName: chatTitulo, type: 'chat_privado',
-                text: respuestaElegida, extra: targetUserUid,
-                timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
-            });
-        }, tiempoEscribiendo);
+    const chatId = snap.key;
+    const partes = chatId.split('_');
+
+    // 1. Identificar si hay un bot en la conversación
+    const uidBot = partes.find(id => id.startsWith('bot_'));
+    const uidHumano = partes.find(id => !id.startsWith('bot_'));
+
+    if (uidBot && uidHumano) {
+        // Obtenemos los mensajes de la sala
+        const mensajesObj = snap.val();
+        const mensajesArray = Object.values(mensajesObj);
+        const ultimoMsg = mensajesArray[mensajesArray.length - 1];
+
+        // 2. ¿El humano escribió el último mensaje?
+        if (ultimoMsg && ultimoMsg.uid === uidHumano) {
+            
+            // 3. Candado de seguridad: No responder dos veces al mismo mensaje
+            const idRespuesta = `rep_${ultimoMsg.fecha}`;
+            if (localStorage.getItem(idRespuesta)) return;
+            localStorage.setItem(idRespuesta, 'true');
+
+            // 4. Buscar la personalidad del bot o usar una por defecto
+            const botInfo = perfilesBots.find(b => b.id === uidBot) || { nombre: "Sofi 🦋", id: uidBot };
+            
+            // 5. Elegir respuesta y tiempo de espera
+            const respuesta = respuestasPrivadas[Math.floor(Math.random() * respuestasPrivadas.length)];
+            const esperaEscribiendo = Math.floor(Math.random() * (10000 - 3000 + 1)) + 3000; // entre 3 y 10 seg.
+
+            console.log(`🤖 Bot ${botInfo.nombre} está escribiendo a ${uidHumano}...`);
+
+            // 6. Simular "Online" (Luz verde) mientras "escribe"
+            db.ref(`users/${uidBot}/lastSeen`).set(firebase.database.ServerValue.TIMESTAMP);
+
+            setTimeout(() => {
+                // 7. Enviar el mensaje a la base de datos
+                db.ref(`chats_privados/${chatId}`).push({
+                    uid: uidBot,
+                    autor: botInfo.nombre,
+                    texto: respuesta,
+                    fecha: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                // 8. Enviar la notificación para que al humano le vibre el cel y vea el punto rojo
+                db.ref(`users/${uidHumano}/notifications`).push({
+                    from: uidBot,
+                    fromName: botInfo.nombre,
+                    type: 'chat_privado',
+                    text: respuesta,
+                    extra: uidBot,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    read: false
+                });
+                
+                // Actualizar de nuevo el status para que siga verde
+                db.ref(`users/${uidBot}/lastSeen`).set(firebase.database.ServerValue.TIMESTAMP);
+
+            }, esperaEscribiendo);
+        }
     }
-};
+});
 </script>
 <!-- 📱 MENÚ DE OPCIONES AL TOCAR + -->
 <div id="modalMenuPublicar" class="modal-overlay" style="z-index: 40000; align-items: flex-end; display: none;">
