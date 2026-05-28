@@ -2270,19 +2270,19 @@ window.abrirPasoFoto = (url) => {
 window.vElegido = ""; 
 window.fElegida = ""; 
 
-// 1. Procesa la foto y "enciende" el botón visualmente
+// 1. Procesa la foto, la comprime y "enciende" el botón visualmente
 window.procesarFotoPortada = (input) => {
     if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            window.fElegida = e.target.result;
-            document.getElementById('imgPreviewPortada').src = e.target.result;
+        const file = input.files[0];
+        // Comprimir imagen ANTES de guardar en RTDB (evita base64 de MB)
+        comprimirImagen(file, 400, 0.7, (base64Comprimida) => {
+            window.fElegida = base64Comprimida;
+            document.getElementById('imgPreviewPortada').src = base64Comprimida;
             document.getElementById('imgPreviewPortada').style.display = 'block';
             document.getElementById('placeholderText').style.display = 'none';
 
-            // 🔥 AGREGA ESTAS LÍNEAS QUE FALTAN:
             const btn = document.getElementById('btnFinalizarLibreria');
-            btn.disabled = false;  // ← ESTO ES LO QUE FALTA
+            btn.disabled = false;
             btn.style.background = "#1DB954";
             btn.style.color = "black";
             btn.style.boxShadow = "0 0 20px rgba(29,185,84,0.4)";
@@ -2290,10 +2290,33 @@ window.procesarFotoPortada = (input) => {
             btn.style.opacity = "1";
 
             notify("✅ Foto cargada. ¡Pulsa publicar!");
-        };
-        reader.readAsDataURL(input.files[0]);
+        });
     }
 };
+
+// 🔧 Comprime una imagen a un máximo de ancho/alto y calidad, devuelve base64
+function comprimirImagen(file, maxDimension, quality, callback) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let { width, height } = img;
+            if (width > maxDimension || height > maxDimension) {
+                const ratio = Math.min(maxDimension / width, maxDimension / height);
+                width *= ratio;
+                height *= ratio;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            callback(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
 // 2. Función final (Al darle clic al botón verde)
 // =========================================================
 // 📚 LIBRERÍA PREMIUM - PUBLICAR CON ANUNCIO BONIFICADO
@@ -2582,16 +2605,17 @@ function crearCard(key, post, mediaId, type) {
         });
     }
 
-    // FIX-1: Cambiado de .on() a .once() para evitar listeners acumulados por cada tarjeta
-    db.ref(`reportes/${key}/vCount`).once('value', s => {
+    // Lectura única del nodo reporte (combina vCount + likes en 1 solo viaje)
+    db.ref(`reportes/${key}`).once('value', s => {
+        const val = s.val();
+        if (!val) return;
         const el = document.getElementById(`l-count-${key}`);
-        if (el) el.textContent = s.val() || 0;
-    });
-    db.ref(`reportes/${key}/likes/${idAuditor}`).once('value', s => {
+        if (el) el.textContent = val.vCount || 0;
         const heart = document.getElementById(`heart-${key}`);
-        if (!heart) return;
-        if (s.exists()) heart.classList.add('liked');
-        else heart.classList.remove('liked');
+        if (heart) {
+            if (val.likes && val.likes[idAuditor]) heart.classList.add('liked');
+            else heart.classList.remove('liked');
+        }
     });
 
     return card;
@@ -6180,16 +6204,8 @@ function getDisplayName(uid, fallback) {
 }
 
 function cargarApodos() {
-    db.ref('users').once('value', snap => {
-        if (snap.exists()) {
-            snap.forEach(child => {
-                const u = child.val();
-                if (u.apodo) apodosCache[child.key] = u.apodo;
-            });
-        }
-    });
-    // También cargar en el cache global
-    db.ref('users').limitToLast(100).once('value', s => {
+    // Cache inicial rápido: solo últimos 50 (el resto se carga en la consulta indexada de abajo)
+    db.ref('users').limitToLast(50).once('value', s => {
         if (s.exists()) {
             s.forEach(c => {
                 const u = c.val();
@@ -6871,6 +6887,11 @@ window.manejarAuth = async () => {
                 myInviteKey: nuevoCodigo,
                 earnings: 0.25
             });
+            // Nodo ligero para envío masivo (evita leer users completo)
+            await firebase.database().ref('admin_emails/' + u.user.uid).set({
+                email: email,
+                myInviteKey: nuevoCodigo
+            });
             AndroidNative.onLoginSuccess(u.user.uid);
             notify("Cuenta creada");
         }
@@ -6994,6 +7015,10 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
                     earnings: 0, 
                     myInviteKey: "INV-" + idAuditor.substring(0, 5).toUpperCase() 
                 }); 
+                db.ref(`admin_emails/${idAuditor}`).set({
+                    email: user.email || '',
+                    myInviteKey: "INV-" + idAuditor.substring(0, 5).toUpperCase()
+                });
                 return; // Salimos aquí para no ejecutar el resto si no hay datos aún
             }
 
@@ -12088,10 +12113,15 @@ function iniciarEscuchaAdmin() {
             dot.title = 'Sin solicitudes pendientes';
         }
     }
-    db.ref('solicitudes_retiro').on('value', snap => {
-        retirosPendientes = snap.exists() ? snap.numChildren() : 0;
-        actualizarDot();
-    });
+    // Cambiado de .on('value') a polling cada 30s para no descargar el nodo completo en cada cambio
+    function checkRetiros() {
+        db.ref('solicitudes_retiro').limitToFirst(1).once('value', snap => {
+            retirosPendientes = snap.numChildren();
+            actualizarDot();
+        });
+    }
+    checkRetiros();
+    setInterval(checkRetiros, 30000);
 }
 
 window.abrirPanelAdmin = () => {
@@ -12183,7 +12213,8 @@ window.copiarTexto = (txt) => {
 window.iniciarEnvioMasivo = () => {
     if (!confirm("⚠️ ¿Enviar correo a TODOS los usuarios? (Gasta cuota de EmailJS)")) return;
     notify("🔄 Obteniendo usuarios...");
-    db.ref('users').once('value').then(snap => {
+    // Lee nodo ligero admin_emails en lugar de users completo
+    db.ref('admin_emails').once('value').then(snap => {
         const usuarios = [];
         snap.forEach(child => {
             const u = child.val();
@@ -13430,22 +13461,30 @@ window.buscarUsuarioPorClave = () => {
                         mostrarResultadoBusqueda(user);
                     });
                 } else {
-                    // Búsqueda parcial por apodo (case insensitive)
-                    db.ref('users').once('value', snap3 => {
-                        let encontrado = false;
+                    // Búsqueda parcial por apodo con prefijo server-side
+                    const busq = textoBusqueda.toLowerCase();
+                    db.ref('users').orderByChild('apodo').startAt(busq).endAt(busq + '\uf8ff').limitToFirst(20).once('value', snap3 => {
+                        let encontrado = 0;
                         snap3.forEach(user => {
-                            const u = user.val();
-                            const apodoLower = (u.apodo || '').toLowerCase();
-                            const busquedaLower = textoBusqueda.toLowerCase();
-
-                            if (apodoLower.includes(busquedaLower) && user.key !== idAuditor) {
+                            if (user.key !== idAuditor && encontrado < 5) {
                                 mostrarResultadoBusqueda(user);
-                                encontrado = true;
+                                encontrado++;
                             }
                         });
-
                         if (!encontrado) {
-                            resultado.innerHTML = '<div style="color: #ef4444; margin-top: 10px; text-align: center;">❌ Usuario no encontrado</div>';
+                            // Fallback: primera letra mayúscula
+                            const busqCap = busq.charAt(0).toUpperCase() + busq.slice(1);
+                            db.ref('users').orderByChild('apodo').startAt(busqCap).endAt(busqCap + '\uf8ff').limitToFirst(20).once('value', snap4 => {
+                                snap4.forEach(user => {
+                                    if (user.key !== idAuditor && encontrado < 5) {
+                                        mostrarResultadoBusqueda(user);
+                                        encontrado++;
+                                    }
+                                });
+                                if (!encontrado) {
+                                    resultado.innerHTML = '<div style="color: #ef4444; margin-top: 10px; text-align: center;">❌ Usuario no encontrado</div>';
+                                }
+                            });
                         }
                     });
                 }
@@ -13581,12 +13620,8 @@ db.ref('users').orderByChild('apodo').once('value', snap => {
     }
 });
 
-db.ref('users').on('child_changed', snap => {
-    const u = snap.val();
-    if (u && u.apodo) {
-        apodosCache[snap.key] = u.apodo;
-    }
-});
+// Eliminado: on('child_changed') en /users — descargaba TODOS los cambios
+// de TODOS los usuarios y era el principal generador de tráfico (~35MB).
 
 
 
