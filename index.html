@@ -2582,11 +2582,12 @@ function crearCard(key, post, mediaId, type) {
         });
     }
 
-    db.ref(`reportes/${key}/vCount`).on('value', s => {
+    // FIX-1: Cambiado de .on() a .once() para evitar listeners acumulados por cada tarjeta
+    db.ref(`reportes/${key}/vCount`).once('value', s => {
         const el = document.getElementById(`l-count-${key}`);
         if (el) el.textContent = s.val() || 0;
     });
-    db.ref(`reportes/${key}/likes/${idAuditor}`).on('value', s => {
+    db.ref(`reportes/${key}/likes/${idAuditor}`).once('value', s => {
         const heart = document.getElementById(`heart-${key}`);
         if (!heart) return;
         if (s.exists()) heart.classList.add('liked');
@@ -2931,6 +2932,17 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="modal-content" style="text-align: center;">
         <h3 style="margin-bottom: 5px;">⚙️ Ajustes</h3>
         <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 20px;">Versión v31.0</p>
+
+        <!-- Botón Admin: Monitor de Ancho de Banda — solo visible para admin -->
+        <div id="btnAdminBandwidth" style="display:none; margin-bottom:10px;">
+            <button onclick="document.getElementById('modalAjustes').style.display='none'; abrirMonitorBandwidth();"
+                    style="width:100%; padding:15px; border:none; border-radius:14px;
+                           background:linear-gradient(135deg,#1e293b,#0f172a);
+                           color:white; font-weight:800; font-size:0.95rem; cursor:pointer;
+                           box-shadow:0 4px 12px rgba(15,23,42,0.4);">
+                📊 Monitor Firebase (Admin)
+            </button>
+        </div>
 
         <button onclick="cerrarSesion()" style="width: 100%; padding: 15px; border: none; 
                 border-radius: 14px; background: linear-gradient(135deg, #ef4444, #dc2626); 
@@ -5073,6 +5085,154 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
+// ══════════════════════════════════════════════════════════════════════
+// 📊 MONITOR DE ANCHO DE BANDA (ADMIN)
+// Intercepta automáticamente TODOS los .once() y .on() de Firebase,
+// estima los bytes descargados y los acumula por día en:
+// admin_stats/bandwidth/YYYY-MM-DD  (valor en bytes)
+// ══════════════════════════════════════════════════════════════════════
+(function instalarMonitorBandwidth() {
+    let _acumuladoBytes   = 0;
+    let _flushTimer       = null;
+    const FLUSH_INTERVALO = 60 * 1000; // guardar en Firebase cada 60 segundos
+
+    function _estimarBytes(valor) {
+        if (valor === null || valor === undefined) return 2;
+        try { return new Blob([JSON.stringify(valor)]).size; } catch(e) { return 0; }
+    }
+
+    function _flush() {
+        if (_acumuladoBytes <= 0) return;
+        const bytes = _acumuladoBytes;
+        _acumuladoBytes = 0;
+        const fecha = new Date().toISOString().split('T')[0];
+        // Usar transaction para sumar de forma segura aunque haya varios usuarios
+        db.ref('admin_stats/bandwidth/' + fecha)
+          .transaction(val => (val || 0) + bytes);
+    }
+
+    function _contabilizar(snap) {
+        try {
+            _acumuladoBytes += _estimarBytes(snap.val());
+            clearTimeout(_flushTimer);
+            _flushTimer = setTimeout(_flush, FLUSH_INTERVALO);
+        } catch(e) {}
+    }
+
+    // Guardar referencias originales ANTES de que cualquier código las use
+    const _Proto  = firebase.database.Query.prototype;
+    const _origOn   = _Proto.on.bind ? _Proto.on   : null;
+    const _origOnce = _Proto.once.bind ? _Proto.once : null;
+
+    if (_origOn) {
+        _Proto.on = function(eventType, callback, cancelCallback, context) {
+            const wrapped = function(snap) {
+                _contabilizar(snap);
+                if (callback) callback.apply(this, arguments);
+            };
+            return _origOn.call(this, eventType, wrapped, cancelCallback, context);
+        };
+    }
+
+    if (_origOnce) {
+        _Proto.once = function(eventType, callback, failureCallback, context) {
+            if (callback) {
+                const wrapped = function(snap) {
+                    _contabilizar(snap);
+                    callback.apply(this, arguments);
+                };
+                return _origOnce.call(this, eventType, wrapped, failureCallback, context);
+            }
+            // Versión Promise (sin callback)
+            return _origOnce.call(this, eventType).then(snap => {
+                _contabilizar(snap);
+                return snap;
+            });
+        };
+    }
+
+    // Flushing adicional al cerrar/recargar la página
+    window.addEventListener('beforeunload', _flush);
+    // Flushing periódico de respaldo
+    setInterval(_flush, FLUSH_INTERVALO);
+})();
+
+// Carga el dashboard de bandwidth (solo admin)
+window.abrirMonitorBandwidth = function() {
+    document.getElementById('modalBandwidth').style.display = 'flex';
+    const lista = document.getElementById('bandwidthLista');
+    lista.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
+
+    db.ref('admin_stats/bandwidth').once('value', snap => {
+        if (!snap.exists()) {
+            lista.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;">Sin datos aún. Los datos aparecen tras el primer minuto de uso.</div>';
+            return;
+        }
+
+        // Construir array de los últimos 14 días
+        const datos = snap.val() || {};
+        const dias = [];
+        for (let i = 0; i < 14; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const fecha = d.toISOString().split('T')[0];
+            dias.push({ fecha, bytes: datos[fecha] || 0 });
+        }
+
+        // Costo Firebase: $1 USD por GB de salida
+        // (https://firebase.google.com/pricing)
+        const PRECIO_POR_BYTE = 1 / (1024 * 1024 * 1024); // $1/GB en USD
+
+        let totalBytes = dias.reduce((s, d) => s + d.bytes, 0);
+        const totalMB  = (totalBytes / (1024 * 1024)).toFixed(2);
+        const totalGB  = (totalBytes / (1024 * 1024 * 1024)).toFixed(4);
+        const totalUSD = (totalBytes * PRECIO_POR_BYTE).toFixed(4);
+
+        const hoy      = new Date().toISOString().split('T')[0];
+        const ayer     = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+        let html = `
+        <div style="background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:16px;padding:18px;margin-bottom:16px;color:white;text-align:center;">
+            <div style="font-size:0.7rem;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total últimos 14 días (estimado)</div>
+            <div style="font-size:2rem;font-weight:800;color:#f97316;">${totalGB} GB</div>
+            <div style="font-size:0.85rem;color:#fbbf24;margin-top:2px;">≈ $${totalUSD} USD · ${totalMB} MB</div>
+            <div style="font-size:0.7rem;color:#64748b;margin-top:6px;">Precio Firebase: $1 USD por GB descargado</div>
+        </div>
+        <div style="font-size:0.7rem;color:#94a3b8;margin-bottom:8px;text-align:center;">📅 Desglose diario (últimos 14 días)</div>`;
+
+        dias.forEach(({ fecha, bytes }) => {
+            if (bytes === 0 && fecha < hoy) return; // ocultar días vacíos del pasado
+            const mb   = (bytes / (1024 * 1024)).toFixed(3);
+            const usd  = (bytes * PRECIO_POR_BYTE).toFixed(5);
+            const esHoy  = fecha === hoy;
+            const esAyer = fecha === ayer;
+            const etiqueta = esHoy ? ' 🔴 HOY' : esAyer ? ' ⬛ AYER' : '';
+            const pct  = totalBytes > 0 ? Math.round((bytes / totalBytes) * 100) : 0;
+            const barColor = bytes > 50*1024*1024 ? '#ef4444' : bytes > 10*1024*1024 ? '#f97316' : '#10b981';
+            const [, mes, dia] = fecha.split('-');
+            html += `
+            <div style="background:white;border-radius:12px;padding:12px 14px;margin-bottom:8px;border-left:4px solid ${barColor};">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <span style="font-weight:800;color:#1e293b;font-size:0.9rem;">${dia}/${mes}${etiqueta}</span>
+                    <span style="font-weight:800;color:${barColor};font-size:0.85rem;">${mb} MB</span>
+                </div>
+                <div style="background:#f1f5f9;border-radius:6px;height:6px;overflow:hidden;">
+                    <div style="width:${pct}%;height:100%;background:${barColor};border-radius:6px;transition:width 0.5s;"></div>
+                </div>
+                <div style="font-size:0.68rem;color:#94a3b8;margin-top:4px;text-align:right;">≈ $${usd} USD</div>
+            </div>`;
+        });
+
+        html += `<div style="font-size:0.65rem;color:#94a3b8;text-align:center;padding:10px;line-height:1.6;">
+            ⚠️ <strong>Estimación basada en datos leídos por este dispositivo.</strong><br>
+            El total real aparece en la Consola de Firebase → Uso → Almacenamiento/Red.<br>
+            Esta pantalla es útil para detectar tendencias y días de alto consumo.
+        </div>`;
+
+        lista.innerHTML = html;
+    });
+};
+
 document.addEventListener('click', (e) => {
     const target = e.target.closest('button, .nav-item, .chip-btn, .btn-blue, .action-icon, .mision-card');
     if (!target) return;
@@ -6283,11 +6443,13 @@ document.addEventListener('click', (e) => {
         if (commentsRef) commentsRef.off();
         commentsRef = db.ref(`reportes/${postKey}/comentarios`);
         let isEmpty = true;
-        commentsRef.on('value', snap => {
-            const count = snap.val() ? Object.keys(snap.val()).length : 0;
+        // FIX-2: Cambiado de .on() a .once() — el listener de 'value' en comentarios descargaba
+        // TODOS los comentarios completos cada vez que alguien publicaba uno nuevo.
+        // Ahora solo se carga una vez para obtener el conteo y los comentarios iniciales.
+        commentsRef.once('value', snap => {
+            const count = snap.numChildren();
             const title = document.getElementById('modalCommentsTitle');
             if (title) title.textContent = `💬 Comentarios (${count})`;
-            // Actualizar contador en cards del feed nativo directamente
             const cEl = document.getElementById('c-count-' + postKey);
             if (cEl) cEl.textContent = count;
             if (!snap.exists()) list.innerHTML = '<div style="text-align:center;padding:40px;">Sé el primero en comentar.</div>';
@@ -6381,11 +6543,12 @@ window.enviarComentarioModal = (e) => {
         if (commentsRef) commentsRef.off();
         commentsRef = db.ref(`galeria_comunidad/${fotoKey}/comentarios`);
         let isEmpty = true;
-        commentsRef.on('value', snap => {
-            const count = snap.val() ? Object.keys(snap.val()).length : 0;
+        // FIX-3: Mismo problema que en comentarios de video — descargaba todos los
+        // comentarios completos ante cada nuevo comentario. Ahora usa .once().
+        commentsRef.once('value', snap => {
+            const count = snap.numChildren();
             const title = document.getElementById('modalCommentsTitle');
             if (title) title.textContent = `💬 Comentarios de foto (${count})`;
-            // Actualizar contador en la card del muro si está visible
             const badge = document.getElementById(`cc-foto-${fotoKey}`);
             if (badge) badge.textContent = count;
             if (!snap.exists()) list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Sé el primero en comentar.</div>';
@@ -10625,14 +10788,23 @@ function cargarListaUsuariosHorizontal() {
     if (_listenersUsuariosIniciados) return;
     _listenersUsuariosIniciados = true;
 
-    // ESCUCHA 1: Usuarios (Se ejecuta independiente)
-    db.ref('users').orderByChild('lastSeen').limitToLast(25).on('value', snapUsers => {
-        _cacheDataUsers = snapUsers;
-        combinarYRenderizarUsuarios();
-    });
+    // FIX-4: Cambiado de .on() a .once() con refresco periódico cada 5 minutos.
+    // El .on('value') original re-descargaba los 25 usuarios completos cada vez que
+    // CUALQUIER usuario actualizaba su 'lastSeen' (campo que cambia constantemente),
+    // generando cientos de MB de tráfico innecesario al día.
+    function _cargarUsuariosOnce() {
+        db.ref('users').orderByChild('lastSeen').limitToLast(25).once('value', snapUsers => {
+            _cacheDataUsers = snapUsers;
+            combinarYRenderizarUsuarios();
+        });
+    }
+    _cargarUsuariosOnce();
+    setInterval(_cargarUsuariosOnce, 5 * 60 * 1000); // Refrescar cada 5 minutos
 
-    // ESCUCHA 2: Pensamientos (Se ejecuta independiente y en paralelo)
-    db.ref('pensamientos').on('value', snapNubes => {
+    // FIX-5: Añadido limitToLast(30) al listener de pensamientos.
+    // Sin límite, descargaba TODOS los pensamientos de la historia cada vez
+    // que cualquier usuario publicaba uno nuevo.
+    db.ref('pensamientos').limitToLast(30).on('value', snapNubes => {
         _cacheDataNubes = snapNubes.val() || {};
         combinarYRenderizarUsuarios();
     });
@@ -15078,5 +15250,56 @@ db.ref('chats_privados').on('child_changed', snap => {
         </button>
     </div>
 </div>
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- 📊 MODAL: MONITOR DE ANCHO DE BANDA (SOLO ADMIN)               -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div id="modalBandwidth" class="modal-overlay" style="z-index:99000; display:none;">
+    <div class="modal-content" style="max-height:85vh; overflow-y:auto; padding:20px;">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div>
+                <h3 style="margin:0;color:#1e293b;font-size:1.05rem;">📊 Monitor Firebase</h3>
+                <div style="font-size:0.7rem;color:#94a3b8;margin-top:2px;">Ancho de banda estimado por día</div>
+            </div>
+            <button onclick="document.getElementById('modalBandwidth').style.display='none'"
+                    style="background:#f1f5f9;border:none;border-radius:50%;width:34px;height:34px;
+                           font-size:1.1rem;cursor:pointer;color:#475569;">✕</button>
+        </div>
+
+        <!-- Lista generada por JS -->
+        <div id="bandwidthLista"></div>
+
+        <button onclick="document.getElementById('modalBandwidth').style.display='none'; abrirMonitorBandwidth();"
+                style="width:100%;padding:12px;margin-top:8px;border:none;border-radius:12px;
+                       background:#f1f5f9;color:#475569;font-weight:700;cursor:pointer;font-size:0.85rem;">
+            🔄 Actualizar datos
+        </button>
+    </div>
+</div>
+
+<script>
+// Mostrar botón admin de bandwidth cuando el usuario sea admin
+(function() {
+    const mostrarBtnAdmin = () => {
+        const btn = document.getElementById('btnAdminBandwidth');
+        if (btn && typeof isAdmin !== 'undefined' && isAdmin) {
+            btn.style.display = 'block';
+        }
+    };
+    // Intentar varias veces hasta que isAdmin esté definido
+    let intentos = 0;
+    const check = setInterval(() => {
+        intentos++;
+        mostrarBtnAdmin();
+        if ((typeof isAdmin !== 'undefined' && isAdmin) || intentos > 30) clearInterval(check);
+    }, 500);
+    // También escuchar cuando Firebase autentique al usuario
+    if (typeof firebase !== 'undefined') {
+        firebase.auth().onAuthStateChanged(() => {
+            setTimeout(mostrarBtnAdmin, 1000);
+        });
+    }
+})();
+</script>
 </body>
 </html>
