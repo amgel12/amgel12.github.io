@@ -9150,6 +9150,16 @@ if ('speechSynthesis' in window) {
 }
 // --- LÓGICA DE GALERÍA DE FOTOS (NUEVO) ---
 
+window.subirFoto = () => {
+    const modal = document.getElementById('modalSubirFoto');
+    if (modal) modal.style.display = 'flex';
+};
+
+window.subirVideo = () => {
+    const modal = document.getElementById('modalMenuPublicar');
+    if (modal) modal.style.display = 'flex';
+};
+
 let fotoBase64Actual = "";
 
 // 1. Procesar la imagen cuando el usuario la selecciona
@@ -9262,6 +9272,10 @@ window.ejecutarSubidaFotoFirebase = () => {
         });
         if (window.checarProgresoDiario) window.checarProgresoDiario();
         try { window.playSound('win'); } catch(e){}
+        if (typeof cargarGaleriaComunidad === "function") {
+            limiteFotosMuro = 20;
+            cargarGaleriaComunidad();
+        }
     }).catch(err => {
         notify("Error al subir: " + err.message);
         if (btn) { btn.disabled = false; btn.innerHTML = "💰 Publicar y Ganar"; }
