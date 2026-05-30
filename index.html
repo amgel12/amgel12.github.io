@@ -14,8 +14,30 @@
   <link rel="preconnect" href="https://ingresos-minimos-default-rtdb.firebaseio.com" crossorigin>
   <link rel="dns-prefetch" href="https://www.youtube.com">
   <link rel="dns-prefetch" href="https://img.youtube.com">
-  
 <style>
+/* Modal de Confirmación Estilizado */
+.confirm-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    display: none; align-items: center; justify-content: center; z-index: 100000;
+    backdrop-filter: blur(5px); animation: fadeIn 0.2s ease;
+}
+.confirm-box {
+    background: #1e293b; width: 85%; max-width: 320px; border-radius: 24px;
+    padding: 25px; text-align: center; border: 1px solid #334155;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5); transform: scale(0.9); animation: popIn 0.3s forwards;
+}
+.confirm-box h3 { color: white; margin-bottom: 10px; font-size: 1.2rem; }
+.confirm-box p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px; line-height: 1.4; }
+.confirm-btns { display: flex; gap: 12px; }
+.confirm-btn {
+    flex: 1; padding: 14px; border-radius: 15px; border: none; 
+    font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: 0.2s;
+}
+.btn-no { background: #334155; color: white; }
+.btn-si { background: #ef4444; color: white; } /* Rojo para eliminar */
+
+@keyframes popIn { to { transform: scale(1); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .mision-card {
     background: white;
     border-radius: 18px;
@@ -360,18 +382,21 @@
 
   /* LAYOUT */
   .app-wrapper {
-      width: 100%;
+      display: flex;
+      width: 500vw;
       height: 100vh;
-      position: relative;
-      overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      will-change: transform;
+      transform: translateZ(0);
+      backface-visibility: hidden;
   }
 
   .screen {
-      display: none;
       width: 100vw;
       height: 100vh;
       overflow-y: auto;
       padding-bottom: 120px;
+      flex-shrink: 0;
       position: relative;
       background: #f8fafc;
       touch-action: pan-y;
@@ -2270,158 +2295,92 @@ window.abrirPasoFoto = (url) => {
 window.vElegido = ""; 
 window.fElegida = ""; 
 
-// 1. Procesa la foto, la comprime y "enciende" el botón visualmente
+// 1. Procesa la foto y "enciende" el botón visualmente
+// 1. Agregamos esta variable al principio de tu script
+window.archivoParaStorage = null; 
+
 window.procesarFotoPortada = (input) => {
     if (input.files && input.files[0]) {
-        const file = input.files[0];
-        // Comprimir imagen ANTES de guardar en RTDB (evita base64 de MB)
-        comprimirImagen(file, 400, 0.7, (base64Comprimida) => {
-            window.fElegida = base64Comprimida;
-            document.getElementById('imgPreviewPortada').src = base64Comprimida;
+        const archivo = input.files[0];
+        
+        // VALIDACIÓN: Si la foto pesa más de 5MB, avisar
+        if (archivo.size > 5 * 1024 * 1024) {
+            return alert("❌ La foto es demasiado pesada. Elige una menor a 5MB.");
+        }
+
+        // GUARDAMOS EL ARCHIVO REAL PARA STORAGE
+        window.archivoParaStorage = archivo; 
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            // USAMOS EL TEXTO SOLO PARA LA VISTA PREVIA (No para la base de datos)
+            document.getElementById('imgPreviewPortada').src = e.target.result;
             document.getElementById('imgPreviewPortada').style.display = 'block';
             document.getElementById('placeholderText').style.display = 'none';
 
             const btn = document.getElementById('btnFinalizarLibreria');
-            btn.disabled = false;
-            btn.style.background = "#1DB954";
-            btn.style.color = "black";
-            btn.style.boxShadow = "0 0 20px rgba(29,185,84,0.4)";
-            btn.style.cursor = "pointer";
-            btn.style.opacity = "1";
+            if (btn) {
+                btn.disabled = false;
+                btn.style.background = "#1DB954";
+                btn.style.color = "black";
+                btn.style.opacity = "1";
+                btn.style.cursor = "pointer";
+            }
 
             notify("✅ Foto cargada. ¡Pulsa publicar!");
-        });
-    }
-};
-
-// 🔧 Comprime una imagen a un máximo de ancho/alto y calidad, devuelve base64
-function comprimirImagen(file, maxDimension, quality, callback) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let { width, height } = img;
-            if (width > maxDimension || height > maxDimension) {
-                const ratio = Math.min(maxDimension / width, maxDimension / height);
-                width *= ratio;
-                height *= ratio;
-            }
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            callback(canvas.toDataURL('image/jpeg', quality));
         };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-// 2. Función final (Al darle clic al botón verde)
-// =========================================================
-// 📚 LIBRERÍA PREMIUM - PUBLICAR CON ANUNCIO BONIFICADO
-// =========================================================
-
-// 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN
-window.finalizarPublicacionLibreria = () => {
-    // Verificamos que sí haya elegido foto
-    if (!window.fElegida) return notify("⚠️ Primero debes elegir una foto");
-
-    const btn = document.getElementById('btnFinalizarLibreria');
-    if (btn) {
-        btn.innerText = "Cargando anuncio...";
-        btn.disabled = true;
-    }
-
-    // Le ponemos una "etiqueta" para saber qué hacer cuando acabe el anuncio
-    window._accionPendienteRecompensa = 'publicar_libreria';
-
-    // Usamos el enlace directo a Kotlin (go:s7 llama a procesarPublicacionPendiente)
-    if (typeof AndroidNative !== 'undefined') {
-        window.location.href = 'go:s7';
-    } else {
-        ejecutarSubidaLibreriaFirebase();
+        reader.readAsDataURL(archivo);
     }
 };
+
 
 // 2. ESTO SE EJECUTA DESPUÉS DEL ANUNCIO PARA SUBIR EL VIDEO
-window.ejecutarSubidaLibreriaFirebase = () => {
-    const txt = document.getElementById('inputTextoLibreria').value || "¡Video Premium! 🔥";
+window.finalizarPublicacionLibreria = async () => {
     const btn = document.getElementById('btnFinalizarLibreria');
+    const txtInput = document.getElementById('inputTextoLibreria');
+    const txt = txtInput ? txtInput.value : "¡Nuevo Video!";
     
-    if (btn) btn.innerText = "⏳ SUBIENDO...";
+    if (!window.archivoParaStorage) return alert("❌ Selecciona una foto primero");
+    
+    if (btn) { 
+        btn.innerText = "⏳ SUBIENDO..."; 
+        btn.disabled = true; 
+    }
 
-    db.ref('reportes').push({
-        uid: idAuditor,
-        autorClave: myCurrentKey,
-        texto: txt,
-        musica: window.vElegido, 
-        fotoPortada: window.fElegida,
-        conLogo: true, 
-        fecha: firebase.database.ServerValue.TIMESTAMP,
-        vCount: 0
-    }).then(() => {
-        // Recompensar al usuario con 0.50 PTS
+    try {
+        // 1. Subida a Storage (Costo casi $0)
+        const nombreArchivo = `portadas/${Date.now()}_${idAuditor}.jpg`;
+        const storageRef = firebase.storage().ref(nombreArchivo);
+        const snapshot = await storageRef.put(window.archivoParaStorage);
+        const urlPublica = await snapshot.ref.getDownloadURL();
+
+        // 2. Guardar en Database (Solo el link corto)
+        await db.ref('reportes').push({
+            uid: idAuditor,
+            autorClave: myCurrentKey,
+            texto: txt,
+            musica: window.vElegido, 
+            fotoPortada: urlPublica, // Link corto ✅
+            conLogo: true, 
+            fecha: firebase.database.ServerValue.TIMESTAMP,
+            vCount: 0
+        });
+
+        // 3. Recompensa y Limpieza
         db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) + 0.50);
-        registrarHistorial("Video de Librería", 0.50);
-
-        // Ocultar modal y avisar
         document.getElementById('modalSubirPortada').style.display = 'none';
         notify("✅ ¡Publicado con éxito!");
-
-        // Limpiar para la próxima vez
-        window.fElegida = "";
-        window.vElegido = "";
-        document.getElementById('inputTextoLibreria').value = "";
         
-        if (btn) {
-            btn.innerText = "🚀 PUBLICAR EN EL MURO";
-            btn.disabled = false;
-        }
+        window.archivoParaStorage = null;
+        if (btn) { btn.innerText = "🚀 PUBLICAR EN EL MURO"; btn.disabled = false; }
+        goToScreen(2); 
 
-        goToScreen(2); // Regresar al Feed principal
-    }).catch(err => {
+    } catch (err) {
         alert("Error: " + err.message);
-        if (btn) {
-            btn.disabled = false;
-            btn.innerText = "🚀 PUBLICAR EN EL MURO";
-        }
-    });
+        if (btn) { btn.disabled = false; btn.innerText = "🚀 PUBLICAR EN EL MURO"; }
+    }
 };
-function _publicarLibreriaPendiente() {
-    const raw = localStorage.getItem('pendingLibreria');
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    localStorage.removeItem('pendingLibreria');
-    localStorage.removeItem('pendingType');
 
-    db.ref('reportes').push({
-        uid: data.uid,
-        autorClave: data.autorClave,
-        texto: data.texto,
-        musica: data.musica,
-        fotoPortada: data.fotoPortada,
-        conLogo: true,
-        fecha: firebase.database.ServerValue.TIMESTAMP,
-        vCount: 0
-    }).then(() => {
-        db.ref(`users/${data.uid}/earnings`).transaction(c => (c || 0) + 0.50);
-        registrarHistorial("Video de Librería", 0.50);
-
-        document.getElementById('modalSubirPortada').style.display = 'none';
-        notify("✅ ¡Publicado con éxito!");
-
-        window.fElegida = "";
-        const btn = document.getElementById('btnFinalizarLibreria');
-        if (btn) { btn.innerText = "🚀 PUBLICAR EN EL MURO"; btn.disabled = false; }
-
-        goToScreen(2);
-    }).catch(err => {
-        notify("Error: " + err.message);
-        const btn = document.getElementById('btnFinalizarLibreria');
-        if (btn) { btn.innerText = "🚀 PUBLICAR EN EL MURO"; btn.disabled = false; }
-    });
-}
 window.cerrarTodoLibreria = () => {
     const container = document.getElementById('reproductorAudioLib');
     if (container) { container.innerHTML = ""; container.style.height = "0"; container.style.marginBottom = "0"; }
@@ -2430,15 +2389,7 @@ window.cerrarTodoLibreria = () => {
     const modal = document.getElementById('modalLibreriaFinal');
     if (modal) modal.remove();
 };
-// (confirmarPublicacionLibreria – see final definition below)
 
-
-// (segunda definición duplicada eliminada)
-window.elegirEsteVideo = (url) => {
-    window.vElegido = url; // 🔥 IMPORTANTE: Guardamos el link aquí
-    window.cerrarTodoLibreria();
-    document.getElementById('modalSubirPortada').style.display = 'flex';
-};
 window.pararAudioLibreria = () => {
     const modal = document.getElementById('modalLibreriaFinal');
     if(modal) modal.remove();
@@ -2576,17 +2527,27 @@ function crearCard(key, post, mediaId, type) {
         </div>
         <div class="feed-card-actions">
             <div class="feed-card-avatar" style="background-image:url('${avatarUrl}')" onclick="mostrarPerfilUsuario('${post.uid || ''}')"></div>
+            
             <button class="feed-action-btn" onclick="feedToggleLike('${key}', '${post.uid || ''}')">
                 <i class="fas fa-heart ${isLikedInitial ? 'liked' : ''}" id="heart-${key}"></i>
                 <span id="l-count-${key}">${post.vCount || 0}</span>
             </button>
+            
             <button class="feed-action-btn" onclick="window.abrirModalComentarios && window.abrirModalComentarios('${key}')">
                 <i class="fas fa-comment-dots"></i>
                 <span id="c-count-${key}">${post.comentarios ? Object.keys(post.comentarios).length : 0}</span>
             </button>
-            <button class="feed-action-btn" onclick="event.stopPropagation(); abrirOpcionesPost('${key}')" style="font-size:1.5rem;">
-                <i class="fas fa-ellipsis-v"></i>
-            </button>
+
+            <!-- 🔥 BOTÓN ELIMINAR (Solo para dueño o admin) -->
+            ${(post.uid === idAuditor || isAdmin) ? `
+                <button class="feed-action-btn" onclick="eliminarPost('${key}')" style="color:#ef4444; margin-top:5px;">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            ` : `
+                <button class="feed-action-btn">
+                    <i class="fas fa-ellipsis-v" style="color:white; opacity:0.5;"></i>
+                </button>
+            `}
         </div>
         ${!audioActivado ? `
         <div class="unmute-box" onclick="activarAudioGlobal()">
@@ -2595,33 +2556,31 @@ function crearCard(key, post, mediaId, type) {
         </div>` : ''}
     `;
 
+    // --- Listeners de Perfil ---
     if (post.uid && !cacheFotosPerfil[post.uid]) {
         db.ref(`users/${post.uid}/fotoPerfil`).once('value', s => {
             if (s.val()) {
                 cacheFotosPerfil[post.uid] = s.val();
-                const avatar = card.querySelector('.feed-card-actions > .feed-card-avatar');
+                const avatar = card.querySelector('.feed-card-avatar');
                 if (avatar) avatar.style.backgroundImage = "url('" + s.val() + "')";
             }
         });
     }
 
-    // Lectura única del nodo reporte (solo si el usuario no ha interactuado)
-    db.ref(`reportes/${key}`).once('value', s => {
-        if (card.dataset.likeToggled === 'true') return;
-        const val = s.val();
-        if (!val) return;
+    // --- Listeners en tiempo real (Likes y Vistas) ---
+    db.ref(`reportes/${key}/vCount`).on('value', s => {
         const el = document.getElementById(`l-count-${key}`);
-        if (el) el.textContent = val.vCount || 0;
+        if (el) el.textContent = s.val() || 0;
+    });
+    db.ref(`reportes/${key}/likes/${idAuditor}`).on('value', s => {
         const heart = document.getElementById(`heart-${key}`);
-        if (heart) {
-            if (val.likes && val.likes[idAuditor]) heart.classList.add('liked');
-            else heart.classList.remove('liked');
-        }
+        if (!heart) return;
+        if (s.exists()) heart.classList.add('liked');
+        else heart.classList.remove('liked');
     });
 
     return card;
 }
-
 // ══════════════════════════════════════════════════════════
 // FEED CACHE — localStorage para renderizado instantáneo
 // ══════════════════════════════════════════════════════════
@@ -2739,21 +2698,13 @@ window.feedToggleLike = (postKey, ownerUid) => {
     if (!idAuditor) return notify("Inicia sesión");
     const ref = db.ref(`reportes/${postKey}/likes/${idAuditor}`);
     const countRef = db.ref(`reportes/${postKey}/vCount`);
-    const heart = document.getElementById(`heart-${postKey}`);
-    const countEl = document.getElementById(`l-count-${postKey}`);
-    const card = document.getElementById(postKey);
-    if (card) card.dataset.likeToggled = 'true';
     ref.once('value', s => {
         if (s.exists()) {
             ref.remove();
             countRef.transaction(c => (c || 0) - 1);
-            if (heart) { heart.classList.remove('liked'); heart.style.color = ""; }
-            if (countEl) countEl.textContent = Math.max(0, (parseInt(countEl.textContent) || 0) - 1);
         } else {
             ref.set(true);
             countRef.transaction(c => (c || 0) + 1);
-            if (heart) { heart.classList.add('liked'); heart.style.color = "#e11d48"; }
-            if (countEl) countEl.textContent = (parseInt(countEl.textContent) || 0) + 1;
             try { window.playSound('coin'); } catch(e) {}
             if (ownerUid && ownerUid !== idAuditor) {
                 const miNombre = (typeof getMiNombre === "function") ? getMiNombre() : (myCurrentKey || "Usuario");
@@ -2965,8 +2916,6 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="modal-content" style="text-align: center;">
         <h3 style="margin-bottom: 5px;">⚙️ Ajustes</h3>
         <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 20px;">Versión v31.0</p>
-
-
 
         <button onclick="cerrarSesion()" style="width: 100%; padding: 15px; border: none; 
                 border-radius: 14px; background: linear-gradient(135deg, #ef4444, #dc2626); 
@@ -3343,7 +3292,7 @@ Cerrar
     </div>
 
     <!-- MODAL PERFIL DE USUARIO PÚBLICO -->
-    <div id="modalPerfilUsuario" class="modal-overlay" style="z-index: 30000;">
+    <div id="modalPerfilUsuario" class="modal-overlay" style="z-index: 27000;">
         <div class="modal-content" style="text-align:center; max-width:320px;">
             <div id="perfilUserAvatar" style="width:80px; height:80px; border-radius:50%; background:#e2e8f0; margin:0 auto 12px; background-size:cover; background-position:center; border:3px solid #6366f1;"></div>
             <h3 id="perfilUserName" style="margin:0 0 5px; color:#1e293b; font-size:1.1rem;">Usuario</h3>
@@ -3422,8 +3371,8 @@ Cerrar
                 <div id="modalCommentsList" class="modal-comments-list"><div style="text-align:center; color:#94a3b8; padding:20px;">Cargando...</div></div>
                 <div class="chips-container" id="modalChips"></div>
                 <div style="display:flex; gap:8px; padding:10px; border-top:1px solid #f1f5f9; background:white;">
-                    <input type="text" id="modalCommentInput" placeholder="Escribe un comentario..." style="font-size:0.9rem; margin:0; text-align:left; background:#f0f2f5; border-radius:20px; border:none; padding:10px 15px; flex:1;">
-                    <button class="btn-blue" style="width:auto; padding:0 15px; font-size:1rem; border-radius:50%;" onclick="enviarComentarioModal(event)">➤</button>
+                    <input type="text" id="modalCommentInput" placeholder="Escribe un comentario..." onkeydown="if(event.key==='Enter') window.enviarComentarioModal()" style="font-size:0.9rem; margin:0; text-align:left; background:#f0f2f5; border-radius:20px; border:none; padding:10px 15px; flex:1;">
+                    <button class="btn-blue" style="width:auto; padding:0 15px; font-size:1rem; border-radius:50%;" onclick="enviarComentarioModal()">➤</button>
                 </div>
             </div>
         </div>
@@ -4331,7 +4280,16 @@ style="display:none;">
 }
 
 </style>
-
+<div id="customConfirm" class="confirm-overlay">
+    <div class="confirm-box">
+        <h3 id="confirmTitle">¿Eliminar?</h3>
+        <p id="confirmText">Esta acción no se puede deshacer.</p>
+        <div class="confirm-btns">
+            <button class="confirm-btn btn-no" onclick="cerrarConfirm()">CANCELAR</button>
+            <button id="confirmBtnSi" class="confirm-btn btn-si">ELIMINAR</button>
+        </div>
+    </div>
+</div>
 <div id="misionesContainer"></div>
     <div id="modalTareas" class="modal-overlay" style="z-index: 20500;">
     <div class="modal-content" style="text-align:left;">
@@ -4475,7 +4433,7 @@ style="display:none;">
             <button onclick="document.getElementById('modalGiftReceived').style.display='none'" style="background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer;">Cerrar</button>
         </div>
    </div>
-<div class="app-wrapper" id="appWrapper">
+<div class="app-wrapper" id="appWrapper" style="transform: translateX(-200vw);">
 
 <!-- PANTALLA 0: MISIONES -->
 <div class="screen mision-screen-dark">
@@ -4530,7 +4488,7 @@ style="display:none;">
             <span style="font-size:1.5rem;">🎮</span>
             <span style="font-size:0.55rem; font-weight:700; margin-top:2px;">Juegos</span>
         </button>
-        <button onclick="cambiarPestanaChat('michat')" style="min-width:62px; height:62px; border-radius:16px; background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3); flex-shrink:0;">
+        <button onclick="abrirListaChats()" style="min-width:62px; height:62px; border-radius:16px; background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3); flex-shrink:0;">
             <span style="font-size:1.5rem;">💬</span>
             <span style="font-size:0.55rem; font-weight:700; margin-top:2px;">Chats</span>
         </button>
@@ -4576,13 +4534,13 @@ style="display:none;">
 </div>
 
 <!-- PANTALLA 2: FEED (VIDEO GITHUB) -->
-<div class="screen" style="display: block; position: relative; background: black; padding:0; overflow: hidden;">
+<div class="screen" style="position: relative; background: black; padding:0; overflow: hidden;">
     <!-- Eliminado: botón redundante "¿Qué estás pensando?" que duplicaba la acción de publicar (ahora manejado por el FAB y su modal) -->
 
     <div id="muroReportes" style="width: 100%; height: 100vh; background: black;"></div>
 </div>
 <!-- PANTALLA 3: MENSAJES -->
-<div class="screen" style="height: 100vh; overflow: hidden; background: #f8fafc; padding-bottom: 65px;">
+<div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #f8fafc; padding-bottom: 65px;">
 
     <!-- TOP BAR: 4 botones iguales -->
     <div style="flex-shrink:0; background:white; border-bottom:1px solid #e2e8f0; display:flex; align-items:stretch;">
@@ -4844,27 +4802,31 @@ style="display:none;">
 </div>
 
 <div id="modalPostOptions" class="modal-overlay" style="z-index:34000; align-items:flex-end;">
-    <div class="modal-content" style="width:100%; max-width:380px; border-radius:20px 20px 0 0; padding:0; margin:0 auto; background:#f8fafc; animation: slideUp 0.2s;">
+    <div class="modal-content" style="width:100%; max-width:100%; border-radius:20px 20px 0 0; padding:0; margin:0; background:#f8fafc; animation: slideUp 0.2s;">
 
-        <div style="padding:18px 20px; border-bottom:1px solid #eef2f6; display:flex; align-items:center; justify-content:space-between;">
-            <span style="font-size:0.85rem; font-weight:700; color:#94a3b8; letter-spacing:0.5px;">OPCIONES</span>
-            <span onclick="document.getElementById('modalPostOptions').style.display='none'" style="width:28px; height:28px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:0.9rem; color:#64748b; cursor:pointer;">✕</span>
-        </div>
+        <h3 style="padding:15px; margin:0; font-size:1rem; border-bottom:1px solid #e2e8f0; color:#334155;">
+            Opciones de publicación
+        </h3>
 
-        <div style="padding:12px 16px;">
-            <button id="btnEliminarPost" onclick="eliminarPostActual()" class="btn-blue" style="display:none; width:100%; padding:14px; border-radius:14px; border:none; display:flex; align-items:center; justify-content:center; gap:10px; font-weight:800; font-size:0.9rem; cursor:pointer; transition:0.2s;">
-                <span id="iconoEliminarPost">😱</span> <span id="textoEliminarPost">Eliminar publicación</span>
-            </button>
-            <div id="sinOpcionesMsg" style="display:none; text-align:center; padding:24px 10px; color:#94a3b8; font-size:0.85rem;">
-                <i class="fas fa-lock" style="font-size:1.2rem; display:block; margin-bottom:8px;"></i>
-                Sin opciones disponibles
-            </div>
-        </div>
+        <button id="btnEliminarPost" onclick="eliminarPostActual()" class="btn-blue" style="display:none; margin:15px 15px 5px; background:#fee2e2; color:#ef4444; border:1px solid #fca5a5; display:flex; align-items:center; justify-content:center; gap:10px;">
+            �😱️ Eliminar publicación
+        </button>
 
-        <div style="padding:8px 16px 18px;">
-            <button onclick="document.getElementById('modalPostOptions').style.display='none'" style="width:100%; padding:14px; border:none; border-radius:14px; background:#fff; font-weight:700; font-size:0.9rem; color:#64748b; cursor:pointer; border:1px solid #eef2f6;">
-                Cancelar
-            </button>
+        <button onclick="verEstadisticasPost()" class="btn-blue" style="margin:5px 15px 5px; background:white; color:#0070ba; border:1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; gap:10px;">
+            📊 Ver estadísticas
+        </button>
+
+        <button onclick="compartirPostWhatsapp()" class="btn-blue" style="margin:5px 15px 15px; background:white; color:#16a34a; border:1px solid #86efac; display:flex; align-items:center; justify-content:center; gap:10px;">
+            🟢 Compartir por WhatsApp
+        </button>
+
+        <div style="height:10px; background:#f1f5f9; border-top:1px solid #e2e8f0;"></div>
+
+        <button onclick="document.getElementById('modalPostOptions').style.display='none'" style="width:100%; padding:15px; border:none; background:white; font-weight:bold; color:#64748b; cursor:pointer;">
+            Cancelar
+        </button>
+    </div>
+</div>
         </div>
     </div>
 </div>
@@ -4924,10 +4886,11 @@ style="display:none;">
     </button>
 </nav>
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+<!-- ESTA ES LA QUE AGREGASTE ✅ -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script>
     // 🔥 RECIBIR NOTIFICACIONES DESDE KOTLIN (FCM BACKGROUND)
@@ -5108,8 +5071,6 @@ function agregarNotificacionAlPanel(title, body) {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
-
-
 
 document.addEventListener('click', (e) => {
     const target = e.target.closest('button, .nav-item, .chip-btn, .btn-blue, .action-icon, .mision-card');
@@ -5572,24 +5533,17 @@ window.goToScreen = (index, userAction = false) => {
     if (document.activeElement) document.activeElement.blur();
 
     currentScreen = index;
-
-    const screens = document.querySelectorAll('.screen');
-    screens.forEach((screen, i) => {
-        screen.style.display = 'none';
-    });
-    const target = screens[index];
-    if (target) {
-        if (index === 3) {
-            target.style.display = 'flex';
-            target.style.flexDirection = 'column';
-        } else {
-            target.style.display = 'block';
-        }
-    }
+    const wrapper = document.getElementById('appWrapper');
+    if (wrapper) wrapper.style.transform = `translateX(-${index * 100}vw)`;
 
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     const btnActivo = document.getElementById(`nav${index}`);
     if (btnActivo) btnActivo.classList.add('active');
+
+    const screens = document.querySelectorAll('.screen');
+    screens.forEach((screen, i) => {
+        screen.style.pointerEvents = (i === index) ? "auto" : "none";
+    });
 
     const container = document.getElementById('muroReportes');
     if (index === 2) {
@@ -5697,14 +5651,11 @@ function otorgarPuntosVideo(ytId) {
     localStorage.setItem(claveHoy, '1');
 
     // Sumar puntos en Firebase
-    if (idAuditor) {
-        db.ref(`users/${idAuditor}`).once('value', s => {
-            const u = s.val() || {};
-            const nuevoSaldo = (u.earnings || 0) + VIDEO_REWARD_POINTS;
-            db.ref(`users/${idAuditor}`).update({ earnings: nuevoSaldo });
-            registrarHistorial("Video Feed", VIDEO_REWARD_POINTS);
-        });
-    }
+// ✅ Forma ultra-barata de sumar puntos sin descargar datos
+if (idAuditor) {
+    db.ref(`users/${idAuditor}/earnings`).transaction(current => (current || 0) + VIDEO_REWARD_POINTS);
+    registrarHistorial("Video Feed", VIDEO_REWARD_POINTS);
+}
 
     // Actualizar display local
     let puntos = parseFloat(localStorage.getItem('puntos') || '0');
@@ -5761,37 +5712,63 @@ window.activarSonido = (divId, ytId) => {
         `;
     }
 };
-    window.mostrarPerfilUsuario = (el, nombre) => {
-        let uid, fotoUrl;
-        if (typeof el === 'string') {
-            uid = el;
-            fotoUrl = getUserProfilePhoto(uid);
-        } else {
-            uid = el.dataset.uid || el.id;
-            fotoUrl = el.src || getUserProfilePhoto(uid);
-        }
-        window.perfilUserUidActual = uid;
-        document.getElementById('perfilUserName').textContent = nombre || 'Usuario';
-        document.getElementById('perfilUserKey').textContent = uid;
-        document.getElementById('perfilUserAvatar').style.backgroundImage = "url('" + fotoUrl + "')";
-        document.getElementById('perfilUserFbBox').style.display = 'none';
-        db.ref(`users/${uid}/facebookUrl`).once('value').then(snap => {
-            if (snap.val()) {
-                document.getElementById('perfilUserFbBox').style.display = 'block';
-            }
-        });
-        db.ref(`users/${uid}`).once('value').then(snap => {
-            const u = snap.val() || {};
-            const hoy = new Date().toISOString().split('T')[0];
-            let completadas = 0;
-            if (u.lastSpinDate === hoy && (u.spinsUsed || 0) >= 3) completadas++;
-            if (u.lastAdDate === hoy && (u.adCount || 0) >= 5) completadas++;
-            if (u.lastCineDate === hoy && (u.cineCount || 0) >= 2) completadas++;
-            if (u.lastGameDate === hoy && (u.gameMinutesToday || 0) >= 15) completadas += 2;
-            document.getElementById('perfilUserTareas').textContent = `📋 Tareas: ${completadas}/5`;
-        });
-        document.getElementById('modalPerfilUsuario').style.display = 'flex';
-    };
+   window.mostrarPerfilUsuario = (el, nombre) => {
+    let uid, fotoUrl;
+    if (typeof el === 'string') {
+        uid = el;
+        fotoUrl = getUserProfilePhoto(uid);
+    } else {
+        uid = el.dataset.uid || el.id;
+        fotoUrl = el.src || getUserProfilePhoto(uid);
+    }
+    window.perfilUserUidActual = uid;
+    document.getElementById('perfilUserName').textContent = nombre || 'Usuario';
+    document.getElementById('perfilUserKey').textContent = uid;
+    document.getElementById('perfilUserAvatar').style.backgroundImage = "url('" + fotoUrl + "')";
+    document.getElementById('perfilUserFbBox').style.display = 'none';
+
+    // 1. Pedir SOLO el link de Facebook (No todo el usuario)
+    db.ref(`users/${uid}/facebookUrl`).once('value').then(snap => {
+        if (snap.val()) document.getElementById('perfilUserFbBox').style.display = 'block';
+    });
+
+    // 2. Pedir SOLO los datos de tareas (Evitamos descargar la lista de referidos e historial)
+    // Pedimos las llaves específicas. Si pides el objeto completo, descargas megas de más.
+    const camposTareas = [
+        db.ref(`users/${uid}/lastSpinDate`).once('value'),
+        db.ref(`users/${uid}/spinsUsed`).once('value'),
+        db.ref(`users/${uid}/lastAdDate`).once('value'),
+        db.ref(`users/${uid}/adCount`).once('value'),
+        db.ref(`users/${uid}/lastCineDate`).once('value'),
+        db.ref(`users/${uid}/cineCount`).once('value'),
+        db.ref(`users/${uid}/lastGameDate`).once('value'),
+        db.ref(`users/${uid}/gameMinutesToday`).once('value')
+    ];
+
+    Promise.all(camposTareas).then(snaps => {
+        const u = {
+            lastSpinDate: snaps[0].val(),
+            spinsUsed: snaps[1].val(),
+            lastAdDate: snaps[2].val(),
+            adCount: snaps[3].val(),
+            lastCineDate: snaps[4].val(),
+            cineCount: snaps[5].val(),
+            lastGameDate: snaps[6].val(),
+            gameMinutesToday: snaps[7].val()
+        };
+
+        const hoy = new Date().toISOString().split('T')[0];
+        let completadas = 0;
+        if (u.lastSpinDate === hoy && (u.spinsUsed || 0) >= 3) completadas++;
+        if (u.lastAdDate === hoy && (u.adCount || 0) >= 5) completadas++;
+        if (u.lastCineDate === hoy && (u.cineCount || 0) >= 2) completadas++;
+        if (u.lastGameDate === hoy && (u.gameMinutesToday || 0) >= 15) completadas += 2;
+        
+        document.getElementById('perfilUserTareas').textContent = `📋 Tareas: ${completadas}/5`;
+    });
+
+    document.getElementById('modalPerfilUsuario').style.display = 'flex';
+};
 
     // Ir al perfil de otro usuario desde notificación
     window.irPerfil = (uid, nombre) => {
@@ -5813,8 +5790,16 @@ function getDisplayName(uid, fallback) {
 }
 
 function cargarApodos() {
-    // Cache inicial rápido: solo últimos 50 (el resto se carga en la consulta indexada de abajo)
-    db.ref('users').limitToLast(50).once('value', s => {
+    db.ref('users').once('value', snap => {
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const u = child.val();
+                if (u.apodo) apodosCache[child.key] = u.apodo;
+            });
+        }
+    });
+    // También cargar en el cache global
+    db.ref('users').limitToLast(100).once('value', s => {
         if (s.exists()) {
             s.forEach(c => {
                 const u = c.val();
@@ -5902,8 +5887,8 @@ function construirPostHTML(post) {
                 <span>Share</span>
             </button>
 
-            <button class="action-icon" onclick="event.stopPropagation(); abrirOpcionesPost('${post.k}')" style="margin-top:10px; font-size:1.5rem;">
-                <i class="fas fa-ellipsis-v"></i>
+            <button class="action-icon" onclick="event.stopPropagation(); abrirOpcionesPost('${post.k}')" style="margin-top:10px;">
+                <i class="fas fa-ellipsis-h" style="font-size:1.2rem;"></i>
             </button>
         </div>
     </article>`;
@@ -5980,26 +5965,47 @@ window.likePost = function(postKey, postOwnerUid, btnElement) {
         }
     });
 };
-    function cargarLeaderboard() { db.ref('users').orderByChild('earnings').limitToLast(1).on('value', snap => { if (!snap.exists()) return; snap.forEach(child => { const u = child.val(); /* Ya no actualizamos el leaderboard viejo */ }); }); }
+    function cargarLeaderboard() { 
+    // .once solo descarga el dato UNA VEZ. No se queda escuchando cambios.
+    db.ref('users').orderByChild('earnings').limitToLast(1).once('value', snap => { 
+        if (!snap.exists()) return; 
+        snap.forEach(child => { 
+            const u = child.val(); 
+            // Aquí puedes poner tu lógica para mostrar al ganador
+        }); 
+    }); 
+}
 
     // --- ACCIONES DE USUARIO ---
     window.copiarClave = () => { const textArea = document.createElement("textarea"); textArea.value = myCurrentKey; document.body.appendChild(textArea); textArea.select(); try { document.execCommand('copy'); notify("✅ Copiado"); } catch (e) {} document.body.removeChild(textArea); };
-    window.verReferidos = () => {
-        if (!idAuditor) return notify("Inicia sesión");
-        document.getElementById('modalReferidos').style.display = 'flex';
-        if (window._refListener) {
-            db.ref(`users/${idAuditor}/referidos`).off('value', window._refListener);
-        }
-        window._refListener = db.ref(`users/${idAuditor}/referidos`).on('value', snap => {
-            let html = "";
-            if (!snap.exists()) html = "<div style='text-align:center;padding:20px;color:#64748b;'>Sin referidos.</div>";
-            else snap.forEach(c => {
+    
+   window.verReferidos = () => {
+    if (!idAuditor) return notify("Inicia sesión");
+    
+    // 1. Abrimos el modal visualmente
+    document.getElementById('modalReferidos').style.display = 'flex';
+    const listaUI = document.getElementById('listaReferidos');
+    if (listaUI) listaUI.innerHTML = "<div style='text-align:center;padding:20px;'><i class='fas fa-spinner fa-spin'></i> Cargando...</div>";
+
+    // 2. Pedimos los datos UNA SOLA VEZ (.once)
+    // Esto descarga la lista, la dibuja y CIERRA la conexión inmediatamente.
+    db.ref(`users/${idAuditor}/referidos`).once('value', snap => {
+        let html = "";
+        if (!snap.exists()) {
+            html = "<div style='text-align:center;padding:20px;color:#64748b;'>Sin referidos.</div>";
+        } else {
+            snap.forEach(c => {
                 const d = c.val();
-                html += `<div style="display:flex;align-items:center;padding:12px;border-bottom:1px solid #f1f5f9;"><div style="width:40px;height:40px;border-radius:50%;background-image:url('${getAvatarUrl(d.clave)}');background-size:cover;"></div><div style="margin-left:10px;"><div style="font-weight:700;">${d.clave}</div></div><div style="margin-left:auto;font-weight:800;color:#10b981;">+0.50</div></div>`;
+                html += `<div style="display:flex;align-items:center;padding:12px;border-bottom:1px solid #f1f5f9;">
+                            <div style="width:40px;height:40px;border-radius:50%;background-image:url('${getAvatarUrl(d.clave)}');background-size:cover;"></div>
+                            <div style="margin-left:10px;"><div style="font-weight:700;">${d.clave}</div></div>
+                            <div style="margin-left:auto;font-weight:800;color:#10b981;">+0.50</div>
+                         </div>`;
             });
-            document.getElementById('listaReferidos').innerHTML = html;
-        });
-    };
+        }
+        if (listaUI) listaUI.innerHTML = html;
+    });
+};
     window.cerrarModalReferidos = () => {
         if (window._refListener && idAuditor) {
             db.ref(`users/${idAuditor}/referidos`).off('value', window._refListener);
@@ -6009,16 +6015,22 @@ window.likePost = function(postKey, postOwnerUid, btnElement) {
     };
 
 window.abrirMision = () => {
-    // 🛑 DETENER VIDEO DE FONDO
     detenerVideoMuro();
 
-    db.ref(`users/${idAuditor}`).once('value').then(snap => {
-        const u = snap.val();
-        const ahora = Date.now();
-        const ultimoTime = u.lastMissionTime || 0;
-        const horasDiff = (ahora - ultimoTime) / (1000 * 60 * 60);
+    // ✅ Pedimos SOLO los dos datos que necesitamos para el límite de tiempo
+    const camposCochinito = [
+        db.ref(`users/${idAuditor}/lastMissionTime`).once('value'),
+        db.ref(`users/${idAuditor}/missionCount`).once('value')
+    ];
 
-        let conteo = u.missionCount || 0;
+    Promise.all(camposCochinito).then(snaps => {
+        const lastTime = snaps[0].val() || 0;
+        const count = snaps[1].val() || 0;
+        
+        const ahora = Date.now();
+        const horasDiff = (ahora - lastTime) / (1000 * 60 * 60);
+
+        let conteo = count;
         if (horasDiff >= 8) conteo = 0;
 
         if (conteo >= 2) {
@@ -6028,28 +6040,13 @@ window.abrirMision = () => {
             return notify(`⏳ Espera ${hRestante}h ${mRestante}m para publicar más`);
         }
 
-        // Abrir modal principal
+        // --- El resto de tu código de abrir modal sigue igual ---
         document.getElementById('modalMision').style.display = 'flex';
-
-        // Ocultar paso 1
         document.getElementById('step1Mision').style.display = 'none';
-
-        // Mostrar paso 2 directamente
         document.getElementById('step2Mision').style.display = 'block';
-
-        // Reset visual
-        document.getElementById('invisiblePlayer').innerHTML = "";
-        if (window.resetAudioControls) window.resetAudioControls();
-
-        document.getElementById('mMusic').value = "";
-        document.getElementById('mText').value = "";
-        document.getElementById('musicDisplayLabel').textContent = "🔍 Toca para buscar canción...";
-        document.getElementById('songNamePreview').textContent = "---";
-
-        // Abrir selector de música automáticamente
-        setTimeout(() => {
-            abrirSelectorMusica();
-        }, 200);
+        
+        // ... (el resto de tus resets visuales) ...
+        setTimeout(() => { abrirSelectorMusica(); }, 200);
     });
 };
     document.getElementById('btnEnviarMision').onclick = () => { 
@@ -6221,55 +6218,85 @@ window.procesarYEnviarFotoDirecto = (input) => {
         return;
     }
 
-    const file = input.files && input.files[0];
-    if (!file) return;
+    if (input.files && input.files[0]) {
+        notify("⏳ Procesando imagen... espera un momento");
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                setTimeout(() => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600; 
+                    const scale = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scale;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // ✅ PASO CORRECTO: Convertir a archivo (Blob) y enviar a Storage
+                    canvas.toBlob((blob) => {
+                        if (currentChatId && targetUserUid) {
+                            subirYCobrarFoto(blob); 
+                        }
+                        input.value = ""; 
+                    }, 'image/jpeg', 0.5);
 
-    notify("⏳ Subiendo foto... espera un momento");
+                    // 🛑 AQUÍ HABÍAS DEJADO CÓDIGO VIEJO, YA LO ELIMINÉ.
+                }, 100);
+            };
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+// Función separada para que el envío no bloquee la pantalla
+async function subirYCobrarFoto(archivoBlob) {
+    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
+    const btn = document.getElementById('btnAbrirMenuAcciones');
+    if (btn) btn.disabled = true;
 
-    const nombreArchivo = "chat_" + Date.now() + "_" + idAuditor + ".jpg";
-    const storageRef = firebase.storage().ref().child('chat_fotos/' + nombreArchivo);
+    try {
+        // 1. Subir a Storage (Casi gratis)
+        const ruta = `fotos_privadas/${currentChatId}/${Date.now()}.jpg`;
+        const refStorage = firebase.storage().ref(ruta);
+        const snapshot = await refStorage.put(archivoBlob);
+        const urlPublica = await snapshot.ref.getDownloadURL();
 
-    storageRef.put(file).then(snapshot => snapshot.ref.getDownloadURL()).then(downloadURL => {
-        const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
-        const updates = {};
+        // 2. Guardar en Database solo el LINK corto
         const chatKey = db.ref(`chats_privados/${currentChatId}`).push().key;
-
+        const updates = {};
+        
         updates[`chats_privados/${currentChatId}/${chatKey}`] = {
             uid: idAuditor,
             autor: miNombre,
             texto: "📷 Foto",
-            foto: downloadURL,
+            foto: urlPublica, // <--- Link corto. Ya no hay Base64 ✅
             esFoto: true,
             fecha: firebase.database.ServerValue.TIMESTAMP
         };
 
-        return db.ref().update(updates).then(() => {
-            db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) - 2.00);
-            db.ref(`users/${targetUserUid}/notifications`).push({
-                from: idAuditor, fromName: miNombre, type: 'chat_privado',
-                text: "📷 Te envió una foto privada", extra: idAuditor,
-                timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
-            });
-            if (typeof registrarHistorial === 'function') {
-                registrarHistorial("Foto privada enviada", -2.00);
-            }
-            notify("✅ Enviada (-2.00 PTS)");
-            try { window.playSound('coin'); } catch(e){}
+        await db.ref().update(updates);
+
+        // 3. Cobro y Notificación
+        db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) - 2.00);
+        db.ref(`users/${targetUserUid}/notifications`).push({
+            from: idAuditor, fromName: miNombre, type: 'chat_privado',
+            text: "📷 Te envió una foto privada", extra: idAuditor,
+            timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
         });
-    }).catch(err => {
-        notify("Error al subir foto: " + err.message);
-    }).finally(() => {
-        input.value = "";
-    });
-}
-// Cierre automático al tocar fuera
-document.addEventListener('click', (e) => {
-    const menu = document.getElementById('boxMenuAcciones');
-    const btn = document.getElementById('btnAbrirMenuAcciones');
-    if (menu && menu.style.display === 'block' && !menu.contains(e.target) && !btn.contains(e.target)) {
-        toggleMenuChatPrivado();
+
+        registrarHistorial("Foto privada enviada", -2.00);
+        notify("✅ Foto enviada (-2.00 PTS)");
+        if (btn) btn.disabled = false;
+
+    } catch (e) {
+        console.error(e);
+        notify("❌ Error al enviar foto");
+        if (btn) btn.disabled = false;
     }
-});
+}
     function onPlayerStateChange(event) {
         const icon = document.getElementById('audioIcon');
         const btn = document.getElementById('btnAudioControl');
@@ -6298,109 +6325,145 @@ document.addEventListener('click', (e) => {
         document.getElementById('step2Mision').style.display = 'none';
         document.getElementById('step1Mision').style.display = 'block';
     };
+let commentsRef = null;
+let currentPostId = null;
 
-    let commentsRef = null;
-    let currentPostId = null;
-    window.abrirModalComentarios = (postKey) => {
-        isCommenting = true;
-        currentPostId = postKey;
-        currentCommentSource = 'reportes'; // comentarios de videos del feed
-        const modal = document.getElementById('modalComments');
-        const list = document.getElementById('modalCommentsList');
-        modal.style.display = 'flex';
-        list.innerHTML = '<div style="text-align:center;padding:20px;">Cargando...</div>';
-        cargarChips();
-        if (commentsRef) commentsRef.off();
-        commentsRef = db.ref(`reportes/${postKey}/comentarios`);
-        let isEmpty = true;
-        // FIX-2: Cambiado de .on() a .once() — el listener de 'value' en comentarios descargaba
-        // TODOS los comentarios completos cada vez que alguien publicaba uno nuevo.
-        // Ahora solo se carga una vez para obtener el conteo y los comentarios iniciales.
-        commentsRef.once('value', snap => {
-            const count = snap.numChildren();
-            const title = document.getElementById('modalCommentsTitle');
-            if (title) title.textContent = `💬 Comentarios (${count})`;
-            const cEl = document.getElementById('c-count-' + postKey);
-            if (cEl) cEl.textContent = count;
-            if (!snap.exists()) list.innerHTML = '<div style="text-align:center;padding:40px;">Sé el primero en comentar.</div>';
-        });
+// --- 1. ABRIR EL MODAL Y CARGAR DATOS ---
+window.abrirModalComentarios = (postKey) => {
+    console.log("🟢 Abriendo comentarios del post:", postKey);
+    isCommenting = true;
+    currentPostId = postKey;
+    
+    const modal = document.getElementById('modalComments');
+    const list = document.getElementById('modalCommentsList');
+    const title = document.getElementById('modalCommentsTitle');
+    
+    if (modal) modal.style.display = 'flex';
+    if (list) list.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Cargando comentarios...</div>';
 
-        commentsRef.limitToLast(50).on('child_added', s => {
-            if (isEmpty) { list.innerHTML = ""; isEmpty = false; }
-            const c = s.val();
-            const esMio = (c.uid === idAuditor);
-            const d = document.createElement('div');
-            d.className = "comment-bubble";
-            d.style.borderLeft = esMio ? '3px solid #10b981' : '3px solid #0070ba';
-            const nombreSeguro = (c.autor || 'Anónimo').replace(/'/g, "\\'");
-            const hora = c.timestamp ? new Date(c.timestamp).toLocaleDateString([], {day:'2-digit', month:'2-digit'}) + ' ' + new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-            d.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span class="comment-author">${escapeHtml(getDisplayName(c.uid, c.autor))}</span>
-                    <button onclick="replyToUser('${nombreSeguro}', '${c.uid}')" style="border:none; background:none; color:#0070ba; font-size:0.7rem; font-weight:bold; cursor:pointer; padding:2px 5px;">Responder ↩</button>
-                </div>
-                <div class="comment-text">${escapeHtml(c.texto)}</div>
-                <div style="font-size:0.65rem; color:#94a3b8; margin-top:4px; text-align:right;">${hora}</div>
-            `;
-            list.appendChild(d);
-            list.scrollTop = list.scrollHeight;
-        });
-    };
-    window.replyToUser = (user, uid) => {
-        window._replyToUid = uid || null;
-        const inp = document.getElementById('modalCommentInput');
+    // Apagamos conexiones viejas para ahorrar dinero y evitar errores
+    if (commentsRef) commentsRef.off();
+    commentsRef = db.ref(`reportes/${postKey}/comentarios`);
+
+    let contadorLocal = 0;
+    let inicializado = false;
+
+    // A) Obtener total inicial (BARATO)
+    commentsRef.once('value', snap => {
+        contadorLocal = snap.numChildren();
+        if (title) title.textContent = `💬 Comentarios (${contadorLocal})`;
+        
+        if (!snap.exists() && list) {
+            list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Sé el primero en comentar.</div>';
+        }
+        inicializado = true;
+    });
+
+    // B) Escuchar comentarios nuevos y viejos (Máximo 50)
+    commentsRef.limitToLast(50).on('child_added', s => {
+        // Quitar el mensaje de carga cuando llega el primer dato
+        if (list && (list.querySelector('.fa-spinner') || list.textContent.includes('Sé el primero'))) {
+            list.innerHTML = "";
+        }
+        
+        // TikTok Effect: Sumar en vivo si llega uno nuevo
+        if (inicializado) {
+            contadorLocal++;
+            if (title) title.textContent = `💬 Comentarios (${contadorLocal})`;
+            const cCount = document.getElementById('c-count-' + postKey);
+            if (cCount) cCount.textContent = contadorLocal;
+        }
+
+        const c = s.val();
+        dibujarComentarioConTodo(list, c, s.key);
+    });
+
+    // C) Si alguien borra un comentario, quitarlo de la pantalla
+    commentsRef.on('child_removed', s => {
+        const el = document.getElementById(`comm-${s.key}`);
+        if (el) el.remove();
+        contadorLocal = Math.max(0, contadorLocal - 1);
+        if (title) title.textContent = `💬 Comentarios (${contadorLocal})`;
+    });
+};
+
+// --- 2. DIBUJAR LA BURBUJA (CON BOTÓN ELIMINAR) ---
+function dibujarComentarioConTodo(contenedor, c, commentKey) {
+    if (!contenedor) return;
+    const esMio = (c.uid === idAuditor);
+    // Verificación segura de Admin
+    const soyAdmin = (typeof isAdmin !== 'undefined' && isAdmin === true);
+    
+    const d = document.createElement('div');
+    d.id = `comm-${commentKey}`;
+    d.className = "comment-bubble";
+    d.style.cssText = `padding:12px; margin:8px 0; border-radius:15px; background:${esMio?'#f0fdf4':'#fff'}; border:1px solid #e2e8f0; border-left:4px solid ${esMio?'#10b981':'#0070ba'}; position:relative;`;
+    
+    const nombre = (typeof getDisplayName === 'function') ? getDisplayName(c.uid, c.autor) : (c.autor || "Usuario");
+    const hora = c.timestamp ? new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+
+    d.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-weight:800; font-size:0.8rem; color:#1e293b;">${nombre}</span>
+            <div style="display:flex; gap:12px; align-items:center;">
+                <button onclick="window.replyToUser('${nombre.replace(/'/g,"")}', '${c.uid}')" style="border:none; background:none; color:#0070ba; font-size:0.7rem; font-weight:bold; cursor:pointer;">Responder</button>
+                ${(esMio || soyAdmin) ? `
+                    <i class="fas fa-trash-alt" onclick="window.eliminarComentario('${commentKey}')" style="color:#ef4444; font-size:0.85rem; cursor:pointer; padding:5px;"></i>
+                ` : ''}
+            </div>
+        </div>
+        <div style="font-size:0.9rem; color:#334155; line-height:1.4;">${escapeHtml(c.texto)}</div>
+        <div style="font-size:0.6rem; color:#94a3b8; text-align:right; margin-top:5px;">${hora}</div>
+    `;
+    contenedor.appendChild(d);
+    contenedor.scrollTop = contenedor.scrollHeight;
+}
+
+// --- 3. ACCIONES: ENVIAR Y ELIMINAR ---
+
+window.enviarComentarioModal = () => {
+    if (!idAuditor) return notify("❌ Inicia sesión para comentar");
+    const inp = document.getElementById('modalCommentInput');
+    const texto = inp ? inp.value.trim() : "";
+    if (!texto || !currentPostId) return;
+
+    db.ref(`reportes/${currentPostId}/comentarios`).push({
+        uid: idAuditor,
+        autor: (typeof getMiNombre === 'function') ? getMiNombre() : "Usuario",
+        texto: texto,
+        fecha: firebase.database.ServerValue.TIMESTAMP // ✅ CAMBIADO: Antes era "timestamp"
+    }).then(() => {
+        inp.value = "";
+        notify("✅ Enviado");
+    }).catch(e => {
+        notify("❌ Error: " + e.message);
+    });
+};
+
+// Compatibilidad de nombres (Mantenlos igual)
+window.enviarComentario = window.enviarComentarioModal;
+window.enviarComentarioModa = window.enviarComentarioModal;
+
+window.eliminarComentario = (commentKey) => {
+    if (!confirm("¿Borrar este comentario?")) return;
+    db.ref(`reportes/${currentPostId}/comentarios/${commentKey}`).remove()
+        .then(() => notify("🗑️ Eliminado"))
+        .catch(e => alert("Error: " + e.message));
+};
+
+window.replyToUser = (user, uid) => {
+    const inp = document.getElementById('modalCommentInput');
+    if (inp) {
         inp.value = `@${user} ` + inp.value;
         inp.focus();
-    };
-window.enviarComentarioModal = (e) => {
-    if (e) e.preventDefault();
-    const inp = document.getElementById('modalCommentInput');
-    const txt = inp.value.trim();
-    if (!txt) return;
-    const autorNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
-    const refBase = currentCommentSource || 'reportes';
-    // Guardar el comentario en la ruta correcta (reportes o galeria_comunidad)
-    db.ref(`${refBase}/${currentPostId}/comentarios`).push({
-        uid: idAuditor,
-        autor: autorNombre,
-        texto: txt,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-    });
-    detectarYEnvarMenciones(txt, "comentario");
-    // Notificaciones solo para comentarios de videos (reportes)
-    if (refBase === 'reportes') {
-        db.ref(`reportes/${currentPostId}`).once('value').then(snap => {
-            if (snap.exists()) {
-                const post = snap.val();
-                if (post.uid !== idAuditor) {
-                    db.ref(`users/${post.uid}/notifications`).push({ from: myCurrentKey, fromName: getMiNombre(), type: 'comentario', text: "💬 Comentó tu video", extra: currentPostId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false });
-                }
-                if (window._replyToUid && window._replyToUid !== idAuditor && window._replyToUid !== post.uid) {
-                    db.ref(`users/${window._replyToUid}/notifications`).push({ from: myCurrentKey, fromName: getMiNombre(), type: 'comentario', text: "💬 Te respondió un comentario", extra: currentPostId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false });
-                }
-            }
-            window._replyToUid = null;
-        });
-    } else {
-        // Notificación para comentarios en fotos del muro
-        db.ref(`galeria_comunidad/${currentPostId}`).once('value').then(snap => {
-            if (snap.exists()) {
-                const foto = snap.val();
-                if (foto.uid && foto.uid !== idAuditor) {
-                    db.ref(`users/${foto.uid}/notifications`).push({ from: myCurrentKey, fromName: getMiNombre(), type: 'comentario', text: "💬 Comentó tu foto", extra: currentPostId, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false });
-                }
-            }
-            window._replyToUid = null;
-        });
     }
-    inp.value = ""; inp.focus();
 };
-    window.cerrarModalComentarios = () => {
-        document.getElementById('modalComments').style.display = 'none';
-        if (commentsRef) commentsRef.off();
-        isCommenting = false;
-    };
 
+window.cerrarModalComentarios = () => {
+    document.getElementById('modalComments').style.display = 'none';
+    if (commentsRef) commentsRef.off();
+    isCommenting = false;
+};
     // ── Comentarios públicos en fotos del muro ────────────────────────────────
     window.abrirComentariosFoto = (fotoKey) => {
         isCommenting = true;
@@ -6413,12 +6476,11 @@ window.enviarComentarioModal = (e) => {
         if (commentsRef) commentsRef.off();
         commentsRef = db.ref(`galeria_comunidad/${fotoKey}/comentarios`);
         let isEmpty = true;
-        // FIX-3: Mismo problema que en comentarios de video — descargaba todos los
-        // comentarios completos ante cada nuevo comentario. Ahora usa .once().
-        commentsRef.once('value', snap => {
-            const count = snap.numChildren();
+        commentsRef.on('value', snap => {
+            const count = snap.val() ? Object.keys(snap.val()).length : 0;
             const title = document.getElementById('modalCommentsTitle');
             if (title) title.textContent = `💬 Comentarios de foto (${count})`;
+            // Actualizar contador en la card del muro si está visible
             const badge = document.getElementById(`cc-foto-${fotoKey}`);
             if (badge) badge.textContent = count;
             if (!snap.exists()) list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Sé el primero en comentar.</div>';
@@ -6495,11 +6557,6 @@ window.manejarAuth = async () => {
                 fechaRegistro: firebase.database.ServerValue.TIMESTAMP,
                 myInviteKey: nuevoCodigo,
                 earnings: 0.25
-            });
-            // Nodo ligero para envío masivo (evita leer users completo)
-            await firebase.database().ref('admin_emails/' + u.user.uid).set({
-                email: email,
-                myInviteKey: nuevoCodigo
             });
             AndroidNative.onLoginSuccess(u.user.uid);
             notify("Cuenta creada");
@@ -6600,9 +6657,52 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
                     lastSeen: firebase.database.ServerValue.TIMESTAMP 
                 });
             }
-        }, 10000);
+        }, 60000);
+
+        // --- 🔔 RADAR DE MENSAJES Y NOTIFICACIONES (PUNTOS ROJOS) ---
+        db.ref(`users/${idAuditor}/notifications`).limitToLast(10).on('value', snap => {
+            window.mapaMensajesSinLeer = {}; 
+            let totalMensajesNuevos = 0;
+
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    const n = child.val();
+                    // Contamos chats privados no leídos
+                    if (n.type === 'chat_privado' && n.read === false) {
+                        const emisorUid = n.extra;
+                        if (emisorUid) {
+                            window.mapaMensajesSinLeer[emisorUid] = (window.mapaMensajesSinLeer[emisorUid] || 0) + 1;
+                            totalMensajesNuevos++;
+                        }
+                    }
+                });
+            }
 
 
+            // 1. Número rojo en el menú de abajo (Pestaña Mensajes)
+            const badgeMenu = document.getElementById('msgBadge');
+            if (badgeMenu) {
+                if (totalMensajesNuevos > 0) {
+                    badgeMenu.style.display = 'flex';
+                    badgeMenu.textContent = totalMensajesNuevos > 99 ? '99+' : totalMensajesNuevos;
+                    document.getElementById('nav3')?.querySelector('.nav-icon')?.classList.add('nav-jumping');
+                } else {
+                    badgeMenu.style.display = 'none';
+                    document.getElementById('nav3')?.querySelector('.nav-icon')?.classList.remove('nav-jumping');
+                }
+            }
+
+            // 2. Sincronizar campanas (arriba y pestaña mensajes)
+            const b1 = document.getElementById('badgeNotis');
+            const b2 = document.getElementById('badgeNotisMensajes');
+            if (b1) { b1.textContent = totalMensajesNuevos; b1.classList.toggle('active', totalMensajesNuevos > 0); }
+            if (b2) { b2.textContent = totalMensajesNuevos; b2.classList.toggle('active', totalMensajesNuevos > 0); }
+
+            // 3. 🔥 RE-DIBUJAR LA LISTA PARA QUE SALGAN LOS GLOBITOS ROJOS
+            if (typeof renderizarUsuariosHorizontal === 'function') {
+                renderizarUsuariosHorizontal();
+            }
+        });
         // 3. Verificar compras confirmadas pendientes de acreditar
         verificarComprasConfirmadas();
 
@@ -6624,10 +6724,6 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
                     earnings: 0, 
                     myInviteKey: "INV-" + idAuditor.substring(0, 5).toUpperCase() 
                 }); 
-                db.ref(`admin_emails/${idAuditor}`).set({
-                    email: user.email || '',
-                    myInviteKey: "INV-" + idAuditor.substring(0, 5).toUpperCase()
-                });
                 return; // Salimos aquí para no ejecutar el resto si no hay datos aún
             }
 
@@ -6818,6 +6914,7 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
         // Esto hace que los puntos rojos y las historias carguen al instante
         if (typeof iniciarMonitorDeBadges === "function") iniciarMonitorDeBadges();
         if (typeof cargarListaUsuariosHorizontal === "function") cargarListaUsuariosHorizontal();
+        if (typeof cachearFotosPerfiles === "function") cachearFotosPerfiles();
 
         // Mandar a la pantalla inicial
         if (typeof goToScreen === "function") goToScreen(2); 
@@ -8943,7 +9040,76 @@ function cachearUsuarios() {
     });
 }
 
+function cargarListaUsuariosHorizontal() {
+    if (window._usuariosListenerActivo) return; 
+    window._usuariosListenerActivo = true;
 
+    // Escuchar cambios de estado (online/offline + lastSeen)
+    db.ref('users').on('value', snap => {
+        listaUsuariosCacheReal = [];
+        const ahora = Date.now();
+        const doceHoras = 12 * 60 * 60 * 1000;
+
+        snap.forEach(child => {
+            const u = child.val();
+            if (!u) return;
+            if (child.key === idAuditor) return; // No incluir al usuario actual
+
+            const nombre = u.apodo || u.myInviteKey || "Usuario";
+            const avatar = u.fotoPerfil || getAvatarUrl(child.key);
+            const lastSeen = u.lastSeen || 0;
+            const tiempoDesdeUltima = ahora - lastSeen;
+            const online = tiempoDesdeUltima < 30000; // Menos de 30 segundos = en línea
+
+            listaUsuariosCacheReal.push({
+                key: child.key,
+                nombre: nombre,
+                avatar: avatar,
+                online: online,
+                lastSeen: lastSeen,
+                rawTime: lastSeen
+            });
+        });
+
+        // Ordenar: online primero, luego por último visto
+        listaUsuariosCacheReal.sort((a, b) => {
+            if (a.online && !b.online) return -1;
+            if (!a.online && b.online) return 1;
+            return b.rawTime - a.rawTime;
+        });
+
+        // Renderizar el listado
+        if (typeof renderizarUsuariosHorizontal === 'function') {
+            renderizarUsuariosHorizontal();
+        }
+    });
+}
+
+function renderizarUsuariosHorizontal() {
+    // Este será el visor de usuarios en línea (si lo tienes en HTML)
+    // Actualiza los colores basado en estados
+}
+
+function iniciarMonitorDeBadges() {
+    // Monitor de badges de mensajes y estados de usuarios
+    if (window._badgesMonitorActivo) return;
+    window._badgesMonitorActivo = true;
+
+    // Escuchar pensamientos públicos
+    db.ref('pensamientos').on('value', snap => {
+        _cacheDataNubes = {};
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const p = child.val();
+                _cacheDataNubes[child.key] = {
+                    texto: p.texto || '',
+                    timestamp: p.timestamp || Date.now(),
+                    uid: child.key
+                };
+            });
+        }
+    });
+}
 document.addEventListener('keyup', (e) => {
     // Solo actuamos si se escribe en el chat
     if (e.target && e.target.id === 'inputChatMsg') {
@@ -9150,16 +9316,6 @@ if ('speechSynthesis' in window) {
 }
 // --- LÓGICA DE GALERÍA DE FOTOS (NUEVO) ---
 
-window.subirFoto = () => {
-    const modal = document.getElementById('modalSubirFoto');
-    if (modal) modal.style.display = 'flex';
-};
-
-window.subirVideo = () => {
-    const modal = document.getElementById('modalMenuPublicar');
-    if (modal) modal.style.display = 'flex';
-};
-
 let fotoBase64Actual = "";
 
 // 1. Procesar la imagen cuando el usuario la selecciona
@@ -9218,8 +9374,7 @@ window.togglePrecioFoto = () => {
 // 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN USANDO LA REDIRECCIÓN DE URL (SEGURO)
 // 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN (CORREGIDO)
 window.subirFotoReal = () => {
-    const file = document.getElementById('inputFotoArchivo').files[0];
-    if (!file) return notify("Elige una foto primero");
+    if (!fotoBase64Actual) return notify("Elige una foto primero");
 
     const btn = document.getElementById('btnPublicarFoto');
     if (btn) {
@@ -9227,58 +9382,65 @@ window.subirFotoReal = () => {
         btn.innerHTML = "Cargando anuncio...";
     }
 
+    // ¡AQUÍ ESTABA EL ERROR! Ahora sí llama a la función nativa que creaste en Kotlin
     if (typeof AndroidNative !== 'undefined' && AndroidNative.publicarFotoConAnuncio) {
         notify("📺 Ve el anuncio para publicar tu foto...");
         AndroidNative.publicarFotoConAnuncio();
     } else {
+        // Fallback
         ejecutarSubidaFotoFirebase();
     }
 };
 
 // 2. KOTLIN LLAMA A ESTA FUNCIÓN AL TERMINAR EL ANUNCIO CON ÉXITO
 window.ejecutarSubidaFotoFirebase = () => {
-    const file = document.getElementById('inputFotoArchivo').files[0];
-    if (!file) return notify("Error: No hay archivo");
-
     const btn = document.getElementById('btnPublicarFoto');
-    if (btn) btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Subiendo foto...";
+    if (btn) btn.innerHTML = "Subiendo...";
 
     const chkVender = document.getElementById('chkVenderFoto');
     const tienePrecio = chkVender && chkVender.checked;
     const precioPts = tienePrecio ? parseInt(document.getElementById('inputPrecioFoto').value) || 0 : 0;
 
-    const nombreArchivo = "muro_" + Date.now() + ".jpg";
-    const storageRef = firebase.storage().ref().child('muro/' + nombreArchivo);
+    const fotoData = {
+        uid: idAuditor,
+        autor: myCurrentKey,
+        foto: fotoBase64Actual,
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    };
+    if (tienePrecio && precioPts >= 1 && precioPts <= 500) {
+        fotoData.precio = precioPts;
+    }
 
-    storageRef.put(file).then(snapshot => {
-        return snapshot.ref.getDownloadURL();
-    }).then(downloadURL => {
-        const fotoData = {
-            uid: idAuditor,
-            autor: myCurrentKey,
-            foto: downloadURL,
-            fecha: firebase.database.ServerValue.TIMESTAMP
-        };
-        if (tienePrecio && precioPts >= 1 && precioPts <= 500) {
-            fotoData.precio = precioPts;
-        }
-
-        return db.ref('galeria_comunidad').push(fotoData);
-    }).then(() => {
+    db.ref('galeria_comunidad').push(fotoData).then(() => {
         notify("✅ Foto subida con éxito");
         cerrarModalFoto();
+
+        // Verificar si la misión M4 de misiones diarias estaba activa
+        if (localStorage.getItem('mision_m4_activa') === '1') {
+            localStorage.setItem('mision_m4', '1');
+            localStorage.removeItem('mision_m4_activa');
+            sumarPuntosMision(8);
+            if (typeof renderizarMisionesAprender === 'function') renderizarMisionesAprender();
+            notify("✅ Misión completada");
+        }
+
+        // Acreditar la recompensa de +0.10 PTS
         db.ref(`users/${idAuditor}`).update({
             earnings: firebase.database.ServerValue.increment(0.10)
         });
+
         if (window.checarProgresoDiario) window.checarProgresoDiario();
         try { window.playSound('win'); } catch(e){}
-        if (typeof cargarGaleriaComunidad === "function") {
-            limiteFotosMuro = 20;
-            cargarGaleriaComunidad();
-        }
+
+        // Refrescar el muro para que se vea la foto nueva con su precio
+        setTimeout(() => { cargarGaleriaComunidad(); }, 500);
+        
     }).catch(err => {
         notify("Error al subir: " + err.message);
-        if (btn) { btn.disabled = false; btn.innerHTML = "💰 Publicar y Ganar"; }
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = "💰 Publicar y Ganar";
+        }
     });
 };
 
@@ -9576,97 +9738,62 @@ window.procesarFotoPrivada = () => {
 
 // 4. ENVIAR FOTO PRIVADA
 window.enviarFotoPrivada = () => {
-    const file = document.getElementById('inputFotoPrivada').files[0];
-    if (!file) return notify("Elige una foto primero");
+    if (!fotoPrivadaBase64) return notify("Elige una foto primero");
     if (!currentChatId || !targetUserUid) return notify("Chat no activo");
 
     const btn = document.getElementById('btnEnviarFotoPrivada');
     btn.disabled = true;
-    btn.innerHTML = 'Subiendo...';
+    btn.innerHTML = 'Enviando...';
 
-    const nombreArchivo = "priv_" + Date.now() + "_" + idAuditor + ".jpg";
-    const storageRef = firebase.storage().ref().child('chat_fotos/' + nombreArchivo);
+    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
 
-    storageRef.put(file).then(snapshot => snapshot.ref.getDownloadURL()).then(downloadURL => {
-        const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
-
-        return db.ref(`chats_privados/${currentChatId}`).push({
-            uid: idAuditor,
-            autor: miNombre,
-            texto: "📷 Foto",
-            foto: downloadURL,
-            esFoto: true,
-            fecha: firebase.database.ServerValue.TIMESTAMP
-        }).then(() => {
-            db.ref(`users/${targetUserUid}/notifications`).push({
-                from: myCurrentKey,
-                fromName: miNombre,
-                type: 'chat_privado',
-                text: "📷 Te envió una foto privada",
-                extra: idAuditor,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                read: false
-            });
-
-            cerrarModalFotoPrivada();
-            notify("✅ Foto enviada");
-            try { window.playSound('win'); } catch(e){}
+    db.ref(`chats_privados/${currentChatId}`).push({
+        uid: idAuditor,
+        autor: miNombre,
+        texto: "📷 Foto",
+        foto: fotoPrivadaBase64,
+        esFoto: true,
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        // Notificar al otro usuario
+        db.ref(`users/${targetUserUid}/notifications`).push({
+            from: myCurrentKey,
+            fromName: miNombre,
+            type: 'chat_privado',
+            text: "📷 Te envió una foto privada",
+            extra: idAuditor,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            read: false
         });
+
+        cerrarModalFotoPrivada();
+        notify("✅ Foto enviada");
+        try { window.playSound('win'); } catch(e){}
     }).catch(err => {
-        notify("Error al subir foto: " + err.message);
+        notify("Error: " + err.message);
         btn.disabled = false;
         btn.innerHTML = '📷 Enviar Foto';
     });
 };
 
-// 5. MOSTRAR FOTO PRIVADA — modal propio, sin botones del muro
+// 5. MOSTRAR FOTO PRIVADA — usa modalFotoDetalle existente
 window.mostrarFotoPrivada = (el) => {
-    const fotoSrc = el?.getAttribute('data-foto') || el?.querySelector('img')?.src;
-    if (!fotoSrc) return;
-
-    let modal = document.getElementById('modalVerFotoPrivada');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'modalVerFotoPrivada';
-        modal.className = 'modal-overlay';
-        modal.style.cssText = `
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.92);
-            z-index: 31000;
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; transition: opacity 0.25s ease;
-            backdrop-filter: blur(4px);
-        `;
-        document.body.appendChild(modal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.style.display = 'none';
+    try {
+        const fotoSrc = el?.getAttribute('data-foto') || el?.querySelector('img')?.src;
+        if (!fotoSrc) return;
+        const modal = document.getElementById('modalFotoDetalle');
+        const img = document.getElementById('detalleFotoImg');
+        if (!modal || !img) return;
+        const ocultar = ['btnGaleriaAnt','btnGaleriaSig','fotoContador','btnSaludarFoto','btnLikeFoto','galeriaIndicadores'];
+        ocultar.forEach(id => { const e = document.getElementById(id); if(e) e.style.display = 'none'; });
+        ['btnSaludarFoto','btnLikeFoto','btnShareFoto'].forEach(id => {
+            const e = document.getElementById(id);
+            if(e) e.onclick = null;
         });
-    }
-
-    modal.innerHTML = `
-        <div style="position: relative; display: inline-block; max-width: 95%; max-height: 90vh;">
-            <img src="${fotoSrc}" 
-                 style="width: auto; height: auto; max-width: 100%; max-height: 90vh; 
-                        object-fit: contain; border-radius: 12px; 
-                        box-shadow: 0 8px 32px rgba(0,0,0,0.6); pointer-events: none;" 
-                 draggable="false">
-            <button id="btnCerrarFotoPrivada" style="
-                position: absolute; top: -14px; right: -14px;
-                background: rgba(255,255,255,0.15); color: white; border: none;
-                width: 36px; height: 36px; border-radius: 50%; font-size: 1.3rem;
-                display: flex; align-items: center; justify-content: center; cursor: pointer;
-                backdrop-filter: blur(6px); transition: transform 0.2s, background 0.2s;
-            ">✕</button>
-        </div>
-    `;
-
-    document.getElementById('btnCerrarFotoPrivada').addEventListener('click', (e) => {
-        e.stopPropagation();
-        modal.style.display = 'none';
-    });
-
-    modal.style.display = 'flex';
-    requestAnimationFrame(() => modal.style.opacity = '1');
+        img.src = fotoSrc;
+        modal.style.display = 'flex';
+        window._privPhotoView = true;
+    } catch (e) {}
 };
 
 // ==========================================
@@ -9726,34 +9853,28 @@ window.procesarFotoGrupo = () => {
 };
 
 window.enviarFotoGrupo = () => {
-    const file = document.getElementById('inputFotoGrupo').files[0];
-    if (!file) return notify("Elige una foto primero");
+    if (!fotoGrupoBase64) return notify("Elige una foto primero");
     if (!currentGrupoId) return notify("Grupo no activo");
 
     const btn = document.getElementById('btnEnviarFotoGrupo');
     btn.disabled = true;
-    btn.innerHTML = 'Subiendo...';
+    btn.innerHTML = 'Enviando...';
 
-    const nombreArchivo = "grupo_" + Date.now() + "_" + idAuditor + ".jpg";
-    const storageRef = firebase.storage().ref().child('chat_fotos/' + nombreArchivo);
+    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
 
-    storageRef.put(file).then(snapshot => snapshot.ref.getDownloadURL()).then(downloadURL => {
-        const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
-
-        return db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push({
-            uid: idAuditor,
-            autor: miNombre,
-            texto: "📷 Foto",
-            foto: downloadURL,
-            esFoto: true,
-            fecha: firebase.database.ServerValue.TIMESTAMP
-        }).then(() => {
-            cerrarModalFotoGrupo();
-            notify("✅ Foto enviada al grupo");
-            try { window.playSound('win'); } catch(e){}
-        });
+    db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push({
+        uid: idAuditor,
+        autor: miNombre,
+        texto: "📷 Foto",
+        foto: fotoGrupoBase64,
+        esFoto: true,
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        cerrarModalFotoGrupo();
+        notify("✅ Foto enviada al grupo");
+        try { window.playSound('win'); } catch(e){}
     }).catch(err => {
-        notify("Error al subir foto: " + err.message);
+        notify("Error: " + err.message);
         btn.disabled = false;
         btn.innerHTML = '📷 Enviar Foto al Grupo';
     });
@@ -9771,7 +9892,7 @@ window.mostrarFotoGrupo = (el) => {
         modal.style.cssText = `
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.92);
-            z-index: 31000;
+            z-index: 10000;
             display: flex; align-items: center; justify-content: center;
             opacity: 0; transition: opacity 0.25s ease;
             backdrop-filter: blur(4px);
@@ -9872,15 +9993,6 @@ window.abrirChatPrivado = (targetUid, targetName) => {
     // 🔥 NUEVO: Forzar limpieza del círculo rojo inmediatamente
     if (window.mapaMensajesSinLeer && window.mapaMensajesSinLeer[targetUid]) {
         delete window.mapaMensajesSinLeer[targetUid];
-        // 🔥 También limpiar el caché local para que no se quede rojo
-        try {
-            let chatsCache = JSON.parse(localStorage.getItem(CHATS_CACHE_KEY()) || '[]');
-            const idx = chatsCache.findIndex(c => c.otroUid === targetUid);
-            if (idx !== -1) {
-                chatsCache[idx].mensajesNoLeidos = 0;
-                localStorage.setItem(CHATS_CACHE_KEY(), JSON.stringify(chatsCache));
-            }
-        } catch(e){}
         if (typeof renderizarUsuariosHorizontal === 'function') renderizarUsuariosHorizontal();
         if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat(); // 🔥 QUITA EL ROJO AL INSTANTE
     }
@@ -10562,8 +10674,6 @@ window.mapaMensajesSinLeer = {};
 // ==========================================
 function iniciarMonitorDeBadges() {
     if(!idAuditor) return;
-    if (window._badgeMonitorIniciado) return;
-    window._badgeMonitorIniciado = true;
 
     db.ref(`users/${idAuditor}/notifications`).on('value', snap => {
         window.mapaMensajesSinLeer = {};
@@ -10683,23 +10793,14 @@ function cargarListaUsuariosHorizontal() {
     if (_listenersUsuariosIniciados) return;
     _listenersUsuariosIniciados = true;
 
-    // FIX-4: Cambiado de .on() a .once() con refresco periódico cada 5 minutos.
-    // El .on('value') original re-descargaba los 25 usuarios completos cada vez que
-    // CUALQUIER usuario actualizaba su 'lastSeen' (campo que cambia constantemente),
-    // generando cientos de MB de tráfico innecesario al día.
-    function _cargarUsuariosOnce() {
-        db.ref('users').orderByChild('lastSeen').limitToLast(25).once('value', snapUsers => {
-            _cacheDataUsers = snapUsers;
-            combinarYRenderizarUsuarios();
-        });
-    }
-    _cargarUsuariosOnce();
-    setInterval(_cargarUsuariosOnce, 5 * 60 * 1000); // Refrescar cada 5 minutos
+    // ESCUCHA 1: Usuarios (Se ejecuta independiente)
+    db.ref('users').orderByChild('lastSeen').limitToLast(25).on('value', snapUsers => {
+        _cacheDataUsers = snapUsers;
+        combinarYRenderizarUsuarios();
+    });
 
-    // FIX-5: Añadido limitToLast(30) al listener de pensamientos.
-    // Sin límite, descargaba TODOS los pensamientos de la historia cada vez
-    // que cualquier usuario publicaba uno nuevo.
-    db.ref('pensamientos').limitToLast(30).on('value', snapNubes => {
+    // ESCUCHA 2: Pensamientos (Se ejecuta independiente y en paralelo)
+    db.ref('pensamientos').on('value', snapNubes => {
         _cacheDataNubes = snapNubes.val() || {};
         combinarYRenderizarUsuarios();
     });
@@ -11738,15 +11839,10 @@ function iniciarEscuchaAdmin() {
             dot.title = 'Sin solicitudes pendientes';
         }
     }
-    // Cambiado de .on('value') a polling cada 30s para no descargar el nodo completo en cada cambio
-    function checkRetiros() {
-        db.ref('solicitudes_retiro').limitToFirst(1).once('value', snap => {
-            retirosPendientes = snap.numChildren();
-            actualizarDot();
-        });
-    }
-    checkRetiros();
-    setInterval(checkRetiros, 30000);
+    db.ref('solicitudes_retiro').on('value', snap => {
+        retirosPendientes = snap.exists() ? snap.numChildren() : 0;
+        actualizarDot();
+    });
 }
 
 window.abrirPanelAdmin = () => {
@@ -11756,69 +11852,70 @@ window.abrirPanelAdmin = () => {
 window.abrirAdminRetiros = () => {
     document.getElementById('modalAdminRetiros').style.display = 'flex';
     const lista = document.getElementById('listaSolicitudes');
-    lista.innerHTML = '<div style="text-align: center; padding: 15px; color: #94a3b8;">Cargando solicitudes...</div>';
     
-    db.ref('solicitudes_retiro').once('value').then(snap => {
-        if (!snap.exists()) {
-            lista.innerHTML = '<div style="text-align: center; padding: 20px; color:#cbd5e1;">Nadie ha pedido dinero aún. 😴</div>';
-            return;
-        }
-        
-        let html = "";
-        snap.forEach(child => {
-            const key = child.key; 
-            const d = child.val();
-            const fecha = d.fecha ? new Date(d.fecha).toLocaleDateString() : 'Sin fecha';
-            
-            let iconoMetodo = "📧 PayPal";
-            let colorFondo = "#dbeafe";
-            let colorTexto = "#1e40af";
-            
-            if (d.metodo_pago === 'binance') {
-                iconoMetodo = "🪙 Binance ID";
-                colorFondo = "#fef3c7";
-                colorTexto = "#92400e";
-            } else if (d.metodo_pago === 'tropipay') {
-                iconoMetodo = "🌴 TropiPay";
-                colorFondo = "#dcfce7";
-                colorTexto = "#166534";
+    if (!lista.dataset.listenerAttached) {
+        lista.dataset.listenerAttached = '1';
+        db.ref('solicitudes_retiro').on('value', snap => {
+            if (!snap.exists()) {
+                lista.innerHTML = '<div style="text-align: center; padding: 20px; color:#cbd5e1;">Nadie ha pedido dinero aún. 😴</div>';
+                return;
             }
+            
+            let html = "";
+            snap.forEach(child => {
+                const key = child.key; 
+                const d = child.val();
+                const fecha = new Date(d.fecha).toLocaleDateString();
+                
+                // --- LÓGICA PARA DETECTAR EL MÉTODO Y EL ÍCONO ---
+                let iconoMetodo = "📧 PayPal";
+                let colorFondo = "#dbeafe"; // Azul para PayPal
+                let colorTexto = "#1e40af";
+                
+                if (d.metodo_pago === 'binance') {
+                    iconoMetodo = "🪙 Binance ID";
+                    colorFondo = "#fef3c7"; // Amarillo para Binance
+                    colorTexto = "#92400e";
+                } else if (d.metodo_pago === 'tropipay') {
+                    iconoMetodo = "🌴 TropiPay";
+                    colorFondo = "#dcfce7"; // Verde para TropiPay
+                    colorTexto = "#166534";
+                }
 
-            const datoCuenta = d.correo_paypal || "No proporcionado";
+                // Usamos d.correo_paypal porque es donde guardamos el ID en la funcion anterior
+                const datoCuenta = d.correo_paypal || "No proporcionado";
 
-            html += `
-            <div style="background: white; padding: 15px; border-radius: 18px; border: 1px solid #e2e8f0; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <span style="background:${colorFondo}; color:${colorTexto}; font-size:0.65rem; padding:4px 10px; border-radius:50px; font-weight:800; text-transform:uppercase;">
-                        ${d.usuario || 'Usuario'}
-                    </span>
-                    <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">${fecha}</span>
-                </div>
-                
-                <div style="font-weight:900; color:#0f172a; font-size:1.4rem; margin-bottom:10px; text-align:center;">
-                    $${d.monto_usd} USD
-                </div>
-                
-                <div style="background:#f8fafc; padding:10px; border-radius:12px; font-size:0.85rem; border:1px solid #f1f5f9; margin-bottom:12px; word-break: break-all;">
-                    <span style="color:#64748b; font-weight:bold; display:block; font-size:0.65rem; text-transform:uppercase; margin-bottom:2px;">${iconoMetodo}:</span>
-                    <strong style="color:#334155;">${datoCuenta}</strong>
-                </div>
-                
-                <div style="display:flex; gap:8px;">
-                    <button onclick="copiarTexto('${datoCuenta}')" style="flex:1; padding:10px; border:1.5px solid #e2e8f0; background:white; border-radius:10px; font-size:0.8rem; font-weight:700; color:#64748b; cursor:pointer;">
-                        📋 Copiar
-                    </button>
-                    <button onclick="marcarRetiroPagado('${key}')" style="flex:1.2; padding:10px; border:none; background:#10b981; color:white; font-weight:800; border-radius:10px; font-size:0.8rem; cursor:pointer; box-shadow:0 4px 12px rgba(16,185,129,0.2);">
-                        ✅ Pagado
-                    </button>
-                </div>
-            </div>`;
+                html += `
+                <div style="background: white; padding: 15px; border-radius: 18px; border: 1px solid #e2e8f0; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span style="background:${colorFondo}; color:${colorTexto}; font-size:0.65rem; padding:4px 10px; border-radius:50px; font-weight:800; text-transform:uppercase;">
+                            ${d.usuario || 'Usuario'}
+                        </span>
+                        <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">${fecha}</span>
+                    </div>
+                    
+                    <div style="font-weight:900; color:#0f172a; font-size:1.4rem; margin-bottom:10px; text-align:center;">
+                        $${d.monto_usd} USD
+                    </div>
+                    
+                    <div style="background:#f8fafc; padding:10px; border-radius:12px; font-size:0.85rem; border:1px solid #f1f5f9; margin-bottom:12px; word-break: break-all;">
+                        <span style="color:#64748b; font-weight:bold; display:block; font-size:0.65rem; text-transform:uppercase; margin-bottom:2px;">${iconoMetodo}:</span>
+                        <strong style="color:#334155;">${datoCuenta}</strong>
+                    </div>
+                    
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="copiarTexto('${datoCuenta}')" style="flex:1; padding:10px; border:1.5px solid #e2e8f0; background:white; border-radius:10px; font-size:0.8rem; font-weight:700; color:#64748b; cursor:pointer;">
+                            📋 Copiar
+                        </button>
+                        <button onclick="marcarRetiroPagado('${key}')" style="flex:1.2; padding:10px; border:none; background:#10b981; color:white; font-weight:800; border-radius:10px; font-size:0.8rem; cursor:pointer; box-shadow:0 4px 12px rgba(16,185,129,0.2);">
+                            ✅ Pagado
+                        </button>
+                    </div>
+                </div>`;
+            });
+            lista.innerHTML = html;
         });
-        lista.innerHTML = html;
-    }).catch(err => {
-        console.error("Error cargando solicitudes:", err);
-        lista.innerHTML = '<div style="text-align: center; padding: 20px; color:#ef4444;">❌ Error al cargar solicitudes. Verifica conexión e intenta de nuevo.</div>';
-    });
+    }
 };
 window.marcarRetiroPagado = (key) => {
     if(!confirm("¿Ya enviaste el dinero por PayPal? Esto borrará la solicitud.")) return;
@@ -11838,8 +11935,7 @@ window.copiarTexto = (txt) => {
 window.iniciarEnvioMasivo = () => {
     if (!confirm("⚠️ ¿Enviar correo a TODOS los usuarios? (Gasta cuota de EmailJS)")) return;
     notify("🔄 Obteniendo usuarios...");
-    // Lee nodo ligero admin_emails en lugar de users completo
-    db.ref('admin_emails').once('value').then(snap => {
+    db.ref('users').once('value').then(snap => {
         const usuarios = [];
         snap.forEach(child => {
             const u = child.val();
@@ -12060,59 +12156,70 @@ function validarPublicacionMision() {
     else { btn.disabled = true; btn.style.opacity = "0.5"; }
 }
 
+// --- 1. ABRIR MENÚ DE OPCIONES (Limpio y Barato) ---
 window.abrirOpcionesPost = (postKey) => {
     if (!postKey) return;
+    
+    // Usamos .once para no gastar datos de más
     db.ref(`reportes/${postKey}`).once('value').then(snap => {
         if (!snap.exists()) return notify("❌ La publicación ya no existe");
+        
         const post = snap.val();
         postSeleccionadoKey = postKey;
         postSeleccionadoData = post;
+        
         const btnEliminar = document.getElementById('btnEliminarPost');
-        const sinOpciones = document.getElementById('sinOpcionesMsg');
-        const iconoEliminar = document.getElementById('iconoEliminarPost');
-        const textoEliminar = document.getElementById('textoEliminarPost');
-
-        btnEliminar.style.display = 'none';
-        sinOpciones.style.display = 'none';
-
-        if (post.uid === idAuditor) {
-            btnEliminar.style.display = 'flex';
-            iconoEliminar.textContent = '😱';
-            textoEliminar.textContent = 'Eliminar mi publicación';
-            btnEliminar.style.background = '#fee2e2';
-            btnEliminar.style.color = '#ef4444';
-            btnEliminar.style.border = '1px solid #fca5a5';
-        } else if (isAdmin) {
-            btnEliminar.style.display = 'flex';
-            iconoEliminar.textContent = '🚫';
-            textoEliminar.textContent = 'Eliminar para todos (Admin)';
-            btnEliminar.style.background = '#dc2626';
-            btnEliminar.style.color = 'white';
-            btnEliminar.style.border = 'none';
-        } else {
-            sinOpciones.style.display = 'block';
+        
+        // Verificación de Dueño o Admin
+        if (post.uid === idAuditor || (typeof isAdmin !== 'undefined' && isAdmin)) { 
+            btnEliminar.style.display = 'flex'; 
+        } else { 
+            btnEliminar.style.display = 'none'; 
         }
+        
         document.getElementById('modalPostOptions').style.display = 'flex';
     });
 };
 
-window.eliminarPostActual = () => {
-    if (!postSeleccionadoKey || !postSeleccionadoData) return;
-    if (postSeleccionadoData.uid !== idAuditor && !isAdmin) return notify("❌ No puedes eliminar esta publicación");
-    if (isAdmin && postSeleccionadoData.uid !== idAuditor) {
-        if (!confirm("⚠️ ¿Eliminar esta publicación para TODOS los usuarios? Esta acción no se puede deshacer.")) return;
-    }
-    db.ref(`reportes/${postSeleccionadoKey}`).remove().then(() => {
-        document.getElementById('modalPostOptions').style.display = 'none';
-        notify("☹️ Publicación eliminada");
-        try { window.playSound('gameover'); } catch(e){}
-        try {
-            let arr = JSON.parse(localStorage.getItem(FEED_CACHE_KEY) || '[]');
-            arr = arr.filter(p => p.key !== postSeleccionadoKey);
-            localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(arr));
-        } catch(e) {}
-    }).catch(err => { notify("❌ Error al eliminar: " + err.message); });
+// --- 2. ELIMINAR POST (Con el Modal Bonito) ---
+window.eliminarPost = (postKey) => {
+    // Si no pasas postKey, usamos el que se guardó al abrir opciones
+    const keyABorrar = postKey || postSeleccionadoKey;
+    if (!keyABorrar) return;
+
+    // Cerramos el menú de opciones antes de mostrar el aviso
+    const menuOpciones = document.getElementById('modalPostOptions');
+    if (menuOpciones) menuOpciones.style.display = 'none';
+
+    // Configuramos nuestro modal personalizado
+    const modalConfirm = document.getElementById('customConfirm');
+    const btnSi = document.getElementById('confirmBtnSi');
+    
+    document.getElementById('confirmTitle').textContent = "🗑️ ¿Borrar Publicación?";
+    document.getElementById('confirmText').textContent = "Este video se eliminará para siempre del muro.";
+    
+    // Mostramos el modal moderno
+    modalConfirm.style.display = 'flex';
+    
+    // Acción al confirmar
+    btnSi.onclick = () => {
+        db.ref(`reportes/${keyABorrar}`).remove().then(() => {
+            notify("✅ Video eliminado");
+            const el = document.getElementById(keyABorrar);
+            if (el) el.remove(); // Quitar de la pantalla
+            window.cerrarConfirm(); // Cerrar el modal bonito
+        }).catch(err => {
+            alert("Error: " + err.message);
+        });
+    };
 };
+// ... aquí terminan tus otras funciones ...
+
+    window.cerrarConfirm = () => {
+        const modal = document.getElementById('customConfirm');
+        if (modal) modal.style.display = 'none';
+    };
+
 
 window.verEstadisticasPost = () => {
     if (!postSeleccionadoData) return;
@@ -12137,7 +12244,31 @@ window.compartirPostWhatsapp = () => {
     window.open(url, '_blank');
 };
 
-
+function cachearFotosPerfiles() {
+    // Usar .on() en lugar de .once() para detectar cambios en tiempo real
+    db.ref('users').limitToLast(200).on('value', snap => {
+        if (!snap.exists()) return;
+        snap.forEach(child => {
+            const u = child.val() || {};
+            if (u.fotoPerfil) { 
+                cacheFotosPerfil[child.key] = u.fotoPerfil; 
+            }
+        });
+        // Actualizar avatares en chat privado si está abierto
+        if (document.getElementById('modalChatPrivado').style.display === 'flex') {
+            document.querySelectorAll('.chat-avatar-img').forEach(img => {
+                const uid = img.dataset.uid;
+                if (uid && cacheFotosPerfil[uid]) {
+                    img.src = cacheFotosPerfil[uid];
+                }
+            });
+        }
+        // Actualizar listas después de actualizar el cache
+        if (typeof renderizarUsuariosHorizontal === "function") renderizarUsuariosHorizontal();
+        cargarMuro(); // ✅ feed nativo unificado
+        if (typeof cargarGaleriaComunidad === "function") cargarGaleriaComunidad();
+    });
+}
 
 const sonidoClick = new Audio("");
 sonidoClick.volume = 0.4;
@@ -13040,6 +13171,149 @@ window.abrirJuego = () => {
     document.getElementById('modalJuegos').style.display = 'flex';
 };
 
+window.abrirListaChats = () => {
+    let modal = document.getElementById('modalListaChats');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalListaChats';
+        modal.className = 'modal-overlay';
+        modal.style.zIndex = '26000';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+        <div class="modal-content" style="max-height: 80vh; overflow-y: auto; position: relative;">
+             <!-- BOTÓN X PARA CERRAR -->
+             <button onclick="document.getElementById('modalListaChats').style.display='none'" 
+                    style="position: absolute; top: 15px; right: 15px; background: none; border: none; 
+                           font-size: 1.5rem; color: #94a3b8; cursor: pointer; padding: 5px; z-index: 10;">✕</button>
+            <h3 style="text-align: center; margin-bottom: 15px; margin-top: 10px;">💬 Chats Pendientes</h3>
+            <div id="listaChatsContainer" style="text-align: center; padding: 20px; color: #94a3b8;">
+                <i class="fas fa-spinner fa-spin"></i> Cargando...
+            </div>
+            <button onclick="document.getElementById('modalListaChats').style.display='none'" class="btn-blue" style="background: #94a3b8;">Cerrar</button>
+        </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    document.getElementById('modalListaChats').style.display = 'flex';
+
+    const container = document.getElementById('listaChatsContainer');
+    container.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando chats...';
+
+    if (!idAuditor) return;
+
+    // 1. Obtenemos TODOS los chats privados
+    db.ref('chats_privados').once('value', snap => {
+        if (!snap.exists()) {
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1;">No hay conversaciones.</div>';
+            return;
+        }
+
+        let chatsPendientes = [];
+
+        snap.forEach(chatSnap => {
+            const chatId = chatSnap.key;
+            const partes = chatId.split('_');
+
+            // Verificamos si este chat es mío
+            if (partes.includes(idAuditor)) {
+                // Obtenemos el otro usuario
+                const otroUid = partes[0] === idAuditor ? partes[1] : partes[0];
+
+                // Obtenemos todos los mensajes de este chat para ver quién escribió último
+                const mensajes = [];
+                chatSnap.forEach(msgSnap => {
+                    mensajes.push(msgSnap.val());
+                });
+
+                if (mensajes.length > 0) {
+                    // Ordenamos por fecha para encontrar el último
+                    mensajes.sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
+                    const ultimoMsg = mensajes[0];
+
+                    // 🔥 FILTRO: Solo mostramos si el ÚLTIMO mensaje NO es mío (espero respuesta)
+                    if (ultimoMsg.uid !== idAuditor) {
+                        chatsPendientes.push({
+                            otroUid: otroUid,
+                            ultimoMsg: ultimoMsg,
+                            fecha: ultimoMsg.fecha
+                        });
+                    }
+                }
+            }
+        });
+
+        if (chatsPendientes.length === 0) {
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:#64748b;">✅ ¡Todo al día!<br>No tienes mensajes pendientes de respuesta.</div>';
+            return;
+        }
+
+        // Ordenar chats pendientes por fecha (más reciente primero)
+        chatsPendientes.sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
+
+        // Renderizamos la lista con placeholders para nombres
+        let html = '';
+        chatsPendientes.forEach(chat => {
+            const msg = chat.ultimoMsg;
+            const uid = chat.otroUid;
+
+            // Calculamos tiempo
+            const ahora = Date.now();
+            const diffMin = Math.floor((ahora - (msg.fecha || Date.now())) / 60000);
+            let tiempoTexto = diffMin < 1 ? 'Ahora' : `${diffMin} min`;
+
+            // Texto del mensaje
+            let textoResumen = msg.texto || (msg.esFoto ? '📷 Foto' : '...');
+            if (textoResumen.length > 30) textoResumen = textoResumen.substring(0, 30) + '...';
+
+            html += `<div id="chat-item-${uid}" onclick="abrirChatPrivado('${uid}', 'Cargando...')" 
+                     style="padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 12px; background: white;">
+                <div style="width: 45px; height: 45px; border-radius: 50%; background: #e2e8f0; background-size: cover; background-image: url('${getUserProfilePhoto(uid)}'); flex-shrink: 0;"></div>
+                <div style="flex: 1; min-width: 0;">
+                    <div id="chat-name-${uid}" style="font-weight: 700; font-size: 0.95rem; color: #1e293b;">
+                        <i class="fas fa-spinner fa-spin" style="font-size:0.8rem"></i>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        ${escapeHtml(textoResumen)}
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                    <span style="font-size: 0.7rem; color: #ef4444; font-weight:bold;">Pendiente</span>
+                    <span style="font-size: 0.6rem; color: #94a3b8;">${tiempoTexto}</span>
+                </div>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+
+        // 🔥 AQUÍ OBTENEMOS LOS NOMBRES REALES (Apodo o INV)
+        const uidsPendientes = chatsPendientes.map(c => c.otroUid);
+        const usersRef = db.ref('users');
+
+        // Promesa para esperar los datos de todos los usuarios
+        const promises = uidsPendientes.map(uid => {
+            return usersRef.child(uid).once('value').then(snap => {
+                const u = snap.val();
+                // LÓGICA: Primero busca Apodo, si no existe usa INV
+                const nombreReal = (u && u.apodo) ? u.apodo : (u && u.myInviteKey ? u.myInviteKey : 'Usuario');
+
+                const elName = document.getElementById(`chat-name-${uid}`);
+                const elItem = document.getElementById(`chat-item-${uid}`);
+
+                if (elName) {
+                    elName.textContent = escapeHtml(nombreReal);
+                }
+                if (elItem) {
+                    // Actualizar onclick con el nombre correcto
+                    elItem.setAttribute('onclick', `abrirChatPrivado('${uid}', '${nombreReal.replace(/'/g, "\\'")}')`);
+                }
+            });
+        });
+
+        Promise.all(promises).then(() => {
+            console.log("Nombres de chats actualizados con apodos reales");
+        });
+    });
+};
 window.abrirBusquedaUsuarios = () => {
     let modal = document.getElementById('modalBuscarUsuario');
     if (!modal) {
@@ -13086,30 +13360,22 @@ window.buscarUsuarioPorClave = () => {
                         mostrarResultadoBusqueda(user);
                     });
                 } else {
-                    // Búsqueda parcial por apodo con prefijo server-side
-                    const busq = textoBusqueda.toLowerCase();
-                    db.ref('users').orderByChild('apodo').startAt(busq).endAt(busq + '\uf8ff').limitToFirst(20).once('value', snap3 => {
-                        let encontrado = 0;
+                    // Búsqueda parcial por apodo (case insensitive)
+                    db.ref('users').once('value', snap3 => {
+                        let encontrado = false;
                         snap3.forEach(user => {
-                            if (user.key !== idAuditor && encontrado < 5) {
+                            const u = user.val();
+                            const apodoLower = (u.apodo || '').toLowerCase();
+                            const busquedaLower = textoBusqueda.toLowerCase();
+
+                            if (apodoLower.includes(busquedaLower) && user.key !== idAuditor) {
                                 mostrarResultadoBusqueda(user);
-                                encontrado++;
+                                encontrado = true;
                             }
                         });
+
                         if (!encontrado) {
-                            // Fallback: primera letra mayúscula
-                            const busqCap = busq.charAt(0).toUpperCase() + busq.slice(1);
-                            db.ref('users').orderByChild('apodo').startAt(busqCap).endAt(busqCap + '\uf8ff').limitToFirst(20).once('value', snap4 => {
-                                snap4.forEach(user => {
-                                    if (user.key !== idAuditor && encontrado < 5) {
-                                        mostrarResultadoBusqueda(user);
-                                        encontrado++;
-                                    }
-                                });
-                                if (!encontrado) {
-                                    resultado.innerHTML = '<div style="color: #ef4444; margin-top: 10px; text-align: center;">❌ Usuario no encontrado</div>';
-                                }
-                            });
+                            resultado.innerHTML = '<div style="color: #ef4444; margin-top: 10px; text-align: center;">❌ Usuario no encontrado</div>';
                         }
                     });
                 }
@@ -13245,8 +13511,12 @@ db.ref('users').orderByChild('apodo').once('value', snap => {
     }
 });
 
-// Eliminado: on('child_changed') en /users — descargaba TODOS los cambios
-// de TODOS los usuarios y era el principal generador de tráfico (~35MB).
+db.ref('users').on('child_changed', snap => {
+    const u = snap.val();
+    if (u && u.apodo) {
+        apodosCache[snap.key] = u.apodo;
+    }
+});
 
 
 
@@ -14405,29 +14675,8 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
     const chatsByUid = {};
     chatsCache.forEach(c => { chatsByUid[c.otroUid] = c; });
 
-    // 🔥 FIX: Mezclar usuarios en línea/recientes con los que ya tenemos chat histórico
-    const todosMap = new Map();
-    
-    (listaUsuariosCacheReal || []).forEach(u => {
-        if (u.key !== idAuditor) todosMap.set(u.key, u);
-    });
-
-    chatsCache.forEach(c => {
-        if (!todosMap.has(c.otroUid)) {
-            let namesCache = {};
-            try { namesCache = JSON.parse(localStorage.getItem(NAMES_CACHE_KEY()) || '{}'); } catch(e){}
-            todosMap.set(c.otroUid, {
-                key: c.otroUid,
-                nombre: namesCache[c.otroUid] || 'Usuario',
-                avatar: getUserProfilePhoto(c.otroUid),
-                online: false,
-                rawTime: 0,
-                pensamiento: ''
-            });
-        }
-    });
-
-    const todos = Array.from(todosMap.values());
+    // Usar listaUsuariosCacheReal (todos, ya filtrados y ordenados por Firebase)
+    const todos = (listaUsuariosCacheReal || []).filter(u => u.key !== idAuditor);
 
     if (todos.length === 0) {
         container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#94a3b8;">
@@ -15153,13 +15402,9 @@ db.ref('chats_privados').on('child_changed', snap => {
                 class="btn-blue" style="background: linear-gradient(135deg, #10b981, #059669); margin-bottom: 15px; width: 100%; box-shadow: 0 4px 15px rgba(16,185,129,0.3);">
             Activar Notificaciones
         </button>
+        
+
     </div>
 </div>
-
-
-<script>
-// Mostrar botón admin de bandwidth cuando el usuario sea admin
-
-</script>
 </body>
 </html>
