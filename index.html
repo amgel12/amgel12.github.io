@@ -10295,7 +10295,9 @@ window.enviarMensajePrivado = () => {
         if (replyBar) replyBar.style.display = 'none';
     }
 
-    // 🔑 ADMIN: Mensajes ilimitados
+    // ==========================================
+    // CAMINO 1: ADMIN (Mensajes ilimitados)
+    // ==========================================
     if (isAdmin) {
         db.ref(`chats_privados/${currentChatId}`).push(msgData);
 
@@ -10310,12 +10312,20 @@ window.enviarMensajePrivado = () => {
             read: false
         });
 
+        // 🔥 AQUI AGREGAMOS GOTIFY 🔥
+        if (typeof window.enviarPushPropio === 'function') {
+            window.enviarPushPropio("🔒 Mensaje Privado (Admin)", miNombre + ": " + txt);
+        }
+
         input.value = "";
         checkLimiteDiario();
         try { window.playSound('click'); } catch(e){}
         return;
     }
 
+    // ==========================================
+    // CAMINO 2: USUARIO NORMAL (Con límites)
+    // ==========================================
     db.ref(`users/${idAuditor}/privados_diarios/${targetUserUid}`).once('value', sChat => {
         const chatData = sChat.val() || {};
         const extras = chatData.extras || 0;
@@ -10346,12 +10356,17 @@ window.enviarMensajePrivado = () => {
             read: false
         });
 
+        // 🔥 AQUI AGREGAMOS GOTIFY 🔥
+        if (typeof window.enviarPushPropio === 'function') {
+            // Le mandamos el nombre de quien escribió y el texto que puso
+            window.enviarPushPropio("💬 Mensaje de " + miNombre, txt);
+        }
+
         input.value = "";
         checkLimiteDiario(targetUserUid);
         try { window.playSound('click'); } catch(e){}
     });
 };
-
 function checkLimiteDiario(uid) {
     const targetUid = uid || targetUserUid;
     if (!targetUid) return;
@@ -15130,6 +15145,26 @@ db.ref('chats_privados').on('child_changed', snap => {
         }
     }
 });
+// ==========================================
+// 🚀 SISTEMA DE NOTIFICACIONES PROPIO (GOTIFY)
+// ==========================================
+window.enviarPushPropio = (titulo, mensaje) => {
+    // ⬇️ AQUÍ PEGAS TU LINK REAL DE CLOUDFLARE ⬇️
+    const PUBLIC_URL = "https://solo-trends-control-editorial.trycloudflare.com"; 
+    
+    const GOTIFY_TOKEN = "A3jlKu4qUx1wt9K"; 
+    const url = `${PUBLIC_URL}/message?token=${GOTIFY_TOKEN}`;
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            title: titulo,
+            message: mensaje,
+            priority: 5
+        })
+    }).then(() => console.log("Notificación enviada por el túnel"));
+};
 </script>
 <!-- 📱 MENÚ DE OPCIONES AL TOCAR + -->
 <div id="modalMenuPublicar" class="modal-overlay" style="z-index: 40000; align-items: flex-end; display: none;">
