@@ -9041,55 +9041,125 @@ function cachearUsuarios() {
 }
 
 function cargarListaUsuariosHorizontal() {
-    if (window._usuariosListenerActivo) return; 
+    if (window._usuariosListenerActivo) return;
     window._usuariosListenerActivo = true;
 
-    // Escuchar cambios de estado (online/offline + lastSeen)
-    db.ref('users').on('value', snap => {
-        listaUsuariosCacheReal = [];
+    const usuariosRef = db.ref('users')
+        .orderByChild('lastSeen')
+        .limitToLast(100);
+
+    const actualizarLista = (uid, data) => {
+        if (!data || uid === idAuditor) return;
+
         const ahora = Date.now();
-        const doceHoras = 12 * 60 * 60 * 1000;
+        const lastSeen = data.lastSeen || 0;
 
-        snap.forEach(child => {
-            const u = child.val();
-            if (!u) return;
-            if (child.key === idAuditor) return; // No incluir al usuario actual
+        const usuario = {
+            key: uid,
+            nombre: data.apodo || data.myInviteKey || "Usuario",
+            avatar: data.fotoPerfil || getAvatarUrl(uid),
+            online: (ahora - lastSeen) < 30000,
+            lastSeen: lastSeen,
+            rawTime: lastSeen
+        };
 
-            const nombre = u.apodo || u.myInviteKey || "Usuario";
-            const avatar = u.fotoPerfil || getAvatarUrl(child.key);
-            const lastSeen = u.lastSeen || 0;
-            const tiempoDesdeUltima = ahora - lastSeen;
-            const online = tiempoDesdeUltima < 30000; // Menos de 30 segundos = en línea
+        const index = listaUsuariosCacheReal.findIndex(u => u.key === uid);
 
-            listaUsuariosCacheReal.push({
-                key: child.key,
-                nombre: nombre,
-                avatar: avatar,
-                online: online,
-                lastSeen: lastSeen,
-                rawTime: lastSeen
-            });
-        });
+        if (index >= 0) {
+            listaUsuariosCacheReal[index] = usuario;
+        } else {
+            listaUsuariosCacheReal.push(usuario);
+        }
 
-        // Ordenar: online primero, luego por último visto
+        ordenarYRenderizar();
+    };
+
+    const eliminarUsuario = (uid) => {
+        listaUsuariosCacheReal =
+            listaUsuariosCacheReal.filter(u => u.key !== uid);
+
+        ordenarYRenderizar();
+    };
+
+    const ordenarYRenderizar = () => {
         listaUsuariosCacheReal.sort((a, b) => {
             if (a.online && !b.online) return -1;
             if (!a.online && b.online) return 1;
             return b.rawTime - a.rawTime;
         });
 
-        // Renderizar el listado
         if (typeof renderizarUsuariosHorizontal === 'function') {
             renderizarUsuariosHorizontal();
         }
+    };
+
+    usuariosRef.on('child_added', snap => {
+        actualizarLista(snap.key, snap.val());
+    });
+
+    usuariosRef.on('child_changed', snap => {
+        actualizarLista(snap.key, snap.val());
+    });
+
+    usuariosRef.on('child_removed', snap => {
+        eliminarUsuario(snap.key);
+    });
+
+    // Guardar referencia para poder apagar listeners después
+    window._usuariosRefListener = usuariosRef;
+}
+function detenerListaUsuariosHorizontal() {
+    if (window._usuariosRefListener) {
+        window._usuariosRefListener.off();
+        window._usuariosRefListener = null;
+    }
+
+    window._usuariosListenerActivo = false;
+}
+function renderizarUsuariosHorizontal() {
+    const contenedor = document.getElementById('listaUsuariosHorizontal');
+    if (!contenedor) return;
+
+    contenedor.innerHTML = '';
+
+    listaUsuariosCacheReal.forEach(u => {
+        const estado = u.online ? 'online' : 'offline';
+
+        // 🔵 detectar pensamiento reciente (últimas 6 horas)
+        const tienePensamiento = _cacheDataNubes[u.key];
+        const esReciente = tienePensamiento &&
+            (Date.now() - tienePensamiento.timestamp < 6 * 60 * 60 * 1000);
+
+        const estadoClase = u.online
+            ? 'status-online'
+            : esReciente
+                ? 'status-thought'
+                : 'status-offline';
+
+        const item = document.createElement('div');
+        item.className = 'user-item-horizontal';
+
+        item.innerHTML = `
+            <div class="avatar-wrapper">
+                <img src="${u.avatar}" class="avatar-user">
+                <span class="status-dot ${estadoClase}"></span>
+            </div>
+
+            <div class="user-name">
+                ${u.nombre}
+            </div>
+        `;
+
+        // click para abrir chat o perfil
+        item.onclick = () => {
+            if (typeof abrirChatPrivado === 'function') {
+                abrirChatPrivado(u.key, u.nombre);
+            }
+        };
+
+        contenedor.appendChild(item);
     });
 }
-
-function renderizarUsuariosHorizontal() {
-    // Este será el visor de usuarios en línea (si lo tienes en HTML)
-    // Actualiza los colores basado en estados
-}
-
 function iniciarMonitorDeBadges() {
     // Monitor de badges de mensajes y estados de usuarios
     if (window._badgesMonitorActivo) return;
@@ -9199,69 +9269,67 @@ function manejarMencion(input) {
 function mostrarSugerencias(filtro, input) {
     const mentionBox = document.getElementById('mentionList');
 
-    // Candados de seguridad
-    if (!filtro || filtro.trim() === "" || (typeof currentScreen !== 'undefined' && currentScreen !== 2)) {
-        if(mentionBox) mentionBox.style.display = 'none';
+    if (!filtro || !mentionBox || (typeof currentScreen !== 'undefined' && currentScreen !== 2)) {
+        if (mentionBox) mentionBox.style.display = 'none';
         return;
     }
 
     if (!listaUsuariosCache || listaUsuariosCache.length === 0) {
-        if(typeof cachearUsuarios === 'function') cachearUsuarios();
+        if (typeof cachearUsuarios === 'function') cachearUsuarios();
         return;
     }
 
-    const coincidencias = listaUsuariosCache.filter(u => 
-        (u.nombre && u.nombre.toUpperCase().includes(filtro)) && u.uid !== idAuditor
-    );
+    const f = filtro.trim().toLowerCase();
+
+    const coincidencias = listaUsuariosCache.filter(u => {
+        if (!u.nombre) return false;
+
+        return (
+            u.nombre.toLowerCase().includes(f) &&
+            u.uid !== idAuditor
+        );
+    }).slice(0, 5);
 
     if (coincidencias.length === 0) {
         mentionBox.style.display = 'none';
         return;
     }
 
-    // Estilos de la caja
-    mentionBox.style.background = "#1e293b"; 
-    mentionBox.style.border = "2px solid #fbbf24"; 
-    mentionBox.style.display = 'block'; 
+    mentionBox.style.cssText = `
+        background:#1e293b;
+        border:2px solid #fbbf24;
+        display:block;
+        border-radius:10px;
+        overflow:hidden;
+    `;
 
-    let html = "";
-    coincidencias.slice(0, 5).forEach(u => { 
-        html += `
+    mentionBox.innerHTML = coincidencias.map(u => `
         <div onclick="insertarMencion('${u.nombre}')" style="
-            display: flex; 
-            align-items: center; 
-            padding: 8px 12px; /* <--- MENOS RELLENO (Más delgado) */
-            border-bottom: 1px solid #334155; 
-            cursor: pointer; 
-            background: #1e293b;
+            display:flex;
+            align-items:center;
+            padding:8px 12px;
+            border-bottom:1px solid #334155;
+            cursor:pointer;
         ">
-            <div style="
-                width: 30px; height: 30px; 
-                border-radius: 50%; 
-                background-image: url('${u.avatar}'); 
-                background-size: cover; 
-                background-color: #333; 
-                margin-right: 10px;
-                border: 1px solid #fbbf24;
-            "></div>
+            <img src="${u.avatar}" style="
+                width:30px;height:30px;
+                border-radius:50%;
+                margin-right:10px;
+                border:1px solid #fbbf24;
+                object-fit:cover;
+            ">
 
-            <div style="flex: 1; line-height: 1.1;">
-                <div style="
-                    font-weight: 700; 
-                    color: #fbbf24 !important; 
-                    font-size: 0.85rem; /* Letra un poco más chica */
-                ">${u.nombre}</div>
-                <div style="
-                    font-size: 0.65rem; 
-                    color: #94a3b8 !important; 
-                ">Toca para mencionar</div>
+            <div>
+                <div style="font-weight:700;color:#fbbf24;font-size:0.85rem;">
+                    ${u.nombre}
+                </div>
+                <div style="font-size:0.65rem;color:#94a3b8;">
+                    Toca para mencionar
+                </div>
             </div>
-        </div>`;
-    });
-
-    mentionBox.innerHTML = html;
+        </div>
+    `).join('');
 }
-
 function insertarMencion(nombre) {
     const input = document.getElementById('inputChatMsg');
     const mentionBox = document.getElementById('mentionList');
@@ -14127,43 +14195,16 @@ window.cambiarPestanaChat = (pestana) => {
     }
 };
 // Funciones vacías para que no te dé error al tocar los botones de ejemplo
-// 4. ABRIR LA SALA DE CHAT DEL GRUPO (CON REQUISITO DE REFERIDOS)
+// 4. ABRIR LA SALA DE CHAT DEL GRUPO (ENTRADA DIRECTA)
 let currentGrupoId = null;
 let grupoChatRef = null;
 
 window.abrirChatDeGrupo = (idGrupo, nombreGrupo, iconoGrupo) => {
     if (!idAuditor) return notify("Inicia sesión primero");
-
-    // 1. VERIFICAR REFERIDOS ANTES DE ENTRAR
-    db.ref(`users/${idAuditor}/referidos`).once('value').then(snap => {
-        const totalReferidos = snap.numChildren() || 0; // Cuenta cuántos referidos tiene
-
-        // 🔑 Si es Admin, entra sin restricciones
-        if (isAdmin) {
-            entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo);
-            return;
-        }
-
-        // 🔒 Si tiene menos de 2 referidos, le bloqueamos el paso
-        if (totalReferidos < 2) {
-            const faltan = 2 - totalReferidos;
-            notify(`🔒 Necesitas ${faltan} referido(s) más para entrar a los grupos`);
-
-            // Opcional: Le abrimos el modal de invitar para que vea su código
-            setTimeout(() => {
-                if (typeof abrirModalInvitar === 'function') abrirModalInvitar();
-            }, 1500);
-
-            try { window.playSound('gameover'); } catch(e){}
-            return;
-        }
-
-        // 🔓 Si tiene 2 o más referidos, lo dejamos entrar
-        entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo);
-    });
+    entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo);
 };
 
-// Función auxiliar que hace el trabajo de abrir la sala (solo se llama si pasó la prueba)
+// Función auxiliar que abre la sala de chat del grupo
 function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
     currentGrupoId = idGrupo;
     document.getElementById('grupoChatTitle').innerText = nombreGrupo;
@@ -14378,33 +14419,7 @@ window.enviarMensajeGrupo = () => {
 // 1. ABRIR MODAL PARA CREAR GRUPO (CON REQUISITO DE REFERIDOS)
 window.crearNuevoGrupo = () => {
     if (!idAuditor) return notify("Inicia sesión primero");
-
-    // VERIFICAR REFERIDOS ANTES DE DEJARLO CREAR UN GRUPO
-    db.ref(`users/${idAuditor}/referidos`).once('value').then(snap => {
-        const totalReferidos = snap.numChildren() || 0;
-
-        // Si es Admin, pasa directo
-        if (isAdmin) {
-            abrirModalCreacionGrupo();
-            return;
-        }
-
-        // Si tiene menos de 2 referidos, lo bloqueamos
-        if (totalReferidos < 2) {
-            const faltan = 2 - totalReferidos;
-            notify(`🔒 Necesitas ${faltan} referido(s) más para crear grupos`);
-
-            setTimeout(() => {
-                if (typeof abrirModalInvitar === 'function') abrirModalInvitar();
-            }, 1500);
-
-            try { window.playSound('gameover'); } catch(e){}
-            return;
-        }
-
-        // Si cumple el requisito, le abrimos el modal
-        abrirModalCreacionGrupo();
-    });
+    abrirModalCreacionGrupo();
 };
 // ==========================================
 // 🔗 COMPARTIR ENLACE DE GRUPO
