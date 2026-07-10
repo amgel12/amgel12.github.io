@@ -1282,11 +1282,178 @@
     display: flex; 
     flex-direction: column; 
     align-items: center; 
-    justify-content: flex-start; /* Cambiado de center a flex-start */
-    height: auto; /* Cambiado de 80% a auto */
+    justify-content: flex-start;
+    height: auto;
     text-align: center; 
-    padding: 10px; /* Reducido de 30px */
-    margin-top: 10px; /* Agregado para controlar la posición */
+    padding: 10px;
+    margin-top: 10px;
+}
+
+/* 💭 PENSAMIENTOS CON FOTO REAL - Diseño Premium */
+@keyframes thoughtGlow {
+    0%, 100% { box-shadow: 0 0 15px rgba(139,92,246,0.3), 0 4px 20px rgba(139,92,246,0.2); }
+    50% { box-shadow: 0 0 25px rgba(139,92,246,0.5), 0 4px 30px rgba(139,92,246,0.35); }
+}
+
+@keyframes thoughtPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+@keyframes thoughtFadeIn {
+    from { opacity: 0; transform: translateY(15px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes thoughtCountdown {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+.pensamiento-real-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 6px 24px rgba(139,92,246,0.15);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+    animation: thoughtFadeIn 0.4s ease-out, thoughtGlow 3s ease-in-out infinite;
+    transition: transform 0.2s ease;
+    cursor: pointer;
+    min-width: 160px;
+    max-width: 170px;
+    flex-shrink: 0;
+}
+
+.pensamiento-real-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899, #6366f1, #a855f7);
+    z-index: -1;
+    animation: thoughtGlow 3s ease-in-out infinite;
+}
+
+.pensamiento-real-card:active {
+    transform: scale(0.97);
+}
+
+.pensamiento-real-card .pensamiento-photo {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    display: block;
+}
+
+.pensamiento-real-card .pensamiento-body {
+    padding: 10px 12px 8px;
+    text-align: center;
+}
+
+.pensamiento-real-card .pensamiento-name {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pensamiento-real-card .pensamiento-text {
+    font-size: 0.65rem;
+    color: #6d28d9;
+    font-style: italic;
+    line-height: 1.4;
+    font-weight: 600;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.pensamiento-real-card .pensamiento-timer {
+    height: 3px;
+    background: #e2e8f0;
+    border-radius: 0 0 20px 20px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.pensamiento-real-card .pensamiento-timer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #ec4899);
+    border-radius: 0 0 20px 20px;
+    transition: width 60s linear;
+}
+
+/* 📩 SOLICITUDES DE CHAT */
+.solicitud-card {
+    background: white;
+    padding: 14px 15px;
+    border-radius: 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 4px solid #f59e0b;
+    animation: solicitudSlideIn 0.3s ease-out;
+}
+.solicitud-card .solicitud-avatar {
+    width: 50px; height: 50px; border-radius: 50%;
+    background: #e2e8f0 center/cover no-repeat;
+    border: 2.5px solid #f59e0b;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(245,158,11,0.25);
+}
+.solicitud-card .solicitud-info { flex:1; min-width:0; }
+.solicitud-card .solicitud-name {
+    font-weight:800; color:#1e293b; font-size:0.9rem;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.solicitud-card .solicitud-sub {
+    font-size:0.78rem; color:#92400e; margin-top:2px;
+}
+.solicitud-btns { display:flex; gap:8px; flex-shrink:0; }
+.solicitud-btns button {
+    border:none; border-radius:10px; padding:8px 14px;
+    font-weight:700; font-size:0.78rem; cursor:pointer;
+    transition: transform 0.15s, opacity 0.15s;
+}
+.solicitud-btns button:active { transform:scale(0.95); }
+.solicitud-btn-accept {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+}
+.solicitud-btn-reject {
+    background: #f1f5f9; color: #94a3b8;
+}
+@keyframes solicitudSlideIn {
+    from { opacity:0; transform:translateX(-10px); }
+    to   { opacity:1; transform:translateX(0); }
+}
+.michat-status-pending {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border-left: 3px solid #f59e0b;
+}
+.michat-status-accepted {
+    border-left: 3px solid #10b981;
+}
+
+/* 💭 PENSAMIENTOS SIN FOTO (default) */
+.pensamiento-default-card {
+    min-width: 130px;
+    max-width: 130px;
+    flex-shrink: 0;
+    text-align: center;
+    position: relative;
+    padding-top: 8px;
+    cursor: pointer;
+    animation: thoughtFadeIn 0.4s ease-out;
 }
 
 
@@ -2868,6 +3035,30 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 </div>
 
+<!-- MODAL PARA EDITAR GRUPO -->
+<div id="modalEditarGrupo" class="modal-overlay" style="z-index: 31000; display: none;">
+    <div class="modal-content" style="text-align: center;">
+        <h3 style="color: #6366f1; margin-bottom: 15px;">✏️ Editar Grupo</h3>
+
+        <div style="text-align: left; margin-bottom: 10px;">
+            <label style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Nombre del Grupo:</label>
+            <input type="text" id="inputEditarNombreGrupo" placeholder="Ej. Gamers VIP" maxlength="20" style="border: 2px solid #e2e8f0; margin-top: 5px;">
+        </div>
+
+        <div style="text-align: left; margin-bottom: 20px;">
+            <label style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Icono (Un Emoji):</label>
+            <input type="text" id="inputEditarIconoGrupo" placeholder="Ej. 🎮" maxlength="2" style="border: 2px solid #e2e8f0; margin-top: 5px; text-align: center; font-size: 1.5rem;">
+        </div>
+
+        <button onclick="guardarEdicionGrupo()" class="btn-blue" style="background: linear-gradient(135deg, #6366f1, #4f46e5); width: 100%;">
+            Guardar Cambios
+        </button>
+        <button onclick="document.getElementById('modalEditarGrupo').style.display='none'" style="background: none; border: none; color: #94a3b8; margin-top: 15px; cursor: pointer; font-weight: bold;">
+            Cancelar
+        </button>
+    </div>
+</div>
+
 <!-- MODAL DE LA SALA DE CHAT DEL GRUPO -->
 <div id="modalChatGrupo" class="modal-overlay" style="z-index: 29000; display: none;">
     <div class="modal-content" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; padding:0; display:flex; flex-direction:column; background:#e5e5f7;">
@@ -2884,7 +3075,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             
-            <!-- NUEVO BOTÓN COMPARTIR -->
+            <!-- BOTÓN EDITAR GRUPO (solo creador/admin) -->
+            <button id="btnEditarGrupo" onclick="abrirModalEditarGrupo()" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: none; width: 40px; height: 40px; border-radius: 50%; display:none; align-items:center; justify-content:center; font-size:1.1rem; cursor:pointer; transition:0.2s; margin-right:8px;">
+                <i class="fas fa-pen"></i>
+            </button>
+            <!-- BOTÓN COMPARTIR -->
             <button onclick="compartirLinkGrupo()" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s;">
                 <i class="fas fa-share-nodes"></i>
             </button>
@@ -4568,7 +4763,10 @@ style="display:none;">
                 style="flex:1; border:none; background:white; padding:10px 4px;
                        cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
                        gap:3px; min-height:52px; font-size:0.65rem; font-weight:800; color:#64748b; transition:.2s;">
-            <span style="font-size:1.2rem;">👥</span>
+            <span style="font-size:1.2rem; position:relative;">
+                👥
+                <div id="gruposBadgeDot" style="display:none; position:absolute; top:-2px; right:-8px; width:14px; height:14px; border-radius:50%; background:#10b981; border:2px solid white; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+            </span>
             <span style="white-space:nowrap;">Grupos</span>
         </button>
     </div>
@@ -4597,7 +4795,7 @@ style="display:none;">
                     <h3 style="color:#8b5cf6; margin:0; font-size:1rem;">💭 Pensamiento Público</h3>
                     <button onclick="document.getElementById('modalPensamiento').style.display='none'" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:1.3rem; padding:0 4px;">×</button>
                 </div>
-                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 12px;">Comparte lo que piensas con todos</p>
+                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 12px;">Comparte lo que piensas con todos · desaparece en 24h</p>
                 <textarea id="inputPensamiento" placeholder="¿En qué estás pensando?" rows="3" maxlength="160" style="width:100%; text-align: left; font-size: 0.9rem; resize: none; max-height: 75px; box-sizing:border-box;"></textarea>
                 <div style="font-size: 0.7rem; color: #94a3b8; margin: 8px 0;">
                     <span id="contadorPensamiento">0</span> / 280 caracteres
@@ -4611,36 +4809,22 @@ style="display:none;">
             </div>
         </div>
 
-        <div id="chatList" class="chat-messages-area" style="flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 10px;">
-             <div style="text-align:center; padding:20px; color:#94a3b8;">Cargando chat...</div>
+        <!-- 📩 SOLICITUDES DE MENSAJE PENDIENTES -->
+        <div id="solicitudesPendientesContainer" style="flex:1; overflow-y:auto; padding:15px; background:#f8fafc;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                <span style="font-size:1.1rem;">📩</span>
+                <h3 style="margin:0; font-size:0.95rem; font-weight:800; color:#1e293b;">Solicitudes Pendientes</h3>
+            </div>
+            <div id="solicitudesPendientesList">
+                <div style="text-align:center; padding:20px; color:#94a3b8;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:1.2rem;"></i>
+                    <div style="margin-top:8px; font-size:0.8rem;">Cargando solicitudes...</div>
+                </div>
+            </div>
         </div>
 
-        <!-- Menciones y Respuestas -->
+        <!-- Menciones -->
         <div id="mentionList" style="display: none; position: fixed; bottom: 130px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 300px; background: #1e293b; border-radius: 12px; z-index: 25000; border: 2px solid #fbbf24;"></div>
-        <div id="replyBar" class="reply-bar" style="display: none;">
-             <div style="display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;">
-                 <i class="fas fa-reply" style="color: #6366f1;"></i>
-                 <div style="flex: 1; overflow: hidden;">
-                     <div id="replyAuthor" style="font-weight: 700; color: #6366f1; font-size: 0.75rem;"></div>
-                     <div id="replyText" style="color: #64748b; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
-                 </div>
-             </div>
-             <button onclick="cancelarRespuesta()" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.2rem; padding: 0 5px;">×</button>
-        </div>
-
-        <!-- Input del chat global -->
-        <div style="background: white; width: 100%; border-top: 1px solid #e2e8f0; flex-shrink: 0; padding: 0; z-index: 200;">
-            <div id="chatGlobalAdBanner" style="display:none; background:linear-gradient(135deg,#1e293b,#0f172a); padding:8px 15px; text-align:center;">
-                <button onclick="verAnuncioChatGlobal()" style="background:linear-gradient(135deg,#f97316,#ef4444); border:none; color:white; padding:8px 20px; border-radius:50px; font-weight:800; font-size:0.8rem; cursor:pointer; box-shadow:0 4px 15px rgba(249,115,22,0.4);">
-                    📺 Ver anuncio — 20 mensajes más
-                </button>
-            </div>
-            <div style="display:flex; align-items:center; padding:10px 15px;">
-                <input type="text" id="inputChatMsg" placeholder="Escribe en el global..." autocomplete="off" style="background:#f0f2f5; border:none; border-radius:20px; flex:1; margin:0; padding: 0 15px; height: 40px; color: #333;">
-                <button onclick="enviarTexto()" class="btn-blue" style="width: 40px; height: 40px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: #0070ba; color: white; border: none; margin-left: 10px;">➤</button>
-                <span id="chatGlobalCount" style="font-size:0.6rem; color:#ef4444; font-weight:700; margin-left:6px; white-space:nowrap;">0/20</span>
-            </div>
-        </div>
     </div>
 
     <!-- LISTA VERTICAL DE USUARIOS (vista principal, siempre visible por defecto) -->
@@ -6663,17 +6847,22 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
         db.ref(`users/${idAuditor}/notifications`).limitToLast(10).on('value', snap => {
             window.mapaMensajesSinLeer = {}; 
             let totalMensajesNuevos = 0;
+            let totalSolicitudesNuevas = 0;
 
             if (snap.exists()) {
                 snap.forEach(child => {
                     const n = child.val();
-                    // Contamos chats privados no leídos
                     if (n.type === 'chat_privado' && n.read === false) {
                         const emisorUid = n.extra;
                         if (emisorUid) {
                             window.mapaMensajesSinLeer[emisorUid] = (window.mapaMensajesSinLeer[emisorUid] || 0) + 1;
                             totalMensajesNuevos++;
                         }
+                    }
+                    // Contar solicitudes de chat pendientes
+                    if (n.type === 'chat_request' && n.read === false) {
+                        totalSolicitudesNuevas++;
+                        totalMensajesNuevos++; // Contar en el badge total
                     }
                 });
             }
@@ -6921,7 +7110,7 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
 
         // --- 2. CARGA DE MENSAJES (Prioridad Alta - 400ms) ---
         setTimeout(() => {
-            if (typeof iniciarChat === "function") iniciarChat(); // Chat Global
+            // iniciarChat() eliminado: el global ya no tiene chat de texto
             if (typeof cargarListaDeGrupos === "function") cargarListaDeGrupos();
         }, 400);
 
@@ -7179,6 +7368,7 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
     };
     window.enviarTexto = () => {
     const i = document.getElementById('inputChatMsg');
+    if(!i) return; // Chat global eliminado
     const t = i.value.trim();
     if(!t) return;
 
@@ -8098,6 +8288,20 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             setTimeout(() => {
                 if (!isChatOpen) toggleChat();
             }, 500);
+        }
+        else if (type === 'chat_request') {
+            // Solicitud de chat recibida → ir a pestaña Global para ver solicitudes
+            goToScreen(3);
+            setTimeout(() => {
+                if (typeof cambiarPestanaChat === 'function') cambiarPestanaChat('global');
+            }, 400);
+        }
+        else if (type === 'chat_request_accepted') {
+            // Solicitud aceptada → ir a Mi Chat y abrir el chat
+            goToScreen(3);
+            setTimeout(() => {
+                if (typeof cambiarPestanaChat === 'function') cambiarPestanaChat('michat');
+            }, 400);
         }
         else {
             // Para cualquier otro tipo, ir al perfil del emisor
@@ -10015,20 +10219,158 @@ const LIMITE_DIARIO_MSGS = 10;
 const BONUS_PAYPAL_MSGS = 20; // 20 mensajes extra al comprar por PayPal
 const BONUS_AD_MSGS = 8;       // 8 mensajes extra al ver un anuncio
 
+// ==========================================
+// 📩 SOLICITUDES DE CHAT (Firebase)
+// ==========================================
+// Estructura: chat_requests/{chatKey} = { requester, requesterName, receiver, status, createdAt }
+// status: 'pending' | 'accepted' | 'rejected'
+
+function _getRequestChatKey(uid1, uid2) {
+    return [uid1, uid2].sort().join('_');
+}
+
+window.enviarSolicitudChat = (targetUid, targetName) => {
+    if (!idAuditor) return notify("Inicia sesión primero");
+    if (targetUid === idAuditor) return notify("No puedes enviarte solicitud a ti mismo");
+
+    const chatKey = _getRequestChatKey(idAuditor, targetUid);
+    const reqRef = db.ref(`chat_requests/${chatKey}`);
+
+    reqRef.once('value').then(snap => {
+        const existing = snap.val();
+
+        // Ya existe una solicitud
+        if (existing) {
+            // Si fue aceptada → abrir chat directamente
+            if (existing.status === 'accepted') {
+                _abrirChatPrivadoReal(targetUid, targetName);
+                return;
+            }
+            // Si está pendiente → mostrar aviso
+            if (existing.status === 'pending') {
+                if (existing.requester === idAuditor) {
+                    notify("⏳ Solicitud ya enviada, espera respuesta");
+                } else {
+                    notify("📩 Tienes una solicitud pendiente de " + (existing.requesterName || 'este usuario'));
+                }
+                return;
+            }
+            // Si fue rechazada → reenviar solicitud
+            if (existing.status === 'rejected') {
+                _crearSolicitud(reqRef, chatKey, targetUid, targetName);
+                return;
+            }
+        } else {
+            // No existe → crear nueva solicitud
+            _crearSolicitud(reqRef, chatKey, targetUid, targetName);
+        }
+    });
+};
+
+function _crearSolicitud(reqRef, chatKey, targetUid, targetName) {
+    reqRef.set({
+        requester: idAuditor,
+        requesterName: getMiNombre(),
+        receiver: targetUid,
+        status: 'pending',
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+        notify("📩 Solicitud enviada a " + targetName);
+        // Enviar notificación push al receptor
+        db.ref(`users/${targetUid}/notifications`).push({
+            from: idAuditor,
+            fromName: getMiNombre(),
+            type: 'chat_request',
+            text: `📩 ${getMiNombre()} quiere chatear contigo`,
+            extra: chatKey,
+            read: false,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        // Refrescar Mi Chat para mostrar estado
+        if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
+    }).catch(err => {
+        console.error("Error enviando solicitud:", err);
+        notify("❌ Error al enviar solicitud");
+    });
+}
+
+window.aceptarSolicitudChat = (chatKey, fromUid, fromName) => {
+    if (!idAuditor) return;
+    const updates = {};
+    updates[`chat_requests/${chatKey}/status`] = 'accepted';
+    updates[`chat_requests/${chatKey}/acceptedAt`] = firebase.database.ServerValue.TIMESTAMP;
+    db.ref().update(updates).then(() => {
+        notify("✅ Solicitud aceptada con " + (fromName || 'Usuario'));
+        // Notificar al solicitante
+        db.ref(`users/${fromUid}/notifications`).push({
+            from: idAuditor,
+            fromName: getMiNombre(),
+            type: 'chat_request_accepted',
+            text: `✅ ${getMiNombre()} aceptó tu solicitud de chat`,
+            extra: chatKey,
+            read: false,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        // Refrescar vistas
+        if (typeof cargarSolicitudesPendientes === 'function') cargarSolicitudesPendientes();
+        if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
+        // Abrir chat directamente
+        _abrirChatPrivadoReal(fromUid, fromName);
+    });
+};
+
+window.rechazarSolicitudChat = (chatKey, fromUid) => {
+    if (!idAuditor) return;
+    db.ref(`chat_requests/${chatKey}/status`).set('rejected').then(() => {
+        notify("Solicitud rechazada");
+        if (typeof cargarSolicitudesPendientes === 'function') cargarSolicitudesPendientes();
+        if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
+    });
+};
+
+// Obtiene el estado de la solicitud entre idAuditor y targetUid
+function _getSolicitudStatus(targetUid, callback) {
+    if (!idAuditor) return callback(null);
+    const chatKey = _getRequestChatKey(idAuditor, targetUid);
+    db.ref(`chat_requests/${chatKey}`).once('value').then(snap => {
+        callback(snap.val());
+    }).catch(() => callback(null));
+}
+
 // 1. ABRIR EL MODAL Y PREPARAR
 window.abrirChatPrivado = (targetUid, targetName) => {
+    // Interceptar: verificar solicitud antes de abrir
+    if (!idAuditor) return notify("Inicia sesión primero");
+    if (targetUid === idAuditor) return notify("No puedes hablarte a ti mismo");
+
+    _getSolicitudStatus(targetUid, (req) => {
+        if (req && req.status === 'accepted') {
+            // Solicitúd aceptada → abrir chat real
+            _abrirChatPrivadoReal(targetUid, targetName);
+        } else if (req && req.status === 'pending') {
+            if (req.requester === idAuditor) {
+                notify("⏳ Solicitud enviada, espera que " + targetName + " responda");
+            } else {
+                notify("📩 Tienes una solicitud pendiente de " + targetName + ". Ve a Solicitudes en la pestaña Global.");
+            }
+        } else {
+            // Sin solicitud o rechazada → enviar solicitud
+            enviarSolicitudChat(targetUid, targetName);
+        }
+    });
+};
+// Función interna que abre el chat (sin verificación de solicitud)
+function _abrirChatPrivadoReal(targetUid, targetName) {
     if(!idAuditor) return notify("Inicia sesión primero");
     if(targetUid === idAuditor) return notify("No puedes hablarte a ti mismo");
 
     targetUserUid = targetUid;
     currentChatTargetUid = targetUid;
-    chatPrivadoActivo = true; // Marcar chat como activo
-    window._enChatPrivado = true; // Evitar re-render de Mi Chat mientras estamos aquí
+    chatPrivadoActivo = true;
+    window._enChatPrivado = true;
 
-    // Generar ID único del chat (Orden alfabético)
     currentChatId = [idAuditor, targetUid].sort().join('_');
 
-    // MARCAR COMO LEÍDO AL ABRIR
     db.ref(`users/${idAuditor}/notifications`).once('value', snap => {
         if (snap.exists()) {
             snap.forEach(s => {
@@ -10040,13 +10382,11 @@ window.abrirChatPrivado = (targetUid, targetName) => {
         }
     });
 
-    // 🔥 NUEVO: Marcar mensajes de este chat como leídos en la base de datos
     db.ref(`chats_privados/${currentChatId}`).limitToLast(50).once('value', snap => {
         if (snap.exists()) {
             const updates = {};
             snap.forEach(msgSnap => {
                 const msg = msgSnap.val();
-                // Si el mensaje es de la otra persona y no está marcado como leído
                 if (msg.uid !== idAuditor && !msg.leido) {
                     updates[`${msgSnap.key}/leido`] = true;
                 }
@@ -10057,18 +10397,15 @@ window.abrirChatPrivado = (targetUid, targetName) => {
         }
     });
 
-    // 🔥 NUEVO: Forzar limpieza del círculo rojo inmediatamente
-    // 🔥 NUEVO: Forzar limpieza del círculo rojo inmediatamente
     if (window.mapaMensajesSinLeer && window.mapaMensajesSinLeer[targetUid]) {
         delete window.mapaMensajesSinLeer[targetUid];
         if (typeof renderizarUsuariosHorizontal === 'function') renderizarUsuariosHorizontal();
-        if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat(); // 🔥 QUITA EL ROJO AL INSTANTE
+        if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
     }
-    // Configurar UI
+
     document.getElementById('privChatTitle').innerText = targetName;
     document.getElementById('privAvatar').style.backgroundImage = "url('" + getUserProfilePhoto(targetUid) + "')";
 
-    // Mostrar botón Facebook si existe
     const btnFb = document.getElementById('btnChatFacebook');
     btnFb.style.display = 'none';
     db.ref(`users/${targetUid}/facebookUrl`).once('value').then(snap => {
@@ -10077,7 +10414,6 @@ window.abrirChatPrivado = (targetUid, targetName) => {
         }
     });
 
-    // Real-time listener for apodo + foto changes
     if (privUserRef) privUserRef.off();
     privUserRef = db.ref(`users/${targetUid}`);
     privUserRef.on('value', snap => {
@@ -10089,13 +10425,12 @@ window.abrirChatPrivado = (targetUid, targetName) => {
         if (u.fotoPerfil) {
             cacheFotosPerfil[targetUid] = u.fotoPerfil;
             document.getElementById('privAvatar').style.backgroundImage = "url('" + u.fotoPerfil + "')";
-            // Solo actualizar imágenes dentro del chat privado que pertenezcan a este usuario
             document.querySelectorAll(`#privChatList .chat-avatar-img[data-uid="${targetUid}"]`).forEach(img => {
                 img.src = u.fotoPerfil;
             });
         }
-        const btnFb = document.getElementById('btnChatFacebook');
-        btnFb.style.display = u.facebookUrl ? 'flex' : 'none';
+        const btnFb2 = document.getElementById('btnChatFacebook');
+        btnFb2.style.display = u.facebookUrl ? 'flex' : 'none';
     });
 
     document.getElementById('modalChatPrivado').style.display = 'flex';
@@ -10103,7 +10438,7 @@ window.abrirChatPrivado = (targetUid, targetName) => {
 
     cargarMensajesPrivados();
     checkLimiteDiario();
-};
+}
 
 window.abrirFacebookDesdeChat = () => {
     if (!currentChatTargetUid) return notify("⏳ Cargando...");
@@ -10904,7 +11239,7 @@ function combinarYRenderizarUsuarios() {
         // Buscar si tiene nube activa (menos de 24h)
         const nube = _cacheDataNubes[uid];
         let pensamientoFinal = "";
-        if (nube && (ahora - nube.timestamp < 43200000)) {
+        if (nube && (ahora - nube.timestamp < 86400000)) {
             pensamientoFinal = nube.texto;
         }
 
@@ -10972,22 +11307,49 @@ function renderizarUsuariosHorizontal() {
         // --- ☁️ LÓGICA DE LA NUBE DE PENSAMIENTO ---
         let nubeHtml = "";
         if (user.pensamiento && user.pensamiento.trim() !== "") {
-            const c = esMio ? '#6366f1' : '#8b5cf6';
-            nubeHtml = `
-            <div style="position:absolute; top:-58px; left:50%; transform:translateX(-50%); z-index:100; animation: floatCloud 3s ease-in-out infinite; pointer-events:none;">
-                <div style="background:${c}; color:white; padding:5px 10px; border-radius:20px;
-                            font-size:0.6rem; font-weight:800; white-space:nowrap;
-                            max-width:95px; overflow:hidden; text-overflow:ellipsis;
-                            box-shadow:0 4px 14px rgba(99,102,241,0.45); text-align:center;
-                            border:2px solid rgba(255,255,255,0.25);">
-                    ${escapeHtml(user.pensamiento)}
-                </div>
-                <div style="display:flex; justify-content:center; align-items:flex-end; gap:2px; margin-top:2px; padding-left:6px;">
-                    <div style="width:6px;height:6px;border-radius:50%;background:${c};opacity:0.9;"></div>
-                    <div style="width:4px;height:4px;border-radius:50%;background:${c};opacity:0.7;margin-bottom:-1px;"></div>
-                    <div style="width:2px;height:2px;border-radius:50%;background:${c};opacity:0.5;margin-bottom:-3px;"></div>
-                </div>
-            </div>`;
+            const nubeData = _cacheDataNubes[user.key];
+            const tieneFotoReal = nubeData && nubeData.fotoPerfil && nubeData.fotoPerfil.indexOf('pravatar.cc') === -1;
+            const edad = nubeData ? (ahora - (nubeData.timestamp || 0)) : 0;
+            const restante = Math.max(0, 86400000 - edad);
+            const horasRest = Math.floor(restante / 3600000);
+            const minsRest = Math.floor((restante % 3600000) / 60000);
+            const tiempoLabel = horasRest > 0 ? horasRest + 'h' : minsRest + 'm';
+
+            if (tieneFotoReal) {
+                const opacidadNube = restante < 7200000 ? 0.5 + (restante / 7200000) * 0.5 : 1;
+                nubeHtml = `
+                <div style="position:absolute; top:-58px; left:50%; transform:translateX(-50%); z-index:100; pointer-events:none; opacity:${opacidadNube};">
+                    <div style="background:linear-gradient(135deg, #8b5cf6, #ec4899); color:white; padding:5px 10px; border-radius:20px;
+                                font-size:0.6rem; font-weight:800; white-space:nowrap;
+                                max-width:95px; overflow:hidden; text-overflow:ellipsis;
+                                box-shadow:0 4px 18px rgba(139,92,246,0.5); text-align:center;
+                                border:2px solid rgba(255,255,255,0.3); animation: thoughtGlow 3s ease-in-out infinite;">
+                        ${escapeHtml(user.pensamiento)}
+                    </div>
+                    <div style="display:flex; justify-content:center; align-items:flex-end; gap:2px; margin-top:2px; padding-left:6px;">
+                        <div style="width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#ec4899);opacity:0.9;"></div>
+                        <div style="width:4px;height:4px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#ec4899);opacity:0.7;margin-bottom:-1px;"></div>
+                        <div style="width:2px;height:2px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#ec4899);opacity:0.5;margin-bottom:-3px;"></div>
+                    </div>
+                </div>`;
+            } else {
+                const c = esMio ? '#6366f1' : '#8b5cf6';
+                nubeHtml = `
+                <div style="position:absolute; top:-58px; left:50%; transform:translateX(-50%); z-index:100; animation: floatCloud 3s ease-in-out infinite; pointer-events:none;">
+                    <div style="background:${c}; color:white; padding:5px 10px; border-radius:20px;
+                                font-size:0.6rem; font-weight:800; white-space:nowrap;
+                                max-width:95px; overflow:hidden; text-overflow:ellipsis;
+                                box-shadow:0 4px 14px rgba(99,102,241,0.45); text-align:center;
+                                border:2px solid rgba(255,255,255,0.25);">
+                        ${escapeHtml(user.pensamiento)}
+                    </div>
+                    <div style="display:flex; justify-content:center; align-items:flex-end; gap:2px; margin-top:2px; padding-left:6px;">
+                        <div style="width:6px;height:6px;border-radius:50%;background:${c};opacity:0.9;"></div>
+                        <div style="width:4px;height:4px;border-radius:50%;background:${c};opacity:0.7;margin-bottom:-1px;"></div>
+                        <div style="width:2px;height:2px;border-radius:50%;background:${c};opacity:0.5;margin-bottom:-3px;"></div>
+                    </div>
+                </div>`;
+            }
         }
 
         // Tiempos y Colores de borde
@@ -11044,7 +11406,7 @@ function actualizarBotonPensar() {
             if (!u.pensamiento || u.pensamiento.trim() === '') continue;
             // Verificar que el pensamiento siga vigente
             const nube = _cacheDataNubes[u.key];
-            if (!nube || (ahora - nube.timestamp > 43200000)) continue;
+            if (!nube || (ahora - nube.timestamp > 86400000)) continue;
             mejor = u;
             break; // Ya ordenados: primero los más recientes
         }
@@ -11066,7 +11428,7 @@ function actualizarBotonPensar() {
     } else {
         // Verificar si YO tengo un pensamiento activo
         const miNube = _cacheDataNubes[idAuditor];
-        if (miNube && (ahora - miNube.timestamp < 43200000)) {
+        if (miNube && (ahora - miNube.timestamp < 86400000)) {
             _ultimoPensamiento = null; // Es mío, no mostrar modal de ver
         } else {
             _ultimoPensamiento = null;
@@ -13873,7 +14235,8 @@ window.publicarPensamiento = () => {
     actualizaciones[`pensamientos/${idAuditor}`] = {
         texto: texto,
         autor: document.getElementById('profKey').textContent || "Usuario",
-        timestamp: timestamp
+        timestamp: timestamp,
+        fotoPerfil: getUserProfilePhoto(idAuditor)
     };
     // Actualizamos tu 'lastSeen' para que brinques al principio de la lista de todos
     actualizaciones[`users/${idAuditor}/lastSeen`] = timestamp;
@@ -13902,38 +14265,57 @@ window.cargarPensamientosPublicos = () => {
 
         snap.forEach(child => {
             const p = child.val();
-            const avatar = getUserProfilePhoto(p.uid);
+            const avatar = p.fotoPerfil || getUserProfilePhoto(p.uid || child.key);
             const nombre = p.autor || "Usuario";
             const textoCorto = p.texto.length > 55 ? p.texto.substring(0, 52) + "..." : p.texto;
+            const tieneFotoReal = p.fotoPerfil && p.fotoPerfil.indexOf('pravatar.cc') === -1;
+            const ahora = Date.now();
+            const edad = ahora - (p.timestamp || 0);
+            const restante = Math.max(0, 86400000 - edad);
+            const horasRest = Math.floor(restante / 3600000);
+            const minsRest = Math.floor((restante % 3600000) / 60000);
 
             const nombreEscapado = nombre.replace(/'/g, "\\'");
             const textoEscapado = p.texto.replace(/'/g, "\\'");
-            html = `
-            <div onclick="mostrarPensamientoDeUsuario('${p.uid}','${nombreEscapado}','${textoEscapado}','${avatar}')"
-                 style="min-width:130px; max-width:130px; flex-shrink:0; text-align:center; position:relative; padding-top:8px; cursor:pointer;">
 
-                <!-- ☁️ NUBE DE PENSAMIENTO (burbuja + puntitos estilo cómic) -->
-                <div style="animation: floatCloudCard 3s ease-in-out infinite;">
-                    <div style="background:#8b5cf6; color:white; padding:7px 10px; border-radius:18px;
-                                font-size:0.68rem; font-style:italic; line-height:1.3; font-weight:600;
-                                box-shadow:0 4px 14px rgba(139,92,246,0.35); text-align:left;
-                                border:1.5px solid rgba(255,255,255,0.2); position:relative;">
-                        "${escapeHtml(textoCorto)}"
+            if (tieneFotoReal) {
+                const progreso = Math.min(100, Math.max(0, (restante / 86400000) * 100));
+                const opacidad = progreso < 20 ? 0.4 + (progreso / 20) * 0.6 : 1;
+                html = `
+                <div class="pensamiento-real-card" onclick="mostrarPensamientoDeUsuario('${p.uid}','${nombreEscapado}','${textoEscapado}','${avatar}')"
+                     style="opacity:${opacidad};">
+                    <img class="pensamiento-photo" src="${avatar}" alt="${escapeHtml(nombre)}"
+                         style="filter: ${progreso < 30 ? 'grayscale(' + ((30 - progreso) * 3) + '%)' : 'none'};">
+                    <div class="pensamiento-body">
+                        <div class="pensamiento-name">${escapeHtml(nombre)}</div>
+                        <div class="pensamiento-text">"${escapeHtml(textoCorto)}"</div>
                     </div>
-                    <!-- Puntitos de nube hacia el usuario -->
-                    <div style="display:flex; align-items:flex-start; gap:2px; padding-left:18px; margin-top:2px;">
-                        <div style="width:6px;height:6px;border-radius:50%;background:#8b5cf6;opacity:0.9;"></div>
-                        <div style="width:4px;height:4px;border-radius:50%;background:#8b5cf6;opacity:0.7;margin-top:2px;"></div>
-                        <div style="width:2px;height:2px;border-radius:50%;background:#8b5cf6;opacity:0.5;margin-top:4px;"></div>
+                    <div class="pensamiento-timer">
+                        <div class="pensamiento-timer-fill" style="width:${progreso}%;"></div>
                     </div>
-                </div>
-
-                <!-- Avatar + Nombre -->
-                <div style="display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:2px;">
-                    <img src="${avatar}" style="width:30px; height:30px; border-radius:50%; border:2px solid #8b5cf6; box-shadow:0 2px 6px rgba(139,92,246,0.3);">
-                    <span style="font-size:0.62rem; font-weight:800; color:#7c3aed; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">${nombre}</span>
-                </div>
-            </div>` + html;
+                </div>` + html;
+            } else {
+                html = `
+                <div class="pensamiento-default-card" onclick="mostrarPensamientoDeUsuario('${p.uid}','${nombreEscapado}','${textoEscapado}','${avatar}')">
+                    <div style="animation: floatCloudCard 3s ease-in-out infinite;">
+                        <div style="background:#8b5cf6; color:white; padding:7px 10px; border-radius:18px;
+                                    font-size:0.68rem; font-style:italic; line-height:1.3; font-weight:600;
+                                    box-shadow:0 4px 14px rgba(139,92,246,0.35); text-align:left;
+                                    border:1.5px solid rgba(255,255,255,0.2); position:relative;">
+                            "${escapeHtml(textoCorto)}"
+                        </div>
+                        <div style="display:flex; align-items:flex-start; gap:2px; padding-left:18px; margin-top:2px;">
+                            <div style="width:6px;height:6px;border-radius:50%;background:#8b5cf6;opacity:0.9;"></div>
+                            <div style="width:4px;height:4px;border-radius:50%;background:#8b5cf6;opacity:0.7;margin-top:2px;"></div>
+                            <div style="width:2px;height:2px;border-radius:50%;background:#8b5cf6;opacity:0.5;margin-top:4px;"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:2px;">
+                        <img src="${avatar}" style="width:30px; height:30px; border-radius:50%; border:2px solid #8b5cf6; box-shadow:0 2px 6px rgba(139,92,246,0.3);">
+                        <span style="font-size:0.62rem; font-weight:800; color:#7c3aed; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">${escapeHtml(nombre)}</span>
+                    </div>
+                </div>` + html;
+            }
         });
 
         feedContainer.innerHTML = html;
@@ -14173,12 +14555,13 @@ window.cambiarPestanaChat = (pestana) => {
         _setTabActivo('tabGlobalBtn');
         if (contGlobal) contGlobal.style.display = 'flex';
         if (typeof cargarPensamientosPublicos === 'function') cargarPensamientosPublicos();
-        setTimeout(() => scrollToBottom(), 100);
+        if (typeof cargarSolicitudesPendientes === 'function') cargarSolicitudesPendientes();
     }
     else if (pestana === 'grupos') {
         _setTabActivo('tabGruposBtn');
         if (contGrupos) contGrupos.style.display = 'block';
         if (typeof cargarListaDeGrupos === 'function') cargarListaDeGrupos();
+        if (typeof limpiarBadgeGrupos === 'function') limpiarBadgeGrupos();
     }
     else {
         // 'michat' → lista de TODOS los usuarios (tengan chat o no)
@@ -14194,9 +14577,107 @@ window.cambiarPestanaChat = (pestana) => {
         cargarTodosLosUsuariosParaMiChat();
     }
 };
+
+// ==========================================
+// 📩 SOLICITUDES PENDIENTES (Global sin chat)
+// ==========================================
+window.cargarSolicitudesPendientes = () => {
+    if (!idAuditor) return;
+    const container = document.getElementById('solicitudesPendientesList');
+    if (!container) return;
+
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:1.2rem;"></i></div>';
+
+    // Buscar solicitudes pendientes donde soy receptor
+    db.ref('chat_requests').orderByChild('receiver').equalTo(idAuditor).once('value', snapReceiver => {
+        // También buscar donde soy solicitante (para mostrar estado)
+        db.ref('chat_requests').orderByChild('requester').equalTo(idAuditor).once('value', snapRequester => {
+            const pendientes = [];
+
+            // Recibir solicitudes (otros me pidieron chatear)
+            if (snapReceiver.exists()) {
+                snapReceiver.forEach(child => {
+                    const req = child.val();
+                    if (req.status === 'pending') {
+                        pendientes.push({ chatKey: child.key, ...req, esReceptor: true });
+                    }
+                });
+            }
+
+            // Enviadas por mí (pendientes de respuesta)
+            if (snapRequester.exists()) {
+                snapRequester.forEach(child => {
+                    const req = child.val();
+                    if (req.status === 'pending') {
+                        pendientes.push({ chatKey: child.key, ...req, esReceptor: false });
+                    }
+                });
+            }
+
+            if (pendientes.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;"><div style="font-size:2rem; margin-bottom:8px;">✅</div><div style="font-size:0.85rem; font-weight:600;">Todo al día</div><div style="font-size:0.75rem; margin-top:4px;">No tienes solicitudes pendientes</div></div>';
+                return;
+            }
+
+            // Ordenar por más recientes primero
+            pendientes.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+            let html = '';
+            pendientes.forEach(p => {
+                const otherUid = p.esReceptor ? p.requester : p.receiver;
+                const otherName = p.esReceptor ? (p.requesterName || 'Usuario') : null;
+                const foto = getUserProfilePhoto(otherUid);
+
+                if (p.esReceptor) {
+                    // Solicitud que recibí → botones Aceptar / Rechazar
+                    html += `
+                    <div class="solicitud-card">
+                        <div class="solicitud-avatar" style="background-image:url('${foto}')"></div>
+                        <div class="solicitud-info">
+                            <div class="solicitud-name">${escapeHtml(p.requesterName || 'Usuario')}</div>
+                            <div class="solicitud-sub">📩 Quiere chatear contigo</div>
+                        </div>
+                        <div class="solicitud-btns">
+                            <button class="solicitud-btn-accept" onclick="event.stopPropagation();aceptarSolicitudChat('${p.chatKey}','${otherUid}','${escapeHtml(p.requesterName || 'Usuario').replace(/'/g, "\\'")}')">✅ Aceptar</button>
+                            <button class="solicitud-btn-reject" onclick="event.stopPropagation();rechazarSolicitudChat('${p.chatKey}','${otherUid}')">✕</button>
+                        </div>
+                    </div>`;
+                } else {
+                    // Solicitud que envié → mostrar estado "esperando"
+                    // Necesitamos el nombre del receptor
+                    const nombreReceptor = p.receiverName || null;
+                    html += `
+                    <div class="solicitud-card" style="border-left-color:#94a3b8; opacity:0.85;">
+                        <div class="solicitud-avatar" style="background-image:url('${foto}')"></div>
+                        <div class="solicitud-info">
+                            <div class="solicitud-name" style="color:#64748b;" id="sol-name-${otherUid}">${escapeHtml(nombreReceptor || 'Usuario')}</div>
+                            <div class="solicitud-sub" style="color:#94a3b8;">⏳ Esperando respuesta...</div>
+                        </div>
+                        <div class="solicitud-btns">
+                            <button class="solicitud-btn-reject" style="font-size:0.72rem;" onclick="event.stopPropagation();db.ref('chat_requests/${p.chatKey}/status').set('rejected').then(()=>{cargarSolicitudesPendientes();cargarTodosLosUsuariosParaMiChat();notify('Solicitud cancelada')})">Cancelar</button>
+                        </div>
+                    </div>`;
+                    // Cargar nombre real del receptor
+                    if (!nombreReceptor) {
+                        db.ref(`users/${otherUid}`).once('value').then(snap => {
+                            const u = snap.val();
+                            const nombre = u ? (u.apodo || u.myInviteKey || 'Usuario') : 'Usuario';
+                            const el = document.getElementById(`sol-name-${otherUid}`);
+                            if (el) el.textContent = nombre;
+                        });
+                    }
+                }
+            });
+
+            container.innerHTML = html;
+        });
+    });
+};
+
 // Funciones vacías para que no te dé error al tocar los botones de ejemplo
 // 4. ABRIR LA SALA DE CHAT DEL GRUPO (ENTRADA DIRECTA)
 let currentGrupoId = null;
+let currentGrupoCreador = null;
 let grupoChatRef = null;
 
 window.abrirChatDeGrupo = (idGrupo, nombreGrupo, iconoGrupo) => {
@@ -14210,6 +14691,21 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
     document.getElementById('grupoChatTitle').innerText = nombreGrupo;
     document.getElementById('grupoIconoHeader').innerText = iconoGrupo || '💬';
     document.getElementById('modalChatGrupo').style.display = 'flex';
+
+    // Obtener creador del grupo para mostrar botón editar
+    db.ref(`grupos_chat/${idGrupo}/info/creador`).once('value').then(snap => {
+        const creador = snap.val();
+        currentGrupoCreador = creador;
+        const btn = document.getElementById('btnEditarGrupo');
+        if (btn) {
+            btn.style.display = (idAuditor === creador || isAdmin) ? 'flex' : 'none';
+        }
+    }).catch(() => {});
+
+    // Registrar como miembro del grupo
+    if (idAuditor) {
+        db.ref(`grupos_chat/${idGrupo}/info/miembros/${idAuditor}`).set(true);
+    }
 
     const list = document.getElementById('grupoChatList');
     list.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando mensajes...</div>';
@@ -14405,6 +14901,7 @@ window.enviarMensajeGrupo = () => {
     chatGrupoMsgCount++;
     actualizarContadorChatGrupo();
 
+    db.ref(`grupos_chat/${currentGrupoId}/info/miembros/${idAuditor}`).set(true);
     db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push(msgData)
         .then(() => {
             detectarYEnvarMenciones(txt, "chat");
@@ -14480,12 +14977,14 @@ window.guardarNuevoGrupo = () => {
 
     // Guardamos en una nueva rama llamada 'grupos_chat'
     const ref = db.ref('grupos_chat').push();
+    const newKey = ref.key;
     ref.set({
         info: {
             nombre: nombre,
             icono: icono,
             creador: idAuditor,
-            fecha: firebase.database.ServerValue.TIMESTAMP
+            fecha: firebase.database.ServerValue.TIMESTAMP,
+            miembros: { [idAuditor]: true }
         }
     }).then(() => {
         document.getElementById('modalCrearGrupo').style.display = 'none';
@@ -14510,8 +15009,90 @@ window.guardarNuevoGrupo = () => {
     });
 };
 
+// ──────────────────────────────────────────────
+// EDITAR GRUPO (nombre e icono)
+// ──────────────────────────────────────────────
+window.abrirModalEditarGrupo = () => {
+    if (!currentGrupoId) return notify("❌ No hay grupo activo");
+    db.ref(`grupos_chat/${currentGrupoId}/info`).once('value').then(snap => {
+        const info = snap.val();
+        if (!info) return notify("❌ No se encontró el grupo");
+        currentGrupoCreador = info.creador || null;
+        if (idAuditor !== currentGrupoCreador && !isAdmin) {
+            return notify("❌ Solo el creador del grupo puede editarlo");
+        }
+        document.getElementById('inputEditarNombreGrupo').value = info.nombre || '';
+        document.getElementById('inputEditarIconoGrupo').value = info.icono || '💬';
+        document.getElementById('modalEditarGrupo').style.display = 'flex';
+    }).catch(() => notify("❌ Error al cargar datos del grupo"));
+};
+
+window.guardarEdicionGrupo = () => {
+    if (!currentGrupoId || !idAuditor) return notify("❌ Inicia sesión primero");
+    if (idAuditor !== currentGrupoCreador && !isAdmin) return notify("❌ Solo el creador puede editar el grupo");
+
+    const inputNombre = document.getElementById('inputEditarNombreGrupo');
+    const inputIcono = document.getElementById('inputEditarIconoGrupo');
+    const nombre = inputNombre.value.trim();
+    const icono = inputIcono.value.trim() || '💬';
+    if (!nombre) return notify("❌ El nombre no puede estar vacío");
+
+    const btn = document.querySelector('#modalEditarGrupo .btn-blue');
+    if (btn) { btn.disabled = true; btn.textContent = "Guardando..."; }
+
+    db.ref(`grupos_chat/${currentGrupoId}/info`).update({ nombre, icono })
+        .then(() => {
+            document.getElementById('modalEditarGrupo').style.display = 'none';
+            document.getElementById('grupoChatTitle').innerText = nombre;
+            document.getElementById('grupoIconoHeader').innerText = icono;
+            notify("✅ Grupo actualizado");
+            if (btn) { btn.disabled = false; btn.textContent = "Guardar Cambios"; }
+        })
+        .catch(err => {
+            notify("❌ Error: " + err.message);
+            if (btn) { btn.disabled = false; btn.textContent = "Guardar Cambios"; }
+        });
+};
+
 // 1. Agregamos esta variable al principio de tus globales (donde están las de fotos)
 window._gruposIniciado = false; 
+
+// ──────────────────────────────────────────────
+// CHIBOLITA VERDE EN GRUPOS (mensajes nuevos)
+// ──────────────────────────────────────────────
+window._gruposNoLeidos = 0;
+window._gruposMsgListeners = {};
+window._gruposInit = {};
+
+function iniciarListenerMensajesGrupo(groupId) {
+    if (window._gruposMsgListeners[groupId]) return;
+    const ref = db.ref(`grupos_chat/${groupId}/mensajes`).limitToLast(1);
+    window._gruposMsgListeners[groupId] = ref;
+    window._gruposInit[groupId] = false;
+    ref.on('child_added', snap => {
+        const msg = snap.val();
+        if (!msg) return;
+        if (!window._gruposInit[groupId]) {
+            window._gruposInit[groupId] = true;
+            return;
+        }
+        if (msg.uid !== idAuditor) {
+            window._gruposNoLeidos++;
+            actualizarBadgeGrupos();
+        }
+    });
+}
+
+function actualizarBadgeGrupos() {
+    const dot = document.getElementById('gruposBadgeDot');
+    if (!dot) return;
+    dot.style.display = window._gruposNoLeidos > 0 ? 'block' : 'none';
+}
+
+function limpiarBadgeGrupos() {
+    window._gruposNoLeidos = 0;
+    actualizarBadgeGrupos();
+}
 
 window.cargarListaDeGrupos = () => {
     const lista = document.getElementById('listaDeGrupos');
@@ -14546,9 +15127,12 @@ window.cargarListaDeGrupos = () => {
 
             const g = data.info;
             const key = child.key;
+
+            iniciarListenerMensajesGrupo(key);
             const nombreSeguro = (g.nombre || 'Grupo').replace(/'/g, "\\'");
             const iconoSeguro = (g.icono || '💬').replace(/'/g, "\\'");
             const creadorSeguro = (g.creador || '').replace(/'/g, "\\'");
+            const numMiembros = g.miembros ? Object.keys(g.miembros).length : 0;
 
             html += `
             <div class="grupo-card" data-key="${key}" data-creador="${creadorSeguro}"
@@ -14557,8 +15141,9 @@ window.cargarListaDeGrupos = () => {
                 <div class="grupo-icon" style="width:50px; height:50px; border-radius:14px; background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; display:flex; align-items:center; justify-content:center; font-size:1.5rem; margin-right:15px; box-shadow:0 4px 10px rgba(99,102,241,0.2);">${g.icono || '💬'}</div>
                 <div style="flex: 1; text-align: left;">
                     <div style="font-weight: 800; color: #1e293b; font-size: 1rem;">${g.nombre || 'Grupo'}</div>
-                    <div style="font-size: 0.8rem; color: #10b981; font-weight: 700;">Entrar ahora ᐳ</div>
+                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">👥 ${numMiembros} miembros</div>
                 </div>
+                <div style="font-size: 0.75rem; color: #10b981; font-weight: 700; white-space:nowrap;">Entrar ᐳ</div>
             </div>`;
         });
 
@@ -14639,11 +15224,22 @@ window.mostrarPensamientoDeUsuario = (uid, nombre, texto, avatar) => {
     const elNombre = document.getElementById('verPensamientoNombre');
     const elTexto = document.getElementById('verPensamientoTexto');
     const elInput = document.getElementById('inputComentarioPensamiento');
+    const elCountdown = document.getElementById('verPensamientoCountdown');
     if (el) el.style.backgroundImage = `url('${avatar}')`;
     if (elNombre) elNombre.textContent = nombre;
     if (elTexto) elTexto.textContent = '"' + texto + '"';
     if (elInput) elInput.value = '';
-    // Guardar el pensamiento activo para el comentario
+
+    // Calcular tiempo restante real
+    const nubeData = _cacheDataNubes[uid];
+    if (nubeData && elCountdown) {
+        const ahora = Date.now();
+        const restante = Math.max(0, 86400000 - (ahora - (nubeData.timestamp || 0)));
+        const horas = Math.floor(restante / 3600000);
+        const mins = Math.floor((restante % 3600000) / 60000);
+        elCountdown.innerHTML = `<span style="font-size:0.8rem;">⏳</span> Desaparece en ${horas}h ${mins}m`;
+    }
+
     _ultimoPensamiento = { uid, autor: nombre, texto, avatar };
     document.getElementById('modalVerPensamiento').style.display = 'flex';
 };
@@ -14717,110 +15313,175 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
         return;
     }
 
-    // Ordenar: nuevos mensajes > online > tiene pensamiento > último visto
-    todos.sort((a, b) => {
-        const cA = chatsByUid[a.key], cB = chatsByUid[b.key];
-        const nA = cA && cA.mensajesNoLeidos > 0 ? 1 : 0;
-        const nB = cB && cB.mensajesNoLeidos > 0 ? 1 : 0;
-        if (nA !== nB) return nB - nA;
-        if (a.online !== b.online) return a.online ? -1 : 1;
-        if (a.pensamiento && !b.pensamiento) return -1;
-        if (!a.pensamiento && b.pensamiento) return 1;
-        return b.rawTime - a.rawTime;
-    });
+    // 📩 Cargar estados de solicitudes de chat (2 queries: enviado + recibido)
+    const _renderLista = (requestStatusMap) => {
+        // Ordenar: solicitud recibida pendiente > nuevos mensajes > online > pensamiento > último visto
+        todos.sort((a, b) => {
+            const cA = chatsByUid[a.key], cB = chatsByUid[b.key];
+            const nA = cA && cA.mensajesNoLeidos > 0 ? 1 : 0;
+            const nB = cB && cB.mensajesNoLeidos > 0 ? 1 : 0;
+            if (nA !== nB) return nB - nA;
 
-    let html = '';
-    todos.forEach(u => {
-        const uid = u.key;
-        const nombre = u.nombre || 'Usuario';
-const chat = chatsByUid[uid];
-        const nube = _cacheDataNubes && _cacheDataNubes[uid];
-        const hasPensamiento = nube && (ahora - nube.timestamp < 43200000) && nube.texto;
-        
-        // 🔥 Usamos el radar oficial de notificaciones para GARANTIZAR el color rojo
-        const mensajesEnRadar = (window.mapaMensajesSinLeer && window.mapaMensajesSinLeer[uid]) ? window.mapaMensajesSinLeer[uid] : 0;
-        const tieneNuevos = (chat && chat.mensajesNoLeidos > 0) || (mensajesEnRadar > 0);
-        
-        // Para que el badge del chat muestre el número correcto
-        const numeroAviso = mensajesEnRadar > 0 ? mensajesEnRadar : (chat ? chat.mensajesNoLeidos : 0);
+            // Priorizar solicitudes recibidas pendientes
+            const solA = requestStatusMap[a.key];
+            const solB = requestStatusMap[b.key];
+            const pendingInA = solA && solA.status === 'pending' && solA.receiver === idAuditor ? 1 : 0;
+            const pendingInB = solB && solB.status === 'pending' && solB.receiver === idAuditor ? 1 : 0;
+            if (pendingInA !== pendingInB) return pendingInB - pendingInA;
 
-        // 1. DETERMINAR EL COLOR DEL BORDE (Prioridades visuales)
-        let borderColor, borderGlow;
-        if (tieneNuevos) {
-            // 🔴 ROJO (Prioridad 1: Mensaje sin leer)
-            borderColor = '#ef4444';
-            borderGlow = 'rgba(239,68,68,0.3)';
-        } else if (hasPensamiento) {
-            // 🔵 AZUL (Prioridad 2: Publicó un pensamiento)
-            borderColor = '#3b82f6';
-            borderGlow = 'rgba(59,130,246,0.3)';
-        } else if (u.online) {
-            // 🟢 VERDE (Prioridad 3: Solo conectado)
-            borderColor = '#10b981';
-            borderGlow = 'rgba(16,185,129,0.3)';
-        } else {
-            // ⚫ GRIS (Prioridad 4: Desconectado sin nada nuevo)
-            borderColor = '#94a3b8';
-            borderGlow = 'transparent';
-        }
+            if (a.online !== b.online) return a.online ? -1 : 1;
+            if (a.pensamiento && !b.pensamiento) return -1;
+            if (!a.pensamiento && b.pensamiento) return 1;
+            return b.rawTime - a.rawTime;
+        });
 
-        // 2. DETERMINAR EL TEXTO DEL ESTADO (Totalmente independiente del color)
-        let textoEstadoDerecha = '';
-        if (u.online) {
-            // Si está online, SIEMPRE dice en línea, no importa el color
-            textoEstadoDerecha = '<span style="color:#10b981; font-weight:800;">🟢 En línea</span>';
-        } else {
-            // Si no está online, calculamos hace cuánto se fue
-            const diffMin = Math.floor((ahora - u.rawTime) / 60000);
-            textoEstadoDerecha = diffMin < 1 ? 'Hace un momento' : diffMin < 60 ? `Hace ${diffMin}m` : `Hace ${Math.floor(diffMin/60)}h`;
-        }
+        let html = '';
+        todos.forEach(u => {
+            const uid = u.key;
+            const nombre = u.nombre || 'Usuario';
+            const chat = chatsByUid[uid];
+            const nube = _cacheDataNubes && _cacheDataNubes[uid];
+            const hasPensamiento = nube && (ahora - nube.timestamp < 86400000) && nube.texto;
+            
+            const mensajesEnRadar = (window.mapaMensajesSinLeer && window.mapaMensajesSinLeer[uid]) ? window.mapaMensajesSinLeer[uid] : 0;
+            const tieneNuevos = (chat && chat.mensajesNoLeidos > 0) || (mensajesEnRadar > 0);
+            const numeroAviso = mensajesEnRadar > 0 ? mensajesEnRadar : (chat ? chat.mensajesNoLeidos : 0);
 
-        // 3. DETERMINAR QUÉ VA DEBAJO DEL NOMBRE (Resumen del chat o del pensamiento)
-        let textoResumen = '';
-        if (chat && chat.ultimoMsg) {
-            const m = chat.ultimoMsg;
-            textoResumen = m.texto || (m.esFoto ? '📷 Foto' : '...');
-        } else if (hasPensamiento) {
-            textoResumen = '💭 ' + nube.texto;
-        } else {
-            textoResumen = 'Toca para chatear';
-        }
-        if (textoResumen.length > 38) textoResumen = textoResumen.substring(0, 36) + '…';
+            // Estado de solicitud
+            const sol = requestStatusMap[uid];
+            const esSolicitudRecibida = sol && sol.status === 'pending' && sol.receiver === idAuditor;
+            const esSolicitudEnviada = sol && sol.status === 'pending' && sol.requester === idAuditor;
+            const esSolicitudAceptada = sol && sol.status === 'accepted';
+            const sinSolicitud = !sol || sol.status === 'rejected';
 
-       const badge = tieneNuevos
-            ? `<div style="background:#ef4444;color:white;font-size:0.65rem;font-weight:800;padding:2px 10px;border-radius:10px;margin-top:4px;display:inline-block;">🔴 ${numeroAviso} sin leer</div>` : '';
+            // Color del borde
+            let borderColor, borderGlow;
+            if (esSolicitudRecibida) {
+                borderColor = '#f59e0b';
+                borderGlow = 'rgba(245,158,11,0.35)';
+            } else if (tieneNuevos) {
+                borderColor = '#ef4444';
+                borderGlow = 'rgba(239,68,68,0.3)';
+            } else if (hasPensamiento) {
+                borderColor = '#3b82f6';
+                borderGlow = 'rgba(59,130,246,0.3)';
+            } else if (u.online) {
+                borderColor = '#10b981';
+                borderGlow = 'rgba(16,185,129,0.3)';
+            } else {
+                borderColor = '#94a3b8';
+                borderGlow = 'transparent';
+            }
 
-        const nombreE = escapeHtml(nombre).replace(/'/g, "\\'");
-        const fotoUrl = u.avatar || getUserProfilePhoto(uid);
-        const penE    = hasPensamiento ? escapeHtml(nube.texto).replace(/'/g, "\\'") : '';
-        const avatarClick = hasPensamiento
-            ? `event.stopPropagation(); mostrarPensamientoDeUsuario('${uid}','${nombreE}','${penE}','${fotoUrl}')`
-            : `abrirChatPrivado('${uid}','${nombreE}')`;
+            // Texto del estado (derecha)
+            let textoEstadoDerecha = '';
+            if (esSolicitudRecibida) {
+                textoEstadoDerecha = '<span style="color:#f59e0b; font-weight:800;">📩 Nueva</span>';
+            } else if (esSolicitudEnviada) {
+                textoEstadoDerecha = '<span style="color:#94a3b8; font-weight:600;">⏳ Pendiente</span>';
+            } else if (u.online) {
+                textoEstadoDerecha = '<span style="color:#10b981; font-weight:800;">🟢 En línea</span>';
+            } else {
+                const diffMin = Math.floor((ahora - u.rawTime) / 60000);
+                textoEstadoDerecha = diffMin < 1 ? 'Hace un momento' : diffMin < 60 ? `Hace ${diffMin}m` : `Hace ${Math.floor(diffMin/60)}h`;
+            }
 
-        html += `
-        <div onclick="abrirChatPrivado('${uid}','${nombreE}')"
-             style="background:white; padding:13px 15px; border-radius:16px; margin-bottom:9px;
-                    box-shadow:0 2px 8px rgba(0,0,0,.05); cursor:pointer;
-                    ${tieneNuevos ? 'border-left:4px solid #ef4444; background:#fff5f5;' : ''}">
-            <div style="display:flex; align-items:center; gap:13px;">
-                <div onclick="${avatarClick}"
-                     style="flex-shrink:0; width:54px; height:54px; border-radius:50%;
-                            background:#e2e8f0 url('${fotoUrl}') center/cover no-repeat;
-                            border:3px solid ${borderColor};
-                            box-shadow:0 0 0 3px ${borderGlow};
-                            cursor:pointer;">
+            // Texto resumen (debajo del nombre)
+            let textoResumen = '';
+            if (esSolicitudRecibida) {
+                textoResumen = '📩 Quiere chatear contigo';
+            } else if (esSolicitudEnviada) {
+                textoResumen = '⏳ Esperando respuesta...';
+            } else if (chat && chat.ultimoMsg) {
+                const m = chat.ultimoMsg;
+                textoResumen = m.texto || (m.esFoto ? '📷 Foto' : '...');
+            } else if (hasPensamiento) {
+                textoResumen = '💭 ' + nube.texto;
+            } else if (esSolicitudAceptada) {
+                textoResumen = 'Toca para chatear';
+            } else {
+                textoResumen = '📩 Toca para enviar solicitud';
+            }
+            if (textoResumen.length > 38) textoResumen = textoResumen.substring(0, 36) + '…';
+
+            const badge = tieneNuevos
+                ? `<div style="background:#ef4444;color:white;font-size:0.65rem;font-weight:800;padding:2px 10px;border-radius:10px;margin-top:4px;display:inline-block;">🔴 ${numeroAviso} sin leer</div>` : '';
+
+            // Acción del avatar (solo pensamiento o nada)
+            const nombreE = escapeHtml(nombre).replace(/'/g, "\\'");
+            const fotoUrl = u.avatar || getUserProfilePhoto(uid);
+            const penE = hasPensamiento ? escapeHtml(nube.texto).replace(/'/g, "\\'") : '';
+            const avatarClick = hasPensamiento
+                ? `event.stopPropagation(); mostrarPensamientoDeUsuario('${uid}','${nombreE}','${penE}','${fotoUrl}')`
+                : `abrirChatPrivado('${uid}','${nombreE}')`;
+
+            // Background del card
+            let cardBg = 'white';
+            let cardExtra = '';
+            if (esSolicitudRecibida) {
+                cardBg = 'linear-gradient(135deg, #fffbeb 0%, white 100%)';
+                cardExtra = 'border-left:4px solid #f59e0b;';
+            } else if (tieneNuevos) {
+                cardExtra = 'border-left:4px solid #ef4444; background:#fff5f5;';
+            }
+
+            html += `
+            <div onclick="abrirChatPrivado('${uid}','${nombreE}')"
+                 style="background:${cardBg}; padding:13px 15px; border-radius:16px; margin-bottom:9px;
+                        box-shadow:0 2px 8px rgba(0,0,0,.05); cursor:pointer;
+                        ${cardExtra}">
+                <div style="display:flex; align-items:center; gap:13px;">
+                    <div onclick="${avatarClick}"
+                         style="flex-shrink:0; width:54px; height:54px; border-radius:50%;
+                                background:#e2e8f0 url('${fotoUrl}') center/cover no-repeat;
+                                border:3px solid ${borderColor};
+                                box-shadow:0 0 0 3px ${borderGlow};
+                                cursor:pointer;">
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-weight:800; color:#1e293b; font-size:0.93rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(nombre)}</div>
+                        <div style="font-size:.81rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(textoResumen)}</div>
+                        ${badge}
+                    </div>
+                    <div style="font-size:.7rem; font-weight:600; flex-shrink:0; text-align:right;">${textoEstadoDerecha}</div>
                 </div>
-                <div style="flex:1; min-width:0;">
-                    <div style="font-weight:800; color:#1e293b; font-size:0.93rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(nombre)}</div>
-                    <div style="font-size:.81rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(textoResumen)}</div>
-                    ${badge}
-                </div>
-                <div style="font-size:.7rem; color:#94a3b8; font-weight:600; flex-shrink:0; text-align:right;">${textoEstadoDerecha}</div>
-            </div>
-        </div>`;
-    });
+            </div>`;
+        });
 
-    container.innerHTML = html;
+        container.innerHTML = html;
+    };
+
+    // Cargar estados de solicitudes y luego renderizar
+    const requestStatusMap = {};
+    let pending = 2;
+
+    const checkDone = () => {
+        pending--;
+        if (pending <= 0) _renderLista(requestStatusMap);
+    };
+
+    // Queries: solicitudes recibidas y enviadas
+    db.ref('chat_requests').orderByChild('receiver').equalTo(idAuditor).once('value').then(snap => {
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const uid = child.val().requester;
+                if (uid) requestStatusMap[uid] = child.val();
+            });
+        }
+        checkDone();
+    }).catch(() => checkDone());
+
+    db.ref('chat_requests').orderByChild('requester').equalTo(idAuditor).once('value').then(snap => {
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const uid = child.val().receiver;
+                if (uid && !requestStatusMap[uid]) {
+                    requestStatusMap[uid] = child.val();
+                }
+            });
+        }
+        checkDone();
+    }).catch(() => checkDone());
 };
 
 window.cargarChatsPrivadosNoLeidos = () => {
@@ -15292,7 +15953,12 @@ window.enviarPushPropio = (titulo, mensaje) => {
              style="width:72px; height:72px; border-radius:50%; background-size:cover; background-position:center; margin:0 auto 10px; border:3px solid #8b5cf6; box-shadow: 0 4px 16px rgba(139,92,246,0.3);">
         </div>
 
-        <div id="verPensamientoNombre" style="font-weight:900; color:#1e293b; font-size:1rem; margin-bottom:14px;"></div>
+        <div id="verPensamientoNombre" style="font-weight:900; color:#1e293b; font-size:1rem; margin-bottom:6px;"></div>
+
+        <!-- ⏱️ Contador 24h -->
+        <div id="verPensamientoCountdown" style="font-size:0.7rem; color:#94a3b8; font-weight:600; margin-bottom:14px; display:flex; align-items:center; justify-content:center; gap:4px;">
+            <span style="font-size:0.8rem;">⏳</span> Desaparece en 24h
+        </div>
 
         <!-- Burbuja de pensamiento grande -->
         <div style="background:linear-gradient(135deg,#f3e8ff,#ede9fe); border-radius:20px; padding:18px 20px; margin-bottom:18px; border:1.5px solid #c4b5fd; position:relative;">
