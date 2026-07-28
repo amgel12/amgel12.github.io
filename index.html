@@ -10639,6 +10639,8 @@ function _abrirChatPrivadoReal(targetUid, targetName) {
         }
     });
 
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.updateMensajesChibolita) AndroidNative.updateMensajesChibolita(0);
+
     db.ref(`chats_privados/${currentChatId}`).limitToLast(50).once('value', snap => {
         if (snap.exists()) {
             const updates = {};
@@ -14288,6 +14290,7 @@ window.abrirNotificaciones = () => {
         // Limpiar badge
         var badge = document.getElementById('badgeNotis') || document.getElementById('badgeNotif');
         if (badge) { badge.textContent = '0'; badge.classList.remove('active'); }
+        if (typeof AndroidNative !== 'undefined' && AndroidNative.updateMensajesChibolita) AndroidNative.updateMensajesChibolita(0);
     });
 };
 
@@ -14305,6 +14308,7 @@ window.marcarNotificacionesComoLeidas = () => {
         if (Object.keys(updates).length) {
             db.ref(`users/${idAuditor}/notifications`).update(updates);
         }
+        if (typeof AndroidNative !== 'undefined' && AndroidNative.updateMensajesChibolita) AndroidNative.updateMensajesChibolita(0);
     });
 };
 // Eventos al cargar DOM
