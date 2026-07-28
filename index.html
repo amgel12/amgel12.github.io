@@ -2052,6 +2052,18 @@
     box-shadow: 0 0 0 2px rgba(239,68,68,0.2) !important;
     transform: scale(0.97);
 }
+
+.grupo-badge {
+    position: absolute; top: -6px; right: -6px;
+    background: #22c55e; color: white;
+    min-width: 22px; height: 22px; padding: 0 5px;
+    border-radius: 50%; display: none;
+    align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 800;
+    border: 2.5px solid white;
+    box-shadow: 0 2px 6px rgba(34,197,94,0.45);
+    z-index: 5;
+}
 .grupo-icon {
     width: 55px;
     height: 55px;
@@ -3671,6 +3683,34 @@ Cerrar
         </div>
 
         <button onclick="cerrarModalComprarMensajes()"
+          style="background:none; border:none; color:#94a3b8; margin-top:14px; font-size:0.85rem; cursor:pointer;">
+          Cancelar
+        </button>
+      </div>
+    </div>
+
+    <div id="modalSinPuntosFoto" class="modal-overlay" style="z-index: 30500;">
+      <div class="modal-content" style="max-width: 360px; text-align:center; border-radius:18px; padding:22px;">
+        <div style="font-size:3rem; margin-bottom:6px;">📷</div>
+        <h3 style="color:#ef4444; margin:0 0 6px 0;">Saldo insuficiente</h3>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom:18px;">
+          Necesitas al menos <b>2.00 PTS</b> para enviar una foto privada.<br>
+          Tienes <b id="ptsActualesModal">0.00</b> PTS.
+        </p>
+
+        <button onclick="verAnuncioFotoPrivado()"
+          style="width:100%; padding:14px; border:none; border-radius:14px;
+                 background:linear-gradient(135deg,#f97316,#ef4444); color:white;
+                 font-weight:800; font-size:0.95rem; display:flex; align-items:center;
+                 justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(249,115,22,0.35);
+                 cursor:pointer;">
+          📺 Ver anuncio — Gana 3 PTS gratis
+        </button>
+        <div style="font-size:0.7rem; color:#f97316; margin-top:6px; margin-bottom:6px;">
+          🎁 Mira el anuncio completo y recibe +3 PTS
+        </div>
+
+        <button onclick="document.getElementById('modalSinPuntosFoto').style.display='none'"
           style="background:none; border:none; color:#94a3b8; margin-top:14px; font-size:0.85rem; cursor:pointer;">
           Cancelar
         </button>
@@ -6384,51 +6424,102 @@ window.toggleMenuChatPrivado = () => {
 };
 
 window.clickGaleriaDirecta = () => {
-    // Verificamos si tiene saldo suficiente (2 puntos)
+    toggleMenuChatPrivado();
     if (currentEarnings < 2) {
-        notify("❌ Necesitas al menos 2.00 PTS para enviar fotos");
+        document.getElementById('ptsActualesModal').textContent = currentEarnings.toFixed(2);
+        document.getElementById('modalSinPuntosFoto').style.display = 'flex';
         return;
     }
-    
     const input = document.getElementById('fileInputDirecto');
     if(input) input.click();
-    toggleMenuChatPrivado();
+};
+
+window.verAnuncioFotoPrivado = () => {
+    document.getElementById('modalSinPuntosFoto').style.display = 'none';
+    notify("📺 Ve el anuncio completo para ganar 3 PTS...");
+    window._pendienteFotoAd = true;
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirVideoRecompensado) {
+        AndroidNative.abrirVideoRecompensado();
+    } else {
+        notify("⚠️ Anuncios no disponibles");
+        window._pendienteFotoAd = false;
+    }
+};
+
+window.onFotoAdComplete = () => {
+    window._pendienteFotoAd = false;
+    db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) + 3.00).then(() => {
+        currentEarnings += 3.00;
+        notify("🎁 +3.00 PTS ganados por ver anuncio");
+        try { window.playSound('win'); } catch(e){}
+        const input = document.getElementById('fileInputDirecto');
+        if (input) input.click();
+    });
 };
 
 window.procesarYEnviarFotoDirecto = (input) => {
     if (currentEarnings < 2) {
-        notify("❌ Necesitas al menos 2.00 PTS");
-        input.value = ""; 
+        document.getElementById('ptsActualesModal').textContent = currentEarnings.toFixed(2);
+        document.getElementById('modalSinPuntosFoto').style.display = 'flex';
+        input.value = "";
         return;
     }
 
     if (input.files && input.files[0]) {
+        if (input.files[0].size > 10 * 1024 * 1024) {
+            notify("❌ La imagen es demasiado grande (máx 10MB)");
+            input.value = "";
+            return;
+        }
         notify("⏳ Procesando imagen... espera un momento");
         
         const reader = new FileReader();
+        reader.onerror = () => {
+            notify("❌ Error al leer el archivo");
+            input.value = "";
+        };
         reader.onload = (e) => {
             const img = new Image();
+            img.onerror = () => {
+                notify("❌ Error al cargar la imagen. Intenta con otro archivo");
+                input.value = "";
+            };
             img.src = e.target.result;
             img.onload = () => {
                 setTimeout(() => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600; 
-                    const scale = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scale;
-                    
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    // ✅ PASO CORRECTO: Convertir a archivo (Blob) y enviar a Storage
-                    canvas.toBlob((blob) => {
-                        if (currentChatId && targetUserUid) {
-                            subirYCobrarFoto(blob); 
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 600; 
+                        const scale = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scale;
+                        
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) {
+                            notify("❌ Error al procesar la imagen");
+                            input.value = "";
+                            return;
                         }
-                        input.value = ""; 
-                    }, 'image/jpeg', 0.5);
-
-                    // 🛑 AQUÍ HABÍAS DEJADO CÓDIGO VIEJO, YA LO ELIMINÉ.
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        canvas.toBlob((blob) => {
+                            if (!blob) {
+                                notify("❌ Error al comprimir la imagen");
+                                input.value = "";
+                                return;
+                            }
+                            if (currentChatId && targetUserUid) {
+                                subirYCobrarFoto(blob); 
+                            } else {
+                                notify("❌ Chat no activo. Intenta de nuevo");
+                                input.value = "";
+                            }
+                        }, 'image/jpeg', 0.5);
+                    } catch (err) {
+                        console.error("Error procesando imagen:", err);
+                        notify("❌ Error al procesar la imagen");
+                        input.value = "";
+                    }
                 }, 100);
             };
         };
@@ -6442,13 +6533,11 @@ async function subirYCobrarFoto(archivoBlob) {
     if (btn) btn.disabled = true;
 
     try {
-        // 1. Subir a Storage (Casi gratis)
         const ruta = `fotos_privadas/${currentChatId}/${Date.now()}.jpg`;
         const refStorage = firebase.storage().ref(ruta);
         const snapshot = await refStorage.put(archivoBlob);
         const urlPublica = await snapshot.ref.getDownloadURL();
 
-        // 2. Guardar en Database solo el LINK corto
         const chatKey = db.ref(`chats_privados/${currentChatId}`).push().key;
         const updates = {};
         
@@ -6456,14 +6545,13 @@ async function subirYCobrarFoto(archivoBlob) {
             uid: idAuditor,
             autor: miNombre,
             texto: "📷 Foto",
-            foto: urlPublica, // <--- Link corto. Ya no hay Base64 ✅
+            foto: urlPublica,
             esFoto: true,
             fecha: firebase.database.ServerValue.TIMESTAMP
         };
 
         await db.ref().update(updates);
 
-        // 3. Cobro y Notificación
         db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) - 2.00);
         db.ref(`users/${targetUserUid}/notifications`).push({
             from: idAuditor, fromName: miNombre, type: 'chat_privado',
@@ -6476,9 +6564,42 @@ async function subirYCobrarFoto(archivoBlob) {
         if (btn) btn.disabled = false;
 
     } catch (e) {
-        console.error(e);
-        notify("❌ Error al enviar foto");
-        if (btn) btn.disabled = false;
+        console.error("Storage falló, intentando Base64 en RTDB:", e);
+        try {
+            const reader = new FileReader();
+            const base64Data = await new Promise((resolve, reject) => {
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(archivoBlob);
+            });
+
+            const chatKey = db.ref(`chats_privados/${currentChatId}`).push().key;
+            const updates = {};
+            updates[`chats_privados/${currentChatId}/${chatKey}`] = {
+                uid: idAuditor,
+                autor: miNombre,
+                texto: "📷 Foto",
+                foto: base64Data,
+                esFoto: true,
+                fecha: firebase.database.ServerValue.TIMESTAMP
+            };
+            await db.ref().update(updates);
+
+            db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) - 2.00);
+            db.ref(`users/${targetUserUid}/notifications`).push({
+                from: idAuditor, fromName: miNombre, type: 'chat_privado',
+                text: "📷 Te envió una foto privada", extra: idAuditor,
+                timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
+            });
+
+            registrarHistorial("Foto privada enviada", -2.00);
+            notify("✅ Foto enviada (-2.00 PTS)");
+            if (btn) btn.disabled = false;
+        } catch (rtbErr) {
+            console.error("Error enviando foto:", rtbErr);
+            notify("❌ Error al enviar foto: " + (rtbErr.message || "Error desconocido"));
+            if (btn) btn.disabled = false;
+        }
     }
 }
     function onPlayerStateChange(event) {
@@ -9974,42 +10095,65 @@ window.procesarFotoPrivada = () => {
     const file = document.getElementById('inputFotoPrivada').files[0];
     if (!file) return;
 
+    if (file.size > 10 * 1024 * 1024) {
+        document.getElementById('placeholderUploadPrivada').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Imagen muy grande (máx 10MB)';
+        return;
+    }
+
     document.getElementById('placeholderUploadPrivada').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
 
     const reader = new FileReader();
+    reader.onerror = () => {
+        document.getElementById('placeholderUploadPrivada').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al leer archivo';
+    };
     reader.onload = (e) => {
         const img = new Image();
+        img.onerror = () => {
+            document.getElementById('placeholderUploadPrivada').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al cargar imagen';
+        };
         img.src = e.target.result;
         img.onload = () => {
-            // Comprimir imagen
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 600;
-            const scaleSize = MAX_WIDTH / img.width;
-            canvas.width = MAX_WIDTH;
-            canvas.height = img.height * scaleSize;
+            try {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600;
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
 
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    document.getElementById('placeholderUploadPrivada').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al procesar imagen';
+                    return;
+                }
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-            fotoPrivadaBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        document.getElementById('placeholderUploadPrivada').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al comprimir imagen';
+                        return;
+                    }
+                    fotoPrivadaBase64 = canvas.toDataURL('image/jpeg', 0.6);
 
-            // Mostrar preview
-            document.getElementById('imgPreviewPrivada').src = fotoPrivadaBase64;
-            document.getElementById('imgPreviewPrivada').style.display = 'block';
-            document.getElementById('placeholderUploadPrivada').style.display = 'none';
+                    document.getElementById('imgPreviewPrivada').src = fotoPrivadaBase64;
+                    document.getElementById('imgPreviewPrivada').style.display = 'block';
+                    document.getElementById('placeholderUploadPrivada').style.display = 'none';
 
-            // Activar botón
-            const btn = document.getElementById('btnEnviarFotoPrivada');
-            btn.disabled = false;
-            btn.innerHTML = '📷 Enviar Foto';
-            btn.style.opacity = "1";
+                    const btn = document.getElementById('btnEnviarFotoPrivada');
+                    btn.disabled = false;
+                    btn.innerHTML = '📷 Enviar Foto';
+                    btn.style.opacity = "1";
+                }, 'image/jpeg', 0.6);
+            } catch (err) {
+                console.error("Error procesando foto privada:", err);
+                document.getElementById('placeholderUploadPrivada').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al procesar imagen';
+            }
         };
     };
     reader.readAsDataURL(file);
 };
 
 // 4. ENVIAR FOTO PRIVADA
-window.enviarFotoPrivada = () => {
+window.enviarFotoPrivada = async () => {
     if (!fotoPrivadaBase64) return notify("Elige una foto primero");
     if (!currentChatId || !targetUserUid) return notify("Chat no activo");
 
@@ -10018,16 +10162,37 @@ window.enviarFotoPrivada = () => {
     btn.innerHTML = 'Enviando...';
 
     const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
-
-    db.ref(`chats_privados/${currentChatId}`).push({
+    const msgData = {
         uid: idAuditor,
         autor: miNombre,
         texto: "📷 Foto",
-        foto: fotoPrivadaBase64,
         esFoto: true,
         fecha: firebase.database.ServerValue.TIMESTAMP
-    }).then(() => {
-        // Notificar al otro usuario
+    };
+
+    try {
+        const imgTemp = new Image();
+        imgTemp.src = fotoPrivadaBase64;
+        await new Promise((resolve, reject) => { imgTemp.onload = resolve; imgTemp.onerror = reject; });
+
+        const blob = await new Promise((resolve) => {
+            const c = document.createElement('canvas');
+            c.width = imgTemp.width; c.height = imgTemp.height;
+            c.getContext('2d').drawImage(imgTemp, 0, 0);
+            c.toBlob(resolve, 'image/jpeg', 0.6);
+        });
+
+        if (!blob) throw new Error("No se pudo comprimir la imagen");
+
+        const ruta = `fotos_privadas/${currentChatId}/${Date.now()}.jpg`;
+        const refStorage = firebase.storage().ref(ruta);
+        const snapshot = await refStorage.put(blob);
+        const urlPublica = await snapshot.ref.getDownloadURL();
+
+        msgData.foto = urlPublica;
+        const chatKey = db.ref(`chats_privados/${currentChatId}`).push().key;
+        await db.ref(`chats_privados/${currentChatId}/${chatKey}`).set(msgData);
+
         db.ref(`users/${targetUserUid}/notifications`).push({
             from: myCurrentKey,
             fromName: miNombre,
@@ -10041,11 +10206,38 @@ window.enviarFotoPrivada = () => {
         cerrarModalFotoPrivada();
         notify("✅ Foto enviada");
         try { window.playSound('win'); } catch(e){}
-    }).catch(err => {
-        notify("Error: " + err.message);
-        btn.disabled = false;
-        btn.innerHTML = '📷 Enviar Foto';
-    });
+    } catch (storageErr) {
+        console.error("Storage falló, intentando Base64 en RTDB:", storageErr);
+        try {
+            msgData.foto = fotoPrivadaBase64;
+            const chatKey = db.ref(`chats_privados/${currentChatId}`).push().key;
+            await db.ref(`chats_privados/${currentChatId}/${chatKey}`).set(msgData);
+
+            db.ref(`users/${targetUserUid}/notifications`).push({
+                from: myCurrentKey,
+                fromName: miNombre,
+                type: 'chat_privado',
+                text: "📷 Te envió una foto privada",
+                extra: idAuditor,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                read: false
+            });
+
+            cerrarModalFotoPrivada();
+            notify("✅ Foto enviada");
+            try { window.playSound('win'); } catch(e){}
+        } catch (rtbErr) {
+            console.error("Error enviando foto privada:", rtbErr);
+            let msg = "❌ Error al enviar foto";
+            if (rtbErr.message && rtbErr.message.includes('too_large')) {
+                msg = "❌ La imagen es demasiado grande. Intenta con otra foto";
+            }
+            notify(msg);
+            btn.disabled = false;
+            btn.innerHTML = '📷 Enviar Foto';
+        }
+    }
+    btn.disabled = false;
 };
 
 // 5. MOSTRAR FOTO PRIVADA — usa modalFotoDetalle existente
@@ -10093,38 +10285,64 @@ window.procesarFotoGrupo = () => {
     const file = document.getElementById('inputFotoGrupo').files[0];
     if (!file) return;
 
+    if (file.size > 10 * 1024 * 1024) {
+        document.getElementById('placeholderUploadGrupo').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Imagen muy grande (máx 10MB)';
+        return;
+    }
+
     document.getElementById('placeholderUploadGrupo').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
 
     const reader = new FileReader();
+    reader.onerror = () => {
+        document.getElementById('placeholderUploadGrupo').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al leer archivo';
+    };
     reader.onload = (e) => {
         const img = new Image();
+        img.onerror = () => {
+            document.getElementById('placeholderUploadGrupo').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al cargar imagen';
+        };
         img.src = e.target.result;
         img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 600;
-            const scaleSize = MAX_WIDTH / img.width;
-            canvas.width = MAX_WIDTH;
-            canvas.height = img.height * scaleSize;
+            try {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600;
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
 
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    document.getElementById('placeholderUploadGrupo').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al procesar imagen';
+                    return;
+                }
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-            fotoGrupoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        document.getElementById('placeholderUploadGrupo').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al comprimir imagen';
+                        return;
+                    }
+                    fotoGrupoBase64 = canvas.toDataURL('image/jpeg', 0.6);
 
-            document.getElementById('imgPreviewGrupo').src = fotoGrupoBase64;
-            document.getElementById('imgPreviewGrupo').style.display = 'block';
-            document.getElementById('placeholderUploadGrupo').style.display = 'none';
+                    document.getElementById('imgPreviewGrupo').src = fotoGrupoBase64;
+                    document.getElementById('imgPreviewGrupo').style.display = 'block';
+                    document.getElementById('placeholderUploadGrupo').style.display = 'none';
 
-            const btn = document.getElementById('btnEnviarFotoGrupo');
-            btn.disabled = false;
-            btn.innerHTML = '📷 Enviar Foto al Grupo';
-            btn.style.opacity = "1";
+                    const btn = document.getElementById('btnEnviarFotoGrupo');
+                    btn.disabled = false;
+                    btn.innerHTML = '📷 Enviar Foto al Grupo';
+                    btn.style.opacity = "1";
+                }, 'image/jpeg', 0.6);
+            } catch (err) {
+                console.error("Error procesando foto grupo:", err);
+                document.getElementById('placeholderUploadGrupo').innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al procesar imagen';
+            }
         };
     };
     reader.readAsDataURL(file);
 };
 
-window.enviarFotoGrupo = () => {
+window.enviarFotoGrupo = async () => {
     if (!fotoGrupoBase64) return notify("Elige una foto primero");
     if (!currentGrupoId) return notify("Grupo no activo");
 
@@ -10133,23 +10351,57 @@ window.enviarFotoGrupo = () => {
     btn.innerHTML = 'Enviando...';
 
     const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
-
-    db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push({
+    const msgData = {
         uid: idAuditor,
         autor: miNombre,
         texto: "📷 Foto",
-        foto: fotoGrupoBase64,
         esFoto: true,
         fecha: firebase.database.ServerValue.TIMESTAMP
-    }).then(() => {
+    };
+
+    try {
+        const imgTemp = new Image();
+        imgTemp.src = fotoGrupoBase64;
+        await new Promise((resolve, reject) => { imgTemp.onload = resolve; imgTemp.onerror = reject; });
+
+        const blob = await new Promise((resolve) => {
+            const c = document.createElement('canvas');
+            c.width = imgTemp.width; c.height = imgTemp.height;
+            c.getContext('2d').drawImage(imgTemp, 0, 0);
+            c.toBlob(resolve, 'image/jpeg', 0.6);
+        });
+
+        if (!blob) throw new Error("No se pudo comprimir la imagen");
+
+        const ruta = `fotos_grupos/${currentGrupoId}/${Date.now()}.jpg`;
+        const refStorage = firebase.storage().ref(ruta);
+        const snapshot = await refStorage.put(blob);
+        const urlPublica = await snapshot.ref.getDownloadURL();
+
+        msgData.foto = urlPublica;
+        await db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push(msgData);
+
         cerrarModalFotoGrupo();
         notify("✅ Foto enviada al grupo");
         try { window.playSound('win'); } catch(e){}
-    }).catch(err => {
-        notify("Error: " + err.message);
-        btn.disabled = false;
-        btn.innerHTML = '📷 Enviar Foto al Grupo';
-    });
+    } catch (storageErr) {
+        console.error("Storage falló, intentando Base64 en RTDB:", storageErr);
+        try {
+            msgData.foto = fotoGrupoBase64;
+            await db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push(msgData);
+
+            cerrarModalFotoGrupo();
+            notify("✅ Foto enviada al grupo");
+            try { window.playSound('win'); } catch(e){}
+        } catch (rtbErr) {
+            console.error("Error enviando foto al grupo:", rtbErr);
+            notify("❌ Error al enviar foto: " + (rtbErr.message || "Error desconocido"));
+            btn.disabled = false;
+            btn.innerHTML = '📷 Enviar Foto al Grupo';
+            return;
+        }
+    }
+    btn.disabled = false;
 };
 window.mostrarFotoGrupo = (el) => {
     const fotoSrc = el?.getAttribute('data-foto');
@@ -14401,6 +14653,10 @@ window.publicarVideoConAnuncio = () => {
 
 // Callback desde Kotlin tras ver el anuncio recompensado
 window.otorgarMensajesPorVideo = () => {
+    if (window._pendienteFotoAd) {
+        window.onFotoAdComplete();
+        return;
+    }
     if (window._rewardPendingTarget) {
         window._rewardPendingTarget = null;
         otorgarMensajesPorAd();
@@ -14420,6 +14676,7 @@ window.otorgarMensajesPorVideo = () => {
 
 window.onAdSkipped = () => {
     window._rewardPendingTarget = null;
+    window._pendienteFotoAd = false;
     const btn = document.getElementById('btnPublicarVideo');
     if (btn) {
         btn.disabled = false;
@@ -14689,6 +14946,12 @@ window.abrirChatDeGrupo = (idGrupo, nombreGrupo, iconoGrupo) => {
 function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
     currentGrupoId = idGrupo;
     document.getElementById('grupoChatTitle').innerText = nombreGrupo;
+
+    // Limpiar badge de este grupo
+    window._gruposNoLeidosPorGrupo[idGrupo] = 0;
+    window._gruposNoLeidos = Object.values(window._gruposNoLeidosPorGrupo).reduce((a, b) => a + b, 0);
+    actualizarBadgeGrupos();
+    actualizarBadgeGrupoCard(idGrupo);
     document.getElementById('grupoIconoHeader').innerText = iconoGrupo || '💬';
     document.getElementById('modalChatGrupo').style.display = 'flex';
 
@@ -15058,9 +15321,10 @@ window.guardarEdicionGrupo = () => {
 window._gruposIniciado = false; 
 
 // ──────────────────────────────────────────────
-// CHIBOLITA VERDE EN GRUPOS (mensajes nuevos)
+// CHIBOLITA VERDE EN GRUPOS (mensajes nuevos per-grupo)
 // ──────────────────────────────────────────────
 window._gruposNoLeidos = 0;
+window._gruposNoLeidosPorGrupo = {};
 window._gruposMsgListeners = {};
 window._gruposInit = {};
 
@@ -15077,10 +15341,21 @@ function iniciarListenerMensajesGrupo(groupId) {
             return;
         }
         if (msg.uid !== idAuditor) {
-            window._gruposNoLeidos++;
+            window._gruposNoLeidosPorGrupo[groupId] = (window._gruposNoLeidosPorGrupo[groupId] || 0) + 1;
+            window._gruposNoLeidos = Object.values(window._gruposNoLeidosPorGrupo).reduce((a, b) => a + b, 0);
             actualizarBadgeGrupos();
+            actualizarBadgeGrupoCard(groupId);
         }
     });
+}
+
+function actualizarBadgeGrupoCard(groupId) {
+    const badge = document.getElementById('grupo-badge-' + groupId);
+    const count = window._gruposNoLeidosPorGrupo[groupId] || 0;
+    if (badge) {
+        badge.style.display = count > 0 ? 'flex' : 'none';
+        badge.textContent = count > 0 ? count : '';
+    }
 }
 
 function actualizarBadgeGrupos() {
@@ -15090,6 +15365,7 @@ function actualizarBadgeGrupos() {
 }
 
 function limpiarBadgeGrupos() {
+    window._gruposNoLeidosPorGrupo = {};
     window._gruposNoLeidos = 0;
     actualizarBadgeGrupos();
 }
@@ -15137,7 +15413,8 @@ window.cargarListaDeGrupos = () => {
             html += `
             <div class="grupo-card" data-key="${key}" data-creador="${creadorSeguro}"
                  onclick="handleGrupoClick(event, '${key}', '${nombreSeguro}', '${iconoSeguro}')"
-                 style="display: flex; align-items: center; background: white; padding: 15px; border-radius: 18px; margin-bottom: 12px; border: 1px solid #f1f5f9; box-shadow: 0 4px 15px rgba(0,0,0,0.03); cursor: pointer;">
+                 style="display: flex; align-items: center; background: white; padding: 15px; border-radius: 18px; margin-bottom: 12px; border: 1px solid #f1f5f9; box-shadow: 0 4px 15px rgba(0,0,0,0.03); cursor: pointer; position: relative;">
+                <span class="grupo-badge" id="grupo-badge-${key}" style="${(window._gruposNoLeidosPorGrupo[key] || 0) > 0 ? 'display:flex' : ''}">${(window._gruposNoLeidosPorGrupo[key] || 0) > 0 ? window._gruposNoLeidosPorGrupo[key] : ''}</span>
                 <div class="grupo-icon" style="width:50px; height:50px; border-radius:14px; background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; display:flex; align-items:center; justify-content:center; font-size:1.5rem; margin-right:15px; box-shadow:0 4px 10px rgba(99,102,241,0.2);">${g.icono || '💬'}</div>
                 <div style="flex: 1; text-align: left;">
                     <div style="font-weight: 800; color: #1e293b; font-size: 1rem;">${g.nombre || 'Grupo'}</div>
@@ -15162,7 +15439,16 @@ window.handleGrupoClick = (e, key, nombre, icono) => {
         holdGrupoActivado = false;
         return;
     }
-    abrirChatDeGrupo(key, nombre, icono);
+    document.getElementById('confirmTitle').innerText = '¿Entrar al grupo?';
+    document.getElementById('confirmText').innerText = 'Vas a entrar a "' + nombre + '"';
+    document.getElementById('confirmBtnSi').innerText = 'ENTRAR';
+    document.getElementById('confirmBtnSi').className = 'confirm-btn btn-si';
+    document.getElementById('confirmBtnSi').style.background = '#6366f1';
+    document.getElementById('customConfirm').style.display = 'flex';
+    document.getElementById('confirmBtnSi').onclick = () => {
+        cerrarConfirm();
+        abrirChatDeGrupo(key, nombre, icono);
+    };
 };
 
 window.iniciarHoldGrupo = (e, key) => {
