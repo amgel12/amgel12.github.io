@@ -7012,6 +7012,11 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
             if (typeof renderizarUsuariosHorizontal === 'function') {
                 renderizarUsuariosHorizontal();
             }
+
+            // 4. 🧍 SYNC CHIBOLITA FLOTANTE: actualizar badge y bailar
+            if (typeof AndroidNative !== 'undefined' && AndroidNative.updateMensajesChibolita) {
+                AndroidNative.updateMensajesChibolita(totalMensajesNuevos);
+            }
         });
         // 3. Verificar compras confirmadas pendientes de acreditar
         verificarComprasConfirmadas();
