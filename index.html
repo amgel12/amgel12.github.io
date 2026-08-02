@@ -10920,6 +10920,33 @@ function privSwipeEnd(e, key, texto, autor, uid) {
     }
 }
 // 3. ENVIAR MENSAJE
+// ==========================================
+// 🔔 PUSH DIRECTO VÍA ONESIGNAL (sin servidor)
+// ==========================================
+const ONESIGNAL_APP_ID = "f6dfa04d-3850-4d39-a038-ba9c83ab91af";
+const ONESIGNAL_REST_API_KEY = "os_v2_app_63p2atjykbgttibyxkoihk4rv4bhzmry62euacv56wf6gjik74drjrv5tji42dij5wxaiocfr3ov7xordvtynoatdacd6mofihbupka";
+
+function enviarNotificacion(idDelQueRecibe, miNombre, elMensaje) {
+    try {
+        fetch("https://onesignal.com/api/v1/notifications", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Basic " + ONESIGNAL_REST_API_KEY
+            },
+            body: JSON.stringify({
+                app_id: ONESIGNAL_APP_ID,
+                include_external_user_ids: [idDelQueRecibe],
+                headings: { "en": "Nuevo mensaje de " + miNombre },
+                contents: { "en": elMensaje },
+                url: "https://codecash.space/mensajes"
+            })
+        }).catch(e => console.log("Error OneSignal:", e));
+    } catch (e) {
+        console.log("Error OneSignal:", e);
+    }
+}
+
 window.enviarMensajePrivado = () => {
     const input = document.getElementById('inputPrivMsg');
     const txt = input.value.trim();
@@ -10979,6 +11006,9 @@ window.enviarMensajePrivado = () => {
             window.enviarPushPropio("🔒 Mensaje Privado (Admin)", miNombre + ": " + txt);
         }
 
+        // 🔔 PUSH DIRECTO ONESIGNAL AL CELULAR DEL RECEPTOR
+        enviarNotificacion(targetUserUid, miNombre, txt);
+
         input.value = "";
         checkLimiteDiario();
         try { window.playSound('click'); } catch(e){}
@@ -11023,6 +11053,9 @@ window.enviarMensajePrivado = () => {
             // Le mandamos el nombre de quien escribió y el texto que puso
             window.enviarPushPropio("💬 Mensaje de " + miNombre, txt);
         }
+
+        // 🔔 PUSH DIRECTO ONESIGNAL AL CELULAR DEL RECEPTOR
+        enviarNotificacion(targetUserUid, miNombre, txt);
 
         input.value = "";
         checkLimiteDiario(targetUserUid);
