@@ -2683,6 +2683,7 @@ function crearCard(key, post, mediaId, type, esRandom) {
     card.setAttribute('data-media', mediaId);
     card.setAttribute('data-type', type);
     card.setAttribute('data-uid', post.uid || '');
+    if (post.fotoPortada) card.setAttribute('data-thumb', post.fotoPortada);
     if (esRandom) card.setAttribute('data-random', '1');
 
     const isLikedInitial = post.likes && idAuditor && post.likes[idAuditor];
@@ -2953,6 +2954,18 @@ const YT_RANDOM_FALLBACK  = [
     "kOkQ4T5WO9E", "J---aiyznGQ", "b7mh0GSM6mo", "uMU0bUq9-iY",
     "YqP_YijUfKE", "v1uiLzYy8tk", "8UVNT4wvIGY", "kxopViU98Xo"
 ];
+// 🎬 Videos MP4 directos (Pexels): se reproducen SIEMPRE en el WebView,
+// a diferencia de los iframes de YouTube que a veces solo muestran la foto con el audio.
+const YT_RANDOM_MP4S = [
+    { id: "3326847", url: "https://videos.pexels.com/video-files/3326847/3326847-hd_1280_720_24fps.mp4",   titulo: "Naturaleza relajante", canal: "Pexels" },
+    { id: "2519660", url: "https://videos.pexels.com/video-files/2519660/2519660-sd_640_360_24fps.mp4",  titulo: "Atardecer en la playa", canal: "Pexels" },
+    { id: "2023708", url: "https://videos.pexels.com/video-files/2023708/2023708-sd_360_640_30fps.mp4",  titulo: "Ciudad de noche", canal: "Pexels" },
+    { id: "3629511", url: "https://videos.pexels.com/video-files/3629511/3629511-sd_360_450_24fps.mp4",  titulo: "Estilo de vida", canal: "Pexels" },
+    { id: "5013307", url: "https://videos.pexels.com/video-files/5013307/5013307-hd_1920_1080_30fps.mp4", titulo: "Paisaje aéreo", canal: "Pexels" },
+    { id: "1192116", url: "https://videos.pexels.com/video-files/1192116/1192116-sd_640_360_30fps.mp4",  titulo: "Tráfico urbano", canal: "Pexels" },
+    { id: "2053100", url: "https://videos.pexels.com/video-files/2053100/2053100-hd_1920_1080_30fps.mp4", titulo: "Calle concurrida", canal: "Pexels" },
+    { id: "854132",   url: "https://videos.pexels.com/video-files/854132/854132-sd_640_360_25fps.mp4",   titulo: "Mascotas divertidas", canal: "Pexels" }
+];
 let ytRandomCargados  = false;
 let ytRandomUsados    = new Set();
 let ytRandomCargando  = false;
@@ -2985,9 +2998,49 @@ function agregarVideoRandomAlFeed(videoId, titulo, canal, thumbUrl) {
     }
 }
 
+// Vídeo MP4 directo al azar: se reproduce con <video> nativo (nunca foto estática)
+function agregarVideoMp4AlFeed(item) {
+    const container = document.getElementById('muroReportes');
+    if (!container || !item || !item.url) return;
+    const key = 'mp4random-' + item.id;
+    if (document.getElementById(key)) return;
+    if (postOcultoParaMi(key)) return;
+    ytRandomUsados.add(item.url);
+
+    const poster = `https://images.pexels.com/videos/${item.id}/free-video-${item.id}.jpg?fit=crop&w=480&h=854&auto=compress&cs=tinysrgb`;
+
+    const post = {
+        uid: '',
+        autorClave: item.canal || 'Pexels',
+        texto: item.titulo || 'Video',
+        musica: item.url,
+        vCount: 0,
+        fotoPortada: poster
+    };
+
+    const card = crearCard(key, post, item.url, 'direct', true);
+    container.appendChild(card);
+    if (observerFeed) observerFeed.observe(card);
+
+    // Si el feed está vacío, reproducir este video
+    const primero = container.querySelector('.feed-card');
+    if (primero === card && !videoActualId) {
+        setTimeout(() => reproducirVideo(card), 300);
+    }
+}
+
 function cargarLoteVideosYT() {
     if (ytRandomCargando) return;
     ytRandomCargando = true;
+
+    // 1) Fuente principal: MP4 directos (garantizan video real, nunca foto estática)
+    const mp4s = YT_RANDOM_MP4S.filter(m => !ytRandomUsados.has(m.url));
+    if (mp4s.length) {
+        const seleccion = mp4s.slice().sort(() => Math.random() - 0.5).slice(0, YT_MAX_RANDOM);
+        seleccion.forEach(m => agregarVideoMp4AlFeed(m));
+        ytRandomCargando = false;
+        return;
+    }
 
     const q = YT_RANDOM_QUERIES[Math.floor(Math.random() * YT_RANDOM_QUERIES.length)];
 
@@ -4959,7 +5012,7 @@ style="display:none;">
                        cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
                        gap:3px; min-height:52px; font-size:0.65rem; font-weight:800; color:#64748b; transition:.2s;">
             <span style="font-size:1.2rem;">🌍</span>
-            <span style="white-space:nowrap;">solicitudes</span>
+            <span style="white-space:nowrap;">Global</span>
         </button>
 
         <!-- 3. Grupos -->
@@ -16169,11 +16222,20 @@ function reproducirVideo(card) {
 
     if (type === 'direct' || type === 'catbox' || type === 'imgur') {
         const src = type === 'imgur' ? mediaId.replace(/\.gifv$/i, '.mp4') : mediaId;
-        frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} style="object-fit:cover;background:#000;display:block;"><source src="${src}" type="video/mp4"></video>`;
+        const poster = card.getAttribute('data-thumb') || '';
+        frame.innerHTML = `<video width="100%" height="100%" autoplay loop playsinline ${audioActivado ? '' : 'muted'} ${poster ? `poster="${poster}"` : ''} style="object-fit:cover;background:#000;display:block;"><source src="${src}" type="video/mp4"></video>`;
         const video = frame.querySelector('video');
         if (video) {
             video.addEventListener('playing', () => ocultarThumb(key), { once: true });
             setTimeout(() => ocultarThumb(key), 5000);
+            video.addEventListener('error', () => {
+                // URL muerta → quitar tarjeta y pasar a la siguiente
+                const el = document.getElementById(key);
+                const siguiente = el ? el.nextElementSibling : null;
+                if (el) el.remove();
+                if (videoActualId === key) videoActualId = null;
+                if (siguiente) setTimeout(() => reproducirVideo(siguiente), 50);
+            });
         }
     } else if (type === 'streamable') {
         if (frame.getAttribute('data-precargado')) {
