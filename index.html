@@ -2676,13 +2676,14 @@ function precargarSiguiente(cardActual) {
     }
 }
 
-function crearCard(key, post, mediaId, type) {
+function crearCard(key, post, mediaId, type, esRandom) {
     const card = document.createElement('div');
     card.className = 'feed-card';
     card.id = key;
     card.setAttribute('data-media', mediaId);
     card.setAttribute('data-type', type);
     card.setAttribute('data-uid', post.uid || '');
+    if (esRandom) card.setAttribute('data-random', '1');
 
     const isLikedInitial = post.likes && idAuditor && post.likes[idAuditor];
     const thumbUrl = getThumbnailUrl(mediaId, type, post.fotoPortada || '');
@@ -2705,6 +2706,17 @@ function crearCard(key, post, mediaId, type) {
             </div>
         </div>
         <div class="feed-card-actions">
+            ${esRandom ? `
+            <div class="feed-card-avatar" style="background-image:url('${avatarUrl}')"></div>
+            <button class="feed-action-btn" style="opacity:0.35; pointer-events:none;">
+                <i class="fas fa-heart"></i>
+                <span>0</span>
+            </button>
+            <button class="feed-action-btn" style="opacity:0.35; pointer-events:none;">
+                <i class="fas fa-comment-dots"></i>
+                <span>0</span>
+            </button>
+            ` : `
             <div class="feed-card-avatar" style="background-image:url('${avatarUrl}')" onclick="mostrarPerfilUsuario('${post.uid || ''}')"></div>
             
             <button class="feed-action-btn" onclick="feedToggleLike('${key}', '${post.uid || ''}')">
@@ -2716,17 +2728,12 @@ function crearCard(key, post, mediaId, type) {
                 <i class="fas fa-comment-dots"></i>
                 <span id="c-count-${key}">${post.comentarios ? Object.keys(post.comentarios).length : 0}</span>
             </button>
-
-            <!-- 🔥 BOTÓN ELIMINAR (Solo para dueño o admin) -->
-            ${(post.uid === idAuditor || isAdmin) ? `
-                <button class="feed-action-btn" onclick="eliminarPost('${key}')" style="color:#ef4444; margin-top:5px;">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            ` : `
-                <button class="feed-action-btn">
-                    <i class="fas fa-ellipsis-v" style="color:white; opacity:0.5;"></i>
-                </button>
             `}
+
+            <!-- 🔥 BOTÓN ELIMINAR (todos los videos) -->
+            <button class="feed-action-btn" onclick="${esRandom ? `eliminarParaMi('${key}')` : `abrirOpcionesPost('${key}')`}" style="color:#ef4444; margin-top:5px;" title="Eliminar video">
+                <i class="fas fa-trash-alt"></i>
+            </button>
         </div>
         ${!audioActivado ? `
         <div class="unmute-box" onclick="activarAudioGlobal()">
@@ -2736,7 +2743,7 @@ function crearCard(key, post, mediaId, type) {
     `;
 
     // --- Listeners de Perfil ---
-    if (post.uid && !cacheFotosPerfil[post.uid]) {
+    if (!esRandom && post.uid && !cacheFotosPerfil[post.uid]) {
         db.ref(`users/${post.uid}/fotoPerfil`).once('value', s => {
             if (s.val()) {
                 cacheFotosPerfil[post.uid] = s.val();
@@ -2747,16 +2754,18 @@ function crearCard(key, post, mediaId, type) {
     }
 
     // --- Listeners en tiempo real (Likes y Vistas) ---
-    db.ref(`reportes/${key}/vCount`).on('value', s => {
-        const el = document.getElementById(`l-count-${key}`);
-        if (el) el.textContent = s.val() || 0;
-    });
-    db.ref(`reportes/${key}/likes/${idAuditor}`).on('value', s => {
-        const heart = document.getElementById(`heart-${key}`);
-        if (!heart) return;
-        if (s.exists()) heart.classList.add('liked');
-        else heart.classList.remove('liked');
-    });
+    if (!esRandom) {
+        db.ref(`reportes/${key}/vCount`).on('value', s => {
+            const el = document.getElementById(`l-count-${key}`);
+            if (el) el.textContent = s.val() || 0;
+        });
+        db.ref(`reportes/${key}/likes/${idAuditor}`).on('value', s => {
+            const heart = document.getElementById(`heart-${key}`);
+            if (!heart) return;
+            if (s.exists()) heart.classList.add('liked');
+            else heart.classList.remove('liked');
+        });
+    }
 
     return card;
 }
@@ -2790,6 +2799,7 @@ function feedCacheRenderizar(container) {
         for (let i = arr.length - 1; i >= 0; i--) {
             const { key, post, mediaLink, type } = arr[i];
             if (document.getElementById(key)) continue;
+            if (postOcultoParaMi(key)) continue;
             const card = crearCard(key, post, mediaLink, type);
             container.prepend(card);
             if (observerFeed) observerFeed.observe(card);
@@ -2831,6 +2841,7 @@ function cargarMuro() {
 
             const post = snap.val();
             if (!post || !post.musica) return;
+            if (postOcultoParaMi(snap.key)) return;
 
             let mediaLink = "", type = "youtube";
 
@@ -2864,13 +2875,23 @@ function cargarMuro() {
     db.ref('reportes').on('child_removed', snap => {
         const el = document.getElementById(snap.key);
         if (el) el.remove();
+        if (videoActualId === snap.key) videoActualId = null;
         // Eliminar también de caché local
         try {
             let arr = JSON.parse(localStorage.getItem(FEED_CACHE_KEY) || '[]');
             arr = arr.filter(p => p.key !== snap.key);
             localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(arr));
         } catch(e) {}
+        // Si estaba en "ocultos para mí", dejarlo limpio
+        try {
+            let ocultos = JSON.parse(localStorage.getItem('pgc_ocultos_v2') || '[]');
+            ocultos = ocultos.filter(k => k !== snap.key);
+            localStorage.setItem('pgc_ocultos_v2', JSON.stringify(ocultos));
+        } catch(e) {}
     });
+
+    // 🎲 Añadir videos aleatorios de YouTube para que el feed nunca esté vacío
+    setTimeout(cargarVideosYTAlAzar, 600);
 }
 
 window.feedToggleLike = (postKey, ownerUid) => {
@@ -2903,6 +2924,103 @@ window.activarAudioGlobal = () => {
     const actual = document.getElementById(videoActualId);
     if (actual) { videoActualId = null; reproducirVideo(actual); }
 };
+// ── VIDEOS DE YOUTUBE AL AZAR ───────────────────────────────────────────
+const YT_API_KEY          = "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A";
+const YT_MAX_RANDOM       = 8;
+const YT_RANDOM_QUERIES   = [
+    "música viral 2026", "videos graciosos", "fútbol goles", "perros y gatos",
+    "memes", "recetas fáciles", "viajes por el mundo", "deportes extremos",
+    "curiosidades", "música en vivo", "humor corto", "naturaleza relajante"
+];
+const YT_RANDOM_FALLBACK  = [
+    "dQw4w9WgXcQ", "9bZkp7q19f0", "kJQP7kiw5Fk", "JGwWNGJdvx8",
+    "RgKAFK5djSk", "OPf0YbXqDm0", "fJ9rUzIMcZQ", "YQHsXMglC9A",
+    "CevxZvSJLk8", "7wtfhZwyrcc", "pRpeEdMmmQ0", "e-fA-gBCkj0",
+    "IcrbM1l_BoI", "fLexgOxsZu0", "q0hyYWKXF0Q", "2Vv-BfVoq4g",
+    "60ItHLz5WEA", "K4DyBUG242c", "2vjPBrBU-TM", "sRxrwjOtIag",
+    "DDWKuo3gXMQ", "e-ORhEE9VVg", "QYh6mYIJG2Y", "WXBHCQYxwr0"
+];
+let ytRandomCargados  = false;
+let ytRandomUsados    = new Set();
+let ytRandomCargando  = false;
+
+function agregarVideoRandomAlFeed(videoId, titulo, canal, thumbUrl) {
+    const container = document.getElementById('muroReportes');
+    if (!container || !videoId) return;
+    const key = 'ytrandom-' + videoId;
+    if (document.getElementById(key)) return;
+    if (postOcultoParaMi(key)) return;
+    ytRandomUsados.add(videoId);
+
+    const post = {
+        uid: '',
+        autorClave: canal || 'YouTube',
+        texto: titulo || 'Video de YouTube',
+        musica: 'https://www.youtube.com/watch?v=' + videoId,
+        vCount: 0,
+        fotoPortada: thumbUrl || ''
+    };
+
+    const card = crearCard(key, post, videoId, 'youtube', true);
+    container.appendChild(card);
+    if (observerFeed) observerFeed.observe(card);
+
+    // Si el feed está vacío (sin posts de Firebase), reproducir este video
+    const primero = container.querySelector('.feed-card');
+    if (primero === card && !videoActualId) {
+        setTimeout(() => reproducirVideo(card), 300);
+    }
+}
+
+function cargarLoteVideosYT() {
+    if (ytRandomCargando) return;
+    ytRandomCargando = true;
+
+    const q = YT_RANDOM_QUERIES[Math.floor(Math.random() * YT_RANDOM_QUERIES.length)];
+
+    fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=${YT_MAX_RANDOM}&q=${encodeURIComponent(q)}&safeSearch=moderate&key=${YT_API_KEY}`)
+        .then(r => r.json())
+        .then(json => {
+            ytRandomCargando = false;
+            const items = (json.items || []).filter(it => it && it.id && it.id.videoId);
+            if (!items.length) throw new Error("Sin resultados de YouTube");
+            items.forEach(it => {
+                const sn = it.snippet || {};
+                const thumb = sn.thumbnails ? (sn.thumbnails.high || sn.thumbnails.default || {}).url || '' : '';
+                agregarVideoRandomAlFeed(it.id.videoId, sn.title || '', sn.channelTitle || '', thumb);
+            });
+        })
+        .catch(() => {
+            // Si la API falla (o está bloqueada), usamos la lista curada y la barajamos
+            let pool = YT_RANDOM_FALLBACK.filter(id => !ytRandomUsados.has(id));
+            if (!pool.length) {
+                ytRandomUsados = new Set(); // pool agotado → reiniciar
+                pool = YT_RANDOM_FALLBACK.slice();
+            }
+            const seleccion = pool.slice().sort(() => Math.random() - 0.5).slice(0, YT_MAX_RANDOM);
+            seleccion.forEach(id => agregarVideoRandomAlFeed(id));
+            ytRandomCargando = false;
+        });
+}
+
+function cargarVideosYTAlAzar() {
+    if (ytRandomCargados) return;
+    ytRandomCargados = true;
+
+    // Carga infinita: al llegar casi al final, pedir otro lote de videos al azar
+    const container = document.getElementById('muroReportes');
+    if (container && !window._ytScrollHook) {
+        window._ytScrollHook = true;
+        container.addEventListener('scroll', () => {
+            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 500) {
+                cargarLoteVideosYT();
+            }
+        });
+    }
+
+    cargarLoteVideosYT();
+}
+// ── FIN VIDEOS DE YOUTUBE AL AZAR ───────────────────────────────────────
 // ── FIN FEED NATIVO ───────────────────────────────────────────────────────
 
     </script>
@@ -5032,8 +5150,12 @@ style="display:none;">
             Opciones de publicación
         </h3>
 
-        <button id="btnEliminarPost" onclick="eliminarPostActual()" class="btn-blue" style="display:none; margin:15px 15px 5px; background:#fee2e2; color:#ef4444; border:1px solid #fca5a5; display:flex; align-items:center; justify-content:center; gap:10px;">
-            �😱️ Eliminar publicación
+        <button id="btnEliminarPost" onclick="eliminarPostActual()" class="btn-blue" style="display:none; margin:15px 15px 5px; background:#fee2e2; color:#ef4444; border:1px solid #fca5a5; align-items:center; justify-content:center; gap:10px;">
+            🗑️ Eliminar para todos
+        </button>
+
+        <button onclick="eliminarParaMi(postSeleccionadoKey)" class="btn-blue" style="margin:5px 15px 5px; background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; align-items:center; justify-content:center; gap:10px;">
+            🙈 Eliminar para mí
         </button>
 
         <button onclick="verEstadisticasPost()" class="btn-blue" style="margin:5px 15px 5px; background:white; color:#0070ba; border:1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; gap:10px;">
@@ -12896,7 +13018,13 @@ function validarPublicacionMision() {
 // --- 1. ABRIR MENÚ DE OPCIONES (Limpio y Barato) ---
 window.abrirOpcionesPost = (postKey) => {
     if (!postKey) return;
-    
+
+    // Videos aleatorios de YouTube: no viven en Firebase, solo se pueden ocultar
+    if (String(postKey).startsWith('ytrandom-')) {
+        eliminarParaMi(postKey);
+        return;
+    }
+
     // Usamos .once para no gastar datos de más
     db.ref(`reportes/${postKey}`).once('value').then(snap => {
         if (!snap.exists()) return notify("❌ La publicación ya no existe");
@@ -12918,7 +13046,7 @@ window.abrirOpcionesPost = (postKey) => {
     });
 };
 
-// --- 2. ELIMINAR POST (Con el Modal Bonito) ---
+// --- 2. ELIMINAR POST PARA TODOS (Con el Modal Bonito) ---
 window.eliminarPost = (postKey) => {
     // Si no pasas postKey, usamos el que se guardó al abrir opciones
     const keyABorrar = postKey || postSeleccionadoKey;
@@ -12932,24 +13060,75 @@ window.eliminarPost = (postKey) => {
     const modalConfirm = document.getElementById('customConfirm');
     const btnSi = document.getElementById('confirmBtnSi');
     
-    document.getElementById('confirmTitle').textContent = "🗑️ ¿Borrar Publicación?";
-    document.getElementById('confirmText').textContent = "Este video se eliminará para siempre del muro.";
+    document.getElementById('confirmTitle').textContent = "🗑️ ¿Eliminar para todos?";
+    document.getElementById('confirmText').textContent = "Este video se eliminará para siempre del muro para TODOS los usuarios.";
     
     // Mostramos el modal moderno
     modalConfirm.style.display = 'flex';
     
     // Acción al confirmar
     btnSi.onclick = () => {
-        db.ref(`reportes/${keyABorrar}`).remove().then(() => {
-            notify("✅ Video eliminado");
-            const el = document.getElementById(keyABorrar);
-            if (el) el.remove(); // Quitar de la pantalla
-            window.cerrarConfirm(); // Cerrar el modal bonito
-        }).catch(err => {
-            alert("Error: " + err.message);
-        });
+        // 1. Quitar la tarjeta de la pantalla INMEDIATAMENTE (para todos)
+        const el = document.getElementById(keyABorrar);
+        if (el) el.remove();
+        if (videoActualId === keyABorrar) videoActualId = null;
+        window.cerrarConfirm(); // Cerrar el modal bonito
+
+        // 2. Limpiar caché local del feed
+        try {
+            let arr = JSON.parse(localStorage.getItem(FEED_CACHE_KEY) || '[]');
+            arr = arr.filter(p => p.key !== keyABorrar);
+            localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(arr));
+        } catch(e) {}
+
+        // 3. Eliminar de Firebase para TODOS (no depende de la pantalla)
+        db.ref(`reportes/${keyABorrar}`).remove()
+            .then(() => notify("✅ Video eliminado para todos"))
+            .catch(err => notify("⚠️ Error: " + err.message));
     };
 };
+
+// --- 2b. ELIMINAR PARA MÍ (Ocultar solo para este usuario) ---
+window.eliminarParaMi = (postKey) => {
+    const key = postKey || postSeleccionadoKey;
+    if (!key) return;
+
+    // Guardamos la key en una lista local de ocultos
+    try {
+        let ocultos = JSON.parse(localStorage.getItem('pgc_ocultos_v2') || '[]');
+        if (!ocultos.includes(key)) ocultos.push(key);
+        localStorage.setItem('pgc_ocultos_v2', JSON.stringify(ocultos));
+    } catch(e) {}
+
+    // Quitarlo también del caché local del feed
+    try {
+        let arr = JSON.parse(localStorage.getItem(FEED_CACHE_KEY) || '[]');
+        arr = arr.filter(p => p.key !== key);
+        localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(arr));
+    } catch(e) {}
+
+    // Quitar de la pantalla
+    const el = document.getElementById(key);
+    if (el) el.remove();
+    if (videoActualId === key) videoActualId = null;
+
+    // Cerrar el menú de opciones
+    const menu = document.getElementById('modalPostOptions');
+    if (menu) menu.style.display = 'none';
+
+    notify("🙈 Video oculto solo para ti");
+};
+
+// El botón "Eliminar para todos" del menú de opciones
+window.eliminarPostActual = () => eliminarPost(postSeleccionadoKey);
+
+// ¿Este usuario ya ocultó este video?
+function postOcultoParaMi(key) {
+    try {
+        const ocultos = JSON.parse(localStorage.getItem('pgc_ocultos_v2') || '[]');
+        return ocultos.includes(key);
+    } catch(e) { return false; }
+}
 // ... aquí terminan tus otras funciones ...
 
     window.cerrarConfirm = () => {
