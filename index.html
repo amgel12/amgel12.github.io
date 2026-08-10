@@ -2730,6 +2730,11 @@ function crearCard(key, post, mediaId, type, esRandom) {
             </button>
             `}
 
+            <button class="feed-action-btn" id="playpause-${key}" onclick="event.stopPropagation(); togglePausaVideo('${key}')" title="Pausar / Reanudar">
+                <i class="fas fa-pause" id="playpauseicon-${key}"></i>
+                <span id="playpausetxt-${key}">Pausa</span>
+            </button>
+
             <!-- 🔥 BOTÓN ELIMINAR (todos los videos) -->
             <button class="feed-action-btn" onclick="${esRandom ? `eliminarParaMi('${key}')` : `abrirOpcionesPost('${key}')`}" style="color:#ef4444; margin-top:5px;" title="Eliminar video">
                 <i class="fas fa-trash-alt"></i>
@@ -2875,6 +2880,7 @@ function cargarMuro() {
     db.ref('reportes').on('child_removed', snap => {
         const el = document.getElementById(snap.key);
         if (el) el.remove();
+        if (window._ytPlayers && window._ytPlayers[snap.key]) delete window._ytPlayers[snap.key];
         if (videoActualId === snap.key) videoActualId = null;
         // Eliminar también de caché local
         try {
@@ -2926,11 +2932,14 @@ window.activarAudioGlobal = () => {
 };
 // ── VIDEOS DE YOUTUBE AL AZAR ───────────────────────────────────────────
 const YT_API_KEY          = "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A";
-const YT_MAX_RANDOM       = 8;
+const YT_MAX_RANDOM       = 12;
 const YT_RANDOM_QUERIES   = [
     "música viral 2026", "videos graciosos", "fútbol goles", "perros y gatos",
     "memes", "recetas fáciles", "viajes por el mundo", "deportes extremos",
-    "curiosidades", "música en vivo", "humor corto", "naturaleza relajante"
+    "curiosidades", "música en vivo", "humor corto", "naturaleza relajante",
+    "bailes virales", "tutoriales rápidos", "gatos divertidos", "mascotas graciosas",
+    "música reggaeton", "fútbol mejores jugadas", "comida callejera", "risas aseguradas",
+    "paisajes hermosos", "trucos de magia", "deportes extremos 2026", "tendencias tiktok"
 ];
 const YT_RANDOM_FALLBACK  = [
     "dQw4w9WgXcQ", "9bZkp7q19f0", "kJQP7kiw5Fk", "JGwWNGJdvx8",
@@ -2938,7 +2947,11 @@ const YT_RANDOM_FALLBACK  = [
     "CevxZvSJLk8", "7wtfhZwyrcc", "pRpeEdMmmQ0", "e-fA-gBCkj0",
     "IcrbM1l_BoI", "fLexgOxsZu0", "q0hyYWKXF0Q", "2Vv-BfVoq4g",
     "60ItHLz5WEA", "K4DyBUG242c", "2vjPBrBU-TM", "sRxrwjOtIag",
-    "DDWKuo3gXMQ", "e-ORhEE9VVg", "QYh6mYIJG2Y", "WXBHCQYxwr0"
+    "DDWKuo3gXMQ", "e-ORhEE9VVg", "QYh6mYIJG2Y", "WXBHCQYxwr0",
+    "hT_nvWreIhg", "09R8_2nJtjg", "gCYcHz2k5x0", "uelHwf8o7_U",
+    "YykjpeuMNEk", "LPPhhB9a7iU", "ktvTqknDobU", "nYh-n7EOtMA",
+    "kOkQ4T5WO9E", "J---aiyznGQ", "b7mh0GSM6mo", "uMU0bUq9-iY",
+    "YqP_YijUfKE", "v1uiLzYy8tk", "8UVNT4wvIGY", "kxopViU98Xo"
 ];
 let ytRandomCargados  = false;
 let ytRandomUsados    = new Set();
@@ -3019,7 +3032,40 @@ function cargarVideosYTAlAzar() {
     }
 
     cargarLoteVideosYT();
+    // Segundo lote inicial para que el feed tenga más videos al azar desde el inicio
+    setTimeout(cargarLoteVideosYT, 900);
 }
+
+// Volver al inicio del feed y refrescarlo con videos nuevos al azar
+window.refrescarVideosFeed = () => {
+    const muro = document.getElementById('muroReportes');
+    if (!muro) return;
+
+    // Quitar los videos aleatorios actuales (los posts de usuarios se conservan)
+    muro.querySelectorAll('.feed-card[data-random]').forEach(card => {
+        if (window._ytPlayers && window._ytPlayers[card.id]) delete window._ytPlayers[card.id];
+        card.remove();
+    });
+
+    // Detener el video en reproducción
+    if (typeof detenerVideoMuro === 'function') detenerVideoMuro();
+
+    // Resetear estado para traer un lote nuevo de videos al azar
+    ytRandomUsados   = new Set();
+    ytRandomCargados = false;
+    ytRandomCargando = false;
+
+    // Volver al inicio del feed
+    muro.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Cargar videos nuevos
+    setTimeout(() => {
+        cargarVideosYTAlAzar();
+        setTimeout(cargarLoteVideosYT, 900);
+    }, 350);
+
+    try { notify('🔄 Feed actualizado con nuevos videos'); } catch(e) {}
+};
 // ── FIN VIDEOS DE YOUTUBE AL AZAR ───────────────────────────────────────
 // ── FIN FEED NATIVO ───────────────────────────────────────────────────────
 
@@ -4913,7 +4959,7 @@ style="display:none;">
                        cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
                        gap:3px; min-height:52px; font-size:0.65rem; font-weight:800; color:#64748b; transition:.2s;">
             <span style="font-size:1.2rem;">🌍</span>
-            <span style="white-space:nowrap;">Global</span>
+            <span style="white-space:nowrap;">solicitudes</span>
         </button>
 
         <!-- 3. Grupos -->
@@ -5866,9 +5912,8 @@ window.goToScreen = (index, userAction = false) => {
     // -------------------------------------------------
 
     if (userAction && index === 2 && currentScreen === 2) {
-        // Doble-tap en feed → volver al primer video
-        const muro = document.getElementById('muroReportes');
-        if (muro) { muro.scrollTo({ top: 0, behavior: 'smooth' }); notify('🔝 Volviendo al inicio'); }
+        // Doble-tap en feed → volver al inicio y refrescar con nuevos videos
+        window.refrescarVideosFeed();
         return;
     }
 
@@ -5897,6 +5942,7 @@ window.goToScreen = (index, userAction = false) => {
         // Feed iniciado una sola vez desde onAuthStateChanged — solo mostrar
     } else {
         detenerProgresoVideo();
+        feedPausado = false;
         // Pausar todos los <video> del feed para que no sigan sonando
         if (container) {
             container.querySelectorAll('video').forEach(function(v) {
@@ -6029,6 +6075,42 @@ function detenerProgresoVideo() {
     document.getElementById('videoProgressWrapper').style.display = 'none';
     videoWatchId = null;
     videoWatchSeconds = 0;
+}
+
+// Reanudar el conteo de recompensa tras pausar (sin reiniciar los segundos)
+function reanudarProgresoVideo(ytId) {
+    if (videoProgressInterval) return; // ya corriendo
+    if (typeof currentScreen !== 'undefined' && currentScreen !== 2) return;
+    // Si este video ya dio recompensa hoy, no volver a contar
+    const claveHoy = 'v2_' + new Date().toISOString().split('T')[0] + '_' + ytId;
+    if (localStorage.getItem(claveHoy)) {
+        videoWatchId = ytId;
+        videoWatchSeconds = VIDEO_REWARD_SECONDS;
+        actualizarBarraProgreso();
+        return;
+    }
+    if (videoWatchId !== ytId) {
+        videoWatchId = ytId;
+        videoWatchSeconds = 0;
+    }
+    document.getElementById('videoProgressWrapper').style.display = 'block';
+    videoProgressInterval = setInterval(() => {
+        if (typeof currentScreen !== 'undefined' && currentScreen !== 2) {
+            clearInterval(videoProgressInterval);
+            videoProgressInterval = null;
+            document.getElementById('videoProgressWrapper').style.display = 'none';
+            return;
+        }
+        if (videoWatchId === ytId) {
+            videoWatchSeconds++;
+            actualizarBarraProgreso();
+            if (videoWatchSeconds >= VIDEO_REWARD_SECONDS) {
+                otorgarPuntosVideo(ytId);
+                clearInterval(videoProgressInterval);
+                videoProgressInterval = null;
+            }
+        }
+    }, 1000);
 }
 
 // --- LÓGICA DE AUTO-PLAY TIKTOK (OPTIMIZADA) ---
@@ -12587,6 +12669,9 @@ window.verFotoInternal = (key) => {
 window.detenerVideoMuro = () => {
     // Detener video del feed nativo directamente
     if (videoActualId) {
+        if (window._ytPlayers && window._ytPlayers[videoActualId]) {
+            delete window._ytPlayers[videoActualId];
+        }
         const card = document.getElementById(videoActualId);
         if (card) {
             const frame = card.querySelector('.vid-frame');
@@ -12595,6 +12680,7 @@ window.detenerVideoMuro = () => {
         }
         videoActualId = null;
     }
+    feedPausado = false;
     if (videoActualJugando) {
         const container = document.getElementById(videoActualJugando);
         if (container) {
@@ -16059,7 +16145,18 @@ function reproducirVideo(card) {
             ant.querySelector('.vid-frame').innerHTML = "";
             mostrarThumb(videoActualId);
         }
+        if (window._ytPlayers && window._ytPlayers[videoActualId]) {
+            delete window._ytPlayers[videoActualId];
+        }
     }
+
+    feedPausado = false;
+    document.querySelectorAll('.feed-card').forEach(c => {
+        const ic = document.getElementById('playpauseicon-' + c.id);
+        const tx = document.getElementById('playpausetxt-' + c.id);
+        if (ic) ic.className = 'fas fa-pause';
+        if (tx) tx.textContent = 'Pausa';
+    });
 
     videoActualId = card.id;
     const mediaId = card.getAttribute('data-media');
@@ -16108,7 +16205,12 @@ function reproducirVideo(card) {
                 videoId: mediaId,
                 playerVars: { autoplay: 1, controls: 0, mute: muteParam, loop: 1, playlist: mediaId, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3 },
                 events: {
-                    onReady: (e) => { if (audioActivado) e.target.unMute(); e.target.playVideo(); },
+                    onReady: (e) => {
+                        window._ytPlayers = window._ytPlayers || {};
+                        window._ytPlayers[key] = e.target;
+                        if (audioActivado) e.target.unMute();
+                        e.target.playVideo();
+                    },
                     onStateChange: (e) => { if (e.data === window.YT.PlayerState.PLAYING) ocultarThumb(key); },
                     onError: () => { const s = document.getElementById(`spin-${key}`); if (s) s.innerHTML = '<i class="fas fa-exclamation-circle"></i>'; }
                 }
@@ -16116,6 +16218,82 @@ function reproducirVideo(card) {
         };
         crearPlayer();
     }
+}
+
+// ── PAUSA / REANUDAR VIDEO DEL FEED ─────────────────────────────────────
+let feedPausado = false;
+
+window.togglePausaVideo = (key) => {
+    const card = document.getElementById(key);
+    if (!card) return;
+    // Solo se puede pausar el video que está en reproducción
+    if (videoActualId !== key) return;
+    const icon = document.getElementById('playpauseicon-' + key);
+    const txt  = document.getElementById('playpausetxt-' + key);
+
+    if (feedPausado) {
+        feedPausado = false;
+        reanudarVideo(key);
+        if (icon) icon.className = 'fas fa-pause';
+        if (txt) txt.textContent = 'Pausa';
+    } else {
+        feedPausado = true;
+        pausarVideo(key);
+        if (icon) icon.className = 'fas fa-play';
+        if (txt) txt.textContent = 'Reanudar';
+    }
+};
+
+function pausarVideo(key) {
+    const card = document.getElementById(key);
+    if (!card) return;
+    const type  = card.getAttribute('data-type');
+    const frame = card.querySelector('.vid-frame');
+    if (!frame) return;
+
+    if (type === 'direct' || type === 'catbox' || type === 'imgur') {
+        const v = frame.querySelector('video');
+        if (v) { try { v.pause(); } catch(e){} }
+    } else if (type === 'youtube') {
+        const p = window._ytPlayers && window._ytPlayers[key];
+        if (p && typeof p.pauseVideo === 'function') { try { p.pauseVideo(); } catch(e){} }
+    } else if (type === 'dailymotion') {
+        const ifr = frame.querySelector('iframe');
+        if (ifr) { try { ifr.contentWindow.postMessage('pause', '*'); } catch(e){} }
+    } else if (type === 'streamable') {
+        const ifr = frame.querySelector('iframe');
+        if (ifr) { try { ifr.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); } catch(e){} }
+    }
+    // Congelar el conteo de recompensa mientras está en pausa
+    if (videoProgressInterval) {
+        clearInterval(videoProgressInterval);
+        videoProgressInterval = null;
+    }
+}
+
+function reanudarVideo(key) {
+    const card = document.getElementById(key);
+    if (!card) return;
+    const type  = card.getAttribute('data-type');
+    const frame = card.querySelector('.vid-frame');
+    if (!frame) return;
+    const mediaId = card.getAttribute('data-media');
+
+    if (type === 'direct' || type === 'catbox' || type === 'imgur') {
+        const v = frame.querySelector('video');
+        if (v) { try { v.play(); } catch(e){} }
+    } else if (type === 'youtube') {
+        const p = window._ytPlayers && window._ytPlayers[key];
+        if (p && typeof p.playVideo === 'function') { try { p.playVideo(); } catch(e){} }
+    } else if (type === 'dailymotion') {
+        const ifr = frame.querySelector('iframe');
+        if (ifr) { try { ifr.contentWindow.postMessage('play', '*'); } catch(e){} }
+    } else if (type === 'streamable') {
+        const ifr = frame.querySelector('iframe');
+        if (ifr) { try { ifr.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); } catch(e){} }
+    }
+    // Reanudar el conteo de recompensa
+    if (typeof reanudarProgresoVideo === 'function') reanudarProgresoVideo(mediaId);
 }
 window.pedirPermisoNotificaciones = () => {
     // 1. Si estamos en la App de Android (Kotlin)
