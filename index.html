@@ -2931,94 +2931,82 @@ window.activarAudioGlobal = () => {
     const actual = document.getElementById(videoActualId);
     if (actual) { videoActualId = null; reproducirVideo(actual); }
 };
-// ── VIDEOS DE YOUTUBE AL AZAR ───────────────────────────────────────────
-const YT_API_KEY          = "AIzaSyBiie8OxnerNy90uRARuPnr0Vr3D017R4A";
-const YT_MAX_RANDOM       = 12;
-const YT_RANDOM_QUERIES   = [
-    "música viral 2026", "videos graciosos", "fútbol goles", "perros y gatos",
-    "memes", "recetas fáciles", "viajes por el mundo", "deportes extremos",
-    "curiosidades", "música en vivo", "humor corto", "naturaleza relajante",
-    "bailes virales", "tutoriales rápidos", "gatos divertidos", "mascotas graciosas",
-    "música reggaeton", "fútbol mejores jugadas", "comida callejera", "risas aseguradas",
-    "paisajes hermosos", "trucos de magia", "deportes extremos 2026", "tendencias tiktok"
-];
-const YT_RANDOM_FALLBACK  = [
-    "dQw4w9WgXcQ", "9bZkp7q19f0", "kJQP7kiw5Fk", "JGwWNGJdvx8",
-    "RgKAFK5djSk", "OPf0YbXqDm0", "fJ9rUzIMcZQ", "YQHsXMglC9A",
-    "CevxZvSJLk8", "7wtfhZwyrcc", "pRpeEdMmmQ0", "e-fA-gBCkj0",
-    "IcrbM1l_BoI", "fLexgOxsZu0", "q0hyYWKXF0Q", "2Vv-BfVoq4g",
-    "60ItHLz5WEA", "K4DyBUG242c", "2vjPBrBU-TM", "sRxrwjOtIag",
-    "DDWKuo3gXMQ", "e-ORhEE9VVg", "QYh6mYIJG2Y", "WXBHCQYxwr0",
-    "hT_nvWreIhg", "09R8_2nJtjg", "gCYcHz2k5x0", "uelHwf8o7_U",
-    "YykjpeuMNEk", "LPPhhB9a7iU", "ktvTqknDobU", "nYh-n7EOtMA",
-    "kOkQ4T5WO9E", "J---aiyznGQ", "b7mh0GSM6mo", "uMU0bUq9-iY",
-    "YqP_YijUfKE", "v1uiLzYy8tk", "8UVNT4wvIGY", "kxopViU98Xo"
-];
-// 🎬 Videos MP4 directos (Pexels): se reproducen SIEMPRE en el WebView,
-// a diferencia de los iframes de YouTube que a veces solo muestran la foto con el audio.
-const YT_RANDOM_MP4S = [
-    { id: "3326847", url: "https://videos.pexels.com/video-files/3326847/3326847-hd_1280_720_24fps.mp4",   titulo: "Naturaleza relajante", canal: "Pexels" },
-    { id: "2519660", url: "https://videos.pexels.com/video-files/2519660/2519660-sd_640_360_24fps.mp4",  titulo: "Atardecer en la playa", canal: "Pexels" },
-    { id: "2023708", url: "https://videos.pexels.com/video-files/2023708/2023708-sd_360_640_30fps.mp4",  titulo: "Ciudad de noche", canal: "Pexels" },
-    { id: "3629511", url: "https://videos.pexels.com/video-files/3629511/3629511-sd_360_450_24fps.mp4",  titulo: "Estilo de vida", canal: "Pexels" },
-    { id: "5013307", url: "https://videos.pexels.com/video-files/5013307/5013307-hd_1920_1080_30fps.mp4", titulo: "Paisaje aéreo", canal: "Pexels" },
-    { id: "1192116", url: "https://videos.pexels.com/video-files/1192116/1192116-sd_640_360_30fps.mp4",  titulo: "Tráfico urbano", canal: "Pexels" },
-    { id: "2053100", url: "https://videos.pexels.com/video-files/2053100/2053100-hd_1920_1080_30fps.mp4", titulo: "Calle concurrida", canal: "Pexels" },
-    { id: "854132",   url: "https://videos.pexels.com/video-files/854132/854132-sd_640_360_25fps.mp4",   titulo: "Mascotas divertidas", canal: "Pexels" }
+// ── VIDEOS AL AZAR DEL FEED ─────────────────────────────────────────────
+// 🎵 SOLO videos de música de YouTube (lista curada verificada, sin API key).
+// Se reproducen con el reproductor de YouTube (YT IFrame API), que reproduce
+// video real en el WebView (nunca imagen estática). El orden es aleatorio.
+const YT_MAX_RANDOM = 12;
+const YT_RANDOM_YT = [
+    // Hits latinos
+    { id: "kJQP7kiw5Fk", titulo: "Despacito", canal: "Luis Fonsi" },
+    { id: "pRpeEdMmmQ0", titulo: "Waka Waka", canal: "Shakira" },
+    { id: "NUsoVlDFqZg", titulo: "Bailando", canal: "Enrique Iglesias" },
+    { id: "DUT5rEU6pqM", titulo: "Hips Don't Lie", canal: "Shakira" },
+    { id: "YXnjy5YlDwk", titulo: "Vivir Mi Vida", canal: "Marc Anthony" },
+    { id: "wnJ6LuUFpMo", titulo: "Mi Gente", canal: "J Balvin" },
+    { id: "p7bfOZek9t4", titulo: "Con Altura", canal: "Rosalía y J Balvin" },
+    // Éxitos internacionales
+    { id: "QYh6mYIJG2Y", titulo: "7 rings", canal: "Ariana Grande" },
+    { id: "PT2_F-1esPk", titulo: "Closer", canal: "The Chainsmokers" },
+    { id: "y6120QOlsfU", titulo: "Sandstorm", canal: "Darude" },
+    { id: "9bZkp7q19f0", titulo: "Gangnam Style", canal: "PSY" },
+    { id: "OPf0YbXqDm0", titulo: "Uptown Funk", canal: "Mark Ronson" },
+    { id: "JGwWNGJdvx8", titulo: "Shape of You", canal: "Ed Sheeran" },
+    { id: "2Vv-BfVoq4g", titulo: "Perfect", canal: "Ed Sheeran" },
+    { id: "09R8_2nJtjg", titulo: "Sugar", canal: "Maroon 5" },
+    { id: "hT_nvWreIhg", titulo: "Counting Stars", canal: "OneRepublic" },
+    { id: "fJ9rUzIMcZQ", titulo: "Bohemian Rhapsody", canal: "Queen" },
+    { id: "hTWKbfoikeg", titulo: "Smells Like Teen Spirit", canal: "Nirvana" },
+    { id: "eVTXPUF4Oz4", titulo: "In The End", canal: "Linkin Park" },
+    { id: "kXYiU_JCYtU", titulo: "Numb", canal: "Linkin Park" },
+    { id: "8UVNT4wvIGY", titulo: "Somebody That I Used To Know", canal: "Gotye" },
+    { id: "YQHsXMglC9A", titulo: "Hello", canal: "Adele" },
+    { id: "CevxZvSJLk8", titulo: "Roar", canal: "Katy Perry" },
+    { id: "RgKAFK5djSk", titulo: "See You Again", canal: "Wiz Khalifa" },
+    { id: "ktvTqknDobU", titulo: "Radioactive", canal: "Imagine Dragons" },
+    { id: "mWRsgZuwf_8", titulo: "Demons", canal: "Imagine Dragons" },
+    { id: "7wtfhZwyrcc", titulo: "Believer", canal: "Imagine Dragons" },
+    { id: "60ItHLz5WEA", titulo: "Faded", canal: "Alan Walker" },
+    { id: "lp-EO5I60KA", titulo: "Thinking Out Loud", canal: "Ed Sheeran" },
+    { id: "nSDgHBxUbVQ", titulo: "Photograph", canal: "Ed Sheeran" },
+    { id: "L0MK7qz13bU", titulo: "Let It Go", canal: "Idina Menzel" },
+    { id: "YykjpeuMNEk", titulo: "Hymn For The Weekend", canal: "Coldplay" },
+    { id: "dvgZkm1xWPE", titulo: "Viva La Vida", canal: "Coldplay" },
+    { id: "1G4isv_Fylg", titulo: "Paradise", canal: "Coldplay" },
+    { id: "CvBfHwUxHIk", titulo: "Umbrella", canal: "Rihanna" },
+    { id: "aJOTlE1K90k", titulo: "Girls Like You", canal: "Maroon 5" },
+    { id: "xpVfcZ0ZcFM", titulo: "God's Plan", canal: "Drake" },
+    { id: "fWNaR-rxAic", titulo: "Call Me Maybe", canal: "Carly Rae Jepsen" },
+    { id: "dQw4w9WgXcQ", titulo: "Never Gonna Give You Up", canal: "Rick Astley" },
+    { id: "hLQl3WQQoQ0", titulo: "Someone Like You", canal: "Adele" },
+    { id: "lWA2pjMjpBs", titulo: "Diamonds", canal: "Rihanna" },
+    { id: "9jK-NcRmVcw", titulo: "The Final Countdown", canal: "Europe" },
+    { id: "d2smz_1L2_0", titulo: "Paparazzi", canal: "Lady Gaga" }
 ];
 let ytRandomCargados  = false;
 let ytRandomUsados    = new Set();
 let ytRandomCargando  = false;
 
-function agregarVideoRandomAlFeed(videoId, titulo, canal, thumbUrl) {
+// Video de música de YouTube al azar: se reproduce con el reproductor de
+// YouTube (YT IFrame API) — video real, nunca imagen estática
+function agregarVideoYTAlFeed(item) {
     const container = document.getElementById('muroReportes');
-    if (!container || !videoId) return;
-    const key = 'ytrandom-' + videoId;
+    if (!container || !item || !item.id) return;
+    const key = 'ytmusic-' + item.id;
     if (document.getElementById(key)) return;
     if (postOcultoParaMi(key)) return;
-    ytRandomUsados.add(videoId);
+    ytRandomUsados.add(item.id);
 
     const post = {
         uid: '',
-        autorClave: canal || 'YouTube',
-        texto: titulo || 'Video de YouTube',
-        musica: 'https://www.youtube.com/watch?v=' + videoId,
+        autorClave: item.canal || 'YouTube',
+        texto: item.titulo || 'Música',
+        musica: 'https://www.youtube.com/watch?v=' + item.id,
         vCount: 0,
-        fotoPortada: thumbUrl || ''
+        fotoPortada: ''
     };
 
-    const card = crearCard(key, post, videoId, 'youtube', true);
-    container.appendChild(card);
-    if (observerFeed) observerFeed.observe(card);
-
-    // Si el feed está vacío (sin posts de Firebase), reproducir este video
-    const primero = container.querySelector('.feed-card');
-    if (primero === card && !videoActualId) {
-        setTimeout(() => reproducirVideo(card), 300);
-    }
-}
-
-// Vídeo MP4 directo al azar: se reproduce con <video> nativo (nunca foto estática)
-function agregarVideoMp4AlFeed(item) {
-    const container = document.getElementById('muroReportes');
-    if (!container || !item || !item.url) return;
-    const key = 'mp4random-' + item.id;
-    if (document.getElementById(key)) return;
-    if (postOcultoParaMi(key)) return;
-    ytRandomUsados.add(item.url);
-
-    const poster = `https://images.pexels.com/videos/${item.id}/free-video-${item.id}.jpg?fit=crop&w=480&h=854&auto=compress&cs=tinysrgb`;
-
-    const post = {
-        uid: '',
-        autorClave: item.canal || 'Pexels',
-        texto: item.titulo || 'Video',
-        musica: item.url,
-        vCount: 0,
-        fotoPortada: poster
-    };
-
-    const card = crearCard(key, post, item.url, 'direct', true);
+    const card = crearCard(key, post, item.id, 'youtube', true);
     container.appendChild(card);
     if (observerFeed) observerFeed.observe(card);
 
@@ -3033,40 +3021,15 @@ function cargarLoteVideosYT() {
     if (ytRandomCargando) return;
     ytRandomCargando = true;
 
-    // 1) Fuente principal: MP4 directos (garantizan video real, nunca foto estática)
-    const mp4s = YT_RANDOM_MP4S.filter(m => !ytRandomUsados.has(m.url));
-    if (mp4s.length) {
-        const seleccion = mp4s.slice().sort(() => Math.random() - 0.5).slice(0, YT_MAX_RANDOM);
-        seleccion.forEach(m => agregarVideoMp4AlFeed(m));
-        ytRandomCargando = false;
-        return;
+    // Fuente única: videos de música de YouTube (lista curada, sin API key)
+    let pool = YT_RANDOM_YT.filter(m => !ytRandomUsados.has(m.id));
+    if (!pool.length) {
+        ytRandomUsados = new Set(); // pool agotado → reiniciar
+        pool = YT_RANDOM_YT.slice();
     }
-
-    const q = YT_RANDOM_QUERIES[Math.floor(Math.random() * YT_RANDOM_QUERIES.length)];
-
-    fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=${YT_MAX_RANDOM}&q=${encodeURIComponent(q)}&safeSearch=moderate&key=${YT_API_KEY}`)
-        .then(r => r.json())
-        .then(json => {
-            ytRandomCargando = false;
-            const items = (json.items || []).filter(it => it && it.id && it.id.videoId);
-            if (!items.length) throw new Error("Sin resultados de YouTube");
-            items.forEach(it => {
-                const sn = it.snippet || {};
-                const thumb = sn.thumbnails ? (sn.thumbnails.high || sn.thumbnails.default || {}).url || '' : '';
-                agregarVideoRandomAlFeed(it.id.videoId, sn.title || '', sn.channelTitle || '', thumb);
-            });
-        })
-        .catch(() => {
-            // Si la API falla (o está bloqueada), usamos la lista curada y la barajamos
-            let pool = YT_RANDOM_FALLBACK.filter(id => !ytRandomUsados.has(id));
-            if (!pool.length) {
-                ytRandomUsados = new Set(); // pool agotado → reiniciar
-                pool = YT_RANDOM_FALLBACK.slice();
-            }
-            const seleccion = pool.slice().sort(() => Math.random() - 0.5).slice(0, YT_MAX_RANDOM);
-            seleccion.forEach(id => agregarVideoRandomAlFeed(id));
-            ytRandomCargando = false;
-        });
+    const seleccion = pool.slice().sort(() => Math.random() - 0.5).slice(0, YT_MAX_RANDOM);
+    seleccion.forEach(m => agregarVideoYTAlFeed(m));
+    ytRandomCargando = false;
 }
 
 function cargarVideosYTAlAzar() {
@@ -3119,7 +3082,7 @@ window.refrescarVideosFeed = () => {
 
     try { notify('🔄 Feed actualizado con nuevos videos'); } catch(e) {}
 };
-// ── FIN VIDEOS DE YOUTUBE AL AZAR ───────────────────────────────────────
+// ── FIN VIDEOS AL AZAR DEL FEED ─────────────────────────────────────────
 // ── FIN FEED NATIVO ───────────────────────────────────────────────────────
 
     </script>
@@ -13158,8 +13121,8 @@ function validarPublicacionMision() {
 window.abrirOpcionesPost = (postKey) => {
     if (!postKey) return;
 
-    // Videos aleatorios de YouTube: no viven en Firebase, solo se pueden ocultar
-    if (String(postKey).startsWith('ytrandom-')) {
+    // Videos aleatorios del feed: no viven en Firebase, solo se pueden ocultar
+    if (String(postKey).startsWith('ytrandom-') || String(postKey).startsWith('ytmusic-') || String(postKey).startsWith('mp4random-')) {
         eliminarParaMi(postKey);
         return;
     }
