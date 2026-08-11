@@ -2129,6 +2129,69 @@
     position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
     color: white; font-weight: bold; z-index: 200; text-align: center;
 }
+
+/* Estilo para el botón "+" tipo Instagram */
+.mi-historia-container {
+    position: relative;
+    display: inline-block;
+}
+
+.plus-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: #3b82f6; /* Azul tipo Facebook/Instagram */
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+/* Que la burbuja solo mida lo que mide el texto */
+.msg-bubble {
+    width: fit-content !important;
+    max-width: 100% !important;
+    display: block !important;
+}
+
+/* El menú de borrar/copiar */
+.msg-actions {
+    display: none; /* Se oculta por defecto */
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.msg-actions.show-actions {
+    display: flex !important; /* Aparece al presionar */
+}
+
+.delete-msg-trigger, .copy-msg-trigger {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 5px;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.solicitud-avatar {
+    pointer-events: auto !important; /* Fuerza a que reciba clics */
+    position: relative;
+    z-index: 50;
+}
+.solicitud-card {
+    overflow: visible !important;
+}
 </style>
 
 <script>
@@ -3679,22 +3742,51 @@ Cerrar
     </div>
 
     <!-- MODAL PERFIL DE USUARIO PÚBLICO -->
-    <div id="modalPerfilUsuario" class="modal-overlay" style="z-index: 27000;">
-        <div class="modal-content" style="text-align:center; max-width:320px;">
-            <div id="perfilUserAvatar" style="width:80px; height:80px; border-radius:50%; background:#e2e8f0; margin:0 auto 12px; background-size:cover; background-position:center; border:3px solid #6366f1;"></div>
-            <h3 id="perfilUserName" style="margin:0 0 5px; color:#1e293b; font-size:1.1rem;">Usuario</h3>
-            <p id="perfilUserKey" style="font-size:0.75rem; color:#94a3b8; margin-bottom:5px;">---</p>
-            <div id="perfilUserTareas" style="font-size:0.85rem; color:#10b981; font-weight:700; margin-bottom:15px;">📋 Tareas: --</div>
-            <div id="perfilUserFbBox" style="display:none; margin-bottom:15px;">
-                <button onclick="abrirFacebookConAnuncio(perfilUserUidActual)" style="width:100%; padding:12px; border:none; border-radius:14px; background:linear-gradient(135deg,#1877f2,#0d5bbf); color:white; font-weight:800; font-size:0.9rem; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 15px rgba(24,119,242,0.35); cursor:pointer;">
-                    <i class="fab fa-facebook"></i> Abrir Facebook
-                </button>
-                <div style="font-size:0.65rem; color:#64748b; margin-top:4px;">Verás un anuncio antes de abrir el enlace</div>
+<!-- 👤 MODAL PERFIL DE USUARIO REDISEÑADO -->
+<div id="modalPerfilUsuario" class="modal-overlay" style="z-index: 29500;">
+    <div class="modal-content" style="text-align:center; max-width:340px; padding: 0; overflow: hidden; border-radius: 25px; border: none;">
+        
+        <!-- Foto de portada/Avatar -->
+        <div id="perfilUserAvatar" style="height: 200px; background:#e2e8f0 center/cover no-repeat; position: relative;">
+            <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 15px; text-align: left;">
+                <h3 id="perfilUserName" style="margin:0; color:white; font-size:1.3rem; font-weight: 800;">Usuario</h3>
+                <span id="perfilUserKey" style="color: rgba(255,255,255,0.8); font-size: 0.75rem; font-weight: 600;">INV-XXXX</span>
             </div>
-            <button onclick="abrirChatPrivado(perfilUserUidActual, document.getElementById('perfilUserName').textContent); document.getElementById('modalPerfilUsuario').style.display='none';" class="btn-blue" style="background:#10b981; margin-bottom:8px; font-size:0.85rem;">💬 Abrir Chat</button>
-            <button onclick="document.getElementById('modalPerfilUsuario').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.85rem; margin-top:10px; cursor:pointer;">Cerrar</button>
         </div>
+
+        <!-- Rejilla de Datos -->
+        <div style="padding: 20px; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: white;">
+            <div><small style="color:#94a3b8; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🎂 Edad</small><div id="valEdad" style="font-weight:700; color: #1e293b;">--</div></div>
+            <div><small style="color:#94a3b8; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🚻 Sexo</small><div id="valSexo" style="font-weight:700; color: #1e293b;">--</div></div>
+            <div><small style="color:#94a3b8; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">✨ Zodiaco</small><div id="valZodiaco" style="font-weight:700; color: #1e293b;">--</div></div>
+            <div><small style="color:#94a3b8; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🎨 Color Fav</small><div id="valColor" style="font-weight:700; color: #1e293b;">--</div></div>
+            <div style="grid-column: span 2; background: #f8fafc; padding: 10px; border-radius: 12px;">
+                <small style="color:#6366f1; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🍕 Mis Gustos</small>
+                <div id="valGustos" style="font-weight:500; font-size: 0.85rem; color: #475569; margin-top: 2px;">--</div>
+            </div>
+            <div style="grid-column: span 2; background: #f0fdf4; padding: 10px; border-radius: 12px;">
+                <small style="color:#10b981; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🎮 Juego Favorito</small>
+                <div id="valJuego" style="font-weight:500; font-size: 0.85rem; color: #475569; margin-top: 2px;">--</div>
+            </div>
+        </div>
+
+        <!-- 🛡️ ZONA DE ACCIÓN: Solo aparece en solicitudes -->
+        <div id="boxAccionesSolicitud" style="display: none; padding: 15px; background: #f1f5f9; gap: 10px; border-top: 1px solid #e2e8f0;">
+            <button id="btnAceptarDesdePerfil" class="btn-blue" style="background: #10b981; flex: 1; border-radius: 12px;">✅ ACEPTAR</button>
+            <button id="btnRechazarDesdePerfil" class="btn-blue" style="background: #ef4444; width: 55px; padding: 0; border-radius: 12px;">✕</button>
+        </div>
+
+        <!-- 💬 Enviar mensaje privado -->
+        <button id="btnEnviarMensajePerfil" onclick="enviarMensajeDesdePerfil()" class="btn-blue" style="width: 100%; border-radius: 0; background: linear-gradient(135deg, #6366f1, #4f46e5); padding: 15px; font-size: 0.85rem;">
+            💬 Enviar Mensaje
+        </button>
+
+        <!-- Botón para cerrar normal -->
+        <button id="btnCerrarPerfilNormal" onclick="document.getElementById('modalPerfilUsuario').style.display='none'" style="width: 100%; padding: 16px; border: none; background: white; color: #94a3b8; font-weight: 700; cursor: pointer; font-size: 0.85rem;">
+            Cerrar
+        </button>
     </div>
+</div>
 
 <div id="gameContainer">
     <!-- 🔥 DISPLAY DE PUNTOS EN LA PARTE SUPERIOR -->
@@ -4956,54 +5048,11 @@ style="display:none;">
 </div>
 <!-- PANTALLA 3: MENSAJES -->
 <div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #f8fafc; padding-bottom: 65px;">
-
-    <!-- TOP BAR: 4 botones iguales -->
-    <div style="flex-shrink:0; background:white; border-bottom:1px solid #e2e8f0; display:flex; align-items:stretch;">
-
-        <!-- 1. Mi Chat -->
-        <button id="tabMiChatBtn" onclick="cambiarPestanaChat('michat')"
-                style="flex:1; border:none; border-right:1px solid #f1f5f9; background:white; padding:10px 4px;
-                       cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
-                       gap:3px; min-height:52px; font-size:0.65rem; font-weight:800; color:#64748b; transition:.2s;">
-            <span style="font-size:1.2rem;">💬</span>
-            <span style="white-space:nowrap;">Mi Chat</span>
-        </button>
-
-        <!-- 2. Global -->
-        <button id="tabGlobalBtn" onclick="cambiarPestanaChat('global')"
-                style="flex:1; border:none; border-right:1px solid #f1f5f9; background:white; padding:10px 4px;
-                       cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
-                       gap:3px; min-height:52px; font-size:0.65rem; font-weight:800; color:#64748b; transition:.2s;">
-            <span style="font-size:1.2rem;">🌍</span>
-            <span style="white-space:nowrap;">Global</span>
-        </button>
-
-        <!-- 3. Grupos -->
-        <button id="tabGruposBtn" onclick="cambiarPestanaChat('grupos')"
-                style="flex:1; border:none; background:white; padding:10px 4px;
-                       cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
-                       gap:3px; min-height:52px; font-size:0.65rem; font-weight:800; color:#64748b; transition:.2s;">
-            <span style="font-size:1.2rem; position:relative;">
-                👥
-                <div id="gruposBadgeDot" style="display:none; position:absolute; top:-2px; right:-8px; width:14px; height:14px; border-radius:50%; background:#10b981; border:2px solid white; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
-            </span>
-            <span style="white-space:nowrap;">Grupos</span>
-        </button>
-    </div>
-
-    <!-- CONTENEDOR GLOBAL (oculto por defecto) -->
-    <div id="chatListContainer" style="flex: 1; display: none; flex-direction: column; overflow: hidden;">
-
         <!-- 💭 PENSAMIENTOS PÚBLICOS + BOTÓN PENSAR -->
-        <div style="display:flex; align-items:center; gap:8px; background:#f8fafc; border-bottom:1px solid #e2e8f0; padding:8px 15px; flex-shrink:0;">
-            <div onclick="document.getElementById('modalPensamiento').style.display='block'; document.getElementById('inputPensamiento').focus();" 
-                 style="min-width: 48px; flex-shrink: 0; text-align: center; cursor: pointer;">
-                <div style="width: 36px; height: 36px; border-radius: 12px; border: 2px dashed #8b5cf6; background: #faf5ff; display: flex; align-items: center; justify-content: center; font-size: 1rem; margin: 0 auto;">
-                    💭
-                </div>
-                <div style="margin-top: 2px; font-size: 0.6rem; color: #8b5cf6; font-weight: 800;">Pensar</div>
-            </div>
-            <div id="pensamientosPublicosFeed" style="display:flex; flex-wrap:nowrap; overflow-x:auto; gap:8px; scrollbar-width:thin; min-height:50px; flex:1;">
+      <!-- Cambia background:#f8fafc por background:white -->
+<div style="display:flex; align-items:center; gap:8px; background:white; border-bottom:1px solid #f1f5f9; padding:10px 15px; flex-shrink:0;">
+         
+<div id="pensamientosPublicosFeed" style="display:flex; flex-wrap:nowrap; overflow-x:auto; gap:12px; scrollbar-width:none; min-height:100px; flex:1; padding: 30px 0 10px;">
                 <div style="color:#94a3b8; font-size:0.7rem; white-space:nowrap; display:flex; align-items:center;">💭 Cargando...</div>
             </div>
         </div>
@@ -5028,6 +5077,43 @@ style="display:none;">
                 </div>
             </div>
         </div>
+
+    <!-- TOP BAR: 4 botones iguales -->
+    <div style="flex-shrink:0; background:white; border-bottom:1px solid #e2e8f0; display:flex; align-items:stretch;">
+
+<!-- 1. Mi Chat -->
+    <button id="tabMiChatBtn" onclick="cambiarPestanaChat('michat')"
+            style="flex:1; border:none; border-right:1px solid #f1f5f9; background:white; padding:5px 4px;
+                   cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                   gap:2px; min-height:42px; font-size:0.6rem; font-weight:800; color:#64748b; transition:.2s;">
+        <span style="font-size:1.1rem;">💬</span>
+        <span style="white-space:nowrap;">Mi Chat</span>
+    </button>
+
+    <!-- 2. Global / Solicitudes -->
+    <button id="tabGlobalBtn" onclick="cambiarPestanaChat('global')"
+            style="flex:1; border:none; border-right:1px solid #f1f5f9; background:white; padding:5px 4px;
+                   cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                   gap:2px; min-height:42px; font-size:0.6rem; font-weight:800; color:#64748b; transition:.2s;">
+        <span style="font-size:1.1rem;">🌍</span>
+        <span style="white-space:nowrap;">Solicitudes</span>
+    </button>
+
+    <!-- 3. Grupos -->
+    <button id="tabGruposBtn" onclick="cambiarPestanaChat('grupos')"
+            style="flex:1; border:none; background:white; padding:5px 4px;
+                   cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                   gap:2px; min-height:42px; font-size:0.6rem; font-weight:800; color:#64748b; transition:.2s;">
+        <span style="font-size:1.1rem; position:relative;">
+            👥
+            <div id="gruposBadgeDot" style="display:none; position:absolute; top:-2px; right:-8px; width:12px; height:12px; border-radius:50%; background:#10b981; border:2px solid white; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+        </span>
+        <span style="white-space:nowrap;">Grupos</span>
+    </button> </div>
+
+    <!-- CONTENEDOR GLOBAL (oculto por defecto) -->
+    <div id="chatListContainer" style="flex: 1; display: none; flex-direction: column; overflow: hidden;">
+
 
         <!-- 📩 SOLICITUDES DE MENSAJE PENDIENTES -->
         <div id="solicitudesPendientesContainer" style="flex:1; overflow-y:auto; padding:15px; background:#f8fafc;">
@@ -5057,9 +5143,10 @@ style="display:none;">
 
     <!-- GRUPOS -->
     <div id="gruposListContainer" style="flex: 1; overflow-y: auto; padding: 15px; display: none; background: #f8fafc;">
-        <button onclick="crearNuevoGrupo()" style="width: 100%; padding: 15px; border-radius: 16px; border: 2px dashed #6366f1; background: #eef2ff; color: #6366f1; font-weight: 800; font-size: 0.95rem; margin-bottom: 15px; cursor: pointer;">
-            ➕ Crear Nuevo Grupo
-        </button>
+<button onclick="crearNuevoGrupo()" 
+        style="width: 100%; padding: 8px; border-radius: 12px; border: 1.5px dashed #6366f1; background: #f5f8ff; color: #6366f1; font-weight: 700; font-size: 0.8rem; margin-bottom: 10px; cursor: pointer;">
+    ➕ Crear Nuevo Grupo
+</button>
         <div id="listaDeGrupos"></div>
     </div>
 </div>
@@ -5117,7 +5204,27 @@ style="display:none;">
         </div>
         <div style="font-size:0.65rem; color:#cbd5e1; margin-top:6px;">Máx. 15 caracteres · visible para todos</div>
     </div>
-
+<!-- 📝 NUEVA SECCIÓN: BIO DETALLADA -->
+<div class="profile-field-card">
+    <div class="profile-field-label">🌟 Mi Biografía</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <input type="number" id="inputEdad" class="profile-field-input" placeholder="Edad">
+        <select id="inputSexo" class="profile-field-input">
+            <option value="">Sexo</option>
+            <option value="Hombre">Hombre</option>
+            <option value="Mujer">Mujer</option>
+            <option value="Otro">Otro</option>
+        </select>
+    </div>
+    <input type="text" id="inputGustos" class="profile-field-input" placeholder="Mis gustos (ej. Música, Viajes)">
+    <input type="text" id="inputZodiaco" class="profile-field-input" placeholder="Signo Zodiacal">
+    <input type="text" id="inputColorFav" class="profile-field-input" placeholder="Color favorito">
+    <input type="text" id="inputJuegoFav" class="profile-field-input" placeholder="Juego favorito">
+    
+    <button onclick="guardarBioCompleta()" class="btn-blue" style="margin-top: 5px; padding: 10px;">
+        💾 Guardar Información
+    </button>
+</div>
     <!-- FACEBOOK -->
     <div class="profile-field-card">
         <div class="profile-field-label" style="color:#1877f2;">
@@ -6156,7 +6263,7 @@ window.activarSonido = (divId, ytId) => {
         `;
     }
 };
-   window.mostrarPerfilUsuario = (el, nombre) => {
+  window.mostrarPerfilUsuario = (el, nombre, requestData = null) => { 
     let uid, fotoUrl;
     if (typeof el === 'string') {
         uid = el;
@@ -6169,49 +6276,61 @@ window.activarSonido = (divId, ytId) => {
     document.getElementById('perfilUserName').textContent = nombre || 'Usuario';
     document.getElementById('perfilUserKey').textContent = uid;
     document.getElementById('perfilUserAvatar').style.backgroundImage = "url('" + fotoUrl + "')";
-    document.getElementById('perfilUserFbBox').style.display = 'none';
 
-    // 1. Pedir SOLO el link de Facebook (No todo el usuario)
-    db.ref(`users/${uid}/facebookUrl`).once('value').then(snap => {
-        if (snap.val()) document.getElementById('perfilUserFbBox').style.display = 'block';
+    const btnMsgPerfil = document.getElementById('btnEnviarMensajePerfil');
+    if (btnMsgPerfil) btnMsgPerfil.style.display = (uid === idAuditor) ? 'none' : 'block';
+
+    // 1. Cargar la biografía del usuario (edad, sexo, gustos, etc.)
+    const valBio = {
+        valEdad: '--', valSexo: '--', valZodiaco: '--',
+        valColor: '--', valGustos: '--', valJuego: '--'
+    };
+    Object.keys(valBio).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = valBio[id];
     });
-
-    // 2. Pedir SOLO los datos de tareas (Evitamos descargar la lista de referidos e historial)
-    // Pedimos las llaves específicas. Si pides el objeto completo, descargas megas de más.
-    const camposTareas = [
-        db.ref(`users/${uid}/lastSpinDate`).once('value'),
-        db.ref(`users/${uid}/spinsUsed`).once('value'),
-        db.ref(`users/${uid}/lastAdDate`).once('value'),
-        db.ref(`users/${uid}/adCount`).once('value'),
-        db.ref(`users/${uid}/lastCineDate`).once('value'),
-        db.ref(`users/${uid}/cineCount`).once('value'),
-        db.ref(`users/${uid}/lastGameDate`).once('value'),
-        db.ref(`users/${uid}/gameMinutesToday`).once('value')
-    ];
-
-    Promise.all(camposTareas).then(snaps => {
-        const u = {
-            lastSpinDate: snaps[0].val(),
-            spinsUsed: snaps[1].val(),
-            lastAdDate: snaps[2].val(),
-            adCount: snaps[3].val(),
-            lastCineDate: snaps[4].val(),
-            cineCount: snaps[5].val(),
-            lastGameDate: snaps[6].val(),
-            gameMinutesToday: snaps[7].val()
+    db.ref(`users/${uid}/bio`).once('value').then(snap => {
+        const bio = snap.val() || {};
+        const mapa = {
+            valEdad: bio.edad, valSexo: bio.sexo, valZodiaco: bio.zodiaco,
+            valColor: bio.colorFav, valGustos: bio.gustos, valJuego: bio.juegoFav
         };
+        Object.keys(mapa).forEach(id => {
+            const el = document.getElementById(id);
+            if (el && mapa[id]) el.textContent = mapa[id];
+        });
+    }).catch(() => {});
 
-        const hoy = new Date().toISOString().split('T')[0];
-        let completadas = 0;
-        if (u.lastSpinDate === hoy && (u.spinsUsed || 0) >= 3) completadas++;
-        if (u.lastAdDate === hoy && (u.adCount || 0) >= 5) completadas++;
-        if (u.lastCineDate === hoy && (u.cineCount || 0) >= 2) completadas++;
-        if (u.lastGameDate === hoy && (u.gameMinutesToday || 0) >= 15) completadas += 2;
-        
-        document.getElementById('perfilUserTareas').textContent = `📋 Tareas: ${completadas}/5`;
-    });
+    // 2. Si venimos desde una solicitud → mostrar botones Aceptar / Rechazar
+    const box = document.getElementById('boxAccionesSolicitud');
+    if (box) {
+        if (requestData && requestData.chatKey) {
+            box.style.display = 'flex';
+            const btnAceptar = document.getElementById('btnAceptarDesdePerfil');
+            const btnRechazar = document.getElementById('btnRechazarDesdePerfil');
+            if (btnAceptar) btnAceptar.onclick = () => {
+                document.getElementById('modalPerfilUsuario').style.display = 'none';
+                aceptarSolicitudChat(requestData.chatKey, uid, nombre);
+            };
+            if (btnRechazar) btnRechazar.onclick = () => {
+                document.getElementById('modalPerfilUsuario').style.display = 'none';
+                rechazarSolicitudChat(requestData.chatKey, uid);
+            };
+        } else {
+            box.style.display = 'none';
+        }
+    }
 
     document.getElementById('modalPerfilUsuario').style.display = 'flex';
+};
+
+// Enviar mensaje privado desde el perfil (maneja solicitud aceptada / pendiente / nueva)
+window.enviarMensajeDesdePerfil = () => {
+    const uid = window.perfilUserUidActual;
+    if (!uid) return notify("No se pudo identificar al usuario");
+    const nombre = document.getElementById('perfilUserName').textContent || 'Usuario';
+    document.getElementById('modalPerfilUsuario').style.display = 'none';
+    abrirChatPrivado(uid, nombre);
 };
 
     // Ir al perfil de otro usuario desde notificación
@@ -7244,7 +7363,14 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
         // 3. ESCUCHAR CAMBIOS EN TIEMPO REAL
         db.ref(`users/${idAuditor}`).on('value', snap => {
             const d = snap.val();
-
+if (d.bio) {
+    if(document.getElementById('inputEdad')) document.getElementById('inputEdad').value = d.bio.edad || "";
+    if(document.getElementById('inputSexo')) document.getElementById('inputSexo').value = d.bio.sexo || "";
+    if(document.getElementById('inputGustos')) document.getElementById('inputGustos').value = d.bio.gustos || "";
+    if(document.getElementById('inputZodiaco')) document.getElementById('inputZodiaco').value = d.bio.zodiaco || "";
+    if(document.getElementById('inputColorFav')) document.getElementById('inputColorFav').value = d.bio.colorFav || "";
+    if(document.getElementById('inputJuegoFav')) document.getElementById('inputJuegoFav').value = d.bio.juegoFav || "";
+}
             // --- A) DATOS BÁSICOS ---
             const correoUsuario = user.email || (d ? d.email : null) || "Sin correo";
             const labelEmail = document.getElementById('profEmail');
@@ -9163,7 +9289,8 @@ window.addEventListener('popstate', (e) => {
     'modalRegaloPrivado',
     'modalPaypal',
     'modalVerFotoPrivada',
-    'modalVerFotoGrupo'
+    'modalVerFotoGrupo',
+    'modalPerfilUsuario'
 ];
 
     function cerrarModalSeguro(id, fallback) {
@@ -10933,44 +11060,57 @@ function crearFilaMensajePrivado(s) {
         ? (document.getElementById('profKey').textContent || myCurrentKey)
         : document.getElementById('privChatTitle').innerText;
         
-    // 🔥 CORRECCIÓN: escapeHtml ya procesa las comillas, no necesitamos el .replace()
     const textoEscapado = escapeHtml(m.texto || '');
     const textoFinal = hacerEnlacesClickeables(textoEscapado);
 
+    // --- FOTO ---
     let fotoHTML = '';
     if (m.esFoto && m.foto) {
-        // Aquí sí escapamos las comillas dobles específicas del atributo HTML
-        fotoHTML = `<div style="margin:8px 0; cursor:pointer;" onclick="event.stopPropagation();mostrarFotoPrivada(this)" data-foto="${m.foto.replace(/"/g, '&quot;')}"><img src="${m.foto}" style="max-width:200px; max-height:200px; border-radius:12px; object-fit:cover; box-shadow:0 2px 8px rgba(0,0,0,0.15);" loading="lazy"></div>`;
+        fotoHTML = `<div style="margin:8px 0; cursor:pointer;" onclick="event.stopPropagation();mostrarFotoPrivada(this)" data-foto="${m.foto.replace(/"/g, '&quot;')}"><img src="${m.foto}" style="max-width:220px; max-height:220px; border-radius:12px; object-fit:cover; display:block;" loading="lazy"></div>`;
     }
 
+    // --- RESPUESTA ---
     let replyHTML = '';
     if (m.replyTo) {
         replyHTML = `<div style="background:rgba(0,0,0,0.08); border-left:3px solid #6366f1; padding:6px 10px; border-radius:6px; margin-bottom:6px; font-size:0.78rem;"><div style="font-weight:800; color:#6366f1;">${escapeHtml(m.replyTo.author || 'Usuario')}</div><div style="opacity:0.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${escapeHtml(m.replyTo.text || '')}</div></div>`;
     }
 
-    const row = document.createElement('div');
-    row.className = `chat-row ${esMio ? 'mine' : 'other'}`;
-    row.id = `priv-row-${key}`;
+    // --- 🗑️ BOTONES (CORREGIDO) ---
     const delIcon = (esMio || isAdmin)
-        ? `<span id="del-icon-${key}" class="delete-msg-trigger" onclick="event.stopPropagation();eliminarMensajeDirecto('${key}')">🗑</span>`
+        ? `<span class="delete-msg-trigger" onclick="event.stopPropagation();eliminarMensajeDirecto('${key}')">🗑</span>`
         : '';
 
-    row.innerHTML = `
-    <img src="${fotoMsg}" class="chat-avatar-img" style="display:block;" data-uid="${m.uid}" onclick="mostrarPerfilUsuario(this, '${autorNombre}')">
-    
-    <div style="display:flex; flex-direction:column; gap:4px;">
+    const actionsHTML = `
         <div class="msg-actions" id="actions-${key}">
             ${delIcon}
             <span class="copy-msg-trigger" onclick="event.stopPropagation();copiarTextoChat('${textoEscapado}');toggleMsgActions('${key}',false)" style="cursor:pointer;">📋</span>
         </div>
+    `;
+
+    // --- 👤 FOTO DEL OTRO ---
+    const avatarHTML = !esMio 
+        ? `<img src="${fotoMsg}" class="chat-avatar-img" style="width:35px; height:35px; border-radius:50%; margin-right:8px; align-self:flex-end;" data-uid="${m.uid}" onclick="mostrarPerfilUsuario(this, '${autorNombre}')">` 
+        : '';
+
+    const row = document.createElement('div');
+    row.className = `chat-row ${esMio ? 'mine' : 'other'}`;
+    row.id = `priv-row-${key}`;
+    row.style.cssText = "display:flex; width:100%; margin-bottom:12px; padding:0 15px;";
+    
+    const contentAlign = esMio ? 'align-items:flex-end; margin-left:auto;' : 'align-items:flex-start;';
+
+    row.innerHTML = `
+    ${avatarHTML}
+    <div style="display:flex; flex-direction:column; max-width:85%; ${contentAlign}">
+        
+        ${actionsHTML}
 
         <div id="priv-msg-${key}"
              class="msg-bubble ${esMio ? 'msg-mine' : 'msg-other'}"
-             style="max-width:75%; cursor:grab; transition: transform 0.2s ease-out;"
+             style="width:fit-content; min-width:50px; word-wrap:break-word; position:relative;"
              data-msg-key="${key}"
              data-msg-text="${textoEscapado}"
              data-msg-uid="${m.uid}"
-             data-msg-actions-key="${key}"
              ontouchstart="startPressFromElement(this, true); privSwipeStart(event, '${key}')"
              ontouchmove="privSwipeMove(event, '${key}')"
              ontouchend="privSwipeEnd(event, '${key}', '${textoEscapado}', '${autorNombre}', '${m.uid}'); cancelPress(true)"
@@ -10979,9 +11119,9 @@ function crearFilaMensajePrivado(s) {
              onmouseleave="cancelPress(true)">
             ${replyHTML}
             ${fotoHTML}
-            <div>${textoFinal}</div>
-            <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
-                ${new Date(m.fecha).toLocaleDateString([], {day:'2-digit', month:'2-digit'})} ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+            <div style="font-size:0.95rem; line-height:1.3;">${textoFinal}</div>
+            <div class="msg-time" style="font-size:0.6rem; opacity:0.6; text-align:right; margin-top:4px;">
+                ${new Date(m.fecha).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
             </div>
         </div>
     </div>`;
@@ -11963,45 +12103,53 @@ window.abrirModalPensarOVer = () => {
 };
 
 window.enviarComentarioPensamiento = () => {
-    if (!_ultimoPensamiento || !_ultimoPensamiento.uid) return;
-    if (!idAuditor) return notify("❌ Inicia sesión");
-    const texto = document.getElementById('inputComentarioPensamiento').value.trim();
-    if (!texto) return notify("📝 Escribe algo");
+    // 1. Verificaciones básicas
+    if (!_ultimoPensamiento || !_ultimoPensamiento.uid) return notify("❌ Error: No se detectó al destinatario");
+    if (!idAuditor) return notify("❌ Inicia sesión para responder");
 
+    const input = document.getElementById('inputComentarioPensamiento');
+    const texto = input.value.trim();
+    if (!texto) return notify("📝 Escribe algo primero");
+
+    // 2. Preparar los datos según tus reglas de Firebase
     const targetUid = _ultimoPensamiento.uid;
     const chatId = [idAuditor, targetUid].sort().join('_');
-    const msgKey = db.ref(`chats_privados/${chatId}`).push().key;
+    const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey || "Usuario";
 
+    // OBJETO MENSAJE: Debe tener 'uid', 'autor' y 'fecha' obligatoriamente para pasar la regla .validate
     const msgData = {
-        texto: '💭 ' + texto,
-        tipo: 'texto',
-        uid: idAuditor,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+        uid: idAuditor,                             // REQUERIDO POR REGLA
+        autor: miNombre,                            // REQUERIDO POR REGLA
+        texto: '💭 Pensamiento: ' + texto,
+        fecha: firebase.database.ServerValue.TIMESTAMP // REQUERIDO POR REGLA (No uses 'timestamp')
     };
 
-    db.ref(`chats_privados/${chatId}/${msgKey}`).set(msgData)
+    // OBJETO NOTIFICACIÓN: Debe tener 'from' y 'timestamp' para pasar la regla de notifications
+    const notiData = {
+        from: idAuditor,                            // REQUERIDO POR REGLA
+        fromName: miNombre,
+        type: 'chat_privado',
+        text: '💭 Respondió a tu pensamiento',
+        extra: idAuditor,
+        timestamp: firebase.database.ServerValue.TIMESTAMP, // REQUERIDO POR REGLA
+        read: false
+    };
+
+    // 3. Ejecutar el envío
+    db.ref(`chats_privados/${chatId}`).push(msgData)
         .then(() => {
-            notify('💬 Comentario enviado a ' + _ultimoPensamiento.autor);
-            document.getElementById('inputComentarioPensamiento').value = '';
+            // Mandamos el punto rojo (notificación) a la otra persona
+            db.ref(`users/${targetUid}/notifications`).push(notiData);
+
+            notify('💬 Respuesta enviada con éxito');
+            input.value = '';
             document.getElementById('modalVerPensamiento').style.display = 'none';
-            try { window.playSound('click'); } catch(e){}
+            try { window.playSound('coin'); } catch(e){}
         })
-        .catch(e => notify('❌ Error al enviar: ' + e.message));
-};
-
-window.formatTimeAgo = (timestamp) => {
-    if (!timestamp) return "Reciente";
-    const ahora = Date.now();
-    const diff = ahora - timestamp;
-    const segundos = Math.floor(diff / 1000);
-    const minutos = Math.floor(segundos / 60);
-    const horas = Math.floor(minutos / 60);
-    const dias = Math.floor(horas / 24);
-
-    if (minutos < 1) return 'Online';
-    if (minutos < 60) return minutos + ' min';
-    if (horas < 24) return horas + ' h';
-    return dias + ' d';
+        .catch(e => {
+            console.error("Error al publicar:", e);
+            alert("❌ Error de Firebase: Asegúrate de tener nombre de usuario y foto de perfil configurados.");
+        });
 };
 // ==========================================
 // 🚀 ABRIR MODAL INVITAR (CON CONTADOR REAL)
@@ -14795,33 +14943,62 @@ window.seleccionarTipoPublicacion = (tipo) => {
 
 // 💭 FUNCIONES PARA PENSAMIENTOS PÚBLICOS
 window.publicarPensamiento = () => {
-    if (!idAuditor) return notify("❌ Inicia sesión");
-    const texto = document.getElementById('inputPensamiento').value.trim();
-    if (!texto) return notify("📝 Escribe algo");
+    console.log("Intentando publicar pensamiento..."); // Esto saldrá en tu consola
+    
+    if (!idAuditor) {
+        alert("❌ No se detectó tu ID de usuario. Intenta recargar.");
+        return;
+    }
+
+    const input = document.getElementById('inputPensamiento');
+    const texto = input ? input.value.trim() : "";
+    
+    if (!texto) {
+        notify("📝 Escribe algo primero");
+        return;
+    }
 
     const btn = document.getElementById('btnPublicarPensamiento');
-    btn.disabled = true;
+    if(btn) {
+        btn.disabled = true;
+        btn.innerText = "⏳ Enviando...";
+    }
 
-    // 🔥 USAMOS EL NODO "pensamientos" DE TUS REGLAS
     const timestamp = firebase.database.ServerValue.TIMESTAMP;
+    const miNombre = document.getElementById('profKey')?.textContent || "Usuario";
+    const miFoto = getUserProfilePhoto(idAuditor);
 
     const actualizaciones = {};
-    // Lo guardamos en el nodo global para que sea PÚBLICO
     actualizaciones[`pensamientos/${idAuditor}`] = {
         texto: texto,
-        autor: document.getElementById('profKey').textContent || "Usuario",
+        autor: miNombre,
         timestamp: timestamp,
-        fotoPerfil: getUserProfilePhoto(idAuditor)
+        fotoPerfil: miFoto,
+        uid: idAuditor
     };
-    // Actualizamos tu 'lastSeen' para que brinques al principio de la lista de todos
+    
+    // También actualizamos tu última conexión para que salgas primero
     actualizaciones[`users/${idAuditor}/lastSeen`] = timestamp;
 
-    db.ref().update(actualizaciones).then(() => {
-        notify("✨ Pensamiento publicado para todos");
-        document.getElementById('inputPensamiento').value = '';
-        document.getElementById('modalPensamiento').style.display = 'none';
-        btn.disabled = false;
-    });
+    db.ref().update(actualizaciones)
+        .then(() => {
+            console.log("✅ Publicado con éxito");
+            notify("✨ Pensamiento publicado");
+            if(input) input.value = '';
+            document.getElementById('modalPensamiento').style.display = 'none';
+            if(btn) {
+                btn.disabled = false;
+                btn.innerHTML = "✨ Publicar";
+            }
+        })
+        .catch(error => {
+            console.error("Error al publicar:", error);
+            alert("Error al publicar: " + error.message);
+            if(btn) {
+                btn.disabled = false;
+                btn.innerHTML = "✨ Publicar";
+            }
+        });
 };
 // Cargar pensamientos públicos (opcional - para futuro)
 window.cargarPensamientosPublicos = () => {
@@ -14830,66 +15007,87 @@ window.cargarPensamientosPublicos = () => {
     if (window._pensamientosListenerActivo) return;
     window._pensamientosListenerActivo = true;
 
-    db.ref('pensamientos').orderByChild('timestamp').limitToLast(15).on('value', snap => {
+    db.ref('pensamientos').on('value', snap => {
         let html = "";
+        const ahora = Date.now();
+        const todosLosDatos = snap.val() || {};
 
-        if (!snap.exists()) {
-            feedContainer.innerHTML = "<div style='color:#94a3b8; font-size:0.7rem;'>Nadie ha pensado nada hoy... ✨</div>";
-            return;
+        // --- 1. TU PROPIO PENSAMIENTO (PARA QUE TÚ LO VEAS) ---
+        const miData = todosLosDatos[idAuditor]; // Buscamos tus datos en el snapshot
+        const miFoto = getUserProfilePhoto(idAuditor);
+        const tengoAlgoPublicado = miData && (ahora - miData.timestamp < 86400000);
+        
+        // Color del borde: Morado si tienes algo, Gris si no
+        const miBordeColor = tengoAlgoPublicado ? '#8b5cf6' : '#cbd5e1';
+
+        // Lógica de la Nube para TI
+        let miNubeHtml = "";
+        if (tengoAlgoPublicado) {
+            const miTextoCorto = miData.texto.length > 25 ? miData.texto.substring(0, 22) + "..." : miData.texto;
+            miNubeHtml = `
+            <div style="position:absolute; top:-35px; left:50%; transform:translateX(-50%); z-index:100; pointer-events:none;">
+                <div style="background:#6366f1; color:white; padding:4px 10px; border-radius:12px; font-size:0.6rem; font-weight:800; white-space:nowrap; box-shadow:0 4px 10px rgba(99,102,241,0.3); border:1px solid rgba(255,255,255,0.2);">
+                    "${escapeHtml(miTextoCorto)}"
+                </div>
+                <div style="display:flex; justify-content:center; gap:2px; margin-top:2px; padding-left:10px;">
+                    <div style="width:5px;height:5px;border-radius:50%;background:#6366f1;"></div>
+                    <div style="width:3px;height:3px;border-radius:50%;background:#6366f1;opacity:0.6;"></div>
+                </div>
+            </div>`;
         }
 
-        snap.forEach(child => {
-            const p = child.val();
-            const avatar = p.fotoPerfil || getUserProfilePhoto(p.uid || child.key);
-            const nombre = p.autor || "Usuario";
-            const textoCorto = p.texto.length > 55 ? p.texto.substring(0, 52) + "..." : p.texto;
-            const tieneFotoReal = p.fotoPerfil && p.fotoPerfil.indexOf('pravatar.cc') === -1;
-            const ahora = Date.now();
+        // El "+" solo se ve si NO tienes nada publicado (como Instagram)
+        const plusBadge = tengoAlgoPublicado ? "" : `<div class="plus-badge">+</div>`;
+
+        html += `
+        <div class="story-item" onclick="document.getElementById('modalPensamiento').style.display='block'; document.getElementById('inputPensamiento').focus();" style="min-width:70px; position:relative; margin-top:20px;">
+            ${miNubeHtml}
+            <div class="mi-historia-container">
+                <div class="story-avatar-box" style="border: 3px solid ${miBordeColor} !important; width:58px; height:58px; border-radius:50%;">
+                    <div class="story-img" style="background-image:url('${miFoto}'); background-size: cover; background-position: center;"></div>
+                </div>
+                ${plusBadge}
+            </div>
+            <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">Tú</div>
+        </div>`;
+
+        // --- 2. LOS PENSAMIENTOS DE LOS DEMÁS ---
+        let listaOtros = [];
+        Object.keys(todosLosDatos).forEach(key => {
+            if (key !== idAuditor) { // Aquí sí filtramos para no repetir tu foto
+                listaOtros.push({ uid: key, ...todosLosDatos[key] });
+            }
+        });
+
+        // Ordenar por tiempo (más recientes primero)
+        listaOtros.sort((a,b) => b.timestamp - a.timestamp);
+
+        listaOtros.forEach(p => {
             const edad = ahora - (p.timestamp || 0);
-            const restante = Math.max(0, 86400000 - edad);
-            const horasRest = Math.floor(restante / 3600000);
-            const minsRest = Math.floor((restante % 3600000) / 60000);
+            if (edad < 86400000) { // Solo mostrar si tiene menos de 24h
+                const avatar = p.fotoPerfil || getUserProfilePhoto(p.uid);
+                const nombre = p.autor || "Usuario";
+                const textoCorto = p.texto.length > 25 ? p.texto.substring(0, 22) + "..." : p.texto;
+                
+                const nombreEsc = nombre.replace(/'/g, "\\'");
+                const textoEsc = p.texto.replace(/'/g, "\\'");
 
-            const nombreEscapado = nombre.replace(/'/g, "\\'");
-            const textoEscapado = p.texto.replace(/'/g, "\\'");
-
-            if (tieneFotoReal) {
-                const progreso = Math.min(100, Math.max(0, (restante / 86400000) * 100));
-                const opacidad = progreso < 20 ? 0.4 + (progreso / 20) * 0.6 : 1;
-                html = `
-                <div class="pensamiento-real-card" onclick="mostrarPensamientoDeUsuario('${p.uid}','${nombreEscapado}','${textoEscapado}','${avatar}')"
-                     style="opacity:${opacidad};">
-                    <img class="pensamiento-photo" src="${avatar}" alt="${escapeHtml(nombre)}"
-                         style="filter: ${progreso < 30 ? 'grayscale(' + ((30 - progreso) * 3) + '%)' : 'none'};">
-                    <div class="pensamiento-body">
-                        <div class="pensamiento-name">${escapeHtml(nombre)}</div>
-                        <div class="pensamiento-text">"${escapeHtml(textoCorto)}"</div>
-                    </div>
-                    <div class="pensamiento-timer">
-                        <div class="pensamiento-timer-fill" style="width:${progreso}%;"></div>
-                    </div>
-                </div>` + html;
-            } else {
-                html = `
-                <div class="pensamiento-default-card" onclick="mostrarPensamientoDeUsuario('${p.uid}','${nombreEscapado}','${textoEscapado}','${avatar}')">
-                    <div style="animation: floatCloudCard 3s ease-in-out infinite;">
-                        <div style="background:#8b5cf6; color:white; padding:7px 10px; border-radius:18px;
-                                    font-size:0.68rem; font-style:italic; line-height:1.3; font-weight:600;
-                                    box-shadow:0 4px 14px rgba(139,92,246,0.35); text-align:left;
-                                    border:1.5px solid rgba(255,255,255,0.2); position:relative;">
+                html += `
+                <div class="story-item" onclick="mostrarPensamientoDeUsuario('${p.uid}','${nombreEsc}','${textoEsc}','${avatar}')" style="min-width:70px; position:relative; margin-top:20px;">
+                    <div style="position:absolute; top:-35px; left:50%; transform:translateX(-50%); z-index:100; pointer-events:none;">
+                        <div style="background:#8b5cf6; color:white; padding:4px 10px; border-radius:12px; font-size:0.6rem; font-weight:800; white-space:nowrap; box-shadow:0 4px 10px rgba(139,92,246,0.3); border:1px solid rgba(255,255,255,0.2);">
                             "${escapeHtml(textoCorto)}"
                         </div>
-                        <div style="display:flex; align-items:flex-start; gap:2px; padding-left:18px; margin-top:2px;">
-                            <div style="width:6px;height:6px;border-radius:50%;background:#8b5cf6;opacity:0.9;"></div>
-                            <div style="width:4px;height:4px;border-radius:50%;background:#8b5cf6;opacity:0.7;margin-top:2px;"></div>
-                            <div style="width:2px;height:2px;border-radius:50%;background:#8b5cf6;opacity:0.5;margin-top:4px;"></div>
+                        <div style="display:flex; justify-content:center; gap:2px; margin-top:2px; padding-left:10px;">
+                            <div style="width:5px;height:5px;border-radius:50%;background:#8b5cf6;"></div>
+                            <div style="width:3px;height:3px;border-radius:50%;background:#8b5cf6;opacity:0.6;"></div>
                         </div>
                     </div>
-                    <div style="display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:2px;">
-                        <img src="${avatar}" style="width:30px; height:30px; border-radius:50%; border:2px solid #8b5cf6; box-shadow:0 2px 6px rgba(139,92,246,0.3);">
-                        <span style="font-size:0.62rem; font-weight:800; color:#7c3aed; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px;">${escapeHtml(nombre)}</span>
+                    <div class="story-avatar-box" style="border: 3px solid #8b5cf6 !important; width:58px; height:58px; border-radius:50%;">
+                        <div class="story-img" style="background-image:url('${avatar}'); background-size: cover; background-position: center;"></div>
                     </div>
-                </div>` + html;
+                    <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">${nombre}</div>
+                </div>`;
             }
         });
 
@@ -15204,25 +15402,32 @@ window.cargarSolicitudesPendientes = () => {
 
             let html = '';
             pendientes.forEach(p => {
-                const otherUid = p.esReceptor ? p.requester : p.receiver;
-                const otherName = p.esReceptor ? (p.requesterName || 'Usuario') : null;
-                const foto = getUserProfilePhoto(otherUid);
+                const otherUid = p.esReceptor ? p.requester : p.receiver; // 🔥 Aseguramos que el ID exista
+const nombreEsc = (p.requesterName || 'Usuario').replace(/'/g, "\\'");
+const foto = getUserProfilePhoto(otherUid);
 
-                if (p.esReceptor) {
-                    // Solicitud que recibí → botones Aceptar / Rechazar
-                    html += `
-                    <div class="solicitud-card">
-                        <div class="solicitud-avatar" style="background-image:url('${foto}')"></div>
-                        <div class="solicitud-info">
-                            <div class="solicitud-name">${escapeHtml(p.requesterName || 'Usuario')}</div>
-                            <div class="solicitud-sub">📩 Quiere chatear contigo</div>
-                        </div>
-                        <div class="solicitud-btns">
-                            <button class="solicitud-btn-accept" onclick="event.stopPropagation();aceptarSolicitudChat('${p.chatKey}','${otherUid}','${escapeHtml(p.requesterName || 'Usuario').replace(/'/g, "\\'")}')">✅ Aceptar</button>
-                            <button class="solicitud-btn-reject" onclick="event.stopPropagation();rechazarSolicitudChat('${p.chatKey}','${otherUid}')">✕</button>
-                        </div>
-                    </div>`;
-                } else {
+if (p.esReceptor) {
+    html += `
+    <div class="solicitud-card" style="position:relative; z-index:10;">
+        <!-- Foto con clic forzado -->
+        <div class="solicitud-avatar" 
+             style="background-image:url('${foto}'); cursor:pointer; position:relative; z-index:20; pointer-events:auto;" 
+             onclick="event.stopPropagation(); window.mostrarPerfilUsuario('${otherUid}', '${nombreEsc}', {chatKey: '${p.chatKey}'})">
+        </div>
+        
+        <div class="solicitud-info">
+            <div class="solicitud-name">${escapeHtml(p.requesterName || 'Usuario')}</div>
+            <div class="solicitud-sub" style="font-size: 0.65rem; line-height: 1.2; color: #92400e;">
+                Toca la foto para ver información antes de aceptar la solicitud.
+            </div>
+        </div>
+        
+        <div class="solicitud-btns" style="position:relative; z-index:20;">
+            <button class="solicitud-btn-accept" onclick="event.stopPropagation(); aceptarSolicitudChat('${p.chatKey}','${otherUid}','${nombreEsc}')">✅ Aceptar</button>
+            <button class="solicitud-btn-reject" onclick="event.stopPropagation(); rechazarSolicitudChat('${p.chatKey}','${otherUid}')">✕</button>
+        </div>
+    </div>`;
+} else {
                     // Solicitud que envié → mostrar estado "esperando"
                     // Necesitamos el nombre del receptor
                     const nombreReceptor = p.receiverName || null;
@@ -15314,6 +15519,14 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
             const avatar = getUserProfilePhoto(m.uid);
             const textoEscapado = escapeHtml(m.texto).replace(/"/g, '&quot;');
             const fotoEscapada = m.foto ? m.foto.replace(/"/g, '&quot;') : '';
+            const autorParaCliqueo = String(m.autor || 'Usuario').replace(/'/g, "\\'");
+            const avatarOnclick = `mostrarPerfilUsuario('${m.uid}', '${autorParaCliqueo}')`;
+            const nombreCliqueable = esMio
+                ? `<div class="msg-user">${escapeHtml(m.autor)}</div>`
+                : `<div class="msg-user" style="cursor:pointer;"
+                     onmousedown="event.stopPropagation()" onmouseup="event.stopPropagation()"
+                     onmouseleave="event.stopPropagation()" ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()"
+                     onclick="event.stopPropagation(); mostrarPerfilUsuario('${m.uid}', '${autorParaCliqueo}')">${escapeHtml(m.autor)}</div>`;
 
             let fotoHTML = '';
             if (m.esFoto && m.foto) {
@@ -15330,7 +15543,7 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
 
             html += `
             <div class="chat-row ${esMio ? 'mine' : 'other'}">
-                <img src="${avatar}" class="chat-avatar-img" onclick="mostrarPerfilUsuario('${m.uid}', '${escapeHtml(m.autor)}')">
+                <img src="${avatar}" class="chat-avatar-img" onclick="${avatarOnclick}">
                 <div style="display:flex; flex-direction:column; gap:4px;">
                     <div class="msg-actions" id="actions-${s.key}">
                         ${delIconGrp}
@@ -15347,7 +15560,7 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
                          ontouchstart="startPressFromElement(this, false); handleGroupSwipeStart(event, '${s.key}')"
                          ontouchend="cancelPress(false); handleGroupSwipeEnd(event, '${s.key}')"
                          ontouchmove="handleGroupSwipeMove(event, '${s.key}')">
-                        <div class="msg-user">${escapeHtml(m.autor)}</div>
+                        ${nombreCliqueable}
                         ${fotoHTML}
                         <div>${hacerEnlacesClickeables(escapeHtml(m.texto))}</div>
                         <div class="msg-time" style="font-size:0.6rem; opacity:0.7;">
@@ -16550,6 +16763,33 @@ window.enviarPushPropio = (titulo, mensaje) => {
             priority: 5
         })
     }).then(() => console.log("Notificación enviada por el túnel"));
+};
+
+window.guardarBioCompleta = () => {
+    console.log("Intentando guardar bio...");
+    
+    if (!idAuditor) return notify("❌ Error: No se detectó sesión");
+
+    // Recogemos los valores de los inputs
+    const bioData = {
+        edad: document.getElementById('inputEdad').value.trim(),
+        sexo: document.getElementById('inputSexo').value,
+        gustos: document.getElementById('inputGustos').value.trim(),
+        zodiaco: document.getElementById('inputZodiaco').value.trim(),
+        colorFav: document.getElementById('inputColorFav').value.trim(),
+        juegoFav: document.getElementById('inputJuegoFav').value.trim()
+    };
+
+    // Guardamos en la rama 'bio' dentro del usuario
+    db.ref(`users/${idAuditor}/bio`).update(bioData)
+        .then(() => {
+            notify("✅ Información guardada correctamente");
+            try { window.playSound('coin'); } catch(e){}
+        })
+        .catch(err => {
+            console.error("Error al guardar bio:", err);
+            alert("❌ Error al guardar: " + err.message);
+        });
 };
 </script>
 <!-- 📱 MENÚ DE OPCIONES AL TOCAR + -->
