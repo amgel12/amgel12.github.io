@@ -11316,6 +11316,11 @@ function enviarNotificacion(idDelQueRecibe, miNombre, elMensaje) {
                 include_external_user_ids: [idDelQueRecibe],
                 headings: { "en": "Nuevo mensaje de " + miNombre },
                 contents: { "en": elMensaje },
+                // 🔥 AGREGAR ESTAS LÍNEAS PARA MANDAR EL ID DEL REMITENTE:
+                data: {
+                    "sender_uid": idAuditor,
+                    "sender_name": miNombre
+                },
                 url: "https://codecash.space/mensajes"
             })
         }).catch(e => console.log("Error OneSignal:", e));
