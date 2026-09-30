@@ -2983,6 +2983,7 @@ window.feedToggleLike = (postKey, ownerUid) => {
                     text: "❤️ Le gustó tu publicación", extra: postKey,
                     timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
                 });
+                avisarSocial(ownerUid, "le gustó tu publicación", "like");
             }
         }
     });
@@ -6509,6 +6510,7 @@ window.likePost = function(postKey, postOwnerUid, btnElement) {
                         timestamp: firebase.database.ServerValue.TIMESTAMP,
                         read: false
                     });
+                    avisarSocial(postOwnerUid, "le gustó tu publicación", "like");
                 }
 
                 if(icon) {
@@ -6971,12 +6973,19 @@ async function subirYCobrarFoto(archivoBlob) {
     };
 let commentsRef = null;
 let currentPostId = null;
+let currentPostUid = null;   // dueño del post: hace falta para avisarle por push
 
 // --- 1. ABRIR EL MODAL Y CARGAR DATOS ---
 window.abrirModalComentarios = (postKey) => {
     console.log("🟢 Abriendo comentarios del post:", postKey);
     isCommenting = true;
     currentPostId = postKey;
+    currentPostUid = null;
+
+    // Leer el uid del dueño del post para poder notificarle al comentar.
+    db.ref(`reportes/${postKey}/uid`).once('value').then(s => {
+        currentPostUid = s.val() || null;
+    }).catch(() => { currentPostUid = null; });
     
     const modal = document.getElementById('modalComments');
     const list = document.getElementById('modalCommentsList');
@@ -7077,6 +7086,7 @@ window.enviarComentarioModal = () => {
         texto: texto,
         fecha: firebase.database.ServerValue.TIMESTAMP // ✅ CAMBIADO: Antes era "timestamp"
     }).then(() => {
+        avisarSocial(currentPostUid, "comentó tu video", "comentario");
         inp.value = "";
         notify("✅ Enviado");
     }).catch(e => {
@@ -8563,6 +8573,7 @@ function enviarNotificacionMencion(targetUid, txt) {
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         read: false
     });
+    avisarSocial(targetUid, `te mencionó: "${resumenMensaje}"`, "mencion");
 }
 
 window.limpiarChatGlobal = () => {
@@ -9238,6 +9249,7 @@ window.addEventListener('message', function(event) {
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             read: false
         }).then(() => {
+            avisarSocial(ownerUid, "le gustó tu publicación", "like");
             console.log("✅ Notificación de Like enviada con éxito");
         }).catch(err => {
             console.error("❌ Error enviando notificación:", err);
@@ -10732,6 +10744,7 @@ window.enviarFotoGrupo = async () => {
 
         msgData.foto = urlPublica;
         await db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push(msgData);
+        avisarCreadorGrupo("envió una foto");
 
         cerrarModalFotoGrupo();
         notify("✅ Foto enviada al grupo");
@@ -10741,6 +10754,7 @@ window.enviarFotoGrupo = async () => {
         try {
             msgData.foto = fotoGrupoBase64;
             await db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push(msgData);
+            avisarCreadorGrupo("envió una foto");
 
             cerrarModalFotoGrupo();
             notify("✅ Foto enviada al grupo");
@@ -11286,31 +11300,93 @@ function privSwipeEnd(e, key, texto, autor, uid) {
 const ONESIGNAL_APP_ID = "f6dfa04d-3850-4d39-a038-ba9c83ab91af";
 const ONESIGNAL_REST_API_KEY = "os_v2_app_63p2atjykbgttibyxkoihk4rv4bhzmry62euacv56wf6gjik74drjrv5tji42dij5wxaiocfr3ov7xordvtynoatdacd6mofihbupka";
 
+// ==========================================
+// 🔔 EMISOR GENÉRICO DE PUSH (OneSignal REST, sin servidor)
+// ==========================================
+// `destinoUid` debe ser el UID de Firebase Auth del receptor: es el mismo que
+// la app registra con OneSignal.login(). OneSignal contesta 200 con
+// {"id":...,"recipients":N} si entregó, o 400 con {"errors":[...]} si el UID
+// no coincide con ninguna suscripción. Antes no se miraba la respuesta, así
+// que un push descartado en silencio era indistinguible de uno entregado.
+function enviarPushOneSignal(destinoUid, tipo, titulo, cuerpo, opciones) {
+    if (!destinoUid) return Promise.resolve(false);
+    const opts = opciones || {};
+    const payload = {
+        app_id: ONESIGNAL_APP_ID,
+        include_external_user_ids: [destinoUid],
+        headings: { "en": titulo },
+        contents: { "en": cuerpo },
+        additional_data: Object.assign({ type: tipo }, opts.additional_data || {})
+    };
+    if (opts.url) payload.url = opts.url;
+
+    return fetch("https://onesignal.com/api/v1/notifications", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Authorization": "Basic " + ONESIGNAL_REST_API_KEY
+        },
+        body: JSON.stringify(payload)
+    })
+        .then(r => r.text().then(txt => {
+            if (r.ok) {
+                console.log("✅ OneSignal " + tipo + " → " + destinoUid + " | " + r.status + " | " + txt);
+                return true;
+            }
+            console.error("❌ OneSignal rechazó " + tipo + " → " + destinoUid + " | " + r.status + " | " + txt);
+            console.error("   Si dice 'No recipients', el receptor nunca ejecutó OneSignal.login() con ese UID.");
+            return false;
+        }))
+        .catch(e => {
+            console.error("❌ OneSignal falló (" + tipo + "):", e);
+            return false;
+        });
+}
+
+// Mensaje privado: el type "private_message" es lo que dispara el bubble
+// estilo Messenger y el salto directo al chat en la app.
 function enviarNotificacion(idDelQueRecibe, miNombre, elMensaje, senderUid) {
-    try {
-        fetch("https://onesignal.com/api/v1/notifications", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json; charset=utf-8",
-                "Authorization": "Basic " + ONESIGNAL_REST_API_KEY
-            },
-            body: JSON.stringify({
-                app_id: ONESIGNAL_APP_ID,
-                include_external_user_ids: [idDelQueRecibe],
-                headings: { "en": "Nuevo mensaje de " + miNombre },
-                contents: { "en": elMensaje },
-                url: "https://codecash.space/mensajes",
-                additional_data: {
-                    type: "private_message",
-                    sender_uid: senderUid || "",
-                    sender_name: miNombre,
-                    text: elMensaje
-                }
-            })
-        }).catch(e => console.log("Error OneSignal:", e));
-    } catch (e) {
-        console.log("Error OneSignal:", e);
-    }
+    return enviarPushOneSignal(
+        idDelQueRecibe,
+        "private_message",
+        "Nuevo mensaje de " + miNombre,
+        elMensaje,
+        {
+            url: "https://codecash.space/mensajes",
+            additional_data: {
+                sender_uid: senderUid || "",
+                sender_name: miNombre,
+                text: elMensaje
+            }
+        }
+    );
+}
+
+// Avisar al creador del grupo. Antes lo hacía la Cloud Function que listens
+// `grupos_chat/{grupoId}/mensajes`, así que el comportamiento se mantiene.
+function avisarCreadorGrupo(queHizo) {
+    if (!currentGrupoId || !idAuditor) return;
+    db.ref(`grupos_chat/${currentGrupoId}/info`).once('value').then(s => {
+        const info = s.val() || {};
+        const creador = info.creador;
+        if (creador && creador !== idAuditor) {
+            avisarSocial(creador, `${queHizo} en ${info.nombre || "el grupo"}`, "grupo");
+        }
+    }).catch(() => {});
+}
+
+// Likes, comentarios, menciones y referidos: avisan al dueño pero NO abren
+// ningún chat, por eso llevan type "social".
+function avisarSocial(destinoUid, texto, tipoSocial) {
+    if (!destinoUid || destinoUid === idAuditor) return Promise.resolve(false);
+    const autor = (typeof getMiNombre === "function") ? getMiNombre() : (myCurrentKey || "Usuario");
+    return enviarPushOneSignal(
+        destinoUid,
+        tipoSocial || "social",
+        autor + " " + texto,
+        texto,
+        { additional_data: { sender_uid: idAuditor || "", sender_name: autor, text: texto } }
+    );
 }
 
 window.enviarMensajePrivado = () => {
@@ -12282,6 +12358,7 @@ window.validarCodigoAmigo = () => {
                 timestamp: fecha, read: false
             };
             db.ref().update(updates).then(() => {
+                avisarSocial(ownerId, "🎉 ¡Alguien usó tu código! (+0.50 PTS)", "referido");
                 notify(`✅ ¡Código Válido! Ganaste +0.25 PTS`);
                 registrarHistorial("Bono Amigo", 0.25);
                 input.value = "";
@@ -12721,6 +12798,7 @@ window.likePhoto = (key, ownerUid, btn) => {
                     extra: key,
                     timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
                 });
+                avisarSocial(ownerUid, "le gustó tu foto en la galería", "like");
             }
             try { window.playSound('coin'); } catch(e){}
         }
@@ -15709,6 +15787,7 @@ window.enviarMensajeGrupo = () => {
     db.ref(`grupos_chat/${currentGrupoId}/info/miembros/${idAuditor}`).set(true);
     db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push(msgData)
         .then(() => {
+            avisarCreadorGrupo("escribió");
             detectarYEnvarMenciones(txt, "chat");
             input.value = '';
             input.focus();
