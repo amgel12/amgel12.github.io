@@ -14,6 +14,13 @@
        window.ytApiReady para saber si el API ya cargó. -->
   <script>
     window.ytApiReady = false;
+    window._ytDebug = { lastCall: '', lastEvent: '', lastError: '', calls: 0 };
+    window.addEventListener('error', function (e) {
+        try {
+            var t = e && e.target;
+            window._ytDebug.lastError = 'ERR: ' + ((e && e.message) || (t && t.src) || e.type);
+        } catch (_) {}
+    }, true);
     function _ytMarcarListo() {
         if (window.ytApiReady) return;
         window.ytApiReady = true;
@@ -44,7 +51,7 @@
         } catch(e) { return 'err:' + e.message; }
     };
   </script>
-  <script defer src="https://www.youtube.com/iframe_api"></script>
+  <script id="ytApiScript" defer src="https://www.youtube.com/iframe_api" onerror="window._ytDebug&&(window._ytDebug.lastError='NO CARGA iframe_api')"></script>
   <!-- Preconexiones feed -->
   <link rel="preconnect" href="https://ingresos-minimos-default-rtdb.firebaseio.com" crossorigin>
   <link rel="dns-prefetch" href="https://www.youtube.com">
@@ -16568,6 +16575,7 @@ function reproducirVideo(card) {
     const key     = card.id;
 
     try { console.log('[FEED] reproducir ' + type + ' key=' + key + ' media=' + mediaId); } catch(e) {}
+    try { window._ytDebug.calls++; window._ytDebug.lastCall = type + ' · ' + mediaId; window._ytDebug.lastEvent = ''; } catch(e) {}
 
     mostrarThumb(key);
     if (typeof iniciarProgresoVideo === 'function') iniciarProgresoVideo(mediaId);
@@ -16620,12 +16628,14 @@ function reproducirVideo(card) {
                 // <iframe> directo para que el video no quede como imagen fija.
                 if (++esperaApi > 40) {
                     try { console.log('[YT] API no carga tras 6s -> fallback iframe ' + key); } catch(e) {}
+                    try { window._ytDebug.lastEvent = 'fallback-iframe (API no cargó)'; } catch(e) {}
                     reproducirYouTubeIframeRespaldo(key, mediaId, frame);
                     return;
                 }
                 setTimeout(crearPlayer, 150);
                 return;
             }
+            try { window._ytDebug.ytObj = true; } catch(e) {}
             try { console.log('[YT] creando player ' + key + ' video=' + mediaId); } catch(e) {}
             new window.YT.Player(divId, {
                 videoId: mediaId,
@@ -16633,6 +16643,7 @@ function reproducirVideo(card) {
                 events: {
                     onReady: (e) => {
                         try { console.log('[YT] ready ' + key); } catch(e) {}
+                        try { window._ytDebug.lastEvent = 'onReady'; } catch(e) {}
                         window._ytPlayers = window._ytPlayers || {};
                         window._ytPlayers[key] = e.target;
                         if (audioActivado) e.target.unMute();
@@ -16643,11 +16654,13 @@ function reproducirVideo(card) {
                     },
                     onStateChange: (e) => {
                         try { console.log('[YT] state ' + key + ' = ' + e.data); } catch(err) {}
+                        try { window._ytDebug.lastEvent = 'state ' + e.data; } catch(err) {}
                         if (e.data === window.YT.PlayerState.PLAYING) ocultarThumb(key);
                     },
                     onError: (e) => {
                         // Embed rechazado (101/150), video no disponible, etc.
                         try { console.log('[YT] ERROR ' + key + ' code=' + (e && e.data)); } catch(err) {}
+                        try { window._ytDebug.lastError = 'YT error ' + (e && e.data); } catch(err) {}
                         ocultarThumb(key);
                         const s = document.getElementById(`spin-${key}`);
                         if (s) s.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
@@ -17285,5 +17298,49 @@ window.guardarBioCompleta = () => {
 
     </div>
 </div>
+
+<!-- ══════════ PANEL DE DIAGNÓSTICO DEL FEED (TEMPORAL - quitar luego) ══════════ -->
+<div id="ytDiagBtn" onclick="document.getElementById('ytDiagPanel').style.display='block'; this.style.display='none';"
+     style="display:none; position:fixed; right:8px; bottom:78px; z-index:999999; background:#111; color:#0f0; font:10px/1 monospace; padding:6px 8px; border-radius:6px; border:1px solid #0f0;">DIAG</div>
+<div id="ytDiagPanel"
+     style="position:fixed; left:6px; right:6px; bottom:76px; z-index:999999; background:rgba(0,0,0,.85); color:#0f0; font:11px/1.4 monospace; padding:9px 12px; border-radius:10px; white-space:pre-wrap; box-shadow:0 2px 12px rgba(0,0,0,.6);">
+  <span onclick="this.parentNode.style.display='none'; document.getElementById('ytDiagBtn').style.display='block';"
+        style="position:absolute; top:3px; right:9px; color:#f66; font-weight:bold; cursor:pointer;">✕</span>
+  <pre id="ytDiagBody" style="margin:0; white-space:pre-wrap; font:inherit;">cargando…</pre>
+</div>
+<script>
+(function () {
+    function upd() {
+        var out = [];
+        try {
+            var d = window._ytDebug || {};
+            var yt = !!window.YT, ytp = !!(window.YT && window.YT.Player), ready = !!window.ytApiReady;
+            var cards = document.querySelectorAll('#muroReportes .feed-card').length;
+            var frames = document.querySelectorAll('#muroReportes .vid-frame');
+            var conContenido = 0;
+            frames.forEach(function (f) { if (f.innerHTML.trim() !== '') conContenido++; });
+            var key = (typeof videoActualId !== 'undefined') ? videoActualId : null;
+            var card = key ? document.getElementById(key) : null;
+            var thumb = key ? document.getElementById('thumb-' + key) : null;
+            var thumbOculto = thumb ? thumb.classList.contains('playing') : null;
+            out.push('yt=' + yt + '  YT.Player=' + ytp + '  ready=' + ready);
+            out.push('cards=' + cards + '  framesLlenos=' + conContenido + '/' + frames.length);
+            out.push('actual=' + (key || '-'));
+            out.push('tipo=' + (card ? card.getAttribute('data-type') : '-') + '  media=' + (card ? card.getAttribute('data-media') : '-'));
+            out.push('thumbOculto=' + thumbOculto);
+            out.push('calls=' + (d.calls || 0) + '  ultima=' + (d.lastCall || '-'));
+            out.push('evento=' + (d.lastEvent || '-'));
+            out.push('error=' + (d.lastError || 'ninguno'));
+            out.push('UA=' + navigator.userAgent);
+        } catch (e) {
+            out.push('DIAG-ERR: ' + e.message);
+        }
+        var el = document.getElementById('ytDiagBody');
+        if (el) el.textContent = out.join('\n');
+    }
+    setInterval(upd, 800);
+    upd();
+})();
+</script>
 </body>
 </html>
