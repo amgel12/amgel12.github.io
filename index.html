@@ -11295,46 +11295,70 @@ function privSwipeEnd(e, key, texto, autor, uid) {
 }
 // 3. ENVIAR MENSAJE
 // ==========================================
-// 🔔 PUSH DIRECTO VÍA ONESIGNAL (sin servidor)
+// 🔔 PUSH VÍA ONESIGNAL (proxy en Cloudflare Worker)
 // ==========================================
 const ONESIGNAL_APP_ID = "f6dfa04d-3850-4d39-a038-ba9c83ab91af";
-const ONESIGNAL_REST_API_KEY = "os_v2_app_63p2atjykbgttibyxkoihk4rv6lpjfvvpwlugpfpdheocmc35b4utkvi6d2fsy7eg4lzfkjdtk6wgjtjc6mkwuvawat2y3ynynws3uq";
+
+// La REST API Key NO va aquí. Si se sube a GitHub, OneSignal la revoca
+// automáticamente (GitHub es socio de OneSignal en "secret scanning": detecta
+// el patrón os_v2_app_... en repos públicos y lo reporta). Por eso el envío
+// pasa por este Worker, que guarda la clave como secreto del lado del server.
+const PUSH_WORKER_URL = "https://TU-WORKER.workers.dev";
 
 // ==========================================
-// 🔔 EMISOR GENÉRICO DE PUSH (OneSignal REST, sin servidor)
+// 🔔 EMISOR GENÉRICO DE PUSH (a través del Worker)
 // ==========================================
-// `destinoUid` debe ser el UID de Firebase Auth del receptor: es el mismo que
-// la app registra con OneSignal.login(). OneSignal contesta 200 con
-// {"id":...,"recipients":N} si entregó, o 400 con {"errors":[...]} si el UID
-// no coincide con ninguna suscripción. Antes no se miraba la respuesta, así
-// que un push descartado en silencio era indistinguible de uno entregado.
+// `destinoUid` debe ser el UID de Firebase Auth del receptor: el mismo que la
+// app registra con OneSignal.login(). El Worker agrega la cabecera de
+// autorización y reenvía a la API nueva (api.onesignal.com). Ahí el campo de
+// datos es `data`, que llega a Android como `additionalData`.
+// Ojo: la API nueva puede contestar 200 con id vacío cuando no hay
+// destinatarios suscritos, así que un 200 no garantiza entrega.
 function enviarPushOneSignal(destinoUid, tipo, titulo, cuerpo, opciones) {
     if (!destinoUid) return Promise.resolve(false);
     const opts = opciones || {};
     const payload = {
         app_id: ONESIGNAL_APP_ID,
-        include_external_user_ids: [destinoUid],
-        headings: { "en": titulo },
-        contents: { "en": cuerpo },
-        additional_data: Object.assign({ type: tipo }, opts.additional_data || {})
+        include_aliases: { external_id: [destinoUid] },
+        target_channel: "push",
+        headings: { "en": titulo, "es": titulo },
+        contents: { "en": cuerpo, "es": cuerpo },
+        data: Object.assign({ type: tipo }, opts.additional_data || {})
     };
     if (opts.url) payload.url = opts.url;
 
-    return fetch("https://onesignal.com/api/v1/notifications", {
+    // Dentro de la app: Kotlin agrega la clave (guardada en local.properties).
+    if (typeof AndroidNative !== "undefined" && AndroidNative.enviarPush) {
+        try {
+            AndroidNative.enviarPush(JSON.stringify(payload));
+            return Promise.resolve(true);
+        } catch (e) {
+            console.error("❌ Puente enviarPush falló (" + tipo + "):", e);
+            return Promise.resolve(false);
+        }
+    }
+
+    // Fuera de la app (navegador): solo funciona si hay un Worker configurado.
+    if (!PUSH_WORKER_URL || PUSH_WORKER_URL.indexOf("TU-WORKER") !== -1) {
+        console.warn("⚠️ Push no enviado: no hay app nativa ni Worker configurado.");
+        return Promise.resolve(false);
+    }
+    return fetch(PUSH_WORKER_URL, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json; charset=utf-8",
-            "Authorization": "Basic " + ONESIGNAL_REST_API_KEY
-        },
+        headers: { "Content-Type": "application/json; charset=utf-8" },
         body: JSON.stringify(payload)
     })
         .then(r => r.text().then(txt => {
-            if (r.ok) {
+            let vacio = false;
+            try {
+                const resp = JSON.parse(txt);
+                vacio = (resp.id !== undefined) && (!resp.id);
+            } catch (e) {}
+            if (r.ok && !vacio) {
                 console.log("✅ OneSignal " + tipo + " → " + destinoUid + " | " + r.status + " | " + txt);
                 return true;
             }
-            console.error("❌ OneSignal rechazó " + tipo + " → " + destinoUid + " | " + r.status + " | " + txt);
-            console.error("   Si dice 'No recipients', el receptor nunca ejecutó OneSignal.login() con ese UID.");
+            console.error("❌ OneSignal NO entregó " + tipo + " → " + destinoUid + " | " + r.status + " | " + txt);
             return false;
         }))
         .catch(e => {
