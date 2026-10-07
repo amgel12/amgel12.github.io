@@ -2725,7 +2725,11 @@ function mostrarThumb(key) {
 function ocultarThumb(key) {
     const thumb = document.getElementById(`thumb-${key}`);
     const spin  = document.getElementById(`spin-${key}`);
-    if (thumb) thumb.classList.add('playing');
+    // Importante: poner la opacidad EN LÍNEA. mostrarThumb() la fija en
+    // línea ('1'), y un estilo en línea gana a la clase CSS .playing, por lo
+    // que si solo añadiéramos la clase la miniatura nunca se ocultaría (el
+    // video se oiría pero se vería la miniatura estática encima).
+    if (thumb) { thumb.style.opacity = '0'; thumb.classList.add('playing'); }
     if (spin)  spin.classList.add('oculto');
 }
 
@@ -17330,13 +17334,22 @@ window.guardarBioCompleta = () => {
             out.push('thumbOculto=' + thumbOculto);
             out.push('calls=' + (d.calls || 0) + '  ultima=' + (d.lastCall || '-'));
             out.push('evento=' + (d.lastEvent || '-'));
+            out.push('redYT=' + (d.probeYT || '…'));
             out.push('error=' + (d.lastError || 'ninguno'));
+            out.push('origen=' + location.origin);
             out.push('UA=' + navigator.userAgent);
         } catch (e) {
             out.push('DIAG-ERR: ' + e.message);
         }
         var el = document.getElementById('ytDiagBody');
         if (el) el.textContent = out.join('\n');
+    }
+    if (!window._ytProbeIniciado) {
+        window._ytProbeIniciado = true;
+        var img = new Image();
+        img.onload = function () { window._ytDebug.probeYT = 'OK'; };
+        img.onerror = function () { window._ytDebug.probeYT = 'FALLA (no accesible)'; };
+        img.src = 'https://www.youtube.com/favicon.ico?_=' + Date.now();
     }
     setInterval(upd, 800);
     upd();
