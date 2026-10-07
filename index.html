@@ -14,13 +14,34 @@
        window.ytApiReady para saber si el API ya cargó. -->
   <script>
     window.ytApiReady = false;
-    window.onYouTubeIframeAPIReady = function() {
+    function _ytMarcarListo() {
+        if (window.ytApiReady) return;
         window.ytApiReady = true;
+        try { console.log('[YT] API listo'); } catch(e) {}
         if (typeof window._ytMisionPendiente === 'function') {
             window._ytMisionPendiente();
             window._ytMisionPendiente = null;
         }
         try { window.dispatchEvent(new Event('yt-api-ready')); } catch(e) {}
+    }
+    window.onYouTubeIframeAPIReady = _ytMarcarListo;
+    // Vigilante: si el callback del API no dispara, igualmente detectamos
+    // cuándo cargó el player para no depender solo del callback.
+    (function vigilarYT() {
+        if (window.YT && window.YT.Player) { _ytMarcarListo(); return; }
+        setTimeout(vigilarYT, 300);
+    })();
+    // Diagnóstico invocable desde Kotlin (se ve en logcat PAGOCODE-WS).
+    window.ytDiagnostico = function() {
+        try {
+            return JSON.stringify({
+                url: location.href,
+                yt: !!window.YT,
+                ytPlayer: !!(window.YT && window.YT.Player),
+                ready: !!window.ytApiReady,
+                cards: document.querySelectorAll('.feed-card').length
+            });
+        } catch(e) { return 'err:' + e.message; }
     };
   </script>
   <script defer src="https://www.youtube.com/iframe_api"></script>
@@ -16546,6 +16567,8 @@ function reproducirVideo(card) {
     const frame   = card.querySelector('.vid-frame');
     const key     = card.id;
 
+    try { console.log('[FEED] reproducir ' + type + ' key=' + key + ' media=' + mediaId); } catch(e) {}
+
     mostrarThumb(key);
     if (typeof iniciarProgresoVideo === 'function') iniciarProgresoVideo(mediaId);
 
@@ -16595,15 +16618,21 @@ function reproducirVideo(card) {
             if (!window.YT || !window.YT.Player) {
                 // El API aún no carga. Esperamos; si nunca llega, usamos un
                 // <iframe> directo para que el video no quede como imagen fija.
-                if (++esperaApi > 40) { reproducirYouTubeIframeRespaldo(key, mediaId, frame); return; }
+                if (++esperaApi > 40) {
+                    try { console.log('[YT] API no carga tras 6s -> fallback iframe ' + key); } catch(e) {}
+                    reproducirYouTubeIframeRespaldo(key, mediaId, frame);
+                    return;
+                }
                 setTimeout(crearPlayer, 150);
                 return;
             }
+            try { console.log('[YT] creando player ' + key + ' video=' + mediaId); } catch(e) {}
             new window.YT.Player(divId, {
                 videoId: mediaId,
                 playerVars: { autoplay: 1, controls: 0, mute: muteParam, loop: 1, playlist: mediaId, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, origin: window.location.origin },
                 events: {
                     onReady: (e) => {
+                        try { console.log('[YT] ready ' + key); } catch(e) {}
                         window._ytPlayers = window._ytPlayers || {};
                         window._ytPlayers[key] = e.target;
                         if (audioActivado) e.target.unMute();
@@ -16612,9 +16641,13 @@ function reproducirVideo(card) {
                         // así nunca queda "congelado" como imagen estática.
                         setTimeout(() => { if (videoActualId === key) ocultarThumb(key); }, 1000);
                     },
-                    onStateChange: (e) => { if (e.data === window.YT.PlayerState.PLAYING) ocultarThumb(key); },
-                    onError: () => {
-                        // Embed rechazado (error 101/150) o video no disponible.
+                    onStateChange: (e) => {
+                        try { console.log('[YT] state ' + key + ' = ' + e.data); } catch(err) {}
+                        if (e.data === window.YT.PlayerState.PLAYING) ocultarThumb(key);
+                    },
+                    onError: (e) => {
+                        // Embed rechazado (101/150), video no disponible, etc.
+                        try { console.log('[YT] ERROR ' + key + ' code=' + (e && e.data)); } catch(err) {}
                         ocultarThumb(key);
                         const s = document.getElementById(`spin-${key}`);
                         if (s) s.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
@@ -16631,6 +16664,7 @@ function reproducirVideo(card) {
 // nunca se quede mostrando solo la miniatura estática.
 function reproducirYouTubeIframeRespaldo(key, mediaId, frame) {
     if (videoActualId !== key) return;
+    try { console.log('[YT] respaldo iframe ' + key + ' id=' + mediaId); } catch(e) {}
     frame.innerHTML = `<iframe src="https://www.youtube.com/embed/${mediaId}?autoplay=1&mute=${audioActivado ? 0 : 1}&controls=0&loop=1&playlist=${mediaId}&playsinline=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(location.origin)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen frameborder="0" style="position:absolute;left:0;top:0;width:100%;height:100%;border:none;"></iframe>`;
     const ifr = frame.querySelector('iframe');
     if (ifr) ifr.addEventListener('load', () => ocultarThumb(key));
