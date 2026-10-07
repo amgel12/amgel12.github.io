@@ -11369,6 +11369,9 @@ function enviarPushOneSignal(destinoUid, tipo, titulo, cuerpo, opciones) {
 
 // Mensaje privado: el type "private_message" es lo que dispara el bubble
 // estilo Messenger y el salto directo al chat en la app.
+// Sin `url`: la notificacion no lleva a ninguna web, la app (addClickListener)
+// lee sender_uid y abre el chat. Antes llevaba codecash.space/mensajes, que no
+// existe en GitHub Pages y daba 404.
 function enviarNotificacion(idDelQueRecibe, miNombre, elMensaje, senderUid) {
     return enviarPushOneSignal(
         idDelQueRecibe,
@@ -11376,7 +11379,6 @@ function enviarNotificacion(idDelQueRecibe, miNombre, elMensaje, senderUid) {
         "Nuevo mensaje de " + miNombre,
         elMensaje,
         {
-            url: "https://codecash.space/mensajes",
             additional_data: {
                 sender_uid: senderUid || "",
                 sender_name: miNombre,
