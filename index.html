@@ -286,7 +286,9 @@
   }
 
   #modalRetiro .modal-content {
-      max-height: 90vh;
+      max-height: 72vh;
+      max-width: 260px;
+      width: 80%;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
   }
@@ -478,15 +480,15 @@
     .badge-pts {
       background: linear-gradient(135deg, #6366f1, #4f46e5);
       color: white;
-      padding: 8px 16px;
+      padding: 5px 10px;
       border-radius: 50px;
       font-weight: 800;
-      font-size: 0.9rem;
+      font-size: 0.72rem;
       transition: transform 0.2s;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 5px;
       box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
   }
 
@@ -494,7 +496,7 @@
 
   .snake-wallet {
       border-left: 1px solid rgba(255, 255, 255, 0.4);
-      padding-left: 8px;
+      padding-left: 6px;
       color: #86efac;
   }
 
@@ -2016,6 +2018,24 @@
     transform: scale(1);
 }
 
+/* Modal de notificaciones */
+@keyframes notifPop {
+    from { opacity: 0; transform: translateY(18px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes notifFade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.notif-item {
+    animation: notifFade 0.28s ease both;
+    -webkit-tap-highlight-color: transparent;
+}
+.notif-item:active { transform: scale(0.975); }
+#listaNotificaciones::-webkit-scrollbar { width: 6px; }
+#listaNotificaciones::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 6px; }
+#listaNotificaciones::-webkit-scrollbar-track { background: transparent; }
+
 
 .noti-icon-box.bell-jump,
 .noti-icon-box.bell-jump .fa-bell {
@@ -3344,14 +3364,22 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 
 <!-- 🔔 MODAL DE NOTIFICACIONES -->
-<div id="modalNotificaciones" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#fff; padding:0; border-radius:20px; width:92%; max-width:400px; color:#1e293b; margin:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#667eea,#764ba2); padding:18px 20px; display:flex; align-items:center; justify-content:space-between;">
-            <h3 style="margin:0; display:flex; align-items:center; gap:8px; color:#fff; font-size:1.1rem;">🔔 Notificaciones</h3>
-            <button onclick="cerrarModalNotif()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">✕</button>
+<div id="modalNotificaciones" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:1200000; align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#fff; padding:0; border-radius:24px; width:92%; max-width:400px; color:#1e293b; margin:auto; box-shadow:0 24px 70px rgba(15,23,42,0.35); overflow:hidden; animation:notifPop 0.3s cubic-bezier(0.34,1.56,0.64,1);">
+        <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#a855f7); padding:18px 20px; display:flex; align-items:center; justify-content:space-between; position:relative; overflow:hidden;">
+            <div style="position:absolute; top:-42px; right:-28px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.12);"></div>
+            <div style="position:absolute; bottom:-54px; left:-24px; width:104px; height:104px; border-radius:50%; background:rgba(255,255,255,0.08);"></div>
+            <div style="position:relative; display:flex; align-items:center; gap:11px; text-align:left;">
+                <div style="width:42px; height:42px; border-radius:13px; background:rgba(255,255,255,0.22); display:flex; align-items:center; justify-content:center; font-size:1.25rem; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.25);">🔔</div>
+                <div>
+                    <h3 style="margin:0; color:#fff; font-size:1.05rem; font-weight:800; letter-spacing:0.3px;">Notificaciones</h3>
+                    <span style="color:rgba(255,255,255,0.82); font-size:0.68rem; font-weight:500;">Tu actividad reciente</span>
+                </div>
+            </div>
+            <button onclick="cerrarModalNotif()" style="position:relative; background:rgba(255,255,255,0.2); border:none; color:#fff; width:34px; height:34px; border-radius:50%; font-size:1.05rem; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.2);">✕</button>
         </div>
-        <div id="listaNotificaciones" style="max-height:360px; overflow-y:auto; padding:12px 16px; background:#f8fafc;">
-            <div style="padding:30px; color:#94a3b8; text-align:center; font-size:0.9rem;">Sin notificaciones nuevas.</div>
+        <div id="listaNotificaciones" style="max-height:62vh; overflow-y:auto; padding:10px 12px 14px; background:linear-gradient(180deg,#f8fafc,#eef2ff);">
+            <div style="padding:40px 22px; color:#94a3b8; text-align:center; font-size:0.85rem;"><div style="font-size:2.2rem; margin-bottom:8px;">🔕</div>Sin notificaciones por ahora</div>
         </div>
     </div>
 </div>
@@ -4209,132 +4237,132 @@ Cerrar
 </div>
 
         <div id="modalRetiro" class="modal-overlay" style="display:none;">
-         <div class="modal-content" style="max-height: 85vh; overflow-y: scroll; background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); padding: 0; border-radius: 25px; border: 1px solid #334155;">
+         <div class="modal-content" style="max-height: 72vh; overflow-y: scroll; background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); padding: 0; border-radius: 20px; border: 1px solid #334155;">
 
             <!-- HEADER -->
-            <div style="padding: 25px 25px 15px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <div style="font-size: 2rem; margin-bottom: 5px;">💎</div>
-                <h3 style="color: white; margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: 1px;">MI BILLETERA</h3>
-                <p style="color: #64748b; font-size: 0.7rem; margin: 3px 0 0;">PAGOCODE • Sistema de Pagos</p>
+            <div style="padding: 12px 14px 8px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 1.2rem; margin-bottom: 2px;">💎</div>
+                <h3 style="color: white; margin: 0; font-size: 0.8rem; font-weight: 800; letter-spacing: 1px;">MI BILLETERA</h3>
+                <p style="color: #64748b; font-size: 0.52rem; margin: 2px 0 0;">PAGOCODE • Sistema de Pagos</p>
             </div>
 
             <!-- SALDO CARD -->
-            <div style="margin: 20px 20px 0; background: linear-gradient(135deg, #0070ba, #0ea5e9); border-radius: 20px; padding: 20px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,112,186,0.4);">
+            <div style="margin: 12px 14px 0; background: linear-gradient(135deg, #0070ba, #0ea5e9); border-radius: 16px; padding: 12px 14px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,112,186,0.4);">
                 <!-- Círculos decorativos -->
                 <div style="position:absolute; top:-20px; right:-20px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.08);"></div>
                 <div style="position:absolute; bottom:-30px; left:-10px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.05);"></div>
 
                 <div style="position:relative; z-index:2;">
-                    <div style="font-size:0.7rem; color:rgba(255,255,255,0.7); font-weight:600; letter-spacing:2px; text-transform:uppercase;">Saldo Disponible</div>
-                    <div style="font-size: 3rem; font-weight: 900; color: white; line-height:1.1; margin: 5px 0;">
+                    <div style="font-size:0.5rem; color:rgba(255,255,255,0.7); font-weight:600; letter-spacing:1.5px; text-transform:uppercase;">Saldo Disponible</div>
+                    <div style="font-size: 1.5rem; font-weight: 900; color: white; line-height:1.1; margin: 3px 0;">
                         <span id="retiroSaldoDisplay">0.00</span>
-                        <span style="font-size:1.2rem; opacity:0.8;">PTS</span>
+                        <span style="font-size:0.68rem; opacity:0.8;">PTS</span>
                     </div>
-                    <div style="font-size:0.75rem; color:rgba(255,255,255,0.6); margin-top:5px;">
+                    <div style="font-size:0.56rem; color:rgba(255,255,255,0.6); margin-top:3px;">
                         ≈ $<span id="retiroUsdEquiv">0.00</span> USD estimado
                     </div>
                 </div>
             </div>
     <!-- RIFA BANNER -->
     <div onclick="abrirRifa(); document.getElementById('modalRetiro').style.display='none'" 
-         style="margin: 15px 20px 0; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 15px; padding: 12px 15px; display:flex; align-items:center; gap:12px; cursor:pointer; box-shadow: 0 4px 15px rgba(245,158,11,0.3);">
-        <div style="font-size:1.8rem;">🎟️</div>
+         style="margin: 12px 16px 0; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 15px; padding: 10px 12px; display:flex; align-items:center; gap:12px; cursor:pointer; box-shadow: 0 4px 15px rgba(245,158,11,0.3);">
+        <div style="font-size:1.3rem;">🎟️</div>
         <div style="flex:1;">
-            <div style="font-weight:800; color:white; font-size:0.9rem;">GRAN RIFA $50 USD</div>
-            <div style="font-size:0.65rem; color:rgba(255,255,255,0.8);">Solo 100 PTS por ticket</div>
+            <div style="font-weight:800; color:white; font-size:0.8rem;">GRAN RIFA $50 USD</div>
+            <div style="font-size:0.58rem; color:rgba(255,255,255,0.8);">Solo 100 PTS por ticket</div>
         </div>
-        <div style="background:white; color:#d97706; padding:6px 14px; border-radius:20px; font-size:0.75rem; font-weight:800;">
+        <div style="background:white; color:#d97706; padding:5px 12px; border-radius:20px; font-size:0.68rem; font-weight:800;">
             JUGAR →
         </div>
     </div>
 
     <!-- TÍTULO RETIROS -->
-    <div style="padding: 20px 20px 10px; display:flex; align-items:center; gap:10px;">
+    <div style="padding: 16px 16px 8px; display:flex; align-items:center; gap:10px;">
         <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
-        <span style="color:#64748b; font-size:0.7rem; font-weight:700; letter-spacing:1px;">SOLICITAR PAGO</span>
+        <span style="color:#64748b; font-size:0.62rem; font-weight:700; letter-spacing:1px;">SOLICITAR PAGO</span>
         <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
     </div>
 
     <!-- GRID DE MONTOS -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding: 0 20px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding: 0 16px;">
 
         <div class="card-retiro" id="promoRetiro" onclick="seleccionarMonto(this, 0.10, 100)"
-             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:15px; text-align:center; cursor:pointer; position:relative; transition:0.2s;">
-            <div style="position:absolute; top:-8px; right:-8px; background:#ef4444; color:white; font-size:0.55rem; padding:3px 7px; border-radius:10px; font-weight:800;">¡NUEVO!</div>
-            <div style="font-size:1.4rem; font-weight:900; color:white;">$0.10</div>
-            <div style="font-size:0.7rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 100 PTS</div>
+             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:12px; text-align:center; cursor:pointer; position:relative; transition:0.2s;">
+            <div style="position:absolute; top:-8px; right:-8px; background:#ef4444; color:white; font-size:0.5rem; padding:2px 6px; border-radius:10px; font-weight:800;">¡NUEVO!</div>
+            <div style="font-size:1.2rem; font-weight:900; color:white;">$0.10</div>
+            <div style="font-size:0.62rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 100 PTS</div>
         </div>
 
         <div class="card-retiro" onclick="seleccionarMonto(this, 1.50, 1500)"
-             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:15px; text-align:center; cursor:pointer; transition:0.2s;">
-            <div style="font-size:1.4rem; font-weight:900; color:white;">$1.50</div>
-            <div style="font-size:0.7rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 1,500 PTS</div>
+             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:12px; text-align:center; cursor:pointer; transition:0.2s;">
+            <div style="font-size:1.2rem; font-weight:900; color:white;">$1.50</div>
+            <div style="font-size:0.62rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 1,500 PTS</div>
         </div>
 
         <div class="card-retiro" onclick="seleccionarMonto(this, 5.00, 5000)"
-             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:15px; text-align:center; cursor:pointer; transition:0.2s;">
-            <div style="font-size:1.4rem; font-weight:900; color:white;">$5.00</div>
-            <div style="font-size:0.7rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 5,000 PTS</div>
+             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:12px; text-align:center; cursor:pointer; transition:0.2s;">
+            <div style="font-size:1.2rem; font-weight:900; color:white;">$5.00</div>
+            <div style="font-size:0.62rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 5,000 PTS</div>
         </div>
 
         <div class="card-retiro" onclick="seleccionarMonto(this, 10.00, 10000)"
-             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:15px; text-align:center; cursor:pointer; transition:0.2s;">
-            <div style="font-size:1.4rem; font-weight:900; color:white;">$10.00</div>
-            <div style="font-size:0.7rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 10,000 PTS</div>
+             style="background:#1e293b; border:2px solid #334155; border-radius:15px; padding:12px; text-align:center; cursor:pointer; transition:0.2s;">
+            <div style="font-size:1.2rem; font-weight:900; color:white;">$10.00</div>
+            <div style="font-size:0.62rem; color:#f59e0b; font-weight:700; margin-top:3px;">⚡ 10,000 PTS</div>
         </div>
 
     </div>
 
     <!-- SELECTOR DE MÉTODO DE PAGO -->
-    <div style="padding: 15px 20px 8px;">
-        <div style="font-size:0.65rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Método de Pago</div>
+    <div style="padding: 12px 16px 8px;">
+        <div style="font-size:0.58rem; color:#64748b; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Método de Pago</div>
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
 
             <!-- PayPal -->
             <div id="metodoPP" onclick="seleccionarMetodoPago('paypal')"
                  style="background:#0070ba; border:2px solid #0070ba; border-radius:12px; padding:10px 6px; text-align:center; cursor:pointer; transition:0.2s; box-shadow:0 4px 12px rgba(0,112,186,0.4);">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" style="height:18px; filter:brightness(10); margin-bottom:4px; display:block; margin:0 auto 4px;">
-                <div style="color:white; font-size:0.65rem; font-weight:800;">PayPal</div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" style="height:16px; filter:brightness(10); margin-bottom:4px; display:block; margin:0 auto 4px;">
+                <div style="color:white; font-size:0.58rem; font-weight:800;">PayPal</div>
             </div>
 
             <!-- Binance Pay -->
             <div id="metodoBNB" onclick="seleccionarMetodoPago('binance')"
                  style="background:#1e293b; border:2px solid #334155; border-radius:12px; padding:10px 6px; text-align:center; cursor:pointer; transition:0.2s; opacity:0.6;">
-                <div style="font-size:1.4rem; line-height:1; margin-bottom:4px;">🟡</div>
-                <div style="color:#f0b90b; font-size:0.62rem; font-weight:800;">Binance</div>
+                <div style="font-size:1.2rem; line-height:1; margin-bottom:4px;">🟡</div>
+                <div style="color:#f0b90b; font-size:0.56rem; font-weight:800;">Binance</div>
             </div>
 
             <!-- TropiPay -->
             <div id="metodoTP" onclick="seleccionarMetodoPago('tropipay')"
                  style="background:#1e293b; border:2px solid #334155; border-radius:12px; padding:10px 6px; text-align:center; cursor:pointer; transition:0.2s; opacity:0.6;">
-                <div style="font-size:1.4rem; line-height:1; margin-bottom:4px;">🌴</div>
-                <div style="color:#10b981; font-size:0.62rem; font-weight:800;">TropiPay</div>
+                <div style="font-size:1.2rem; line-height:1; margin-bottom:4px;">🌴</div>
+                <div style="color:#10b981; font-size:0.56rem; font-weight:800;">TropiPay</div>
             </div>
         </div>
     </div>
 
     <!-- INPUT DINÁMICO SEGÚN MÉTODO -->
-    <div style="margin: 8px 20px 0; position:relative;">
+    <div style="margin: 8px 16px 0; position:relative;">
         <div id="iconoInputPago" style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#64748b; font-size:0.9rem;">📧</div>
         <input id="inputDatosPago" type="text" placeholder="Correo de PayPal"
-               style="background:#1e293b; border:2px solid #334155; border-radius:15px; color:white; padding:12px 14px 12px 40px; width:100%; outline:none; font-family:inherit;">
+               style="background:#1e293b; border:2px solid #334155; border-radius:15px; color:white; padding:10px 12px 10px 38px; width:100%; outline:none; font-family:inherit; font-size:0.8rem;">
     </div>
     <!-- Nota informativa del método -->
-    <div id="notaMetodoPago" style="margin:6px 20px 0; font-size:0.65rem; color:#64748b; text-align:center;">
+    <div id="notaMetodoPago" style="margin:6px 16px 0; font-size:0.58rem; color:#64748b; text-align:center;">
         💡 Tu correo asociado a PayPal
     </div>
 
     <!-- BOTÓN RETIRO -->
-    <div style="padding: 15px 20px;">
+    <div style="padding: 12px 16px;">
         <button id="btnSolicitarRetiro" onclick="procesarRetiro()" disabled
-                style="width:100%; padding:16px; border-radius:15px; border:none; background:linear-gradient(135deg, #334155, #475569); color:#64748b; font-weight:800; font-size:1rem; cursor:not-allowed; transition:0.3s; letter-spacing:1px;">
+                style="width:100%; padding:12px; border-radius:14px; border:none; background:linear-gradient(135deg, #334155, #475569); color:#64748b; font-weight:800; font-size:0.8rem; cursor:not-allowed; transition:0.3s; letter-spacing:1px;">
             SELECCIONA UN MONTO
         </button>
     </div>
 
     <!-- NOTAS -->
-    <div style="margin: 0 20px 15px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:12px;">
-        <div style="font-size:0.65rem; color:#475569; line-height:1.8;">
+    <div style="margin: 0 16px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:12px;">
+        <div style="font-size:0.58rem; color:#475569; line-height:1.6;">
             ⏱️ Pagos en 1-7 días hábiles<br>
             🛡️ El uso de trampas anulará el pago<br>
             ⚠️ Google no está afiliado a estas recompensas
@@ -4343,7 +4371,7 @@ Cerrar
 
     <!-- CERRAR -->
     <button onclick="document.getElementById('modalRetiro').style.display='none'" 
-            style="width:100%; padding:15px; border:none; background:rgba(255,255,255,0.05); color:#64748b; font-weight:600; cursor:pointer; border-top:1px solid rgba(255,255,255,0.07);">
+            style="width:100%; padding:12px; border:none; background:rgba(255,255,255,0.05); color:#64748b; font-weight:600; font-size:0.82rem; cursor:pointer; border-top:1px solid rgba(255,255,255,0.07);">
         Cerrar
     </button>
 
@@ -7599,7 +7627,7 @@ if (typeof actualizarBioResumen === 'function') actualizarBioResumen(d.bio);
 
                 // Llenar lista
                 let h = "";
-                Object.entries(d.notifications).reverse().slice(0, 20).forEach(([k, n]) => {
+                Object.entries(d.notifications).reverse().slice(0, 20).forEach(([k, n], idx) => {
                     const idVideo = n.extra || "";
                     const nombreEmisor = n.fromName || n.from || "Usuario";
                     const safeType = String(n.type || '').replace(/'/g, "\\'");
@@ -7607,10 +7635,28 @@ if (typeof actualizarBioResumen === 'function') actualizarBioResumen(d.bio);
                     const safeKey = String(k).replace(/'/g, "\\'");
                     const safeName = String(nombreEmisor).replace(/'/g, "\\'");
                     const safeFrom = String(n.from || '').replace(/'/g, "\\'");
-                    h += `<div id="noti-${k}" class="noti-item" onclick="irANotificacion('${safeType}', '${safeExtra}', '${safeKey}', '${safeFrom}')"><strong>${safeName}</strong><div class="noti-text">${n.text || ''}</div></div>`;
+                    const safeTexto = String(n.text || '');
+                    const esNueva = !n.read;
+                    let icon = '📢', iconBg = 'linear-gradient(135deg,#eef2ff,#e0e7ff)';
+                    if (n.type === 'chat_privado' || n.type === 'chat' || n.type === 'comentario') { icon = '💬'; iconBg = 'linear-gradient(135deg,#e0f2fe,#bae6fd)'; }
+                    else if (n.type === 'like') { icon = '❤️'; iconBg = 'linear-gradient(135deg,#ffe4e6,#fecdd3)'; }
+                    else if (n.type === 'referido') { icon = '👥'; iconBg = 'linear-gradient(135deg,#dcfce7,#bbf7d0)'; }
+                    else if (n.type === 'gift') { icon = '🎁'; iconBg = 'linear-gradient(135deg,#fef3c7,#fde68a)'; }
+                    else if (n.type === 'grupo_chat') { icon = '👥'; iconBg = 'linear-gradient(135deg,#ede9fe,#ddd6fe)'; }
+                    const fecha = n.timestamp ? new Date(n.timestamp).toLocaleString('es-MX', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+                    const borde = esNueva ? '#e0e7ff' : '#eef1f6';
+                    const shadow = esNueva ? '0 6px 18px rgba(99,102,241,0.12)' : '0 2px 6px rgba(15,23,42,0.04)';
+                    h += `<div id="noti-${k}" class="notif-item" onclick="irANotificacion('${safeType}', '${safeExtra}', '${safeKey}', '${safeFrom}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;margin:8px 2px;border-radius:16px;background:#fff;border:1px solid ${borde};box-shadow:${shadow};cursor:pointer;animation-delay:${Math.min(idx*35,350)}ms;">`
+                       + `<div style="width:42px;height:42px;border-radius:14px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;">${icon}</div>`
+                       + `<div style="flex:1;min-width:0;text-align:left;">`
+                       + `<div class="noti-text" style="font-weight:700;color:#0f172a;font-size:0.85rem;line-height:1.3;"><strong>${safeName}</strong> ${safeTexto}</div>`
+                       + (fecha ? `<div style="font-size:0.68rem;margin-top:3px;color:#94a3b8;">${fecha}</div>` : '')
+                       + `</div>`
+                       + (esNueva ? `<div style="width:9px;height:9px;border-radius:50%;background:#6366f1;box-shadow:0 0 0 4px rgba(99,102,241,0.15);flex-shrink:0;"></div>` : '')
+                       + `</div>`;
                 });
                 const listaContainer = document.getElementById('listaNotificaciones');
-                if(listaContainer) listaContainer.innerHTML = h || "<div style='padding:20px; color:#cbd5e1;'>Sin notificaciones.</div>";
+                if(listaContainer) listaContainer.innerHTML = h || "<div style='padding:40px 22px;color:#94a3b8;text-align:center;font-size:0.85rem;'><div style='font-size:2.2rem;margin-bottom:8px;'>🔕</div>Sin notificaciones por ahora</div>";
 
             } else {
                 window._lastNotiCount = 0;
@@ -15336,12 +15382,12 @@ window.abrirNotificaciones = () => {
     if (modal) modal.style.display = 'flex';
     if (!idAuditor) return;
     const lista = document.getElementById('listaNotificaciones');
-    if (lista) lista.innerHTML = '<div style="padding:30px;text-align:center;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i></div>';
+    if (lista) lista.innerHTML = '<div style="padding:40px 22px;text-align:center;color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i></div>';
 
     db.ref('users/' + idAuditor + '/notifications').once('value', function(snap) {
         if (!lista) return;
         if (!snap.exists()) {
-            lista.innerHTML = '<div style="padding:30px;color:#94a3b8;text-align:center;font-size:0.9rem;">Sin notificaciones aun.</div>';
+            lista.innerHTML = '<div style="padding:40px 22px;color:#94a3b8;text-align:center;font-size:0.85rem;"><div style="font-size:2.2rem;margin-bottom:8px;">🔕</div>Sin notificaciones por ahora</div>';
             return;
         }
         var items = [];
@@ -15354,28 +15400,35 @@ window.abrirNotificaciones = () => {
 
         // Crear divs por DOM (sin innerHTML con onclick) para evitar errores de escapado
         lista.innerHTML = '';
-        items.slice(0, 30).forEach(function(n) {
+        if (!items.length) {
+            lista.innerHTML = '<div style="padding:40px 22px;color:#94a3b8;text-align:center;font-size:0.85rem;"><div style="font-size:2.2rem;margin-bottom:8px;">🔕</div>Sin notificaciones por ahora</div>';
+            return;
+        }
+        items.slice(0, 30).forEach(function(n, idx) {
             var fecha = n.timestamp
                 ? new Date(n.timestamp).toLocaleString('es-MX', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
                 : '';
-            var bg     = n.read ? '#fff'    : '#eef2ff';
-            var borde  = n.read ? '#e2e8f0' : '#c7d2fe';
-            var shadow = n.read ? '' : '0 2px 8px rgba(99,102,241,0.1)';
-            var icon   = '📢';
-            if (n.type === 'chat_privado' || n.type === 'chat') icon = '💬';
-            else if (n.type === 'comentario') icon = '💬';
-            else if (n.type === 'like')       icon = '❤️';
-            else if (n.type === 'referido')   icon = '👥';
-            else if (n.type === 'gift')       icon = '🎁';
-            var titulo = (n.fromName ? n.fromName + ' — ' : '') + (n.text || '');
+            var esNueva = !n.read;
+            var icon = '📢', iconBg = 'linear-gradient(135deg,#eef2ff,#e0e7ff)';
+            if (n.type === 'chat_privado' || n.type === 'chat' || n.type === 'comentario') { icon = '💬'; iconBg = 'linear-gradient(135deg,#e0f2fe,#bae6fd)'; }
+            else if (n.type === 'like')    { icon = '❤️'; iconBg = 'linear-gradient(135deg,#ffe4e6,#fecdd3)'; }
+            else if (n.type === 'referido') { icon = '👥'; iconBg = 'linear-gradient(135deg,#dcfce7,#bbf7d0)'; }
+            else if (n.type === 'gift')    { icon = '🎁'; iconBg = 'linear-gradient(135deg,#fef3c7,#fde68a)'; }
+            else if (n.type === 'grupo_chat') { icon = '👥'; iconBg = 'linear-gradient(135deg,#ede9fe,#ddd6fe)'; }
+            var nombre = String(n.fromName || n.from || 'Usuario');
+            var texto = String(n.text || '');
+            var esc = (typeof escapeHtml === 'function') ? escapeHtml : function(x){ return x; };
 
             var div = document.createElement('div');
-            div.style.cssText = 'padding:12px 14px;margin:8px 0;border:1px solid ' + borde + ';background:' + bg + ';border-radius:14px;font-size:0.9rem;display:flex;align-items:flex-start;gap:10px;box-shadow:' + shadow + ';cursor:pointer;';
-            div.innerHTML = '<span style="font-size:1.3rem;flex-shrink:0;margin-top:1px;">' + icon + '</span>'
-                + '<div style="flex:1;min-width:0;">'
-                + '<div style="font-weight:600;color:#0f172a;">' + (typeof escapeHtml === 'function' ? escapeHtml(titulo) : titulo) + '</div>'
-                + '<div style="font-size:0.75rem;margin-top:4px;color:#94a3b8;">' + fecha + '</div>'
-                + '</div>';
+            div.id = 'noti-' + String(n.key || '');
+            div.className = 'notif-item';
+            div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;margin:8px 2px;border-radius:16px;background:#fff;border:1px solid ' + (esNueva ? '#e0e7ff' : '#eef1f6') + ';box-shadow:' + (esNueva ? '0 6px 18px rgba(99,102,241,0.12)' : '0 2px 6px rgba(15,23,42,0.04)') + ';cursor:pointer;animation-delay:' + Math.min(idx * 35, 350) + 'ms;';
+            div.innerHTML = '<div style="width:42px;height:42px;border-radius:14px;background:' + iconBg + ';display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;">' + icon + '</div>'
+                + '<div style="flex:1;min-width:0;text-align:left;">'
+                + '<div class="noti-text" style="font-weight:700;color:#0f172a;font-size:0.85rem;line-height:1.3;text-align:left;"><strong>' + esc(nombre) + '</strong>' + (texto ? ' ' + esc(texto) : '') + '</div>'
+                + '<div style="font-size:0.68rem;margin-top:3px;color:#94a3b8;">' + fecha + '</div>'
+                + '</div>'
+                + (esNueva ? '<div style="width:9px;height:9px;border-radius:50%;background:#6366f1;box-shadow:0 0 0 4px rgba(99,102,241,0.15);flex-shrink:0;"></div>' : '');
 
             // Usar addEventListener — sin riesgo de escapado
             (function(type, extra, key, from) {
@@ -15439,43 +15492,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-let cantidadNotificaciones = 0;
-const badge = document.getElementById('badgeNotif');
-const campana = document.getElementById('btnCampana');
-const modal = document.getElementById('modalNotificaciones');
-const lista = document.getElementById('listaNotificaciones');
-
-function abrirNotificaciones() {
-    modal.style.display = 'flex'; // o 'block' según tu CSS de modal
-    cantidadNotificaciones = 0;
-    badge.textContent = '0';
-    badge.classList.remove('active');
-}
-
-function cerrarNotificaciones() {
-    modal.style.display = 'none';
-}
-
-// Llámala cuando llegue una notificación real o por prueba:
-function notificarLlegada(mensaje = "Nueva actividad") {
-    cantidadNotificaciones++;
-    badge.textContent = cantidadNotificaciones > 99 ? '99+' : cantidadNotificaciones;
-    badge.classList.add('active');
-
-    if (lista.children.length === 1 && lista.querySelector('div[style*="text-align:center"]')) lista.innerHTML = '';
-    lista.innerHTML = `<div style="padding:12px 14px; margin:8px 0; border:1px solid #c7d2fe; background:#eef2ff; border-radius:14px; font-size:0.9rem; display:flex; align-items:flex-start; gap:10px; box-shadow:0 2px 8px rgba(99,102,241,0.1);"><span style="font-size:1.3rem;">📢</span><div style="flex:1;"><div style="font-weight:600; color:#0f172a;">${mensaje}</div></div></div>` + lista.innerHTML;
-
-    // Brinco
-    campana.classList.remove('bell-jump');
-    void campana.offsetWidth;
-    campana.classList.add('bell-jump');
-    setTimeout(() => campana.classList.remove('bell-jump'), 600);
-}
-
-// === VARIABLES GLOBALES PARA NOTIFICACIONES ===
-
 // === CERRAR MODAL DE NOTIFICACIONES ===
-// ✅ FUNCIÓN PARA CERRAR EL MODAL
 window.cerrarModalNotif = () => {
     const modal = document.getElementById('modalNotificaciones');
     if (modal) modal.style.display = 'none';
