@@ -2382,307 +2382,7 @@
           // Llave pública corregida 👇
           emailjs.init("VDnIwq_AnzDP-iCEO");
        })();
-       let videoPendienteUrl = "";
 let fotoBase64Pendiente = "";
-
-// ── Helpers de plataforma para la Librería Premium ──────────────────────────
-window._libGetPlatform = (url) => {
-    if (!url) return 'unknown';
-    if (url.includes('catbox.moe'))                              return 'catbox';
-    if (url.includes('imgur.com'))                               return 'imgur';
-    if (url.includes('dai.ly') || url.includes('dailymotion'))  return 'dailymotion';
-    if (url.includes('streamable.com'))                          return 'streamable';
-    return 'direct';
-};
-
-window._libThumb = (url, platform) => {
-    try {
-        if (platform === 'dailymotion') {
-            const id = url.match(/(?:dai\.ly|video\/)([a-zA-Z0-9]+)/)?.[1] || url.split('/').pop();
-            return `https://www.dailymotion.com/thumbnail/video/${id}`;
-        }
-        if (platform === 'streamable') {
-            const id = url.split('/').pop();
-            return `https://thumbs.streamable.com/${id}.jpg`;
-        }
-        if (platform === 'imgur') {
-            // i.imgur.com/XXXXX.mp4 → i.imgur.com/XXXXX.jpg
-            const base = url.replace(/\.(mp4|gifv|gif|webm)$/i, '');
-            const imgId = base.split('/').pop();
-            return `https://i.imgur.com/${imgId}.jpg`;
-        }
-        // Catbox and direct mp4 — no thumbnail API, use a play icon placeholder
-        return '';
-    } catch(e) { return ''; }
-};
-
-window._libBadge = (platform) => {
-    const badges = {
-        catbox:      { label: 'Catbox',      color: '#6366f1' },
-        imgur:       { label: 'Imgur',        color: '#1bb76e' },
-        dailymotion: { label: 'Dailymotion', color: '#0066dc' },
-        streamable:  { label: 'Streamable',  color: '#ef4444' },
-        direct:      { label: 'MP4',         color: '#f59e0b' },
-    };
-    const b = badges[platform] || { label: 'Video', color: '#555' };
-    return `<span style="font-size:0.55rem;font-weight:900;background:${b.color};color:#fff;padding:2px 6px;border-radius:20px;letter-spacing:0.5px;">${b.label}</span>`;
-};
-
-window.abrirLibreriaVideosPremium = () => {
-    if(document.getElementById('modalMenuPublicar')) document.getElementById('modalMenuPublicar').style.display = 'none';
-    notify("🎬 Cargando Librería Premium...");
-
-    db.ref('libreria_videos').once('value', snap => {
-        if(!snap.exists()) return notify("La biblioteca está vacía");
-
-        let data = snap.val();
-        let videos = data.Nombre ? data.Nombre : data;
-
-        // Orden aleatorio en cada apertura
-        let keys = Object.keys(videos);
-        for (let i = keys.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [keys[i], keys[j]] = [keys[j], keys[i]];
-        }
-
-        let itemsHtml = "";
-        keys.forEach(key => {
-            const url = videos[key];
-            const platform = window._libGetPlatform(url);
-            const thumbUrl = window._libThumb(url, platform);
-            const badge = window._libBadge(platform);
-            const safeUrl = url.replace(/'/g, "\\'");
-
-            const thumbContent = thumbUrl
-                ? `<img src="${thumbUrl}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;">`
-                : `<i class="fas fa-film" style="color:#555;font-size:1.4rem;"></i>`;
-
-            itemsHtml += `
-            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #1a1a1a;">
-                <div id="video-item-${key}"
-                     onclick="window.reproducirAudioPremium('${safeUrl}','${key}')"
-                     style="display:flex;align-items:center;gap:12px;flex:1;cursor:pointer;transition:background 0.2s;border-radius:10px;padding:4px;">
-                    <div style="width:55px;height:55px;flex-shrink:0;border-radius:8px;overflow:hidden;background:#1a1a1a;position:relative;border:1px solid #333;display:flex;align-items:center;justify-content:center;">
-                        ${thumbContent}
-                        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);">
-                            <i class="fas fa-play" style="color:#1DB954;font-size:0.9rem;"></i>
-                        </div>
-                    </div>
-                    <div style="flex:1;min-width:0;">
-                        <div style="color:white;font-weight:700;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;">${key}</div>
-                        <div style="display:flex;align-items:center;gap:6px;">${badge}<span style="color:#888;font-size:0.6rem;">▶ Preview</span></div>
-                    </div>
-                </div>
-                <button onclick="window.abrirPasoFoto('${safeUrl}')"
-                        style="background:white;border:none;color:black;padding:8px 16px;border-radius:20px;font-size:0.75rem;font-weight:900;cursor:pointer;flex-shrink:0;">
-                    ELEGIR
-                </button>
-            </div>`;
-        });
-
-        const ex = document.getElementById("modalLibreriaFinal");
-        if(ex) ex.remove();
-
-        const modal = document.createElement('div');
-        modal.id = "modalLibreriaFinal";
-        modal.style.cssText = "position:fixed;inset:0;background:#000;z-index:999999;display:flex;flex-direction:column;padding:20px;";
-        modal.innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;margin-top:20px;">
-                <h3 style="color:white;font-size:1.3rem;font-weight:800;">🎬 Librería Premium</h3>
-                <div onclick="window.cerrarTodoLibreria()" style="color:white;font-size:1.8rem;cursor:pointer;">✕</div>
-            </div>
-            <div id="reproductorAudioLib" style="width:100%;height:0;border-radius:12px;overflow:hidden;background:#111;transition:height 0.3s ease;margin-bottom:0;"></div>
-            <div id="reproductorAudioLibLabel" style="display:none;color:#1DB954;font-size:0.75rem;font-weight:800;text-align:center;padding:6px 0 10px;letter-spacing:0.5px;">▶ REPRODUCIENDO...</div>
-            <div style="flex:1;overflow-y:auto;scrollbar-width:none;">${itemsHtml}</div>
-            <div style="padding:20px 0;">
-                <button onclick="window.cerrarTodoLibreria()" style="width:100%;background:#1DB954;color:#000;padding:16px;border-radius:40px;font-weight:900;font-size:1rem;border:none;">CERRAR</button>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    });
-};
-
-window.reproducirAudioPremium = (url, videoKey) => {
-    const container = document.getElementById('reproductorAudioLib');
-    if (!container) return notify("❌ Error: Contenedor no encontrado");
-
-    const platform = window._libGetPlatform(url);
-    let playerHtml = '';
-
-    if (platform === 'dailymotion') {
-        const id = url.match(/(?:dai\.ly|video\/)([a-zA-Z0-9]+)/)?.[1] || url.split('/').pop();
-        playerHtml = `<iframe src="https://www.dailymotion.com/embed/video/${id}?autoplay=1&mute=0&ui-start-screen-info=0"
-            style="width:100%;height:180px;border:none;display:block;"
-            allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
-
-    } else if (platform === 'streamable') {
-        const id = url.split('/').pop();
-        playerHtml = `<iframe src="https://streamable.com/e/${id}?autoplay=1&muted=0"
-            style="width:100%;height:180px;border:none;display:block;"
-            allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
-
-    } else if (platform === 'catbox') {
-        // Catbox = enlace directo .mp4
-        playerHtml = `<video src="${url}" autoplay controls loop playsinline
-            style="width:100%;height:180px;object-fit:contain;background:#000;display:block;"></video>`;
-
-    } else if (platform === 'imgur') {
-        // Convertir .gifv → .mp4 si aplica
-        const mp4Url = url.replace(/\.gifv$/i, '.mp4');
-        playerHtml = `<video src="${mp4Url}" autoplay controls loop playsinline
-            style="width:100%;height:180px;object-fit:contain;background:#000;display:block;"></video>`;
-
-    } else {
-        // Intento genérico como video directo
-        playerHtml = `<video src="${url}" autoplay controls loop playsinline
-            style="width:100%;height:180px;object-fit:contain;background:#000;display:block;"></video>`;
-    }
-
-    // Resaltar ítem activo
-    document.querySelectorAll('[id^="video-item-"]').forEach(el => {
-        el.style.background = 'transparent';
-    });
-    const activeItem = document.getElementById('video-item-' + videoKey);
-    if (activeItem) activeItem.style.background = 'rgba(29,185,84,0.15)';
-
-    // Expandir mini-player
-    container.style.height = '180px';
-    container.style.marginBottom = '10px';
-
-    const label = document.getElementById('reproductorAudioLibLabel');
-    if (label) {
-        label.style.display = 'block';
-        label.textContent = '▶ REPRODUCIENDO: ' + videoKey;
-    }
-
-    container.innerHTML = playerHtml;
-};
-window.abrirPasoFoto = (url) => {
-    videoPendienteUrl = url;
-    window.vElegido = url; // FIX: sincronizar con la variable que usa finalizarPublicacionLibreria
-    // Detener audio antes de cambiar de modal
-    const container = document.getElementById('reproductorAudioLib');
-    if(container) container.innerHTML = "";
-
-    document.getElementById('modalLibreriaFinal').style.display = 'none';
-    document.getElementById('modalSubirPortada').style.display = 'flex';
-};
-
-// --- VARIABLES GLOBALES (Asegúrate de que estén arriba) ---
-window.vElegido = ""; 
-window.fElegida = ""; 
-
-// 1. Procesa la foto y "enciende" el botón visualmente
-// 1. Agregamos esta variable al principio de tu script
-window.archivoParaStorage = null; 
-
-window.procesarFotoPortada = (input) => {
-    if (input.files && input.files[0]) {
-        const archivo = input.files[0];
-        
-        // VALIDACIÓN: Si la foto pesa más de 5MB, avisar
-        if (archivo.size > 5 * 1024 * 1024) {
-            return alert("❌ La foto es demasiado pesada. Elige una menor a 5MB.");
-        }
-
-        // GUARDAMOS EL ARCHIVO REAL PARA STORAGE
-        window.archivoParaStorage = archivo; 
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            // USAMOS EL TEXTO SOLO PARA LA VISTA PREVIA (No para la base de datos)
-            document.getElementById('imgPreviewPortada').src = e.target.result;
-            document.getElementById('imgPreviewPortada').style.display = 'block';
-            document.getElementById('placeholderText').style.display = 'none';
-
-            const btn = document.getElementById('btnFinalizarLibreria');
-            if (btn) {
-                btn.disabled = false;
-                btn.style.background = "#1DB954";
-                btn.style.color = "black";
-                btn.style.opacity = "1";
-                btn.style.cursor = "pointer";
-            }
-
-            notify("✅ Foto cargada. ¡Pulsa publicar!");
-        };
-        reader.readAsDataURL(archivo);
-    }
-};
-
-
-// 2. ESTO SE EJECUTA DESPUÉS DEL ANUNCIO PARA SUBIR EL VIDEO
-window.finalizarPublicacionLibreria = async () => {
-    const btn = document.getElementById('btnFinalizarLibreria');
-    const txtInput = document.getElementById('inputTextoLibreria');
-    const txt = txtInput ? txtInput.value : "¡Nuevo Video!";
-    
-    if (!window.archivoParaStorage) return alert("❌ Selecciona una foto primero");
-    
-    if (btn) { 
-        btn.innerText = "⏳ SUBIENDO..."; 
-        btn.disabled = true; 
-    }
-
-    try {
-        // 1. Subida a Storage (Costo casi $0)
-        const nombreArchivo = `portadas/${Date.now()}_${idAuditor}.jpg`;
-        const storageRef = firebase.storage().ref(nombreArchivo);
-        const snapshot = await storageRef.put(window.archivoParaStorage);
-        const urlPublica = await snapshot.ref.getDownloadURL();
-
-        // 2. Guardar en Database (Solo el link corto)
-        await db.ref('reportes').push({
-            uid: idAuditor,
-            autorClave: myCurrentKey,
-            texto: txt,
-            musica: window.vElegido, 
-            fotoPortada: urlPublica, // Link corto ✅
-            conLogo: true, 
-            fecha: firebase.database.ServerValue.TIMESTAMP,
-            vCount: 0
-        });
-
-        // 3. Recompensa y Limpieza
-        db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) + 0.50);
-        document.getElementById('modalSubirPortada').style.display = 'none';
-        notify("✅ ¡Publicado con éxito!");
-        
-        window.archivoParaStorage = null;
-        if (btn) { btn.innerText = "🚀 PUBLICAR EN EL MURO"; btn.disabled = false; }
-        goToScreen(2); 
-
-    } catch (err) {
-        alert("Error: " + err.message);
-        if (btn) { btn.disabled = false; btn.innerText = "🚀 PUBLICAR EN EL MURO"; }
-    }
-};
-
-window.cerrarTodoLibreria = () => {
-    const container = document.getElementById('reproductorAudioLib');
-    if (container) { container.innerHTML = ""; container.style.height = "0"; container.style.marginBottom = "0"; }
-    const label = document.getElementById('reproductorAudioLibLabel');
-    if (label) label.style.display = 'none';
-    const modal = document.getElementById('modalLibreriaFinal');
-    if (modal) modal.remove();
-};
-
-window.pararAudioLibreria = () => {
-    const modal = document.getElementById('modalLibreriaFinal');
-    if(modal) modal.remove();
-};
-// Reparación de audio oculto (ahora detecta dailymotion también)
-
-let videoParaPublicar = "";
-
-// Esta es la función que llama el botón de arriba
-window.confirmarPublicacionLibreria = (urlVideo) => {
-    window.vElegido = urlVideo; // Guardamos en variable global consistente
-    window.pararAudioLibreria();
-    const modalLib = document.getElementById("modalLibreriaFinal");
-    if (modalLib) modalLib.remove();
-    document.getElementById('modalSubirPortada').style.display = 'flex';
-};
 
 // ── FEED NATIVO (unificado de feed.html) ─────────────────────────────────
 let audioActivado = false;
@@ -3514,7 +3214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div style="position:relative; z-index:1; width:100%; max-width:340px;">
         <div style="margin-bottom: 28px;">
             <div style="font-size:3rem; margin-bottom:8px;">💎</div>
-            <h1 style="color: white; font-size: 2.2rem; font-weight: 800; letter-spacing: 2px; margin:0;">CodeCash</h1>
+            <h1 style="color: white; font-size: 2.2rem; font-weight: 800; letter-spacing: 2px; margin:0;">PAGOCODE</h1>
             <p style="color: #94a3b8; font-size: 0.8rem; margin-top:8px;">Tus interacciones se convierten en ganancias reales</p>
         </div>
 
@@ -4127,6 +3827,10 @@ Cerrar
                 <i class="fas fa-gift" style="color:#a855f7;"></i>
                 <span style="font-weight:700; color:#475569; font-size:0.85rem;">Regalar Puntos</span>
             </div>
+            <div onclick="abrirRetoAmigo(); toggleMenuChatPrivado();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; border-top:1px solid #f8fafc;">
+                <i class="fas fa-chess-knight" style="color:#f59e0b;"></i>
+                <span style="font-weight:700; color:#475569; font-size:0.85rem;">Retar Amigo</span>
+            </div>
         </div>
     </div>
 
@@ -4141,29 +3845,7 @@ Cerrar
 </div> <!-- 1. Cierra barra blanca -->
 </div> <!-- 2. Cierra contenido del modal -->
 </div> <!-- 3. Cierra overlay del modal -->
-<div id="modalSubirPortada" class="modal-overlay" style="z-index:1000000; display:none; background: rgba(0,0,0,0.95);">
-    <div class="modal-content" style="max-width:350px; text-align:center; background:#121212; color:white; border:1px solid #1DB954; border-radius:24px; padding:25px;">
-        <h3 style="margin-bottom:15px; color:#1DB954;">🎨 Personaliza tu Post</h3>
-
-        <div style="width:100%; height:160px; background:#181818; border:2px dashed #333; border-radius:15px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; margin-bottom:15px;">
-            <img id="imgPreviewPortada" style="width:100%; height:100%; object-fit:cover; display:none; position:absolute; z-index:5;">
-            <div id="placeholderText" style="color:#1DB954; font-weight:bold;">🖼️ Tap para elegir foto</div>
-            <input type="file" accept="image/*" onchange="window.procesarFotoPortada(this)" style="position:absolute; inset:0; opacity:0; cursor:pointer; z-index:10;">
-        </div>
-
-        <input type="text" id="inputTextoLibreria" placeholder="Escribe un mensaje..." style="background:#181818; border:1px solid #333; color:white; padding:12px; border-radius:10px; width:100%; margin-bottom:15px; outline:none;">
-
-       <button id="btnFinalizarLibreria" 
-        onclick="window.finalizarPublicacionLibreria()" 
-        disabled 
-        style="width:100%; background:#1DB954; color:#000; padding:15px; border-radius:40px; font-weight:900; font-size:1rem; border:none; cursor:pointer; opacity:0.5; transition:opacity 0.3s;">
-    🚀 PUBLICAR EN EL MURO
-</button>
-
-        <button onclick="document.getElementById('modalSubirPortada').style.display='none'" style="background:none; border:none; color:#b3b3b3; margin-top:15px; cursor:pointer;">Cancelar</button>
-    </div>
-</div>
-   <div id="modalSubirFoto" class="modal-overlay" style="z-index: 26000;">
+<div id="modalSubirFoto" class="modal-overlay" style="z-index: 26000;">
     <div class="modal-content">
         <h3 style="color:#10b981;">📸 Sube y Vende tu Foto</h3>
         <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
@@ -5287,26 +4969,38 @@ style="display:none;">
         </div>
         <div style="font-size:0.65rem; color:#cbd5e1; margin-top:6px;">Máx. 15 caracteres · visible para todos</div>
     </div>
-<!-- 📝 NUEVA SECCIÓN: BIO DETALLADA -->
+<!-- 📝 NUEVA SECCIÓN: BIO DETALLADA (colapsable) -->
 <div class="profile-field-card">
-    <div class="profile-field-label">🌟 Mi Biografía</div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-        <input type="number" id="inputEdad" class="profile-field-input" placeholder="Edad">
-        <select id="inputSexo" class="profile-field-input">
-            <option value="">Sexo</option>
-            <option value="Hombre">Hombre</option>
-            <option value="Mujer">Mujer</option>
-            <option value="Otro">Otro</option>
-        </select>
+    <div class="profile-field-label" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <span>🌟 Mi Biografía</span>
+        <button id="bioToggleBtn" onclick="toggleBioForm()" class="profile-save-btn" style="white-space:nowrap; font-size:0.7rem; padding:7px 14px;">Ver mi información</button>
     </div>
-    <input type="text" id="inputGustos" class="profile-field-input" placeholder="Mis gustos (ej. Música, Viajes)">
-    <input type="text" id="inputZodiaco" class="profile-field-input" placeholder="Signo Zodiacal">
-    <input type="text" id="inputColorFav" class="profile-field-input" placeholder="Color favorito">
-    <input type="text" id="inputJuegoFav" class="profile-field-input" placeholder="Juego favorito">
-    
-    <button onclick="guardarBioCompleta()" class="btn-blue" style="margin-top: 5px; padding: 10px;">
-        💾 Guardar Información
-    </button>
+
+    <!-- Resumen (visible cuando el formulario está cerrado) -->
+    <div id="bioResumen" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;">
+        <span style="font-size:0.72rem; color:#94a3b8;">Aún no has llenado tu información. Toca "Ver mi información".</span>
+    </div>
+
+    <!-- Formulario (oculto por defecto) -->
+    <div id="bioForm" style="display:none; margin-top:12px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <input type="number" id="inputEdad" class="profile-field-input" placeholder="Edad">
+            <select id="inputSexo" class="profile-field-input">
+                <option value="">Sexo</option>
+                <option value="Hombre">Hombre</option>
+                <option value="Mujer">Mujer</option>
+                <option value="Otro">Otro</option>
+            </select>
+        </div>
+        <input type="text" id="inputGustos" class="profile-field-input" placeholder="Mis gustos (ej. Música, Viajes)">
+        <input type="text" id="inputZodiaco" class="profile-field-input" placeholder="Signo Zodiacal">
+        <input type="text" id="inputColorFav" class="profile-field-input" placeholder="Color favorito">
+        <input type="text" id="inputJuegoFav" class="profile-field-input" placeholder="Juego favorito">
+
+        <button onclick="guardarBioCompleta()" class="btn-blue" style="margin-top: 5px; padding: 10px;">
+            💾 Guardar Información
+        </button>
+    </div>
 </div>
     <!-- FACEBOOK -->
     <div class="profile-field-card">
@@ -6722,15 +6416,6 @@ window.abrirMision = () => {
 };
 function procesarPublicacionPendiente() {
     
-    // 💡 NUEVO: Si la petición viene de la Librería Premium
-    if (window._accionPendienteRecompensa === 'publicar_libreria') {
-        window._accionPendienteRecompensa = null;
-        if (typeof window.ejecutarSubidaLibreriaFirebase === 'function') {
-            window.ejecutarSubidaLibreriaFirebase();
-        }
-        return; 
-    }
-
     // --- Flujo original: Misión del Feed (Video de YouTube) ---
     const pending = localStorage.getItem('pendingPost');
     if (pending && idAuditor) {
@@ -7364,6 +7049,11 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
         window._appInitialized = true; 
         window._lastNotiCount = 0;
 // ==========================================
+        // 🚀 Centro de Invitación automático (una vez, tras entrar a la app)
+        if (typeof programarCentroInvitacion === 'function') programarCentroInvitacion(user.uid);
+        // 💬 Si la app se recargó estando en un chat privado, reabrirlo
+        if (typeof restaurarChatAbierto === 'function') restaurarChatAbierto();
+
         // 🚪 DETECTAR INVITACIÓN A GRUPOS POR URL
         // ==========================================
         setTimeout(() => {
@@ -7479,6 +7169,7 @@ if (d.bio) {
     if(document.getElementById('inputColorFav')) document.getElementById('inputColorFav').value = d.bio.colorFav || "";
     if(document.getElementById('inputJuegoFav')) document.getElementById('inputJuegoFav').value = d.bio.juegoFav || "";
 }
+if (typeof actualizarBioResumen === 'function') actualizarBioResumen(d.bio);
             // --- A) DATOS BÁSICOS ---
             const correoUsuario = user.email || (d ? d.email : null) || "Sin correo";
             const labelEmail = document.getElementById('profEmail');
@@ -8968,7 +8659,23 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
     };
 
     // --- GESTIÓN DE JUEGOS ---
-    window.prepararJuego = (m) => {
+    window.prepararJuego = (m, sinAnuncio) => {
+    // Antes de entrar a cualquier juego mostramos un anuncio (AdMob) una vez.
+    if (!sinAnuncio && typeof AndroidNative !== 'undefined' && typeof window.location !== 'undefined') {
+        window._juegoPendiente = m;
+        notify("📺 Mira un anuncio para jugar...");
+        try {
+            window.location.href = 'go:ad-game';
+            clearTimeout(window._juegoAdTimeout);
+            window._juegoAdTimeout = setTimeout(() => {
+                if (window._juegoPendiente === m) {
+                    window._juegoPendiente = null;
+                    notify("⚠️ No se pudo cargar el anuncio, intenta de nuevo");
+                }
+            }, 60000);
+            return;
+        } catch(e) { window._juegoPendiente = null; }
+    }
     notify("Cargando...");
     setTimeout(() => {
         activeGameMode = m;
@@ -9413,6 +9120,10 @@ window.addEventListener('popstate', (e) => {
         }
         if (id === 'modalMusicaMision' && window.cerrarModalMusicaMision) {
             window.cerrarModalMusicaMision();
+            return true;
+        }
+        if (id === 'modalChatPrivado' && window.cerrarChatPrivado) {
+            window.cerrarChatPrivado();
             return true;
         }
         if (el.style.display === 'flex') {
@@ -11088,6 +10799,13 @@ function _abrirChatPrivadoReal(targetUid, targetName) {
 
     currentChatId = [idAuditor, targetUid].sort().join('_');
 
+    // 💾 Recordar el chat abierto: si la app se recarga (p. ej. al volver del
+    // navegador externo tras jugar un reto), volveremos a este chat.
+    try {
+        localStorage.setItem('chatAbiertoUid', targetUid);
+        localStorage.setItem('chatAbiertoNombre', targetName || 'Usuario');
+    } catch(e) {}
+
     db.ref(`users/${idAuditor}/notifications`).once('value', snap => {
         if (snap.exists()) {
             snap.forEach(s => {
@@ -11807,6 +11525,7 @@ window.cerrarChatPrivado = () => {
     }
     currentChatId = null;
     window._enChatPrivado = false; // Permitir re-render de Mi Chat de nuevo
+    try { localStorage.removeItem('chatAbiertoUid'); localStorage.removeItem('chatAbiertoNombre'); } catch(e) {}
 };
 
 window.cerrarChatGrupo = () => {
@@ -12364,6 +12083,41 @@ window.enviarComentarioPensamiento = () => {
 // ========================================
 // 🎯 SISTEMA DE MISIONES - CÓDIGO COMPLETO
 // ========================================
+
+// Muestra el Centro de Invitación UNA vez al entrar a la pantalla principal
+// (después del registro/login), para que el usuario decida si usa una clave
+// de invitación. Se recuerda por usuario; no vuelve a salir automáticamente.
+window.programarCentroInvitacion = (uid) => {
+    if (!uid) return;
+    if (localStorage.getItem('chatAbiertoUid')) return; // no interrumpir si hay un chat abierto
+    if (localStorage.getItem('invite_prompt_' + uid)) return;
+    localStorage.setItem('invite_prompt_' + uid, '1');
+    let intentos = 0;
+    const abrir = () => {
+        if (window._appInitialized !== true) { if (++intentos < 25) setTimeout(abrir, 400); return; }
+        if (myCurrentKey && myCurrentKey !== '---') {
+            abrirModalInvitar();
+        } else if (++intentos < 25) {
+            setTimeout(abrir, 400);
+        }
+    };
+    setTimeout(abrir, 4500);
+};
+
+// 💬 Reabrir el chat privado si la app se recargó estando en él
+window.restaurarChatAbierto = () => {
+    try {
+        const uid = localStorage.getItem('chatAbiertoUid');
+        if (!uid || uid === idAuditor) return;
+        const nombre = localStorage.getItem('chatAbiertoNombre') || 'Usuario';
+        let intentos = 0;
+        const abrir = () => {
+            if (window._appInitialized !== true) { if (++intentos < 25) setTimeout(abrir, 400); return; }
+            if (typeof abrirChatPrivado === 'function') abrirChatPrivado(uid, nombre);
+        };
+        setTimeout(abrir, 1500);
+    } catch(e) {}
+};
 
 window.abrirModalInvitar = () => {
     if(!myCurrentKey || myCurrentKey === "---") return notify("⏳ Espera a que cargue tu perfil");
@@ -13335,6 +13089,86 @@ function lanzarConfetti() {
     }
 }
 
+// --- ⚔️ RETAR AMIGO (Ajedrez / Damas) ---
+window.abrirRetoAmigo = () => {
+    if (!targetUserUid) return notify("❌ Abre un chat primero");
+    let modal = document.getElementById('modalRetoAmigo');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalRetoAmigo';
+        modal.className = 'modal-overlay';
+        modal.style.zIndex = '30000';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:330px; text-align:center;">
+                <h3 style="margin-bottom:6px; color:#1e293b;">⚔️ Retar Amigo</h3>
+                <p style="font-size:0.8rem; color:#64748b; margin-bottom:16px;">Elige el juego para retar a <b id="retoAmigoNombre">tu amigo</b></p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <button onclick="lanzarReto('ajedrez')" style="padding:18px 10px; border-radius:16px; background:linear-gradient(135deg,#6366f1,#4f46e5); border:none; color:white; font-weight:800; font-size:0.9rem; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px;">
+                        <span style="font-size:1.8rem;">♟️</span>Ajedrez
+                    </div>
+                    <button onclick="lanzarReto('dama')" style="padding:18px; border-radius:16px; background:linear-gradient(135deg,#ef4444,#dc2626); border:none; color:white; font-size:1rem; font-weight:700; cursor:pointer; flex-direction:column; align-items:center; gap:6px; display:flex;">
+                        <span style="font-size:1.8rem;">⛀</span>Damas
+                    </button>
+                </div>
+                <button onclick="document.getElementById('modalRetoAmigo').style.display='none'" style="margin-top:15px; background:none; border:none; color:#94a3b8; cursor:pointer;">Cerrar</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    document.getElementById('modalRetoAmigo').style.display = 'flex';
+};
+
+window.lanzarReto = (juego) => {
+    const datos = {
+        ajedrez: { nombre: 'Ajedrez ♟️', url: 'https://lichess.org/' },
+        dama:    { nombre: 'Damas ⛀',    url: 'https://draughts.io/es' }
+    };
+    const j = datos[juego];
+    if (!j) return;
+    const modal = document.getElementById('modalRetoAmigo');
+    if (modal) modal.style.display = 'none';
+
+    // Enviar el reto al chat privado (genera notificación al amigo)
+    const input = document.getElementById('inputPrivMsg');
+    if (input && targetUserUid) {
+        input.value = `⚔️ ¡Te reto a una partida de ${j.nombre}! Entra aquí: ${j.url}`;
+        if (typeof enviarMensajePrivado === 'function') enviarMensajePrivado();
+    }
+
+    // Abrir el juego en pantalla nativa (WebView aparte): el chat NO se recarga
+    // y al volver con atrás seguimos en el chat privado.
+    setTimeout(() => {
+        if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirWebNativa) {
+            AndroidNative.abrirWebNativa(j.url, j.nombre);
+        } else if (typeof AndroidNative !== 'undefined' && AndroidNative.openExternalUrl) {
+            AndroidNative.openExternalUrl(j.url);
+        } else {
+            window.open(j.url, '_blank');
+        }
+    }, 500);
+};
+
+// Abrir enlaces externos (http/https) en una pantalla nativa aparte (o en el
+// navegador si no está disponible). Así el WebView principal NO se recarga y
+// el chat privado se conserva (p. ej. cuando el amigo toca el enlace del reto).
+document.addEventListener('click', function(e) {
+    const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a) return;
+    const href = a.getAttribute('href') || '';
+    if (!/^https?:\/\//i.test(href)) return;
+    if (href.indexOf('codecash.space') !== -1) return; // enlaces internos: dejar como están
+    e.preventDefault();
+    e.stopPropagation();
+    const txt = (a.textContent || '').trim().slice(0, 40) || 'Enlace';
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirWebNativa) {
+        AndroidNative.abrirWebNativa(href, txt);
+    } else if (typeof AndroidNative !== 'undefined' && AndroidNative.openExternalUrl) {
+        AndroidNative.openExternalUrl(href);
+    } else {
+        window.open(href, '_blank');
+    }
+}, true);
+
 window.abrirRegaloPrivado = () => {
     if (!targetUserUid) return notify("❌ Abre un chat primero");
     document.getElementById('saldoRegaloDisplay').textContent = currentEarnings.toFixed(2) + " PTS";
@@ -14071,6 +13905,13 @@ window.onM9AdComplete = function() {
 
 // Callback desde Kotlin tras ver anuncio recompensado al terminar un juego
 window.onGameAdComplete = function() {
+    // Si veníamos de "entrar a un juego" (anuncio previo), iniciamos el juego
+    if (window._juegoPendiente) {
+        const modo = window._juegoPendiente;
+        window._juegoPendiente = null;
+        prepararJuego(modo, true);
+        return;
+    }
     const gain = window._ultimaGananciaJuego || 0;
     if (gain <= 0) return;
     window._ultimaGananciaJuego = null;
@@ -14516,7 +14357,6 @@ function mostrarToast(mensaje) {
 // --- FUNCIONES DE BARRA MISIONES ---
 
 window.abrirJuego = () => {
-    if (!currentEarnings || currentEarnings < 0.50) return notify("❌ Necesitas al menos 0.50 PTS para jugar");
     const modal = document.getElementById('modalJuegos');
     if (!modal) {
         const div = document.createElement('div');
@@ -14529,7 +14369,7 @@ window.abrirJuego = () => {
         div.innerHTML = `
             <div class="modal-content" style="text-align: center;">
                 <h3 style="margin-bottom: 15px;">🎮 Elige un Juego</h3>
-                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Cuesta 0.50 PTS por juego</p>
+                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">Mira un anuncio y juega gratis 🎮</p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <button onclick="prepararJuego('snake'); document.getElementById('modalJuegos').style.display='none';" style="padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; font-size: 1rem; font-weight: 700; cursor: pointer;">
                         🐍 Snake
@@ -15405,6 +15245,10 @@ window.otorgarMensajesPorVideo = () => {
 };
 
 window.onAdSkipped = () => {
+    if (window._juegoPendiente) {
+        window._juegoPendiente = null;
+        return notify("🎮 Debes ver el anuncio completo para jugar");
+    }
     window._rewardPendingTarget = null;
     window._pendienteFotoAd = false;
     const btn = document.getElementById('btnPublicarVideo');
@@ -17014,6 +16858,52 @@ window.enviarPushPropio = (titulo, mensaje) => {
     }).then(() => console.log("Notificación enviada por el túnel"));
 };
 
+// Abre/cierra el formulario de biografía
+window.toggleBioForm = () => {
+    const form = document.getElementById('bioForm');
+    const resumen = document.getElementById('bioResumen');
+    const btn = document.getElementById('bioToggleBtn');
+    if (!form) return;
+    const abrir = form.style.display === 'none' || form.style.display === '';
+    form.style.display = abrir ? 'block' : 'none';
+    if (resumen) resumen.style.display = abrir ? 'none' : 'flex';
+    if (btn) btn.textContent = abrir ? 'Ocultar' : 'Ver mi información';
+};
+
+// Pinta el resumen de la biografía (o el aviso si está vacía)
+window.actualizarBioResumen = (bio) => {
+    const el = document.getElementById('bioResumen');
+    if (!el) return;
+    bio = bio || {};
+    const filas = [
+        ['🎂', 'Edad', bio.edad],
+        ['🚻', 'Sexo', bio.sexo],
+        ['💜', 'Gustos', bio.gustos],
+        ['♈', 'Zodiaco', bio.zodiaco],
+        ['🎨', 'Color favorito', bio.colorFav],
+        ['🎮', 'Juego favorito', bio.juegoFav]
+    ].filter(f => f[2] !== undefined && f[2] !== null && String(f[2]).trim() !== '');
+    if (!filas.length) {
+        el.innerHTML = '<span style="font-size:0.72rem; color:#94a3b8;">Aún no has llenado tu información. Toca "Ver mi información".</span>';
+        return;
+    }
+    el.innerHTML = filas.map(f =>
+        '<span style="display:inline-flex; align-items:center; gap:4px; background:#eef2ff; color:#4338ca; font-size:0.7rem; font-weight:700; padding:4px 10px; border-radius:50px;">' +
+        f[0] + ' ' + f[1] + ': ' + String(f[2]) + '</span>'
+    ).join('');
+};
+
+// Oculta el formulario y muestra el resumen
+window.cerrarBioForm = (bio) => {
+    const form = document.getElementById('bioForm');
+    const resumen = document.getElementById('bioResumen');
+    const btn = document.getElementById('bioToggleBtn');
+    if (form) form.style.display = 'none';
+    if (resumen) resumen.style.display = 'flex';
+    if (btn) btn.textContent = 'Ver mi información';
+    if (typeof actualizarBioResumen === 'function') actualizarBioResumen(bio);
+};
+
 window.guardarBioCompleta = () => {
     console.log("Intentando guardar bio...");
     
@@ -17034,6 +16924,7 @@ window.guardarBioCompleta = () => {
         .then(() => {
             notify("✅ Información guardada correctamente");
             try { window.playSound('coin'); } catch(e){}
+            if (typeof cerrarBioForm === 'function') cerrarBioForm(bioData);
         })
         .catch(err => {
             console.error("Error al guardar bio:", err);
@@ -17050,14 +16941,13 @@ window.guardarBioCompleta = () => {
         <div style="display: flex; flex-direction: column; gap: 15px;">
 
             <!-- OPCIÓN YOUTUBE -->
-<!-- Añade este botón a tu modalMenuPublicar en index.html -->
-<!-- Botón Librería en modalMenuPublicar -->
-<button onclick="abrirLibreriaVideosPremium()" 
-    style="width: 100%; padding: 18px; border: 2px solid #3b82f6; background: #f0f7ff; border-radius: 18px; display: flex; align-items: center; gap: 15px; cursor: pointer; margin-top:10px;">
-    <span style="font-size: 2rem;">📚</span>
+<!-- OPCIÓN JUEGOS -->
+<button onclick="document.getElementById('modalMenuPublicar').style.display='none'; abrirJuego();" 
+    style="width: 100%; padding: 18px; border: 2px solid #6366f1; background: #eef2ff; border-radius: 18px; display: flex; align-items: center; gap: 15px; cursor: pointer; margin-top:10px;">
+    <span style="font-size: 2rem;">🎮</span>
     <div style="text-align: left;">
-        <div style="font-weight: 800; color: #3b82f6; font-size: 1rem;">Librería Premium</div>
-        <div style="font-size: 0.75rem; color: #64748b;">Elige videos con música sin bloqueos</div>
+        <div style="font-weight: 800; color: #4f46e5; font-size: 1rem;">Juegos</div>
+        <div style="font-size: 0.75rem; color: #64748b;">Elige Snake o Breakout y gana</div>
     </div>
 </button>
 
