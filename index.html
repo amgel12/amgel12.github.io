@@ -7042,29 +7042,47 @@ window.cerrarModalComentarios = () => {
         const key = window.fotoComentarioActivoKey || currentPhotoKey;
         if (!key) return notify("⚠️ Abre los comentarios de la foto primero");
         if (!texto) return notify("Escribe un comentario");
-        db.ref(`galeria_comunidad/${key}/comentarios`).push({
-            uid: idAuditor,
-            autor: (typeof getMiNombre === 'function') ? getMiNombre() : "Usuario",
-            texto: texto,
-            fecha: firebase.database.ServerValue.TIMESTAMP,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        }).then(() => {
-            if (inp) inp.value = "";
-            const owner = (galeriaFotosArray.find(f => f.k === key) || {}).uid || currentPhotoOwner;
-            if (owner && owner !== idAuditor) {
-                // 1) Entrada en la lista de notificaciones de la app (campana)
-                db.ref(`users/${owner}/notifications`).push({
-                    from: idAuditor,
-                    fromName: (typeof getMiNombre === 'function') ? getMiNombre() : "Usuario",
-                    type: 'comentario',
-                    text: '💬 Comentó tu foto',
-                    extra: key,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    read: false
-                }).catch(() => {});
-                // 2) Push en segundo plano
+        const miNombre = (typeof getMiNombre === 'function') ? getMiNombre() : "Usuario";
+        const owner = (galeriaFotosArray.find(f => f.k === key) || {}).uid || currentPhotoOwner;
+        const ref = db.ref(`galeria_comunidad/${key}/comentarios`);
+
+        // Leer los comentarios previos para saber a quién avisar (dueño + quien ya comentó).
+        ref.once('value').then(snap => {
+            const previos = snap.val() || {};
+            const destinatarios = new Set();
+            if (owner) destinatarios.add(owner);
+            Object.values(previos).forEach(c => { if (c && c.uid) destinatarios.add(c.uid); });
+            destinatarios.delete(idAuditor); // no me aviso a mí mismo
+
+            return ref.push({
+                uid: idAuditor,
+                autor: miNombre,
+                texto: texto,
+                fecha: firebase.database.ServerValue.TIMESTAMP,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                if (inp) inp.value = "";
+                destinatarios.forEach(uid => {
+                    const esDueno = (uid === owner);
+                    const cuerpoTexto = esDueno ? '💬 Comentó tu foto' : '💬 Respondió tu comentario';
+                    // Lista de notificaciones de la app (campana)
+                    db.ref(`users/${uid}/notifications`).push({
+                        from: idAuditor,
+                        fromName: miNombre,
+                        type: 'comentario',
+                        text: cuerpoTexto,
+                        extra: key,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        read: false
+                    }).catch(() => {});
+                });
+                // Push en segundo plano agrupado: máx. 2 envíos (dueño y comentadores), no uno por persona
+                const comentaristas = [...destinatarios].filter(u => u !== owner);
                 try { avisarSocial(owner, "comentó tu foto", "comentario"); } catch(e){}
-            }
+                if (comentaristas.length) {
+                    try { avisarSocial(comentaristas, "respondió tu comentario", "comentario"); } catch(e){}
+                }
+            });
         }).catch(e => notify("❌ Error al comentar: " + e.message));
     };
 
@@ -8719,6 +8737,19 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             setTimeout(() => {
                 if (typeof cambiarPestanaChat === 'function') cambiarPestanaChat('michat');
             }, 400);
+        }
+        else if (type === 'grupo_chat') {
+            // Nuevo mensaje en un grupo → abrir el chat de ese grupo
+            goToScreen(3);
+            setTimeout(() => {
+                if (typeof cambiarPestanaChat === 'function') cambiarPestanaChat('grupos');
+                db.ref(`grupos_chat/${extra}/info`).once('value').then(snap => {
+                    const info = snap.val() || {};
+                    if (window.abrirChatDeGrupo) {
+                        abrirChatDeGrupo(extra, info.nombre || "Grupo", info.icono || '💬');
+                    }
+                });
+            }, 500);
         }
         else {
             // Para cualquier otro tipo, ir al perfil del emisor
@@ -11293,11 +11324,13 @@ const PUSH_WORKER_URL = "https://TU-WORKER.workers.dev";
 // Ojo: la API nueva puede contestar 200 con id vacío cuando no hay
 // destinatarios suscritos, así que un 200 no garantiza entrega.
 function enviarPushOneSignal(destinoUid, tipo, titulo, cuerpo, opciones) {
-    if (!destinoUid) return Promise.resolve(false);
+    // Acepta un uid o un array de uids (1 sola llamada a la API para varios).
+    const ids = (Array.isArray(destinoUid) ? destinoUid : [destinoUid]).filter(Boolean);
+    if (!ids.length) return Promise.resolve(false);
     const opts = opciones || {};
     const payload = {
         app_id: ONESIGNAL_APP_ID,
-        include_aliases: { external_id: [destinoUid] },
+        include_aliases: { external_id: ids },
         target_channel: "push",
         headings: { "en": titulo, "es": titulo },
         contents: { "en": cuerpo, "es": cuerpo },
@@ -11366,26 +11399,48 @@ function enviarNotificacion(idDelQueRecibe, miNombre, elMensaje, senderUid) {
     );
 }
 
-// Avisar al creador del grupo. Antes lo hacía la Cloud Function que listens
-// `grupos_chat/{grupoId}/mensajes`, así que el comportamiento se mantiene.
-function avisarCreadorGrupo(queHizo) {
-    if (!currentGrupoId || !idAuditor) return;
-    db.ref(`grupos_chat/${currentGrupoId}/info`).once('value').then(s => {
-        const info = s.val() || {};
-        const creador = info.creador;
-        if (creador && creador !== idAuditor) {
-            avisarSocial(creador, `${queHizo} en ${info.nombre || "el grupo"}`, "grupo");
-        }
+// Avisar a TODOS los miembros del grupo cuando alguien escribe o manda algo.
+// Antes solo se avisaba al creador (el resto de miembros no recibía nada).
+function avisarActividadGrupo(queHizo) {
+    const grupoId = currentGrupoId;
+    if (!grupoId || !idAuditor) return;
+    db.ref(`grupos_chat/${grupoId}/info`).once('value').then(snap => {
+        const info = snap.val() || {};
+        const nombreGrupo = info.nombre || "el grupo";
+        return db.ref(`grupos_chat/${grupoId}/info/miembros`).once('value').then(s2 => {
+            const miembros = s2.val() || {};
+            const ids = Object.keys(miembros).filter(u => u && u !== idAuditor);
+            if (!ids.length) return;
+            const texto = `${queHizo} en ${nombreGrupo}`;
+            const miNombre = (typeof getMiNombre === "function") ? getMiNombre() : "Usuario";
+            ids.forEach(uid => {
+                db.ref(`users/${uid}/notifications`).push({
+                    from: idAuditor,
+                    fromName: miNombre,
+                    type: 'grupo_chat',
+                    text: '💬 ' + texto,
+                    extra: grupoId,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    read: false
+                }).catch(() => {});
+            });
+            // Push en segundo plano agrupado (una sola llamada para todos)
+            avisarSocial(ids, texto, "grupo_chat");
+        });
     }).catch(() => {});
 }
+// Alias por compatibilidad (llamadas antiguas)
+function avisarCreadorGrupo(queHizo) { return avisarActividadGrupo(queHizo); }
 
 // Likes, comentarios, menciones y referidos: avisan al dueño pero NO abren
 // ningún chat, por eso llevan type "social".
 function avisarSocial(destinoUid, texto, tipoSocial) {
-    if (!destinoUid || destinoUid === idAuditor) return Promise.resolve(false);
+    // Acepta uno o varios destinatarios (array) para enviar un único push.
+    const destinos = (Array.isArray(destinoUid) ? destinoUid : [destinoUid]).filter(u => u && u !== idAuditor);
+    if (destinos.length === 0) return Promise.resolve(false);
     const autor = (typeof getMiNombre === "function") ? getMiNombre() : (myCurrentKey || "Usuario");
     return enviarPushOneSignal(
-        destinoUid,
+        destinos,
         tipoSocial || "social",
         autor + " " + texto,
         texto,
