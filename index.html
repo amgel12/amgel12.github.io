@@ -3873,6 +3873,12 @@ Cerrar
                    style="text-align:center; font-weight:800; font-size:1.1rem; border:2px solid #f59e0b; background:#fffbeb;">
         </div>
 
+        <div style="margin-bottom:12px;">
+            <label style="font-size:0.75rem; font-weight:700; color:#64748b; display:block; margin-bottom:4px;">Descripción (opcional)</label>
+            <input type="text" id="inputDescripcionFoto" maxlength="200" placeholder="Escribe algo sobre tu foto..."
+                   style="font-size:0.85rem; background:#f8fafc;">
+        </div>
+
         <div style="font-size:0.65rem; color:#ef4444; margin-bottom:15px; background: #fef2f2; padding: 8px; border-radius: 8px;">
             ⚠️ Prohibido contenido +18 o violento. Serás baneado.
         </div>
@@ -3951,25 +3957,47 @@ Cerrar
     </div>
 
     <!-- CONTADOR DE FOTOS -->
-    <div style="position:absolute; top:20px; left:50%; transform:translateX(-50%); z-index:20; background:rgba(0,0,0,0.6); color:white; padding:5px 15px; border-radius:20px; font-size:0.8rem; font-weight:600;">
+    <div style="display:none; position:absolute; top:20px; left:50%; transform:translateX(-50%); z-index:20; background:rgba(0,0,0,0.6); color:white; padding:5px 15px; border-radius:20px; font-size:0.8rem; font-weight:600;">
       <span id="fotoContador">1 / 1</span>
     </div>
 
     <!-- IMAGEN ACTUAL -->
-    <div id="galeriaSlide" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; transition:transform 0.3s ease;" ontouchstart="touchStart(event)" ontouchmove="touchMove(event)" ontouchend="touchEnd()">
+    <div id="galeriaSlide" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
       <img id="detalleFotoImg" src="" style="width:100%; height:auto; max-height:100%; object-fit:contain;">
     </div>
 
     <!-- BOTONES LATERALES (OPCIONALES) -->
-    <button onclick="galeriaAnterior()" id="btnGaleriaAnt" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.2); border:none; color:white; width:40px; height:40px; border-radius:50%; font-size:1.2rem; cursor:pointer; backdrop-filter:blur(5px); z-index:10;">
+    <button onclick="galeriaAnterior()" id="btnGaleriaAnt" style="display:none !important; position:absolute; left:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.2); border:none; color:white; width:40px; height:40px; border-radius:50%; font-size:1.2rem; cursor:pointer; backdrop-filter:blur(5px); z-index:10;">
       ‹
     </button>
-    <button onclick="galeriaSiguiente()" id="btnGaleriaSig" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.2); border:none; color:white; width:40px; height:40px; border-radius:50%; font-size:1.2rem; cursor:pointer; backdrop-filter:blur(5px); z-index:10;">
+    <button onclick="galeriaSiguiente()" id="btnGaleriaSig" style="display:none !important; position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.2); border:none; color:white; width:40px; height:40px; border-radius:50%; font-size:1.2rem; cursor:pointer; backdrop-filter:blur(5px); z-index:10;">
       ›
     </button>
 
+    <!-- DESCRIPCIÓN DE LA FOTO -->
+    <div id="fotoDescripcionBox" style="display:none; position:absolute; bottom:82px; left:0; width:100%; padding:0 15px; z-index:15;">
+      <div style="background:rgba(0,0,0,0.78); color:white; padding:10px 14px; border-radius:12px; font-size:0.85rem; line-height:1.4; backdrop-filter:blur(6px); max-height:30vh; overflow-y:auto;">
+        <span id="fotoDescripcionTexto"></span>
+      </div>
+    </div>
+
+    <!-- PANEL DE COMENTARIOS DENTRO DE LA FOTO -->
+    <div id="fotoComentariosPanel" style="display:none; position:absolute; bottom:0; left:0; width:100%; max-height:72%; background:#fff; border-radius:20px 20px 0 0; z-index:30; flex-direction:column; box-shadow:0 -6px 25px rgba(0,0,0,0.4);">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #e2e8f0;">
+        <span id="fotoComentariosTitle" style="font-weight:800; font-size:0.95rem; color:#1e293b;">💬 Comentarios</span>
+        <button onclick="window.cerrarComentariosFoto()" style="background:none; border:none; color:#64748b; font-size:1.4rem; line-height:1; cursor:pointer;">✕</button>
+      </div>
+      <div id="fotoComentariosList" style="flex:1; overflow-y:auto; padding:8px 16px; background:#f8fafc; min-height:110px; max-height:46vh;">
+        <div style="text-align:center; color:#94a3b8; padding:20px;">Cargando...</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; padding:10px 16px; border-top:1px solid #e2e8f0;">
+        <input type="text" id="fotoCommentInput" enterkeyhint="send" placeholder="Escribe un comentario..." onkeydown="if(event.key==='Enter'){event.preventDefault();window.enviarComentarioFoto();}" style="flex:1; margin:0; text-align:left; background:#f0f2f5; border-radius:20px; border:none; padding:10px 15px; font-size:0.9rem;">
+        <button type="button" onclick="window.enviarComentarioFoto()" style="background:#0070ba; border:none; color:white; width:42px; height:42px; border-radius:50%; font-size:1rem; cursor:pointer; flex-shrink:0;"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+
     <!-- BARRA INFERIOR -->
-    <div style="position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.9); padding:10px 15px; display:flex; flex-direction:column; gap:6px; border-top:1px solid rgba(255,255,255,0.1);">
+    <div id="fotoBarraInferior" style="position:absolute; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.9); padding:10px 15px; display:flex; flex-direction:column; gap:6px; border-top:1px solid rgba(255,255,255,0.1); z-index:20;">
 
       <div id="barraCompraFoto" style="display:none; width:100%;">
         <button id="btnComprarFotoDetalle" onclick="window.ejecutarCompraFoto(currentPhotoKey, currentPhotoOwner, this)"
@@ -3982,15 +4010,30 @@ Cerrar
         <div id="msgFotoYaComprada" style="display:none; text-align:center; font-size:0.7rem; color:#10b981; font-weight:700;">✔ Ya comprada</div>
       </div>
 
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-        <div class="action-icon" id="btnShareFoto" style="cursor:pointer; display:flex; flex-direction:column; align-items:center;">
-          <i class="fas fa-share" style="font-size:1.5rem; color:white;"></i>
-          <span style="font-size:0.7rem; margin-top:4px; color:white;">Share</span>
+      <div style="display:flex; align-items:center; justify-content:space-around; gap:6px;">
+        <div class="action-icon" id="btnLikeFoto" onclick="likePhoto(currentPhotoKey, currentPhotoOwner, this)" style="cursor:pointer; display:flex; flex-direction:column; align-items:center;">
+          <i class="far fa-heart" style="font-size:1.4rem; color:white;"></i>
+          <span id="fotoLikeCount" style="font-size:0.65rem; margin-top:2px; color:white;">0</span>
         </div>
 
-        <button id="btnSaludarFoto" class="btn-blue" style="width:auto; padding:8px 16px; background:linear-gradient(135deg,#a855f7,#8b5cf6); border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:8px; box-shadow:0 4px 15px rgba(168,85,247,0.4);">
+        <div class="action-icon" id="btnComentarFoto" onclick="window.abrirComentariosFoto()" style="cursor:pointer; display:flex; flex-direction:column; align-items:center;">
+          <i class="far fa-comment" style="font-size:1.4rem; color:white;"></i>
+          <span id="fotoCommentCount" style="font-size:0.65rem; margin-top:2px; color:white;">0</span>
+        </div>
+
+        <button id="btnDescripcionFoto" onclick="window.toggleDescripcionFoto()" title="Descripción"
+                style="display:none; background:rgba(255,255,255,0.2); border:none; color:white; width:42px; height:42px; border-radius:50%; font-size:1rem; cursor:pointer;">
+          <i class="fas fa-info-circle"></i>
+        </button>
+
+        <button id="btnSaludarFoto" class="btn-blue" style="width:auto; padding:8px 16px; background:linear-gradient(135deg,#a855f7,#8b5cf6); border-radius:50px; font-size:0.8rem; display:flex; align-items:center; gap:6px; box-shadow:0 4px 15px rgba(168,85,247,0.4);">
           <i class="fas fa-comment"></i> Hola
         </button>
+
+        <div class="action-icon" id="btnShareFoto" style="cursor:pointer; display:flex; flex-direction:column; align-items:center;">
+          <i class="fas fa-share" style="font-size:1.4rem; color:white;"></i>
+          <span style="font-size:0.65rem; margin-top:2px; color:white;">Share</span>
+        </div>
 
         <button onclick="event.stopPropagation(); abrirMenuFoto(event, currentPhotoKey, currentPhotoOwner, false)" 
                 style="background:rgba(255,255,255,0.2); border:none; color:white; padding:8px 12px; border-radius:20px; cursor:pointer;">
@@ -3999,8 +4042,8 @@ Cerrar
       </div>
     </div>
 
-    <!-- INDICADORES (PUNTOS) -->
-    <div id="galeriaIndicadores" style="position:absolute; bottom:80px; left:0; width:100%; display:flex; justify-content:center; gap:5px; z-index:10;">
+    <!-- INDICADORES (PUNTOS) OCULTOS -->
+    <div id="galeriaIndicadores" style="display:none; position:absolute; bottom:80px; left:0; width:100%; justify-content:center; gap:5px; z-index:10;">
     </div>
 
   </div>
@@ -4843,7 +4886,7 @@ style="display:none;">
             </div>
         </div>
 
-    <!-- TOP BAR: 4 botones iguales -->
+    <!-- TOP BAR: 3 botones iguales -->
     <div style="flex-shrink:0; background:white; border-bottom:1px solid #e2e8f0; display:flex; align-items:stretch;">
 
 <!-- 1. Mi Chat -->
@@ -4855,12 +4898,12 @@ style="display:none;">
         <span style="white-space:nowrap;">Mi Chat</span>
     </button>
 
-    <!-- 2. Global / Solicitudes -->
-    <button id="tabGlobalBtn" onclick="cambiarPestanaChat('global')"
+    <!-- 2. Solicitudes -->
+    <button id="tabSolicitudesBtn" onclick="cambiarPestanaChat('solicitudes')"
             style="flex:1; border:none; border-right:1px solid #f1f5f9; background:white; padding:5px 4px;
                    cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
                    gap:2px; min-height:42px; font-size:0.6rem; font-weight:800; color:#64748b; transition:.2s;">
-        <span style="font-size:1.1rem;">🌍</span>
+        <span style="font-size:1.1rem;">📩</span>
         <span style="white-space:nowrap;">Solicitudes</span>
     </button>
 
@@ -4876,7 +4919,7 @@ style="display:none;">
         <span style="white-space:nowrap;">Grupos</span>
     </button> </div>
 
-    <!-- CONTENEDOR GLOBAL (oculto por defecto) -->
+    <!-- CONTENEDOR SOLICITUDES (oculto por defecto) -->
     <div id="chatListContainer" style="flex: 1; display: none; flex-direction: column; overflow: hidden;">
 
 
@@ -6054,6 +6097,16 @@ window.activarSonido = (divId, ytId) => {
     document.getElementById('perfilUserKey').textContent = uid;
     document.getElementById('perfilUserAvatar').style.backgroundImage = "url('" + fotoUrl + "')";
 
+    // Cargar la FOTO DE PERFIL real (no solo el avatar generado)
+    db.ref(`users/${uid}/fotoPerfil`).once('value').then(snap => {
+        const fotoReal = snap.val();
+        if (fotoReal) {
+            cacheFotosPerfil[uid] = fotoReal;
+            const avEl = document.getElementById('perfilUserAvatar');
+            if (avEl) avEl.style.backgroundImage = "url('" + fotoReal + "')";
+        }
+    }).catch(() => {});
+
     const btnMsgPerfil = document.getElementById('btnEnviarMensajePerfil');
     if (btnMsgPerfil) btnMsgPerfil.style.display = (uid === idAuditor) ? 'none' : 'block';
 
@@ -6107,7 +6160,8 @@ window.enviarMensajeDesdePerfil = () => {
     if (!uid) return notify("No se pudo identificar al usuario");
     const nombre = document.getElementById('perfilUserName').textContent || 'Usuario';
     document.getElementById('modalPerfilUsuario').style.display = 'none';
-    abrirChatPrivado(uid, nombre);
+    // Desde el perfil ya se vio su información → enviar la solicitud (o abrir el chat si ya fue aceptada)
+    enviarSolicitudChat(uid, nombre);
 };
 
     // Ir al perfil de otro usuario desde notificación
@@ -6885,51 +6939,141 @@ window.cerrarModalComentarios = () => {
     if (commentsRef) commentsRef.off();
     isCommenting = false;
 };
-    // ── Comentarios públicos en fotos del muro ────────────────────────────────
+    // ── Comentarios inline en la foto a pantalla completa ─────────────────────
+    let fotoCommentsRef = null;
+
+    window.toggleDescripcionFoto = () => {
+        const box = document.getElementById('fotoDescripcionBox');
+        if (!box) return;
+        box.style.display = (box.style.display === 'block') ? 'none' : 'block';
+    };
+
     window.abrirComentariosFoto = (fotoKey) => {
-        isCommenting = true;
-        currentPostId = fotoKey;
-        currentCommentSource = 'galeria_comunidad';
-        const modal = document.getElementById('modalComments');
-        const list = document.getElementById('modalCommentsList');
-        modal.style.display = 'flex';
-        list.innerHTML = '<div style="text-align:center;padding:20px;">Cargando...</div>';
-        if (commentsRef) commentsRef.off();
-        commentsRef = db.ref(`galeria_comunidad/${fotoKey}/comentarios`);
-        let isEmpty = true;
-        commentsRef.on('value', snap => {
-            const count = snap.val() ? Object.keys(snap.val()).length : 0;
-            const title = document.getElementById('modalCommentsTitle');
-            if (title) title.textContent = `💬 Comentarios de foto (${count})`;
-            // Actualizar contador en la card del muro si está visible
-            const badge = document.getElementById(`cc-foto-${fotoKey}`);
+        const abrirPanel = () => {
+            const panel = document.getElementById('fotoComentariosPanel');
+            if (!panel) return;
+            const descBox = document.getElementById('fotoDescripcionBox');
+            if (descBox) descBox.style.display = 'none';
+            const inp = document.getElementById('fotoCommentInput');
+            if (inp) inp.value = "";
+            panel.style.display = 'flex';
+            cargarComentariosFotoModal();
+        };
+        // Si viene una fotoKey (desde notificaciones), abrir esa foto primero.
+        if (fotoKey && fotoKey !== currentPhotoKey) {
+            let idx = (window.galeriaFotosArray || galeriaFotosArray || []).findIndex(f => f.k === fotoKey);
+            if (idx >= 0 && window.abrirGaleriaFotos) {
+                abrirGaleriaFotos(idx);
+                abrirPanel();
+                return;
+            }
+            db.ref(`galeria_comunidad/${fotoKey}`).once('value', snap => {
+                const f = snap.val();
+                if (!f) { notify("⚠️ Foto no encontrada"); return; }
+                galeriaFotosArray.push({ k: fotoKey, ...f });
+                if (window.abrirGaleriaFotos) abrirGaleriaFotos(galeriaFotosArray.length - 1);
+                abrirPanel();
+            });
+            return;
+        }
+        abrirPanel();
+    };
+
+    window.cerrarComentariosFoto = () => {
+        const panel = document.getElementById('fotoComentariosPanel');
+        if (panel) panel.style.display = 'none';
+        if (fotoCommentsRef) fotoCommentsRef.off();
+    };
+
+    function cargarComentariosFotoModal() {
+        const key = currentPhotoKey;
+        const list = document.getElementById('fotoComentariosList');
+        if (!key || !list) return;
+        window.fotoComentarioActivoKey = key;
+        list.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;"><i class="fas fa-spinner fa-spin"></i></div>';
+        if (fotoCommentsRef) fotoCommentsRef.off();
+        fotoCommentsRef = db.ref(`galeria_comunidad/${key}/comentarios`);
+
+        const render = (snap) => {
+            const raw = snap.val() || {};
+            const comentarios = Object.keys(raw).map(k => ({ k, ...raw[k] }));
+            comentarios.sort((a, b) => ((a.fecha || a.timestamp) || 0) - ((b.fecha || b.timestamp) || 0));
+            const count = comentarios.length;
+
+            const title = document.getElementById('fotoComentariosTitle');
+            if (title) title.textContent = `💬 Comentarios (${count})`;
+            const badge = document.getElementById('fotoCommentCount');
             if (badge) badge.textContent = count;
-            if (!snap.exists()) list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8;">Sé el primero en comentar.</div>';
-        });
-        commentsRef.limitToLast(50).on('child_added', s => {
-            if (isEmpty) { list.innerHTML = ""; isEmpty = false; }
-            const c = s.val();
-            const esMio = (c.uid === idAuditor);
-            const d = document.createElement('div');
-            d.className = "comment-bubble";
-            d.style.borderLeft = esMio ? '3px solid #10b981' : '3px solid #0070ba';
-            const nombreSeguro = (c.autor || 'Anónimo').replace(/'/g, "\\'");
-            const hora = c.timestamp
-                ? new Date(c.timestamp).toLocaleDateString([], {day:'2-digit',month:'2-digit'}) + ' '
-                  + new Date(c.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
-                : '';
-            d.innerHTML = `
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span class="comment-author">${escapeHtml(getDisplayName(c.uid, c.autor))}</span>
-                    <button onclick="replyToUser('${nombreSeguro}','${c.uid}')" style="border:none;background:none;color:#0070ba;font-size:0.7rem;font-weight:bold;cursor:pointer;padding:2px 5px;">Responder ↩</button>
-                </div>
-                <div class="comment-text">${escapeHtml(c.texto)}</div>
-                <div style="font-size:0.65rem;color:#94a3b8;margin-top:4px;text-align:right;">${hora}</div>
-            `;
-            list.appendChild(d);
+            const cardBadge = document.getElementById('cc-foto-' + key);
+            if (cardBadge) cardBadge.innerHTML = `<i class="far fa-comment"></i> ${count}`;
+
+            if (count === 0) {
+                list.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;">Sé el primero en comentar.</div>';
+                return;
+            }
+
+            list.innerHTML = comentarios.map(c => {
+                const esMio = (c.uid === idAuditor);
+                const ts = c.fecha || c.timestamp;
+                const hora = ts
+                    ? new Date(ts).toLocaleDateString([], {day:'2-digit',month:'2-digit'}) + ' '
+                      + new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
+                    : '';
+                return `
+                <div class="comment-bubble" style="padding:10px 12px; margin:6px 0; border-radius:14px; background:${esMio?'#f0fdf4':'#fff'}; border-left:3px solid ${esMio?'#10b981':'#0070ba'};">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span class="comment-author" style="font-weight:800;font-size:0.78rem;color:#1e293b;">${escapeHtml(getDisplayName(c.uid, c.autor))}</span>
+                        ${esMio ? `<i class="fas fa-trash-alt" onclick="window.eliminarComentarioFoto('${c.k}')" style="color:#ef4444;font-size:0.8rem;cursor:pointer;padding:4px;"></i>` : ''}
+                    </div>
+                    <div class="comment-text" style="font-size:0.88rem;color:#334155;margin-top:2px;">${escapeHtml(c.texto)}</div>
+                    <div style="font-size:0.62rem;color:#94a3b8;margin-top:4px;text-align:right;">${hora}</div>
+                </div>`;
+            }).join("");
             list.scrollTop = list.scrollHeight;
-        });
-        window.history.pushState({modal:'modalComments'}, "");
+        };
+
+        fotoCommentsRef.on('value', render);
+    }
+
+    window.enviarComentarioFoto = () => {
+        if (!idAuditor) return notify("❌ Inicia sesión para comentar");
+        const inp = document.getElementById('fotoCommentInput');
+        const texto = inp ? inp.value.trim() : "";
+        const key = window.fotoComentarioActivoKey || currentPhotoKey;
+        if (!key) return notify("⚠️ Abre los comentarios de la foto primero");
+        if (!texto) return notify("Escribe un comentario");
+        db.ref(`galeria_comunidad/${key}/comentarios`).push({
+            uid: idAuditor,
+            autor: (typeof getMiNombre === 'function') ? getMiNombre() : "Usuario",
+            texto: texto,
+            fecha: firebase.database.ServerValue.TIMESTAMP,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        }).then(() => {
+            if (inp) inp.value = "";
+            const owner = (galeriaFotosArray.find(f => f.k === key) || {}).uid || currentPhotoOwner;
+            if (owner && owner !== idAuditor) {
+                // 1) Entrada en la lista de notificaciones de la app (campana)
+                db.ref(`users/${owner}/notifications`).push({
+                    from: idAuditor,
+                    fromName: (typeof getMiNombre === 'function') ? getMiNombre() : "Usuario",
+                    type: 'comentario',
+                    text: '💬 Comentó tu foto',
+                    extra: key,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    read: false
+                }).catch(() => {});
+                // 2) Push en segundo plano
+                try { avisarSocial(owner, "comentó tu foto", "comentario"); } catch(e){}
+            }
+        }).catch(e => notify("❌ Error al comentar: " + e.message));
+    };
+
+    window.eliminarComentarioFoto = (commentKey) => {
+        if (!confirm("¿Borrar este comentario?")) return;
+        const key = window.fotoComentarioActivoKey || currentPhotoKey;
+        if (!key) return;
+        db.ref(`galeria_comunidad/${key}/comentarios/${commentKey}`).remove()
+            .catch(e => notify("❌ Error: " + e.message));
     };
     function cargarChips() { return; }
 
@@ -8563,10 +8707,10 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             }, 500);
         }
         else if (type === 'chat_request') {
-            // Solicitud de chat recibida → ir a pestaña Global para ver solicitudes
+            // Solicitud de chat recibida → ir a la pestaña Solicitudes para ver solicitudes
             goToScreen(3);
             setTimeout(() => {
-                if (typeof cambiarPestanaChat === 'function') cambiarPestanaChat('global');
+                if (typeof cambiarPestanaChat === 'function') cambiarPestanaChat('solicitudes');
             }, 400);
         }
         else if (type === 'chat_request_accepted') {
@@ -9968,6 +10112,9 @@ window.ejecutarSubidaFotoFirebase = () => {
     const tienePrecio = chkVender && chkVender.checked;
     const precioPts = tienePrecio ? parseInt(document.getElementById('inputPrecioFoto').value) || 0 : 0;
 
+    const inputDesc = document.getElementById('inputDescripcionFoto');
+    const descripcionTexto = inputDesc ? inputDesc.value.trim() : "";
+
     const fotoData = {
         uid: idAuditor,
         autor: myCurrentKey,
@@ -9976,6 +10123,9 @@ window.ejecutarSubidaFotoFirebase = () => {
     };
     if (tienePrecio && precioPts >= 1 && precioPts <= 500) {
         fotoData.precio = precioPts;
+    }
+    if (descripcionTexto) {
+        fotoData.descripcion = descripcionTexto;
     }
 
     db.ref('galeria_comunidad').push(fotoData).then(() => {
@@ -10021,6 +10171,8 @@ window.cerrarModalFoto = () => {
     document.getElementById('chkVenderFoto').checked = false;
     document.getElementById('divPrecioFoto').style.display = 'none';
     document.getElementById('inputPrecioFoto').value = '10';
+    const inpDesc = document.getElementById('inputDescripcionFoto');
+    if (inpDesc) inpDesc.value = "";
     fotoBase64Actual = "";
     
     // Restaurar el botón al estado inicial
@@ -10132,14 +10284,16 @@ function cargarGaleriaComunidad() {
                     </div>
                 </div>
 
-                <div style="padding:8px 10px 10px; display:flex; align-items:center; gap:8px;">
-                    <button onclick="event.stopPropagation(); abrirComentariosFoto('${f.k}')" style="background:#f1f5f9; border:none; color:#475569; font-size:0.72rem; font-weight:700; padding:6px 10px; border-radius:20px; cursor:pointer;">
-                        💬 <span id="cc-foto-${f.k}">${commentCount}</span>
-                    </button>
+                ${f.descripcion ? `<div style="padding:6px 10px 0; font-size:0.72rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(f.descripcion)}</div>` : ''}
+
+                <div style="padding:8px 10px 10px; display:flex; align-items:center; gap:12px;">
                     <button onclick="event.stopPropagation(); likePhoto('${f.k}', '${f.uid}', this)" style="background:#f1f5f9; border:none; color:#475569; font-size:0.72rem; font-weight:700; padding:6px 10px; border-radius:20px; cursor:pointer;">
                         <i class="${isLiked ? 'fas fa-heart liked' : 'far fa-heart'}" style="color:${isLiked ? '#e11d48' : '#94a3b8'};"></i>
                         <span>${f.vCount || 0}</span>
                     </button>
+                    <span id="cc-foto-${f.k}" style="display:flex; align-items:center; gap:5px; color:#64748b; font-size:0.72rem; font-weight:700;">
+                        <i class="far fa-comment"></i> ${commentCount}
+                    </span>
                 </div>
             </div>`;
         });
@@ -10208,8 +10362,11 @@ if (!window._fotoMuroInit) {
         if (window._suppressClickUntil && Date.now() < window._suppressClickUntil) return;
         const card = e.target.closest('.photo-card');
         if (!card) return;
-        const idx = parseInt(card.getAttribute('data-index'));
-        if (isNaN(idx)) return;
+        const fotoKey = card.getAttribute('data-key');
+        let idx = -1;
+        if (fotoKey) idx = galeriaFotosArray.findIndex(f => f.k === fotoKey);
+        if (idx < 0) idx = parseInt(card.getAttribute('data-index'));
+        if (isNaN(idx) || idx < 0) return;
         const foto = galeriaFotosArray[idx];
         // Si la foto está en venta y no ha sido comprada, NO abrir galería
         if (foto && Number(foto.precio) >= 1 && Number(foto.precio) <= 500 && (!foto.compras || !foto.compras[idAuditor])) {
@@ -10422,12 +10579,16 @@ window.mostrarFotoPrivada = (el) => {
         const modal = document.getElementById('modalFotoDetalle');
         const img = document.getElementById('detalleFotoImg');
         if (!modal || !img) return;
-        const ocultar = ['btnGaleriaAnt','btnGaleriaSig','fotoContador','btnSaludarFoto','btnLikeFoto','galeriaIndicadores'];
+        const ocultar = ['btnGaleriaAnt','btnGaleriaSig','fotoContador','btnSaludarFoto','btnLikeFoto','galeriaIndicadores','btnComentarFoto','btnDescripcionFoto'];
         ocultar.forEach(id => { const e = document.getElementById(id); if(e) e.style.display = 'none'; });
         ['btnSaludarFoto','btnLikeFoto','btnShareFoto'].forEach(id => {
             const e = document.getElementById(id);
             if(e) e.onclick = null;
         });
+        const privPanelCom = document.getElementById('fotoComentariosPanel');
+        if (privPanelCom) privPanelCom.style.display = 'none';
+        const privDescBox = document.getElementById('fotoDescripcionBox');
+        if (privDescBox) privDescBox.style.display = 'none';
         img.src = fotoSrc;
         modal.style.display = 'flex';
         window._privPhotoView = true;
@@ -10779,11 +10940,11 @@ window.abrirChatPrivado = (targetUid, targetName) => {
             if (req.requester === idAuditor) {
                 notify("⏳ Solicitud enviada, espera que " + targetName + " responda");
             } else {
-                notify("📩 Tienes una solicitud pendiente de " + targetName + ". Ve a Solicitudes en la pestaña Global.");
+                notify("📩 Tienes una solicitud pendiente de " + targetName + ". Ve a la pestaña Solicitudes.");
             }
         } else {
-            // Sin solicitud o rechazada → enviar solicitud
-            enviarSolicitudChat(targetUid, targetName);
+            // Sin solicitud o rechazada → ver su información antes de enviar la solicitud
+            mostrarPerfilUsuario(targetUid, targetName);
         }
     });
 };
@@ -12259,6 +12420,16 @@ let touchEndX = 0;
 window.abrirGaleriaFotos = (index) => {
     if (!galeriaFotosArray || !galeriaFotosArray[index]) return;
 
+    // Reiniciar paneles internos de la foto
+    const panelCom = document.getElementById('fotoComentariosPanel');
+    if (panelCom) panelCom.style.display = 'none';
+    const descBox = document.getElementById('fotoDescripcionBox');
+    if (descBox) descBox.style.display = 'none';
+    const btnCom = document.getElementById('btnComentarFoto');
+    if (btnCom) btnCom.style.display = 'flex';
+    window.fotoComentarioActivoKey = null;
+    if (typeof fotoCommentsRef !== 'undefined' && fotoCommentsRef) { fotoCommentsRef.off(); fotoCommentsRef = null; }
+
     galeriaIndexActual = index;
     mostrarFotoGaleria();
     document.getElementById('modalFotoDetalle').style.display = 'flex';
@@ -12274,6 +12445,9 @@ function mostrarFotoGaleria() {
     currentPhotoKey = foto.k;
     currentPhotoOwner = foto.uid;
 
+    const inpComentario = document.getElementById('fotoCommentInput');
+    if (inpComentario) inpComentario.value = "";
+
     const img = document.getElementById('detalleFotoImg');
     const btnLike = document.getElementById('btnLikeFoto');
     const btnSaludar = document.getElementById('btnSaludarFoto');
@@ -12286,12 +12460,28 @@ function mostrarFotoGaleria() {
 
     if (img) img.src = foto.foto || "";
 
+    // ── Descripción de la foto ──
+    const descBox = document.getElementById('fotoDescripcionBox');
+    const descTexto = document.getElementById('fotoDescripcionTexto');
+    const btnDesc = document.getElementById('btnDescripcionFoto');
+    if (descBox) descBox.style.display = 'none';
+    if (descTexto) descTexto.textContent = foto.descripcion || "";
+    if (btnDesc) btnDesc.style.display = foto.descripcion ? 'flex' : 'none';
+
+    // ── Contador de comentarios ──
+    const commentBadge = document.getElementById('fotoCommentCount');
+    if (commentBadge) commentBadge.textContent = (foto.comentarios ? Object.keys(foto.comentarios).length : 0);
+
     // ── Lógica de compra (fotos con precio) ──
     // Forzar lectura desde Firebase para tener datos frescos
     if (foto.k) {
       db.ref(`galeria_comunidad/${foto.k}`).once('value', snap => {
         const fd = snap.val();
         if (!fd) return;
+        const cb = document.getElementById('fotoCommentCount');
+        if (cb) cb.textContent = (fd.comentarios ? Object.keys(fd.comentarios).length : 0);
+        if (descTexto) descTexto.textContent = fd.descripcion || "";
+        if (btnDesc) btnDesc.style.display = fd.descripcion ? 'flex' : 'none';
         const p = Number(fd.precio) || 0;
         const esVendible = p >= 1 && p <= 500;
         const esPropia = (fd.uid || foto.uid) === idAuditor;
@@ -12610,6 +12800,14 @@ window.abrirFotoDetalle = (key, ownerUid, ownerName, url) => {
         const btnLike = document.getElementById('btnLikeFoto');
         const btnSaludar = document.getElementById('btnSaludarFoto');
         const btnShare = document.getElementById('btnShareFoto');
+        const btnComentarFallback = document.getElementById('btnComentarFoto');
+        if (btnComentarFallback) btnComentarFallback.style.display = 'flex';
+        const descBtnFallback = document.getElementById('btnDescripcionFoto');
+        if (descBtnFallback) descBtnFallback.style.display = 'none';
+        const descBoxFallback = document.getElementById('fotoDescripcionBox');
+        if (descBoxFallback) descBoxFallback.style.display = 'none';
+        const panelFallback = document.getElementById('fotoComentariosPanel');
+        if (panelFallback) panelFallback.style.display = 'none';
         img.src = url;
         if (ownerUid === idAuditor) {
             btnSaludar.style.display = 'none'; 
@@ -12647,8 +12845,13 @@ window.abrirFotoDetalle = (key, ownerUid, ownerName, url) => {
 window.cerrarFotoDetalle = () => {
     document.getElementById('modalFotoDetalle').style.display = 'none';
     document.getElementById('detalleFotoImg').src = "";
-    const ids = ['btnGaleriaAnt','btnGaleriaSig','fotoContador','btnSaludarFoto','btnLikeFoto','galeriaIndicadores'];
+    const ids = ['btnSaludarFoto','btnLikeFoto'];
     ids.forEach(id => { const e = document.getElementById(id); if(e) e.style.display = ''; });
+    const panelCom = document.getElementById('fotoComentariosPanel');
+    if (panelCom) panelCom.style.display = 'none';
+    const descBox = document.getElementById('fotoDescripcionBox');
+    if (descBox) descBox.style.display = 'none';
+    if (typeof fotoCommentsRef !== 'undefined' && fotoCommentsRef) { fotoCommentsRef.off(); fotoCommentsRef = null; }
     window._privPhotoView = false;
     history.pushState({ modalClosed: 'fotoDetalle' }, "");
 };
@@ -15360,7 +15563,7 @@ const _TAB_ACTIVE_STYLE  = 'color:#6366f1; border-bottom:3px solid #6366f1; back
 const _TAB_NORMAL_STYLE  = 'color:#64748b; border-bottom:3px solid transparent; background:white;';
 
 function _setTabActivo(idActivo) {
-    ['tabMiChatBtn','tabGlobalBtn','tabGruposBtn'].forEach(id => {
+    ['tabMiChatBtn','tabSolicitudesBtn','tabGruposBtn'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         // reset inline border-bottom y color preservando el resto
@@ -15382,10 +15585,9 @@ window.cambiarPestanaChat = (pestana) => {
 
     clearInterval(window._mensajesInterval);
 
-    if (pestana === 'global') {
-        _setTabActivo('tabGlobalBtn');
+    if (pestana === 'solicitudes') {
+        _setTabActivo('tabSolicitudesBtn');
         if (contGlobal) contGlobal.style.display = 'flex';
-        if (typeof cargarPensamientosPublicos === 'function') cargarPensamientosPublicos();
         if (typeof cargarSolicitudesPendientes === 'function') cargarSolicitudesPendientes();
     }
     else if (pestana === 'grupos') {
@@ -15421,7 +15623,8 @@ window.cargarSolicitudesPendientes = () => {
 
     // Buscar solicitudes pendientes donde soy receptor
     db.ref('chat_requests').orderByChild('receiver').equalTo(idAuditor).once('value', snapReceiver => {
-        // También buscar donde soy solicitante (para mostrar estado)
+        // (Las solicitudes ENVIADAS por mí ya no se muestran aquí: esta
+        //  pestaña es solo para aceptar solicitudes de usuarios nuevos.)
         db.ref('chat_requests').orderByChild('requester').equalTo(idAuditor).once('value', snapRequester => {
             const pendientes = [];
 
@@ -15435,17 +15638,18 @@ window.cargarSolicitudesPendientes = () => {
                 });
             }
 
-            // Enviadas por mí (pendientes de respuesta)
+            // Enviadas por mí (pendientes de respuesta) → sección aparte
+            const enviadas = [];
             if (snapRequester.exists()) {
                 snapRequester.forEach(child => {
                     const req = child.val();
                     if (req.status === 'pending') {
-                        pendientes.push({ chatKey: child.key, ...req, esReceptor: false });
+                        enviadas.push({ chatKey: child.key, ...req, esReceptor: false });
                     }
                 });
             }
 
-            if (pendientes.length === 0) {
+            if (pendientes.length === 0 && enviadas.length === 0) {
                 container.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;"><div style="font-size:2rem; margin-bottom:8px;">✅</div><div style="font-size:0.85rem; font-weight:600;">Todo al día</div><div style="font-size:0.75rem; margin-top:4px;">No tienes solicitudes pendientes</div></div>';
                 return;
             }
@@ -15507,9 +15711,59 @@ if (p.esReceptor) {
                 }
             });
 
+// --- MIS ENVIADAS (botón desplegable) ---
+            if (enviadas.length > 0) {
+                enviadas.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                let envHtml = '';
+                enviadas.forEach(p => {
+                    const otroUid = p.receiver;
+                    const nombreReceptor = p.receiverName || null;
+                    const foto = getUserProfilePhoto(otroUid);
+                    envHtml += `
+                    <div class="solicitud-card" style="border-left-color:#94a3b8; opacity:0.9;">
+                        <div class="solicitud-avatar" style="background-image:url('${foto}')"></div>
+                        <div class="solicitud-info">
+                            <div class="solicitud-name" style="color:#64748b;" id="sol-name-${otroUid}">${escapeHtml(nombreReceptor || 'Usuario')}</div>
+                            <div class="solicitud-sub" style="color:#94a3b8;">⏳ Esperando respuesta...</div>
+                        </div>
+                        <div class="solicitud-btns">
+                            <button class="solicitud-btn-reject" style="font-size:0.72rem;" onclick="event.stopPropagation();db.ref('chat_requests/${p.chatKey}/status').set('rejected').then(()=>{cargarSolicitudesPendientes();cargarTodosLosUsuariosParaMiChat();notify('Solicitud cancelada')})">Cancelar</button>
+                        </div>
+                    </div>`;
+                    if (!nombreReceptor) {
+                        db.ref(`users/${otroUid}`).once('value').then(snap => {
+                            const u = snap.val();
+                            const nombre = u ? (u.apodo || u.myInviteKey || 'Usuario') : 'Usuario';
+                            const el = document.getElementById(`sol-name-${otroUid}`);
+                            if (el) el.textContent = nombre;
+                        });
+                    }
+                });
+                html += `
+                <div id="misEnviadasHeader" onclick="toggleMisEnviadas()" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin:18px 0 10px; cursor:pointer; background:#f1f5f9; padding:11px 13px; border-radius:12px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1rem;">📤</span>
+                        <span style="font-size:0.85rem; font-weight:800; color:#334155;">Mis enviadas (${enviadas.length})</span>
+                    </div>
+                    <span id="misEnviadasChevron" style="font-size:0.9rem; color:#64748b; transition:transform .2s; transform:${window._misEnviadasAbierto ? 'rotate(180deg)' : 'rotate(0deg)'};">▾</span>
+                </div>
+                <div id="misEnviadasLista" style="display:${window._misEnviadasAbierto ? 'block' : 'none'};">${envHtml}</div>`;
+            }
+
             container.innerHTML = html;
         });
     });
+};
+
+// Desplegar/ocultar la sección "Mis enviadas"
+window.toggleMisEnviadas = () => {
+    const lista = document.getElementById('misEnviadasLista');
+    const chevron = document.getElementById('misEnviadasChevron');
+    if (!lista) return;
+    const abierto = lista.style.display === 'block';
+    lista.style.display = abierto ? 'none' : 'block';
+    window._misEnviadasAbierto = !abierto;
+    if (chevron) chevron.style.transform = abierto ? 'rotate(0deg)' : 'rotate(180deg)';
 };
 
 // Funciones vacías para que no te dé error al tocar los botones de ejemplo
@@ -15581,6 +15835,11 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
                      onmouseleave="event.stopPropagation()" ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()"
                      onclick="event.stopPropagation(); mostrarPerfilUsuario('${m.uid}', '${autorParaCliqueo}')">${escapeHtml(m.autor)}</div>`;
 
+// En grupos, mi propia foto NO se muestra en mis mensajes; solo las fotos de los demás.
+            const avatarHTMLGrp = esMio
+                ? ''
+                : `<img src="${avatar}" class="chat-avatar-img" onclick="${avatarOnclick}">`;
+
             let fotoHTML = '';
             if (m.esFoto && m.foto) {
                 fotoHTML = `
@@ -15596,7 +15855,7 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
 
             html += `
             <div class="chat-row ${esMio ? 'mine' : 'other'}">
-                <img src="${avatar}" class="chat-avatar-img" onclick="${avatarOnclick}">
+                ${avatarHTMLGrp}
                 <div style="display:flex; flex-direction:column; gap:4px;">
                     <div class="msg-actions" id="actions-${s.key}">
                         ${delIconGrp}
@@ -16230,6 +16489,10 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
             const esSolicitudAceptada = sol && sol.status === 'accepted';
             const sinSolicitud = !sol || sol.status === 'rejected';
 
+            // Las solicitudes ENVIADAS pendientes ya no se muestran en Mi Chat
+            // (solo aparecen en Solicitudes → Mis enviadas).
+            if (esSolicitudEnviada) return;
+
             // Color del borde
             let borderColor, borderGlow;
             if (esSolicitudRecibida) {
@@ -16276,20 +16539,29 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
             } else if (esSolicitudAceptada) {
                 textoResumen = 'Toca para chatear';
             } else {
-                textoResumen = '📩 Toca para enviar solicitud';
+                textoResumen = '👤 Toca para ver su información';
             }
             if (textoResumen.length > 38) textoResumen = textoResumen.substring(0, 36) + '…';
 
             const badge = tieneNuevos
                 ? `<div style="background:#ef4444;color:white;font-size:0.65rem;font-weight:800;padding:2px 10px;border-radius:10px;margin-top:4px;display:inline-block;">🔴 ${numeroAviso} sin leer</div>` : '';
 
-            // Acción del avatar (solo pensamiento o nada)
+            // Acción: perfil primero (para ver su información antes de enviar solicitud)
             const nombreE = escapeHtml(nombre).replace(/'/g, "\\'");
             const fotoUrl = u.avatar || getUserProfilePhoto(uid);
             const penE = hasPensamiento ? escapeHtml(nube.texto).replace(/'/g, "\\'") : '';
+            let accionCard;
+            if (esSolicitudRecibida) {
+                accionCard = `mostrarPerfilUsuario('${uid}','${nombreE}',{chatKey:'${sol.chatKey}'})`;
+            } else if (chat || esSolicitudAceptada) {
+                accionCard = `abrirChatPrivado('${uid}','${nombreE}')`;
+            } else {
+                // Sin chat ni solicitud → ver su información antes de enviar la solicitud
+                accionCard = `mostrarPerfilUsuario('${uid}','${nombreE}')`;
+            }
             const avatarClick = hasPensamiento
                 ? `event.stopPropagation(); mostrarPensamientoDeUsuario('${uid}','${nombreE}','${penE}','${fotoUrl}')`
-                : `abrirChatPrivado('${uid}','${nombreE}')`;
+                : `event.stopPropagation(); ${accionCard}`;
 
             // Background del card
             let cardBg = 'white';
@@ -16302,7 +16574,7 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
             }
 
             html += `
-            <div onclick="abrirChatPrivado('${uid}','${nombreE}')"
+            <div onclick="${accionCard}"
                  style="background:${cardBg}; padding:13px 15px; border-radius:16px; margin-bottom:9px;
                         box-shadow:0 2px 8px rgba(0,0,0,.05); cursor:pointer;
                         ${cardExtra}">
