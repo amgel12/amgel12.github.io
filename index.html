@@ -3044,9 +3044,20 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="text" id="inputNombreGrupo" placeholder="Ej. Gamers VIP" maxlength="20" style="border: 2px solid #e2e8f0; margin-top: 5px;">
         </div>
 
+        <div style="text-align: left; margin-bottom: 12px;">
+            <label style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Descripción:</label>
+            <textarea id="inputDescGrupo" placeholder="De qué trata el grupo..." maxlength="120" rows="2" style="border: 2px solid #e2e8f0; margin-top: 5px; width:100%; box-sizing:border-box; resize:none; font-family:inherit; font-size:0.85rem;"></textarea>
+        </div>
+
         <div style="text-align: left; margin-bottom: 20px;">
-            <label style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Icono (Un Emoji):</label>
-            <input type="text" id="inputIconoGrupo" placeholder="Ej. 🎮" maxlength="2" style="border: 2px solid #e2e8f0; margin-top: 5px; text-align: center; font-size: 1.5rem;">
+            <label style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Foto del grupo (opcional):</label>
+            <div style="display:flex; align-items:center; gap:10px; margin-top:6px;">
+                <div id="previewFotoNuevoGrupo" style="width:56px; height:56px; border-radius:14px; background:#eef2ff; display:flex; align-items:center; justify-content:center; color:#6366f1; font-size:1.4rem; background-size:cover; background-position:center; flex-shrink:0;">👥</div>
+                <label style="background:#eef2ff; color:#6366f1; padding:8px 12px; border-radius:10px; font-size:0.75rem; font-weight:800; cursor:pointer;">
+                    Elegir foto
+                    <input type="file" id="inputFotoNuevoGrupo" accept="image/*" style="display:none;" onchange="procesarFotoNuevoGrupo(this)">
+                </label>
+            </div>
         </div>
 
         <button onclick="guardarNuevoGrupo()" class="btn-blue" style="background: linear-gradient(135deg, #6366f1, #4f46e5); width: 100%;">
@@ -3068,9 +3079,21 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="text" id="inputEditarNombreGrupo" placeholder="Ej. Gamers VIP" maxlength="20" style="border: 2px solid #e2e8f0; margin-top: 5px;">
         </div>
 
+        <div style="text-align: left; margin-bottom: 12px;">
+            <label style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Descripción:</label>
+            <textarea id="inputEditarDescGrupo" placeholder="De qué trata el grupo..." maxlength="120" rows="2" style="border: 2px solid #e2e8f0; margin-top: 5px; width:100%; resize:none;"></textarea>
+        </div>
+
         <div style="text-align: left; margin-bottom: 20px;">
-            <label style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Icono (Un Emoji):</label>
-            <input type="text" id="inputEditarIconoGrupo" placeholder="Ej. 🎮" maxlength="2" style="border: 2px solid #e2e8f0; margin-top: 5px; text-align: center; font-size: 1.5rem;">
+            <label style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Foto del grupo:</label>
+            <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
+                <div id="previewFotoEditarGrupo" style="width:56px; height:56px; border-radius:14px; background:#eef2ff; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#6366f1; font-size:1.4rem;">👥</div>
+                <label style="background:#eef2ff; color:#6366f1; padding:8px 12px; border-radius:10px; font-size:0.75rem; font-weight:800; cursor:pointer;">
+                    Cambiar foto
+                    <input type="file" id="inputEditarFotoGrupo" accept="image/*" style="display:none;" onchange="procesarFotoEditarGrupo(this)">
+                </label>
+                <button type="button" onclick="quitarFotoEditarGrupo()" style="background:#fee2e2; color:#ef4444; border:none; padding:8px 12px; border-radius:10px; font-size:0.72rem; font-weight:800; cursor:pointer;">Quitar</button>
+            </div>
         </div>
 
         <button onclick="guardarEdicionGrupo()" class="btn-blue" style="background: linear-gradient(135deg, #6366f1, #4f46e5); width: 100%;">
@@ -3094,7 +3117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div id="grupoIconoHeader" style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 2px 8px rgba(99,102,241,0.3);">🎮</div>
                 <div>
                     <h3 id="grupoChatTitle" style="margin:0; font-size:1rem; color:#1e293b;">Nombre Grupo</h3>
-                    <span style="font-size:0.65rem; color:#10b981; font-weight:bold;">Chat Grupal</span>
+                    <span id="grupoChatDesc" style="font-size:0.65rem; color:#10b981; font-weight:bold;">Chat Grupal</span>
                 </div>
             </div>
             
@@ -4117,6 +4140,22 @@ Cerrar
             </div>
         </div>
 
+<div id="modalOpcionesGrupo" class="modal-overlay" style="z-index: 30000; display:none;">
+    <div class="modal-content" style="text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: 6px;">👥</div>
+        <h3 id="opcionesGrupoNombre" style="color:#1e293b; margin-bottom: 16px;">Opciones del grupo</h3>
+        <button onclick="eliminarGrupoParaMi()" class="btn-blue" style="background:#ef4444; color:white; width:100%; margin-bottom:8px;">
+            🗑️ Eliminar solo para mí
+        </button>
+        <button id="btnEliminarParaTodos" onclick="abrirConfirmarEliminarTodos()" class="btn-blue" style="background:#7f1d1d; color:white; width:100%; margin-bottom:8px; display:none;">
+            💥 Eliminar para todos
+        </button>
+        <button onclick="cerrarModalOpcionesGrupo()" style="background: none; border: none; color: #94a3b8; margin-top: 10px; cursor: pointer; font-weight: bold;">
+            Cancelar
+        </button>
+    </div>
+</div>
+
 <div id="modalEliminarGrupo" class="modal-overlay" style="z-index: 30000; display:none;">
     <div class="modal-content" style="border: 2px solid #ef4444; text-align: center;">
         <div style="font-size: 3rem; margin-bottom: 10px;">👥</div>
@@ -4951,10 +4990,6 @@ style="display:none;">
 
     <!-- GRUPOS -->
     <div id="gruposListContainer" style="flex: 1; overflow-y: auto; padding: 15px; display: none; background: #f8fafc;">
-<button onclick="crearNuevoGrupo()" 
-        style="width: 100%; padding: 8px; border-radius: 12px; border: 1.5px dashed #6366f1; background: #f5f8ff; color: #6366f1; font-weight: 700; font-size: 0.8rem; margin-bottom: 10px; cursor: pointer;">
-    ➕ Crear Nuevo Grupo
-</button>
         <div id="listaDeGrupos"></div>
     </div>
 </div>
@@ -5165,6 +5200,13 @@ style="display:none;">
         </div>
     </div>
 </div>
+<!-- FAB: Crear nuevo grupo (fuera del appWrapper para que position:fixed funcione) -->
+<button id="fabCrearGrupo" onclick="crearNuevoGrupo()" title="Crear nuevo grupo"
+    style="display:none; position:fixed; right:18px; bottom:82px; width:58px; height:58px; border-radius:50%;
+           border:none; background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff;
+           font-size:2rem; font-weight:400; line-height:1; cursor:pointer;
+           box-shadow:0 6px 18px rgba(99,102,241,0.5); z-index:10950;
+           align-items:center; justify-content:center;">+</button>
 <!-- Ruleta fuera del appWrapper para que position:fixed funcione sobre cualquier pantalla -->
 <div id="modalRuletaGame" class="modal-overlay" onclick="if(event.target===this)window.cerrarRuleta()">
     <div class="modal-content" style="text-align:center;" onclick="event.stopPropagation()">
@@ -5920,6 +5962,8 @@ window.goToScreen = (index, userAction = false) => {
     if (index === 0 && typeof renderizarMisionesAprender === "function") {
         renderizarMisionesAprender();
     }
+
+    if (typeof actualizarFabGrupo === 'function') actualizarFabGrupo();
 };
 // --- FUNCIONES PARA BARRA DE PROGRESO DE VIDEOS ---
 let videoProgressInterval = null;
@@ -7210,11 +7254,12 @@ if (!localStorage.getItem('aviso_notis_mostrado')) {
         // 🔥 INICIALIZAR BANDERAS PARA EL BRINCO (CRUCIAL)
         window._appInitialized = true; 
         window._lastNotiCount = 0;
-// ==========================================
+        // 🧹 Al abrir la app NO se reabre ningún chat privado automáticamente.
+        // Limpiamos la marca de "chat abierto" para que la sesión empiece limpia.
+        try { localStorage.removeItem('chatAbiertoUid'); localStorage.removeItem('chatAbiertoNombre'); } catch(e) {}
+        // ==========================================
         // 🚀 Centro de Invitación automático (una vez, tras entrar a la app)
         if (typeof programarCentroInvitacion === 'function') programarCentroInvitacion(user.uid);
-        // 💬 Si la app se recargó estando en un chat privado, reabrirlo
-        if (typeof restaurarChatAbierto === 'function') restaurarChatAbierto();
 
         // 🚪 DETECTAR INVITACIÓN A GRUPOS POR URL
         // ==========================================
@@ -9273,6 +9318,7 @@ window.addEventListener('popstate', (e) => {
     'modalAdminRetiros',
     'modalChatGrupo',
     'modalEliminarGrupo',
+    'modalOpcionesGrupo',
     'modalMenuPublicar',
     'modalOpcionVideoPropio',
     'modalSubirVideo',
@@ -12320,20 +12366,10 @@ window.programarCentroInvitacion = (uid) => {
     setTimeout(abrir, 4500);
 };
 
-// 💬 Reabrir el chat privado si la app se recargó estando en él
-window.restaurarChatAbierto = () => {
-    try {
-        const uid = localStorage.getItem('chatAbiertoUid');
-        if (!uid || uid === idAuditor) return;
-        const nombre = localStorage.getItem('chatAbiertoNombre') || 'Usuario';
-        let intentos = 0;
-        const abrir = () => {
-            if (window._appInitialized !== true) { if (++intentos < 25) setTimeout(abrir, 400); return; }
-            if (typeof abrirChatPrivado === 'function') abrirChatPrivado(uid, nombre);
-        };
-        setTimeout(abrir, 1500);
-    } catch(e) {}
-};
+// 💬 (Eliminado) Ya NO se reabre el chat privado al recargar la app.
+// La app siempre inicia en la pantalla principal; el usuario entra al chat manualmente.
+window.restaurarChatAbierto = () => {};
+
 
 window.abrirModalInvitar = () => {
     if(!myCurrentKey || myCurrentKey === "---") return notify("⏳ Espera a que cargue tu perfil");
@@ -13720,6 +13756,11 @@ function cachearFotosPerfiles() {
             if (u.fotoPerfil) { 
                 cacheFotosPerfil[child.key] = u.fotoPerfil; 
             }
+            // Mantener actualizado el apodo/foto real de los autores de pensamientos
+            if (window._perfilAutores && window._perfilAutores[child.key]) {
+                window._perfilAutores[child.key].apodo = u.apodo || u.myInviteKey || 'Usuario';
+                window._perfilAutores[child.key].fotoPerfil = u.fotoPerfil || '';
+            }
         });
         // Actualizar avatares en chat privado si está abierto
         if (document.getElementById('modalChatPrivado').style.display === 'flex') {
@@ -13732,6 +13773,7 @@ function cachearFotosPerfiles() {
         }
         // Actualizar listas después de actualizar el cache
         if (typeof renderizarUsuariosHorizontal === "function") renderizarUsuariosHorizontal();
+        if (typeof window._renderPensamientosFeed === "function") window._renderPensamientosFeed();
         cargarMuro(); // ✅ feed nativo unificado
         if (typeof cargarGaleriaComunidad === "function") cargarGaleriaComunidad();
     });
@@ -15272,22 +15314,27 @@ window.publicarPensamiento = () => {
     }
 
     const timestamp = firebase.database.ServerValue.TIMESTAMP;
-    const miNombre = document.getElementById('profKey')?.textContent || "Usuario";
-    const miFoto = getUserProfilePhoto(idAuditor);
 
-    const actualizaciones = {};
-    actualizaciones[`pensamientos/${idAuditor}`] = {
-        texto: texto,
-        autor: miNombre,
-        timestamp: timestamp,
-        fotoPerfil: miFoto,
-        uid: idAuditor
-    };
-    
-    // También actualizamos tu última conexión para que salgas primero
-    actualizaciones[`users/${idAuditor}/lastSeen`] = timestamp;
+    // Leemos tu perfil REAL actual (apodo + foto) antes de publicar,
+    // así el pensamiento nunca guarda datos viejos.
+    db.ref('users/' + idAuditor).once('value').then(us => {
+        const u = us.val() || {};
+        const miNombre = u.apodo || u.myInviteKey || document.getElementById('profKey')?.textContent || "Usuario";
+        const miFoto = u.fotoPerfil || getUserProfilePhoto(idAuditor);
 
-    db.ref().update(actualizaciones)
+        const actualizaciones = {};
+        actualizaciones[`pensamientos/${idAuditor}`] = {
+            texto: texto,
+            autor: miNombre,
+            timestamp: timestamp,
+            fotoPerfil: miFoto,
+            uid: idAuditor
+        };
+        // También actualizamos tu última conexión para que salgas primero
+        actualizaciones[`users/${idAuditor}/lastSeen`] = timestamp;
+
+        return db.ref().update(actualizaciones);
+    })
         .then(() => {
             console.log("✅ Publicado con éxito");
             notify("✨ Pensamiento publicado");
@@ -15307,7 +15354,11 @@ window.publicarPensamiento = () => {
             }
         });
 };
-// Cargar pensamientos públicos (opcional - para futuro)
+// Cargar pensamientos públicos (feed de historias 💭)
+window._perfilAutores = window._perfilAutores || {};      // uid -> { apodo, fotoPerfil }
+window._fetchingAutores = window._fetchingAutores || {};
+window._ultimoSnapPensamientos = null;
+
 window.cargarPensamientosPublicos = () => {
     const feedContainer = document.getElementById('pensamientosPublicosFeed');
     if(!feedContainer) return;
@@ -15315,91 +15366,123 @@ window.cargarPensamientosPublicos = () => {
     window._pensamientosListenerActivo = true;
 
     db.ref('pensamientos').on('value', snap => {
-        let html = "";
-        const ahora = Date.now();
-        const todosLosDatos = snap.val() || {};
+        window._ultimoSnapPensamientos = snap;
+        const datos = snap.val() || {};
 
-        // --- 1. TU PROPIO PENSAMIENTO (PARA QUE TÚ LO VEAS) ---
-        const miData = todosLosDatos[idAuditor]; // Buscamos tus datos en el snapshot
-        const miFoto = getUserProfilePhoto(idAuditor);
-        const tengoAlgoPublicado = miData && (ahora - miData.timestamp < 86400000);
-        
-        // Color del borde: Morado si tienes algo, Gris si no
-        const miBordeColor = tengoAlgoPublicado ? '#8b5cf6' : '#cbd5e1';
+        // Traer el perfil REAL (apodo + foto) de cada autor, aunque ya esté publicado
+        Object.keys(datos).forEach(uid => {
+            if (uid === idAuditor) return;
+            if (window._perfilAutores[uid] || window._fetchingAutores[uid]) return;
+            window._fetchingAutores[uid] = true;
+            db.ref('users/' + uid).once('value').then(us => {
+                const u = us.val() || {};
+                window._perfilAutores[uid] = {
+                    apodo: u.apodo || u.myInviteKey || 'Usuario',
+                    fotoPerfil: u.fotoPerfil || ''
+                };
+                delete window._fetchingAutores[uid];
+                if (window._renderPensamientosFeed) window._renderPensamientosFeed();
+            }).catch(() => { delete window._fetchingAutores[uid]; });
+        });
 
-        // Lógica de la Nube para TI
-        let miNubeHtml = "";
-        if (tengoAlgoPublicado) {
-            const miTextoCorto = miData.texto.length > 25 ? miData.texto.substring(0, 22) + "..." : miData.texto;
-            miNubeHtml = `
-            <div style="position:absolute; top:-35px; left:50%; transform:translateX(-50%); z-index:100; pointer-events:none;">
-                <div style="background:#6366f1; color:white; padding:4px 10px; border-radius:12px; font-size:0.6rem; font-weight:800; white-space:nowrap; box-shadow:0 4px 10px rgba(99,102,241,0.3); border:1px solid rgba(255,255,255,0.2);">
-                    "${escapeHtml(miTextoCorto)}"
+        window._renderPensamientosFeed();
+    });
+};
+
+window._renderPensamientosFeed = () => {
+    const feedContainer = document.getElementById('pensamientosPublicosFeed');
+    if (!feedContainer) return;
+    const snap = window._ultimoSnapPensamientos;
+    if (!snap) return;
+
+    let html = "";
+    const ahora = Date.now();
+    const todosLosDatos = snap.val() || {};
+
+    // --- 1. TU PROPIO PENSAMIENTO (PARA QUE TÚ LO VEAS) ---
+    const miData = todosLosDatos[idAuditor]; // Buscamos tus datos en el snapshot
+    const miFoto = getUserProfilePhoto(idAuditor);
+    const tengoAlgoPublicado = miData && (ahora - miData.timestamp < 86400000);
+    
+    // Color del borde: Morado si tienes algo, Gris si no
+    const miBordeColor = tengoAlgoPublicado ? '#8b5cf6' : '#cbd5e1';
+
+    // Lógica de la Nube para TI
+    let miNubeHtml = "";
+    if (tengoAlgoPublicado) {
+        const miTexto = miData.texto || "";
+        const miTextoCorto = miTexto.length > 25 ? miTexto.substring(0, 22) + "..." : miTexto;
+        miNubeHtml = `
+        <div style="position:absolute; top:-35px; left:50%; transform:translateX(-50%); z-index:100; pointer-events:none;">
+            <div style="background:#6366f1; color:white; padding:4px 10px; border-radius:12px; font-size:0.6rem; font-weight:800; white-space:nowrap; box-shadow:0 4px 10px rgba(99,102,241,0.3); border:1px solid rgba(255,255,255,0.2);">
+                "${escapeHtml(miTextoCorto)}"
+            </div>
+            <div style="display:flex; justify-content:center; gap:2px; margin-top:2px; padding-left:10px;">
+                <div style="width:5px;height:5px;border-radius:50%;background:#6366f1;"></div>
+                <div style="width:3px;height:3px;border-radius:50%;background:#6366f1;opacity:0.6;"></div>
+            </div>
+        </div>`;
+    }
+
+    // El "+" solo se ve si NO tienes nada publicado (como Instagram)
+    const plusBadge = tengoAlgoPublicado ? "" : `<div class="plus-badge">+</div>`;
+
+    html += `
+    <div class="story-item" onclick="document.getElementById('modalPensamiento').style.display='block'; document.getElementById('inputPensamiento').focus();" style="min-width:70px; position:relative; margin-top:20px;">
+        ${miNubeHtml}
+        <div class="mi-historia-container">
+            <div class="story-avatar-box" style="border: 3px solid ${miBordeColor} !important; width:58px; height:58px; border-radius:50%;">
+                <div class="story-img" style="background-image:url('${miFoto}'); background-size: cover; background-position: center;"></div>
+            </div>
+            ${plusBadge}
+        </div>
+        <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">Tú</div>
+    </div>`;
+
+    // --- 2. LOS PENSAMIENTOS DE LOS DEMÁS ---
+    let listaOtros = [];
+    Object.keys(todosLosDatos).forEach(key => {
+        if (key !== idAuditor) { // Aquí sí filtramos para no repetir tu foto
+            listaOtros.push({ uid: key, ...todosLosDatos[key] });
+        }
+    });
+
+    // Ordenar por tiempo (más recientes primero)
+    listaOtros.sort((a,b) => b.timestamp - a.timestamp);
+
+    listaOtros.forEach(p => {
+        const edad = ahora - (p.timestamp || 0);
+        if (edad < 86400000) { // Solo mostrar si tiene menos de 24h
+            // Apodo y foto REALES y ACTUALES del autor (no los guardados al publicar)
+            const perfil = window._perfilAutores[p.uid] || {};
+            const avatar = perfil.fotoPerfil || cacheFotosPerfil[p.uid] || p.fotoPerfil || getUserProfilePhoto(p.uid);
+            const nombre = perfil.apodo || p.autor || "Usuario";
+            const textoFull = p.texto || "";
+            const textoCorto = textoFull.length > 25 ? textoFull.substring(0, 22) + "..." : textoFull;
+            
+            const nombreEsc = nombre.replace(/'/g, "\\'");
+            const textoEsc = textoFull.replace(/'/g, "\\'");
+
+            html += `
+            <div class="story-item" onclick="mostrarPensamientoDeUsuario('${p.uid}','${nombreEsc}','${textoEsc}','${avatar}')" style="min-width:70px; position:relative; margin-top:20px;">
+                <div style="position:absolute; top:-35px; left:50%; transform:translateX(-50%); z-index:100; pointer-events:none;">
+                    <div style="background:#8b5cf6; color:white; padding:4px 10px; border-radius:12px; font-size:0.6rem; font-weight:800; white-space:nowrap; box-shadow:0 4px 10px rgba(139,92,246,0.3); border:1px solid rgba(255,255,255,0.2);">
+                        "${escapeHtml(textoCorto)}"
+                    </div>
+                    <div style="display:flex; justify-content:center; gap:2px; margin-top:2px; padding-left:10px;">
+                        <div style="width:5px;height:5px;border-radius:50%;background:#8b5cf6;"></div>
+                        <div style="width:3px;height:3px;border-radius:50%;background:#8b5cf6;opacity:0.6;"></div>
+                    </div>
                 </div>
-                <div style="display:flex; justify-content:center; gap:2px; margin-top:2px; padding-left:10px;">
-                    <div style="width:5px;height:5px;border-radius:50%;background:#6366f1;"></div>
-                    <div style="width:3px;height:3px;border-radius:50%;background:#6366f1;opacity:0.6;"></div>
+                <div class="story-avatar-box" style="border: 3px solid #8b5cf6 !important; width:58px; height:58px; border-radius:50%;">
+                    <div class="story-img" style="background-image:url('${avatar}'); background-size: cover; background-position: center;"></div>
                 </div>
+                <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">${escapeHtml(nombre)}</div>
             </div>`;
         }
-
-        // El "+" solo se ve si NO tienes nada publicado (como Instagram)
-        const plusBadge = tengoAlgoPublicado ? "" : `<div class="plus-badge">+</div>`;
-
-        html += `
-        <div class="story-item" onclick="document.getElementById('modalPensamiento').style.display='block'; document.getElementById('inputPensamiento').focus();" style="min-width:70px; position:relative; margin-top:20px;">
-            ${miNubeHtml}
-            <div class="mi-historia-container">
-                <div class="story-avatar-box" style="border: 3px solid ${miBordeColor} !important; width:58px; height:58px; border-radius:50%;">
-                    <div class="story-img" style="background-image:url('${miFoto}'); background-size: cover; background-position: center;"></div>
-                </div>
-                ${plusBadge}
-            </div>
-            <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">Tú</div>
-        </div>`;
-
-        // --- 2. LOS PENSAMIENTOS DE LOS DEMÁS ---
-        let listaOtros = [];
-        Object.keys(todosLosDatos).forEach(key => {
-            if (key !== idAuditor) { // Aquí sí filtramos para no repetir tu foto
-                listaOtros.push({ uid: key, ...todosLosDatos[key] });
-            }
-        });
-
-        // Ordenar por tiempo (más recientes primero)
-        listaOtros.sort((a,b) => b.timestamp - a.timestamp);
-
-        listaOtros.forEach(p => {
-            const edad = ahora - (p.timestamp || 0);
-            if (edad < 86400000) { // Solo mostrar si tiene menos de 24h
-                const avatar = p.fotoPerfil || getUserProfilePhoto(p.uid);
-                const nombre = p.autor || "Usuario";
-                const textoCorto = p.texto.length > 25 ? p.texto.substring(0, 22) + "..." : p.texto;
-                
-                const nombreEsc = nombre.replace(/'/g, "\\'");
-                const textoEsc = p.texto.replace(/'/g, "\\'");
-
-                html += `
-                <div class="story-item" onclick="mostrarPensamientoDeUsuario('${p.uid}','${nombreEsc}','${textoEsc}','${avatar}')" style="min-width:70px; position:relative; margin-top:20px;">
-                    <div style="position:absolute; top:-35px; left:50%; transform:translateX(-50%); z-index:100; pointer-events:none;">
-                        <div style="background:#8b5cf6; color:white; padding:4px 10px; border-radius:12px; font-size:0.6rem; font-weight:800; white-space:nowrap; box-shadow:0 4px 10px rgba(139,92,246,0.3); border:1px solid rgba(255,255,255,0.2);">
-                            "${escapeHtml(textoCorto)}"
-                        </div>
-                        <div style="display:flex; justify-content:center; gap:2px; margin-top:2px; padding-left:10px;">
-                            <div style="width:5px;height:5px;border-radius:50%;background:#8b5cf6;"></div>
-                            <div style="width:3px;height:3px;border-radius:50%;background:#8b5cf6;opacity:0.6;"></div>
-                        </div>
-                    </div>
-                    <div class="story-avatar-box" style="border: 3px solid #8b5cf6 !important; width:58px; height:58px; border-radius:50%;">
-                        <div class="story-img" style="background-image:url('${avatar}'); background-size: cover; background-position: center;"></div>
-                    </div>
-                    <div class="story-name" style="margin-top:6px; font-weight:700; color:#1e293b; font-size:0.75rem;">${nombre}</div>
-                </div>`;
-            }
-        });
-
-        feedContainer.innerHTML = html;
     });
+
+    feedContainer.innerHTML = html;
 };
 window.grabarVideoCamara = () => {
     document.getElementById('modalOpcionVideoPropio').style.display = 'none';
@@ -15629,6 +15712,7 @@ function _setTabActivo(idActivo) {
 }
 
 window.cambiarPestanaChat = (pestana) => {
+    window._pestanaChatActiva = pestana;
     const contGlobal    = document.getElementById('chatListContainer');
     const contMensajes  = document.getElementById('mensajesPrivadosContainer');
     const contGrupos    = document.getElementById('gruposListContainer');
@@ -15664,6 +15748,16 @@ window.cambiarPestanaChat = (pestana) => {
         // Renderizar TODOS los usuarios ahora
         cargarTodosLosUsuariosParaMiChat();
     }
+
+    if (typeof actualizarFabGrupo === 'function') actualizarFabGrupo();
+};
+
+// Muestra el botón flotante "+" solo en la pestaña Grupos
+window.actualizarFabGrupo = () => {
+    const fab = document.getElementById('fabCrearGrupo');
+    if (!fab) return;
+    const enGrupos = (typeof currentScreen !== 'undefined' && currentScreen === 3) && (window._pestanaChatActiva === 'grupos');
+    fab.style.display = enGrupos ? 'flex' : 'none';
 };
 
 // ==========================================
@@ -15704,7 +15798,28 @@ window.cargarSolicitudesPendientes = () => {
                 });
             }
 
-            if (pendientes.length === 0 && enviadas.length === 0) {
+            // Solicitudes ACEPTADAS conmigo = MIS AMIGOS
+            const amigos = [];
+            const _amigosVistos = {};
+            const _addAmigo = (uid, nombre) => {
+                if (!uid || uid === idAuditor || _amigosVistos[uid]) return;
+                _amigosVistos[uid] = true;
+                amigos.push({ uid, nombre });
+            };
+            if (snapReceiver.exists()) {
+                snapReceiver.forEach(child => {
+                    const req = child.val();
+                    if (req.status === 'accepted') _addAmigo(req.requester, req.requesterName);
+                });
+            }
+            if (snapRequester.exists()) {
+                snapRequester.forEach(child => {
+                    const req = child.val();
+                    if (req.status === 'accepted') _addAmigo(req.receiver, req.receiverName);
+                });
+            }
+
+            if (pendientes.length === 0 && enviadas.length === 0 && amigos.length === 0) {
                 container.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;"><div style="font-size:2rem; margin-bottom:8px;">✅</div><div style="font-size:0.85rem; font-weight:600;">Todo al día</div><div style="font-size:0.75rem; margin-top:4px;">No tienes solicitudes pendientes</div></div>';
                 return;
             }
@@ -15766,10 +15881,10 @@ if (p.esReceptor) {
                 }
             });
 
-// --- MIS ENVIADAS (botón desplegable) ---
+// --- MIS ENVIADAS / MIS AMIGOS (botones desplegables) ---
+            let envHtml = '';
             if (enviadas.length > 0) {
                 enviadas.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                let envHtml = '';
                 enviadas.forEach(p => {
                     const otroUid = p.receiver;
                     const nombreReceptor = p.receiverName || null;
@@ -15794,16 +15909,55 @@ if (p.esReceptor) {
                         });
                     }
                 });
-                html += `
-                <div id="misEnviadasHeader" onclick="toggleMisEnviadas()" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin:18px 0 10px; cursor:pointer; background:#f1f5f9; padding:11px 13px; border-radius:12px;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:1rem;">📤</span>
-                        <span style="font-size:0.85rem; font-weight:800; color:#334155;">Mis enviadas (${enviadas.length})</span>
-                    </div>
-                    <span id="misEnviadasChevron" style="font-size:0.9rem; color:#64748b; transition:transform .2s; transform:${window._misEnviadasAbierto ? 'rotate(180deg)' : 'rotate(0deg)'};">▾</span>
-                </div>
-                <div id="misEnviadasLista" style="display:${window._misEnviadasAbierto ? 'block' : 'none'};">${envHtml}</div>`;
             }
+
+            // Lista de amigos (solo aceptados)
+            let amigosHtml = '';
+            if (amigos.length === 0) {
+                amigosHtml = '<div style="text-align:center; padding:20px; color:#94a3b8; font-size:0.8rem;">Aún no tienes amigos. Acepta una solicitud para agregarlos.</div>';
+            } else {
+                amigos.forEach(a => {
+                    const foto = getUserProfilePhoto(a.uid);
+                    const nombreEsc = (a.nombre || 'Usuario').replace(/'/g, "\\'");
+                    amigosHtml += `
+                    <div class="solicitud-card" style="border-left-color:#10b981; cursor:pointer;" onclick="window.abrirChatPrivado('${a.uid}','${nombreEsc}')">
+                        <div class="solicitud-avatar" style="background-image:url('${foto}')"></div>
+                        <div class="solicitud-info">
+                            <div class="solicitud-name" id="amigo-name-${a.uid}">${escapeHtml(a.nombre || 'Usuario')}</div>
+                            <div class="solicitud-sub" style="color:#10b981;">💬 Toca para chatear</div>
+                        </div>
+                    </div>`;
+                    if (!a.nombre) {
+                        db.ref(`users/${a.uid}`).once('value').then(snap => {
+                            const u = snap.val();
+                            const nombre = u ? getDisplayName(a.uid, u.nombre || u.apodo || u.myInviteKey) : 'Usuario';
+                            const el = document.getElementById(`amigo-name-${a.uid}`);
+                            if (el) el.textContent = nombre;
+                        });
+                    }
+                });
+            }
+
+            html += `
+                <div style="display:flex; gap:10px; margin:18px 0 10px;">
+                    ${enviadas.length > 0 ? `
+                    <div id="misEnviadasHeader" onclick="toggleMisEnviadas()" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:6px; cursor:pointer; background:#f1f5f9; padding:11px 10px; border-radius:12px;">
+                        <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+                            <span style="font-size:1rem;">📤</span>
+                            <span style="font-size:0.78rem; font-weight:800; color:#334155; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Mis enviadas (${enviadas.length})</span>
+                        </div>
+                        <span id="misEnviadasChevron" style="font-size:0.9rem; color:#64748b; transition:transform .2s; transform:${window._misEnviadasAbierto ? 'rotate(180deg)' : 'rotate(0deg)'};">▾</span>
+                    </div>` : ''}
+                    <div id="misAmigosHeader" onclick="toggleMisAmigos()" style="flex:1; display:flex; align-items:center; justify-content:space-between; gap:6px; cursor:pointer; background:#ecfdf5; padding:11px 10px; border-radius:12px;">
+                        <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+                            <span style="font-size:1rem;">👥</span>
+                            <span style="font-size:0.78rem; font-weight:800; color:#065f46; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Mis amigos (${amigos.length})</span>
+                        </div>
+                        <span id="misAmigosChevron" style="font-size:0.9rem; color:#10b981; transition:transform .2s; transform:${window._misAmigosAbierto ? 'rotate(180deg)' : 'rotate(0deg)'};">▾</span>
+                    </div>
+                </div>`;
+            if (enviadas.length > 0) html += `<div id="misEnviadasLista" style="display:${window._misEnviadasAbierto ? 'block' : 'none'};">${envHtml}</div>`;
+            html += `<div id="misAmigosLista" style="display:${window._misAmigosAbierto ? 'block' : 'none'};">${amigosHtml}</div>`;
 
             container.innerHTML = html;
         });
@@ -15814,10 +15968,19 @@ if (p.esReceptor) {
 window.toggleMisEnviadas = () => {
     const lista = document.getElementById('misEnviadasLista');
     const chevron = document.getElementById('misEnviadasChevron');
-    if (!lista) return;
-    const abierto = lista.style.display === 'block';
-    lista.style.display = abierto ? 'none' : 'block';
+    const abierto = lista && lista.style.display !== 'none';
     window._misEnviadasAbierto = !abierto;
+    if (lista) lista.style.display = abierto ? 'none' : 'block';
+    if (chevron) chevron.style.transform = abierto ? 'rotate(0deg)' : 'rotate(180deg)';
+};
+
+// Desplegar/ocultar la sección "Mis amigos"
+window.toggleMisAmigos = () => {
+    const lista = document.getElementById('misAmigosLista');
+    const chevron = document.getElementById('misAmigosChevron');
+    const abierto = lista && lista.style.display !== 'none';
+    window._misAmigosAbierto = !abierto;
+    if (lista) lista.style.display = abierto ? 'none' : 'block';
     if (chevron) chevron.style.transform = abierto ? 'rotate(0deg)' : 'rotate(180deg)';
 };
 
@@ -15835,6 +15998,8 @@ window.abrirChatDeGrupo = (idGrupo, nombreGrupo, iconoGrupo) => {
 // Función auxiliar que abre la sala de chat del grupo
 function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
     currentGrupoId = idGrupo;
+    // Recordar que ya entró: el modal "¿Entrar al grupo?" no volverá a mostrarse
+    if (typeof _marcarGrupoEntrado === 'function') _marcarGrupoEntrado(idGrupo);
     document.getElementById('grupoChatTitle').innerText = nombreGrupo;
 
     // Limpiar badge de este grupo
@@ -15842,16 +16007,31 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
     window._gruposNoLeidos = Object.values(window._gruposNoLeidosPorGrupo).reduce((a, b) => a + b, 0);
     actualizarBadgeGrupos();
     actualizarBadgeGrupoCard(idGrupo);
-    document.getElementById('grupoIconoHeader').innerText = iconoGrupo || '💬';
     document.getElementById('modalChatGrupo').style.display = 'flex';
 
-    // Obtener creador del grupo para mostrar botón editar
-    db.ref(`grupos_chat/${idGrupo}/info/creador`).once('value').then(snap => {
-        const creador = snap.val();
-        currentGrupoCreador = creador;
+    // Cargar info completa del grupo: avatar (foto), descripción y botón editar
+    db.ref(`grupos_chat/${idGrupo}/info`).once('value').then(snap => {
+        const info = snap.val() || {};
+        currentGrupoCreador = info.creador || null;
         const btn = document.getElementById('btnEditarGrupo');
         if (btn) {
-            btn.style.display = (idAuditor === creador || isAdmin) ? 'flex' : 'none';
+            btn.style.display = (idAuditor === currentGrupoCreador || isAdmin) ? 'flex' : 'none';
+        }
+        const titleEl = document.getElementById('grupoChatTitle');
+        if (titleEl && info.nombre) titleEl.innerText = info.nombre;
+        const descEl = document.getElementById('grupoChatDesc');
+        if (descEl) descEl.innerText = info.descripcion || 'Chat Grupal';
+        const header = document.getElementById('grupoIconoHeader');
+        if (header) {
+            if (info.foto) {
+                header.style.backgroundImage = `url('${info.foto}')`;
+                header.style.backgroundSize = 'cover';
+                header.style.backgroundPosition = 'center';
+                header.innerText = '';
+            } else {
+                header.style.backgroundImage = '';
+                header.innerText = '👥';
+            }
         }
     }).catch(() => {});
 
@@ -16118,21 +16298,60 @@ const texto = `¡Únete a mi grupo "${nombreGrupo}" en PAGOCODE! 🚀\nEntra al 
 // Función auxiliar para limpiar y abrir el modal
 function abrirModalCreacionGrupo() {
     document.getElementById('inputNombreGrupo').value = '';
-    document.getElementById('inputIconoGrupo').value = '';
+    document.getElementById('inputDescGrupo').value = '';
+    window._fotoGrupoNueva = '';
+    const prev = document.getElementById('previewFotoNuevoGrupo');
+    if (prev) { prev.style.backgroundImage = ''; prev.innerText = '👥'; }
+    const file = document.getElementById('inputFotoNuevoGrupo');
+    if (file) file.value = '';
     document.getElementById('modalCrearGrupo').style.display = 'flex';
     try { window.playSound('click'); } catch(e){}
 }
+
+// Redimensiona y convierte una imagen a base64 (para foto de grupo)
+function _procesarImagenGrupo(file, cb) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+            try {
+                const MAX = 320;
+                const scale = Math.min(1, MAX / img.width);
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(img.width * scale);
+                canvas.height = Math.round(img.height * scale);
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                cb(canvas.toDataURL('image/jpeg', 0.75));
+            } catch (err) { cb(e.target.result); }
+        };
+        img.onerror = () => cb(e.target.result);
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+window.procesarFotoNuevoGrupo = (input) => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    _procesarImagenGrupo(file, (dataUrl) => {
+        window._fotoGrupoNueva = dataUrl;
+        const prev = document.getElementById('previewFotoNuevoGrupo');
+        if (prev) { prev.style.backgroundImage = `url('${dataUrl}')`; prev.innerText = ''; }
+    });
+};
+
 // 2. GUARDAR EL GRUPO EN FIREBASE
 window.guardarNuevoGrupo = () => {
     if (!idAuditor) return notify("❌ Inicia sesión primero");
 
     const inputNombre = document.getElementById('inputNombreGrupo');
-    const inputIcono = document.getElementById('inputIconoGrupo');
-
-    if (!inputNombre || !inputIcono) return console.error("No se encontraron los inputs");
+    const inputDesc = document.getElementById('inputDescGrupo');
+    if (!inputNombre) return console.error("No se encontró el input del nombre");
 
     const nombre = inputNombre.value.trim();
-    const icono = inputIcono.value.trim() || '💬'; // Si no pone emoji, le pone uno por defecto
+    const descripcion = inputDesc ? inputDesc.value.trim() : '';
+    const foto = window._fotoGrupoNueva || null;
 
     if (!nombre) return notify("❌ Ponle un nombre al grupo");
 
@@ -16144,11 +16363,11 @@ window.guardarNuevoGrupo = () => {
 
     // Guardamos en una nueva rama llamada 'grupos_chat'
     const ref = db.ref('grupos_chat').push();
-    const newKey = ref.key;
     ref.set({
         info: {
             nombre: nombre,
-            icono: icono,
+            descripcion: descripcion,
+            foto: foto,
             creador: idAuditor,
             fecha: firebase.database.ServerValue.TIMESTAMP,
             miembros: { [idAuditor]: true }
@@ -16164,7 +16383,10 @@ window.guardarNuevoGrupo = () => {
 
         // Limpiar los campos para la próxima vez
         inputNombre.value = '';
-        inputIcono.value = '';
+        if (inputDesc) inputDesc.value = '';
+        window._fotoGrupoNueva = '';
+        const file = document.getElementById('inputFotoNuevoGrupo');
+        if (file) file.value = '';
 
         try { window.playSound('win'); } catch(e){}
     }).catch(err => {
@@ -16189,9 +16411,33 @@ window.abrirModalEditarGrupo = () => {
             return notify("❌ Solo el creador del grupo puede editarlo");
         }
         document.getElementById('inputEditarNombreGrupo').value = info.nombre || '';
-        document.getElementById('inputEditarIconoGrupo').value = info.icono || '💬';
+        document.getElementById('inputEditarDescGrupo').value = info.descripcion || '';
+        window._fotoGrupoEditar = info.foto || '';
+        const prev = document.getElementById('previewFotoEditarGrupo');
+        if (prev) {
+            if (info.foto) { prev.style.backgroundImage = `url('${info.foto}')`; prev.innerText = ''; }
+            else { prev.style.backgroundImage = ''; prev.innerText = '👥'; }
+        }
         document.getElementById('modalEditarGrupo').style.display = 'flex';
     }).catch(() => notify("❌ Error al cargar datos del grupo"));
+};
+
+window.procesarFotoEditarGrupo = (input) => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    _procesarImagenGrupo(file, (dataUrl) => {
+        window._fotoGrupoEditar = dataUrl;
+        const prev = document.getElementById('previewFotoEditarGrupo');
+        if (prev) { prev.style.backgroundImage = `url('${dataUrl}')`; prev.innerText = ''; }
+    });
+};
+
+window.quitarFotoEditarGrupo = () => {
+    window._fotoGrupoEditar = '';
+    const prev = document.getElementById('previewFotoEditarGrupo');
+    if (prev) { prev.style.backgroundImage = ''; prev.innerText = '👥'; }
+    const file = document.getElementById('inputEditarFotoGrupo');
+    if (file) file.value = '';
 };
 
 window.guardarEdicionGrupo = () => {
@@ -16199,19 +16445,34 @@ window.guardarEdicionGrupo = () => {
     if (idAuditor !== currentGrupoCreador && !isAdmin) return notify("❌ Solo el creador puede editar el grupo");
 
     const inputNombre = document.getElementById('inputEditarNombreGrupo');
-    const inputIcono = document.getElementById('inputEditarIconoGrupo');
+    const inputDesc = document.getElementById('inputEditarDescGrupo');
     const nombre = inputNombre.value.trim();
-    const icono = inputIcono.value.trim() || '💬';
+    const descripcion = inputDesc ? inputDesc.value.trim() : '';
+    const foto = window._fotoGrupoEditar || null;
     if (!nombre) return notify("❌ El nombre no puede estar vacío");
 
     const btn = document.querySelector('#modalEditarGrupo .btn-blue');
     if (btn) { btn.disabled = true; btn.textContent = "Guardando..."; }
 
-    db.ref(`grupos_chat/${currentGrupoId}/info`).update({ nombre, icono })
+    db.ref(`grupos_chat/${currentGrupoId}/info`).update({ nombre, descripcion, foto })
         .then(() => {
             document.getElementById('modalEditarGrupo').style.display = 'none';
             document.getElementById('grupoChatTitle').innerText = nombre;
-            document.getElementById('grupoIconoHeader').innerText = icono;
+            const descEl = document.getElementById('grupoChatDesc');
+            if (descEl) descEl.innerText = descripcion || 'Chat Grupal';
+            // Actualizar avatar del header
+            const header = document.getElementById('grupoIconoHeader');
+            if (header) {
+                if (foto) {
+                    header.style.backgroundImage = `url('${foto}')`;
+                    header.style.backgroundSize = 'cover';
+                    header.style.backgroundPosition = 'center';
+                    header.innerText = '';
+                } else {
+                    header.style.backgroundImage = '';
+                    header.innerText = '👥';
+                }
+            }
             notify("✅ Grupo actualizado");
             if (btn) { btn.disabled = false; btn.textContent = "Guardar Cambios"; }
         })
@@ -16283,6 +16544,11 @@ window.cargarListaDeGrupos = () => {
     window._gruposIniciado = true;
 
     const GRUPOS_CACHE_KEY = 'pgc_cache_grupos_v1';
+    const OCULTOS_KEY = 'pgc_grupos_ocultos_' + (idAuditor || '');
+    if (!window._gruposOcultos) {
+        window._gruposOcultos = new Set();
+        try { JSON.parse(localStorage.getItem(OCULTOS_KEY) || '[]').forEach(k => window._gruposOcultos.add(k)); } catch (e) {}
+    }
 
     // 2. CARGA INSTANTÁNEA: Leer de la memoria del teléfono
     const gruposGuardados = localStorage.getItem(GRUPOS_CACHE_KEY);
@@ -16292,9 +16558,9 @@ window.cargarListaDeGrupos = () => {
         lista.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando grupos...</div>';
     }
 
-    // 3. SEGUNDO PLANO: Sincronizar con Firebase de forma silenciosa
-    db.ref('grupos_chat').on('value', snap => {
-        if (!snap.exists()) {
+    // Renderiza la lista aplicando los grupos que ESTE usuario ocultó
+    window._renderGruposLista = (snap) => {
+        if (!snap || !snap.exists()) {
             lista.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">No hay grupos aún.</div>';
             localStorage.removeItem(GRUPOS_CACHE_KEY);
             return;
@@ -16308,29 +16574,61 @@ window.cargarListaDeGrupos = () => {
             const g = data.info;
             const key = child.key;
 
+            // Grupo eliminado (solo para mí): no lo mostramos ni escuchamos
+            if (window._gruposOcultos.has(key)) return;
+
             iniciarListenerMensajesGrupo(key);
             const nombreSeguro = (g.nombre || 'Grupo').replace(/'/g, "\\'");
-            const iconoSeguro = (g.icono || '💬').replace(/'/g, "\\'");
             const creadorSeguro = (g.creador || '').replace(/'/g, "\\'");
             const numMiembros = g.miembros ? Object.keys(g.miembros).length : 0;
+            const descMostrar = (g.descripcion && g.descripcion.trim())
+                ? escapeHtml(g.descripcion.trim())
+                : ('👥 ' + numMiembros + ' miembros');
+            const avatarHtml = g.foto
+                ? `<div class="grupo-icon" style="width:50px; height:50px; border-radius:14px; background-image:url('${g.foto}'); background-size:cover; background-position:center; margin-right:15px; box-shadow:0 4px 10px rgba(99,102,241,0.2); flex-shrink:0;"></div>`
+                : `<div class="grupo-icon" style="width:50px; height:50px; border-radius:14px; background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:800; margin-right:15px; box-shadow:0 4px 10px rgba(99,102,241,0.2); flex-shrink:0;">${escapeHtml((g.nombre || 'G').trim().charAt(0).toUpperCase() || 'G')}</div>`;
 
             html += `
-            <div class="grupo-card" data-key="${key}" data-creador="${creadorSeguro}"
-                 onclick="handleGrupoClick(event, '${key}', '${nombreSeguro}', '${iconoSeguro}')"
-                 style="display: flex; align-items: center; background: white; padding: 15px; border-radius: 18px; margin-bottom: 12px; border: 1px solid #f1f5f9; box-shadow: 0 4px 15px rgba(0,0,0,0.03); cursor: pointer; position: relative;">
+            <div class="grupo-card" data-key="${key}" data-creador="${creadorSeguro}" data-nombre="${escapeHtml(g.nombre || 'Grupo')}"
+                 onclick="handleGrupoClick(event, '${key}', '${nombreSeguro}', '')"
+                 onmousedown="iniciarHoldGrupo(event, '${key}')" onmouseup="cancelarHoldGrupo(event)" onmouseleave="cancelarHoldGrupo(event)"
+                 ontouchstart="iniciarHoldGrupo(event, '${key}')" ontouchend="cancelarHoldGrupo(event)" ontouchmove="cancelarHoldGrupo(event)"
+                 style="display: flex; align-items: center; background: white; padding: 15px; border-radius: 18px; margin-bottom: 12px; border: 1px solid #f1f5f9; box-shadow: 0 4px 15px rgba(0,0,0,0.03); cursor: pointer; position: relative; -webkit-touch-callout:none; user-select:none;">
                 <span class="grupo-badge" id="grupo-badge-${key}" style="${(window._gruposNoLeidosPorGrupo[key] || 0) > 0 ? 'display:flex' : ''}">${(window._gruposNoLeidosPorGrupo[key] || 0) > 0 ? window._gruposNoLeidosPorGrupo[key] : ''}</span>
-                <div class="grupo-icon" style="width:50px; height:50px; border-radius:14px; background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; display:flex; align-items:center; justify-content:center; font-size:1.5rem; margin-right:15px; box-shadow:0 4px 10px rgba(99,102,241,0.2);">${g.icono || '💬'}</div>
-                <div style="flex: 1; text-align: left;">
-                    <div style="font-weight: 800; color: #1e293b; font-size: 1rem;">${g.nombre || 'Grupo'}</div>
-                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">👥 ${numMiembros} miembros</div>
+                ${avatarHtml}
+                <div style="flex: 1; text-align: left; min-width:0;">
+                    <div style="font-weight: 800; color: #1e293b; font-size: 1rem;">${escapeHtml(g.nombre || 'Grupo')}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${descMostrar}</div>
                 </div>
                 <div style="font-size: 0.75rem; color: #10b981; font-weight: 700; white-space:nowrap;">Entrar ᐳ</div>
+                <button onclick="event.stopPropagation(); abrirOpcionesGrupoPorKey('${key}')" aria-label="Opciones del grupo" style="background:#f1f5f9; border:none; color:#64748b; width:30px; height:30px; border-radius:9px; font-size:1.2rem; font-weight:900; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:6px; flex-shrink:0;">⋮</button>
             </div>`;
         });
+
+        if (!html) html = '<div style="text-align:center; padding:20px; color:#94a3b8;">No hay grupos aún.</div>';
 
         // Actualizamos el contenido y la memoria sin que el usuario note el salto
         lista.innerHTML = html;
         localStorage.setItem(GRUPOS_CACHE_KEY, html);
+    };
+
+    // Sincroniza los grupos ocultos guardados en la nube (otros dispositivos)
+    if (idAuditor) {
+        db.ref('users/' + idAuditor + '/gruposOcultos').once('value').then(s => {
+            const val = s.val() || {};
+            let changed = false;
+            Object.keys(val).forEach(k => { if (!window._gruposOcultos.has(k)) { window._gruposOcultos.add(k); changed = true; } });
+            if (changed) {
+                try { localStorage.setItem(OCULTOS_KEY, JSON.stringify([...window._gruposOcultos])); } catch (e) {}
+                if (window._ultimoSnapGrupos && window._renderGruposLista) window._renderGruposLista(window._ultimoSnapGrupos);
+            }
+        }).catch(() => {});
+    }
+
+    // 3. SEGUNDO PLANO: Sincronizar con Firebase de forma silenciosa
+    db.ref('grupos_chat').on('value', snap => {
+        window._ultimoSnapGrupos = snap;
+        window._renderGruposLista(snap);
     });
 };
 // LONG-PRESS PARA ELIMINAR GRUPOS
@@ -16338,9 +16636,34 @@ let holdGrupoActivado = false;
 let holdGrupoTimer = null;
 let holdGrupoKey = null;
 
+// Controla si el usuario ya entró a un grupo (para mostrar el modal solo 1 vez)
+function _yaEntroAlGrupo(key) {
+    try {
+        const arr = JSON.parse(localStorage.getItem('pgc_grupos_entrados_v1') || '[]');
+        return Array.isArray(arr) && arr.indexOf(key) !== -1;
+    } catch (e) { return false; }
+}
+function _marcarGrupoEntrado(key) {
+    if (!key) return;
+    try {
+        let arr = JSON.parse(localStorage.getItem('pgc_grupos_entrados_v1') || '[]');
+        if (!Array.isArray(arr)) arr = [];
+        if (arr.indexOf(key) === -1) {
+            arr.push(key);
+            localStorage.setItem('pgc_grupos_entrados_v1', JSON.stringify(arr));
+        }
+    } catch (e) {}
+}
+window._marcarGrupoEntrado = _marcarGrupoEntrado;
+
 window.handleGrupoClick = (e, key, nombre, icono) => {
     if (holdGrupoActivado) {
         holdGrupoActivado = false;
+        return;
+    }
+    // Si ya entró antes a este grupo, abre directo sin volver a preguntar
+    if (_yaEntroAlGrupo(key)) {
+        abrirChatDeGrupo(key, nombre, icono);
         return;
     }
     document.getElementById('confirmTitle').innerText = '¿Entrar al grupo?';
@@ -16351,6 +16674,7 @@ window.handleGrupoClick = (e, key, nombre, icono) => {
     document.getElementById('customConfirm').style.display = 'flex';
     document.getElementById('confirmBtnSi').onclick = () => {
         cerrarConfirm();
+        _marcarGrupoEntrado(key);
         abrirChatDeGrupo(key, nombre, icono);
     };
 };
@@ -16362,19 +16686,76 @@ window.iniciarHoldGrupo = (e, key) => {
     const el = e.currentTarget;
     if (el) el.classList.add('grupo-card-holding');
     const creador = el ? el.getAttribute('data-creador') : '';
+    const nombre = el ? el.getAttribute('data-nombre') : '';
     holdGrupoTimer = setTimeout(() => {
         holdGrupoTimer = null;
         if (el) el.classList.remove('grupo-card-holding');
-        if (idAuditor && (idAuditor === creador || isAdmin)) {
-            holdGrupoActivado = true;
-            try { navigator.vibrate(50); } catch(ex) {}
-            document.getElementById('modalEliminarGrupo').style.display = 'flex';
-            document.getElementById('btnConfirmarEliminarGrupo').setAttribute('data-key', key);
-        } else if (idAuditor) {
-            holdGrupoActivado = true;
-            notify('❌ Solo el creador del grupo puede eliminarlo');
-        }
+        if (!idAuditor) return;
+        holdGrupoActivado = true;
+        try { navigator.vibrate(50); } catch(ex) {}
+        window._grupoOpcionesKey = key;
+        const esDueno = (idAuditor === creador || isAdmin);
+        const elNombre = document.getElementById('opcionesGrupoNombre');
+        if (elNombre) elNombre.innerText = nombre || 'Opciones del grupo';
+        const btnTodos = document.getElementById('btnEliminarParaTodos');
+        if (btnTodos) btnTodos.style.display = esDueno ? 'block' : 'none';
+        document.getElementById('modalOpcionesGrupo').style.display = 'flex';
     }, 600);
+};
+
+window.cerrarModalOpcionesGrupo = () => {
+    const m = document.getElementById('modalOpcionesGrupo');
+    if (m) m.style.display = 'none';
+    holdGrupoActivado = false;
+};
+
+// Abre las opciones del grupo directamente (botón ⋮ de cada tarjeta)
+window.abrirOpcionesGrupoPorKey = (key) => {
+    if (!idAuditor) return;
+    const el = document.querySelector('.grupo-card[data-key="' + key + '"]');
+    const creador = el ? el.getAttribute('data-creador') : '';
+    const nombre = el ? el.getAttribute('data-nombre') : '';
+    window._grupoOpcionesKey = key;
+    const esDueno = (idAuditor === creador || isAdmin);
+    const elNombre = document.getElementById('opcionesGrupoNombre');
+    if (elNombre) elNombre.innerText = nombre || 'Opciones del grupo';
+    const btnTodos = document.getElementById('btnEliminarParaTodos');
+    if (btnTodos) btnTodos.style.display = esDueno ? 'block' : 'none';
+    document.getElementById('modalOpcionesGrupo').style.display = 'flex';
+};
+
+// Elimina el grupo SOLO para este usuario (lo oculta y lo abandona)
+window.eliminarGrupoParaMi = () => {
+    const key = window._grupoOpcionesKey;
+    if (!key) return;
+    window._gruposOcultos.add(key);
+    try { localStorage.setItem('pgc_grupos_ocultos_' + (idAuditor || ''), JSON.stringify([...window._gruposOcultos])); } catch (e) {}
+    if (idAuditor) {
+        db.ref('users/' + idAuditor + '/gruposOcultos/' + key).set(true).catch(() => {});
+        db.ref('grupos_chat/' + key + '/info/miembros/' + idAuditor).remove().catch(() => {});
+    }
+    if (window._gruposMsgListeners && window._gruposMsgListeners[key]) {
+        try { window._gruposMsgListeners[key].off(); } catch (e) {}
+        delete window._gruposMsgListeners[key];
+        delete window._gruposInit[key];
+    }
+    if (window._gruposNoLeidosPorGrupo) {
+        delete window._gruposNoLeidosPorGrupo[key];
+        window._gruposNoLeidos = Object.values(window._gruposNoLeidosPorGrupo).reduce((a, b) => a + b, 0);
+        actualizarBadgeGrupos();
+    }
+    window.cerrarModalOpcionesGrupo();
+    if (window._ultimoSnapGrupos && window._renderGruposLista) window._renderGruposLista(window._ultimoSnapGrupos);
+    notify('✅ Grupo eliminado de tu lista');
+};
+
+// El dueño/admin abre la confirmación para borrarlo definitivamente
+window.abrirConfirmarEliminarTodos = () => {
+    const key = window._grupoOpcionesKey;
+    if (!key) return;
+    document.getElementById('modalOpcionesGrupo').style.display = 'none';
+    document.getElementById('btnConfirmarEliminarGrupo').setAttribute('data-key', key);
+    document.getElementById('modalEliminarGrupo').style.display = 'flex';
 };
 
 window.cancelarHoldGrupo = (e) => {
@@ -16394,6 +16775,11 @@ window.eliminarGrupo = () => {
         .then(() => {
             document.getElementById('modalEliminarGrupo').style.display = 'none';
             holdGrupoActivado = false;
+            if (window._gruposMsgListeners && window._gruposMsgListeners[key]) {
+                try { window._gruposMsgListeners[key].off(); } catch (e) {}
+                delete window._gruposMsgListeners[key];
+                delete window._gruposInit[key];
+            }
             notify('✅ Grupo eliminado');
             try { window.playSound('win'); } catch(e){}
         })
