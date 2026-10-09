@@ -3328,7 +3328,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <div id="modalAjustes" class="modal-overlay" style="z-index: 26000;">
     <div class="modal-content" style="text-align: center;">
         <h3 style="margin-bottom: 5px;">⚙️ Ajustes</h3>
-        <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 20px;">Versión v31.0</p>
+        <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 20px;">Versión v14.9</p>
 
         <!-- 🛡️ Bloquear capturas de pantalla en los chats -->
         <div id="filaBloqueoCapturas" class="fila-ajuste-capturas" onclick="toggleBloqueoCapturas()" style="display:flex; align-items:center; gap:12px; width:100%; padding:13px 15px; margin-bottom:10px; border-radius:14px; background:#f8fafc; border:1.5px solid #e2e8f0; cursor:pointer; text-align:left; box-sizing:border-box;">
@@ -11171,6 +11171,8 @@ window.enviarSolicitudChat = (targetUid, targetName) => {
             if (existing.status === 'pending') {
                 if (existing.requester === idAuditor) {
                     notify("⏳ Solicitud ya enviada, espera respuesta");
+                    // Auto-abrir el chat si el otro usuario la acepta.
+                    _vigilarSolicitud(targetUid, targetName);
                 } else {
                     notify("📩 Tienes una solicitud pendiente de " + (existing.requesterName || 'este usuario'));
                 }
@@ -11189,38 +11191,60 @@ window.enviarSolicitudChat = (targetUid, targetName) => {
 };
 
 function _crearSolicitud(reqRef, chatKey, targetUid, targetName) {
-    reqRef.set({
-        requester: idAuditor,
-        requesterName: getMiNombre(),
-        receiver: targetUid,
-        status: 'pending',
-        createdAt: firebase.database.ServerValue.TIMESTAMP
-    }).then(() => {
-        notify("📩 Solicitud enviada a " + targetName);
-        // Enviar notificación push al receptor
-        db.ref(`users/${targetUid}/notifications`).push({
-            from: idAuditor,
-            fromName: getMiNombre(),
-            type: 'chat_request',
-            text: `📩 ${getMiNombre()} quiere chatear contigo`,
-            extra: chatKey,
-            read: false,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        });
-        // Refrescar Mi Chat para mostrar estado
-        if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
-    }).catch(err => {
-        console.error("Error enviando solicitud:", err);
-        notify("❌ Error al enviar solicitud");
+    // Transacción sobre el valor REAL del servidor: si ya existe una solicitud
+    // (por ejemplo ya aceptada) NO la sobrescribimos.
+    reqRef.transaction(current => {
+        if (current === null || current.status === 'rejected') {
+            return {
+                requester: idAuditor,
+                requesterName: getMiNombre(),
+                receiver: targetUid,
+                receiverName: targetName || 'Usuario',
+                status: 'pending',
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            };
+        }
+        return; // abortar: ya existe
+    }, (error, committed, snapshot) => {
+        if (error) {
+            console.error("Error enviando solicitud:", error);
+            notify("❌ Error al enviar solicitud");
+            return;
+        }
+        if (committed) {
+            notify("📩 Solicitud enviada a " + targetName);
+            db.ref(`users/${targetUid}/notifications`).push({
+                from: idAuditor,
+                fromName: getMiNombre(),
+                type: 'chat_request',
+                text: `📩 ${getMiNombre()} quiere chatear contigo`,
+                extra: chatKey,
+                read: false,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+            if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
+            return;
+        }
+        // No se creó porque ya existía: reaccionar al estado actual
+        const req = snapshot ? snapshot.val() : null;
+        if (req && req.status === 'accepted') {
+            _abrirChatPrivadoReal(targetUid, targetName);
+        } else if (req && req.status === 'pending') {
+            if (req.requester === idAuditor) {
+                notify("⏳ Solicitud ya enviada, espera respuesta");
+            } else {
+                notify("📩 Tienes una solicitud pendiente de " + (req.requesterName || 'este usuario'));
+            }
+        }
     });
 }
 
 window.aceptarSolicitudChat = (chatKey, fromUid, fromName) => {
     if (!idAuditor) return;
     const updates = {};
-    updates[`chat_requests/${chatKey}/status`] = 'accepted';
-    updates[`chat_requests/${chatKey}/acceptedAt`] = firebase.database.ServerValue.TIMESTAMP;
-    db.ref().update(updates).then(() => {
+    updates.status = 'accepted';
+    updates.acceptedAt = firebase.database.ServerValue.TIMESTAMP;
+    db.ref(`chat_requests/${chatKey}`).update(updates).then(() => {
         notify("✅ Solicitud aceptada con " + (fromName || 'Usuario'));
         // Notificar al solicitante
         db.ref(`users/${fromUid}/notifications`).push({
@@ -11237,6 +11261,9 @@ window.aceptarSolicitudChat = (chatKey, fromUid, fromName) => {
         if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
         // Abrir chat directamente
         _abrirChatPrivadoReal(fromUid, fromName);
+    }).catch(err => {
+        console.error("Error aceptando solicitud:", err);
+        notify("❌ No se pudo aceptar la solicitud. Intenta de nuevo.");
     });
 };
 
@@ -11246,6 +11273,9 @@ window.rechazarSolicitudChat = (chatKey, fromUid) => {
         notify("Solicitud rechazada");
         if (typeof cargarSolicitudesPendientes === 'function') cargarSolicitudesPendientes();
         if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
+    }).catch(err => {
+        console.error("Error rechazando solicitud:", err);
+        notify("❌ No se pudo rechazar la solicitud. Intenta de nuevo.");
     });
 };
 
@@ -11256,6 +11286,30 @@ function _getSolicitudStatus(targetUid, callback) {
     db.ref(`chat_requests/${chatKey}`).once('value').then(snap => {
         callback(snap.val());
     }).catch(() => callback(null));
+}
+
+// Escucha en vivo la solicitud entre el usuario actual y targetUid: si el otro
+// usuario la acepta, abre el chat automáticamente (evita el falso "espera...").
+function _detenerVigilanciaSolicitud() {
+    if (window._solicitudWatchRef) {
+        window._solicitudWatchRef.off();
+        window._solicitudWatchRef = null;
+    }
+}
+
+function _vigilarSolicitud(targetUid, targetName) {
+    _detenerVigilanciaSolicitud();
+    if (!idAuditor) return;
+    const chatKey = _getRequestChatKey(idAuditor, targetUid);
+    const ref = db.ref(`chat_requests/${chatKey}`);
+    window._solicitudWatchRef = ref;
+    ref.on('value', snap => {
+        const req = snap.val();
+        if (req && req.status === 'accepted') {
+            _detenerVigilanciaSolicitud();
+            _abrirChatPrivadoReal(targetUid, targetName);
+        }
+    });
 }
 
 // 1. ABRIR EL MODAL Y PREPARAR
@@ -11271,6 +11325,8 @@ window.abrirChatPrivado = (targetUid, targetName) => {
         } else if (req && req.status === 'pending') {
             if (req.requester === idAuditor) {
                 notify("⏳ Solicitud enviada, espera que " + targetName + " responda");
+                // Si el otro la acepta mientras esperamos, abrir el chat solo.
+                _vigilarSolicitud(targetUid, targetName);
             } else {
                 notify("📩 Tienes una solicitud pendiente de " + targetName + ". Ve a la pestaña Solicitudes.");
             }
@@ -11285,6 +11341,7 @@ function _abrirChatPrivadoReal(targetUid, targetName) {
     if(!idAuditor) return notify("Inicia sesión primero");
     if(targetUid === idAuditor) return notify("No puedes hablarte a ti mismo");
 
+    _detenerVigilanciaSolicitud();
     targetUserUid = targetUid;
     currentChatTargetUid = targetUid;
     chatPrivadoActivo = true;
@@ -17788,7 +17845,7 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
         if (snap.exists()) {
             snap.forEach(child => {
                 const uid = child.val().requester;
-                if (uid) requestStatusMap[uid] = child.val();
+                if (uid) requestStatusMap[uid] = Object.assign({}, child.val(), { chatKey: child.key });
             });
         }
         checkDone();
@@ -17799,7 +17856,7 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
             snap.forEach(child => {
                 const uid = child.val().receiver;
                 if (uid && !requestStatusMap[uid]) {
-                    requestStatusMap[uid] = child.val();
+                    requestStatusMap[uid] = Object.assign({}, child.val(), { chatKey: child.key });
                 }
             });
         }
