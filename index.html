@@ -1044,6 +1044,94 @@
     transform: translateX(-50%) scale(1);
 }
 
+/* Aviso elegante al copiar texto en el chat */
+.toast-copiado {
+    position: fixed;
+    left: 50%;
+    bottom: 108px;
+    transform: translate(-50%, 26px) scale(0.85);
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 20px 10px 11px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, rgba(30,41,59,0.98), rgba(15,23,42,0.98));
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    box-shadow: 0 16px 38px rgba(15,23,42,0.5), 0 0 20px rgba(99,102,241,0.35), inset 0 0 0 1px rgba(255,255,255,0.09);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100000;
+    overflow: hidden;
+    transition: transform 0.36s cubic-bezier(0.34,1.56,0.64,1), opacity 0.26s ease;
+}
+.toast-copiado.show {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+}
+.toast-copiado .tc-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    color: #fff;
+    background: linear-gradient(135deg, #34d399, #10b981);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.18), 0 4px 10px rgba(16,185,129,0.4);
+}
+.toast-copiado.show .tc-icon { animation: tcPop 0.42s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes tcPop {
+    0% { transform: scale(0.3) rotate(-25deg); }
+    60% { transform: scale(1.18) rotate(6deg); }
+    100% { transform: scale(1) rotate(0); }
+}
+.toast-copiado .tc-text { display: flex; flex-direction: column; line-height: 1.15; }
+.toast-copiado .tc-text small { font-weight: 500; font-size: 0.63rem; color: #a5b4fc; margin-top: 1px; }
+.toast-copiado .tc-bar {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 3px;
+    transform-origin: left;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    animation: tcBar 1.8s linear forwards;
+}
+@keyframes tcBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* Interruptor para bloquear capturas en el chat */
+.switch-capturas {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    border-radius: 30px;
+    background: #cbd5e1;
+    flex-shrink: 0;
+    transition: background 0.25s ease;
+}
+.switch-capturas .sc-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(15,23,42,0.25);
+    transition: left 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.switch-capturas.on { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+.switch-capturas.on .sc-knob { left: 23px; }
+.fila-ajuste-capturas { transition: background 0.2s ease, border-color 0.2s ease; }
+.fila-ajuste-capturas:active { transform: scale(0.985); }
+.fila-ajuste-capturas.activo { background: #eef2ff !important; border-color: #c7d2fe !important; }
+
 .alert-foto {
     position: fixed;
     top: 80px;
@@ -3206,6 +3294,16 @@ document.addEventListener('DOMContentLoaded', () => {
         <h3 style="margin-bottom: 5px;">⚙️ Ajustes</h3>
         <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 20px;">Versión v31.0</p>
 
+        <!-- 🛡️ Bloquear capturas de pantalla en los chats -->
+        <div id="filaBloqueoCapturas" class="fila-ajuste-capturas" onclick="toggleBloqueoCapturas()" style="display:flex; align-items:center; gap:12px; width:100%; padding:13px 15px; margin-bottom:10px; border-radius:14px; background:#f8fafc; border:1.5px solid #e2e8f0; cursor:pointer; text-align:left; box-sizing:border-box;">
+            <div style="width:38px; height:38px; border-radius:12px; background:linear-gradient(135deg,#eef2ff,#e0e7ff); display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0;">🛡️</div>
+            <div style="flex:1; min-width:0;">
+                <div style="font-weight:800; color:#334155; font-size:0.88rem;">Bloquear capturas en el chat</div>
+                <div id="txtBloqueoCapturas" style="font-size:0.68rem; color:#94a3b8; margin-top:2px;">Desactivado</div>
+            </div>
+            <div id="switchBloqueoCapturas" class="switch-capturas"><span class="sc-knob"></span></div>
+        </div>
+
         <button onclick="cerrarSesion()" style="width: 100%; padding: 15px; border: none; 
                 border-radius: 14px; background: linear-gradient(135deg, #ef4444, #dc2626); 
                 color: white; font-weight: 800; font-size: 0.95rem; cursor: pointer;
@@ -3352,6 +3450,13 @@ document.addEventListener('DOMContentLoaded', () => {
     </header>
 
     <div id="toast" class="toast"></div>
+
+    <!-- ✅ Aviso bonito al copiar texto del chat -->
+    <div id="toastCopiado" class="toast-copiado" role="status" aria-live="polite">
+        <span class="tc-icon">✓</span>
+        <span class="tc-text"><span id="toastCopiadoTexto">Texto copiado</span><small>al portapapeles</small></span>
+        <span class="tc-bar"></span>
+    </div>
     <div id="alertFoto" class="alert-foto">⚠️ ¡Atención! Sube tu foto real</div>
     <!-- Barra de progreso para videos públicos -->
     <div id="videoProgressWrapper" class="video-progress-wrapper">
@@ -11313,17 +11418,36 @@ function crearFilaMensajePrivado(s) {
     </div>`;
     return row;
 }
+function toastCopiado(msg) {
+    const t = document.getElementById('toastCopiado');
+    if (!t) { alert(msg || 'Texto copiado'); return; }
+    const txt = document.getElementById('toastCopiadoTexto');
+    if (txt) txt.textContent = msg || 'Texto copiado';
+
+    // Reiniciar la barra de progreso
+    const bar = t.querySelector('.tc-bar');
+    if (bar) { bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = ''; }
+
+    t.classList.remove('show');
+    void t.offsetWidth; // reinicia la animación de entrada
+    t.classList.add('show');
+
+    clearTimeout(t._ocultar);
+    t._ocultar = setTimeout(() => t.classList.remove('show'), 1800);
+}
+window.toastCopiado = toastCopiado;
+
 function copiarTextoChat(texto) {
     // Decodificamos el texto si viene escapado para que se copie bien
     const el = document.createElement('textarea');
     el.value = texto;
     document.body.appendChild(el);
     el.select();
-    document.execCommand('copy');
+    try { document.execCommand('copy'); } catch (e) {}
     document.body.removeChild(el);
-    
-    // Opcional: Avisar al usuario
-    alert('¡Texto copiado al portapapeles!');
+
+    // Aviso elegante (sustituye al alert)
+    toastCopiado('Texto copiado');
 }
 
 let timerGuardadoCache = null;
@@ -15557,8 +15681,86 @@ function cargarRanking() {
         lista.innerHTML = html;
     });
 }
+// ==========================================
+// 🛡️ BLOQUEO DE CAPTURAS DE PANTALLA EN CHATS
+// ==========================================
+window._bloqueoCapturasActivo = function() {
+    try { return localStorage.getItem('pgc_bloquear_capturas') === '1'; } catch(e) { return false; }
+};
+
+window._hayChatAbierto = function() {
+    try {
+        const priv = document.getElementById('modalChatPrivado');
+        const grup = document.getElementById('modalChatGrupo');
+        const glob = document.getElementById('chatWindow');
+        return !!(
+            (priv && getComputedStyle(priv).display !== 'none') ||
+            (grup && getComputedStyle(grup).display !== 'none') ||
+            (glob && glob.classList.contains('open'))
+        );
+    } catch(e) { return false; }
+};
+
+let _ultimoBloqueoCapturas = null;
+window._syncBloqueoCapturas = function(force) {
+    const debe = window._bloqueoCapturasActivo() && window._hayChatAbierto();
+    if (!force && debe === _ultimoBloqueoCapturas) return;
+    _ultimoBloqueoCapturas = debe;
+    try {
+        if (window.AndroidNative && AndroidNative.setBloquearCapturas) {
+            AndroidNative.setBloquearCapturas(debe);
+        }
+    } catch(e) {}
+};
+
+window._renderBloqueoCapturas = function() {
+    const on = window._bloqueoCapturasActivo();
+    const sw = document.getElementById('switchBloqueoCapturas');
+    const txt = document.getElementById('txtBloqueoCapturas');
+    const fila = document.getElementById('filaBloqueoCapturas');
+    if (sw) sw.classList.toggle('on', on);
+    if (fila) fila.classList.toggle('activo', on);
+    if (txt) txt.textContent = on ? 'Activado · sin capturas en el chat' : 'Desactivado';
+};
+
+window.toggleBloqueoCapturas = function() {
+    const nuevo = !window._bloqueoCapturasActivo();
+    try { localStorage.setItem('pgc_bloquear_capturas', nuevo ? '1' : '0'); } catch(e) {}
+    window._renderBloqueoCapturas();
+    window._syncBloqueoCapturas(true);
+    const nativo = !!(window.AndroidNative && AndroidNative.setBloquearCapturas);
+    if (!nativo) {
+        notify(nuevo ? '🛡️ Disponible solo en la app' : '🔓 Opción desactivada');
+    } else {
+        notify(nuevo ? '🛡️ Capturas bloqueadas en el chat' : '🔓 Capturas permitidas');
+    }
+};
+
+// Observa la apertura/cierre de cualquier chat para aplicar o quitar el bloqueo
+(function() {
+    function observar() {
+        try {
+            const obs = new MutationObserver(function() { window._syncBloqueoCapturas(); });
+            ['modalChatPrivado', 'modalChatGrupo', 'chatWindow'].forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) obs.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+            });
+        } catch(e) {}
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            observar();
+            setTimeout(function() { window._renderBloqueoCapturas(); window._syncBloqueoCapturas(true); }, 400);
+        });
+    } else {
+        observar();
+        setTimeout(function() { window._renderBloqueoCapturas(); window._syncBloqueoCapturas(true); }, 400);
+    }
+})();
+
 window.abrirAjustes = () => {
     document.getElementById('modalAjustes').style.display = 'flex';
+    if (window._renderBloqueoCapturas) window._renderBloqueoCapturas();
 };
 
 window.cerrarSesion = () => {
