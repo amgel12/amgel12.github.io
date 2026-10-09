@@ -15857,14 +15857,20 @@ window.toggleBloqueoCapturas = function() {
             });
         } catch(e) {}
     }
+    // Siempre inicia ENCENDIDO: la elección solo dura durante la sesión actual.
+    function iniciar() {
+        try { localStorage.setItem('pgc_bloquear_capturas', '1'); } catch(e) {}
+        window._renderBloqueoCapturas();
+        window._syncBloqueoCapturas(true);
+    }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             observar();
-            setTimeout(function() { window._renderBloqueoCapturas(); window._syncBloqueoCapturas(true); }, 400);
+            setTimeout(iniciar, 400);
         });
     } else {
         observar();
-        setTimeout(function() { window._renderBloqueoCapturas(); window._syncBloqueoCapturas(true); }, 400);
+        setTimeout(iniciar, 400);
     }
 })();
 
