@@ -5510,6 +5510,212 @@ window.receiveFCMNotification = function(jsonStr) {
     } catch (e) { console.error("Error FCM:", e); }
 };
 
+// 🔥 RECIBIR MENSAJES DE ONESIGNAL EN TIEMPO REAL (foreground)
+window.receiveOneSignalMessage = function(data) {
+    try {
+        if (data.type !== "private_message") return;
+        
+        const senderUid = data.sender_uid;
+        const senderName = data.sender_name;
+        const messageText = data.text;
+        const timestamp = data.timestamp || Date.now();
+        
+        console.log("📨 OneSignal mensaje recibido:", senderUid, senderName, messageText);
+        
+        // Si el chat privado está ABIERTO con este usuario, agregar mensaje al DOM
+        if (window._enChatPrivado && currentChatTargetUid === senderUid) {
+            appendMessageToPrivateChat(senderUid, messageText, false, timestamp);
+            // Marcar como leído en Firebase
+            markMessagesAsRead(senderUid);
+            return;
+        }
+        
+        // Si NO está en ese chat, incrementar badge y guardar para cuando abra
+        incrementPrivateChatBadge(senderUid, senderName, messageText);
+        
+        // Toast visual
+        if (typeof notify === 'function') {
+            notify("💬 " + senderName + ": " + messageText.substring(0, 50));
+        }
+        
+        // Vibración
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        
+        // Hacer brincar la campana
+        const campana = document.getElementById('btnNotis');
+        if (campana) campana.classList.add('bell-jump');
+        
+    } catch (e) { console.error("Error OneSignal message:", e); }
+};
+
+// 🔥 RECIBIR OTRAS NOTIFICACIONES DE ONESIGNAL (likes, regalos, etc)
+window.receiveOneSignalNotification = function(data) {
+    try {
+        const title = data.title || "CodeCash";
+        const body = data.body || "";
+        const type = data.type || "other";
+        
+        console.log("🔔 OneSignal notificación:", type, title, body);
+        
+        // Toast visual
+        if (typeof notify === 'function') notify("🔔 " + title);
+        
+        // Badge en campana
+        const badge = document.getElementById('badgeNotis') || document.querySelector('.noti-badge');
+        if (badge) {
+            let count = parseInt(badge.textContent) || 0;
+            badge.textContent = count + 1;
+            badge.classList.add('active');
+        }
+        
+        // Vibración
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        
+    } catch (e) { console.error("Error OneSignal notification:", e); }
+};
+
+// 🔥 AGREGAR MENSAJE AL CHAT PRIVADO EN TIEMPO REAL
+function appendMessageToPrivateChat(senderUid, text, isMine, timestamp) {
+    const chatList = document.getElementById('privChatList');
+    if (!chatList) return;
+    
+    // Remover "Cargando chat..." si existe
+    const loading = chatList.querySelector('[style*="Cargando chat"]');
+    if (loading) loading.remove();
+    
+    const timeStr = new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+    const isMe = isMine || senderUid === idAuditor;
+    // Usar senderName global o fallback
+    const displayName = (typeof currentChatTargetName !== 'undefined' && currentChatTargetName) ? currentChatTargetName : senderUid;
+    
+    const row = document.createElement('div');
+    row.className = 'chat-row ' + (isMe ? 'mine' : 'other');
+    row.innerHTML = `
+        <img class="chat-avatar-img" data-uid="${senderUid}" src="${getUserProfilePhoto(senderUid)}" alt="">
+        <div class="msg-bubble ${isMe ? 'msg-mine' : 'msg-other'}">
+            ${!isMe ? '<div class="msg-user">' + escapeHtml(displayName) + '</div>' : ''}
+            <div class="msg-text">${escapeHtml(text)}</div>
+            <div class="msg-time">${timeStr}</div>
+        </div>
+    `;
+    
+    chatList.appendChild(row);
+    chatList.scrollTop = chatList.scrollHeight;
+}
+
+// 🔥 MARCAR MENSAJES COMO LEÍDOS
+function markMessagesAsRead(senderUid) {
+    if (!idAuditor || !currentChatId) return;
+    db.ref(`chats_privados/${currentChatId}`).limitToLast(50).once('value', snap => {
+        if (snap.exists()) {
+            const updates = {};
+            snap.forEach(msgSnap => {
+                const msg = msgSnap.val();
+                if (msg.uid !== idAuditor && !msg.leido) {
+                    updates[`${msgSnap.key}/leido`] = true;
+                }
+            });
+            if (Object.keys(updates).length > 0) {
+                db.ref(`chats_privados/${currentChatId}`).update(updates);
+            }
+        }
+    });
+}
+
+// 🔥 INCREMENTAR BADGE DE CHAT PRIVADO
+function incrementPrivateChatBadge(senderUid, senderName, messageText) {
+    // Guardar mensaje pendiente para mostrar al abrir chat
+    if (!window.pendingPrivateMessages) window.pendingPrivateMessages = {};
+    if (!window.pendingPrivateMessages[senderUid]) {
+        window.pendingPrivateMessages[senderUid] = [];
+    }
+    window.pendingPrivateMessages[senderUid].push({
+        text: messageText,
+        timestamp: Date.now(),
+        senderName: senderName
+    });
+    
+    // Actualizar badge en lista de chats (pestaña Mi Chat)
+    const badge = document.getElementById('badge-michat-' + senderUid);
+    if (badge) {
+        let count = parseInt(badge.textContent) || 0;
+        badge.textContent = count + 1;
+        badge.style.display = 'flex';
+    }
+    
+    // Badge general en pestaña Mi Chat
+    const mainBadge = document.getElementById('msgBadge');
+    if (mainBadge) {
+        let count = parseInt(mainBadge.textContent) || 0;
+        mainBadge.textContent = count + 1;
+        mainBadge.classList.add('show');
+    }
+    
+    // Actualizar chibolita
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.updateMensajesChibolita) {
+        AndroidNative.updateMensajesChibolita(getTotalUnreadCount());
+    }
+}
+
+function getTotalUnreadCount() {
+    let total = 0;
+    if (window.pendingPrivateMessages) {
+        Object.values(window.pendingPrivateMessages).forEach(arr => total += arr.length);
+    }
+    return total;
+}
+
+// 🔥 RESETEAR BADGE AL ABRIR CHAT
+function resetPrivateChatBadge(senderUid) {
+    // Limpiar mensajes pendientes de este usuario
+    if (window.pendingPrivateMessages && window.pendingPrivateMessages[senderUid]) {
+        delete window.pendingPrivateMessages[senderUid];
+    }
+    
+    // Resetear badge específico
+    const badge = document.getElementById('badge-michat-' + senderUid);
+    if (badge) {
+        badge.textContent = '0';
+        badge.style.display = 'none';
+    }
+    
+    // Recalcular badge principal
+    recalculateMainBadge();
+    
+    // Actualizar chibolita
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.updateMensajesChibolita) {
+        AndroidNative.updateMensajesChibolita(getTotalUnreadCount());
+    }
+}
+
+function recalculateMainBadge() {
+    const mainBadge = document.getElementById('msgBadge');
+    if (mainBadge) {
+        const total = getTotalUnreadCount();
+        if (total > 0) {
+            mainBadge.textContent = total > 99 ? '99+' : total;
+            mainBadge.classList.add('show');
+        } else {
+            mainBadge.textContent = '0';
+            mainBadge.classList.remove('show');
+        }
+    }
+}
+
+// 🔥 MOSTRAR MENSAJES PENDIENTES AL ABRIR CHAT
+function showPendingMessages(senderUid) {
+    if (!window.pendingPrivateMessages || !window.pendingPrivateMessages[senderUid]) return;
+    
+    const messages = window.pendingPrivateMessages[senderUid];
+    messages.forEach(msg => {
+        appendMessageToPrivateChat(senderUid, msg.text, false, msg.timestamp);
+    });
+    
+    // Limpiar después de mostrar
+    delete window.pendingPrivateMessages[senderUid];
+    resetPrivateChatBadge(senderUid);
+}
+
 // 🔥 SISTEMA DE COLA
 window._fcmQueue = window._fcmQueue || [];
 window._fcmReady = window._fcmReady || false;
@@ -6119,6 +6325,12 @@ window.goToScreen = (index, userAction = false) => {
     if (userAction && index === 2 && currentScreen === 2) {
         // Doble-tap en feed → volver al inicio y refrescar con nuevos videos
         window.refrescarVideosFeed();
+        return;
+    }
+
+    if (userAction && index === 3 && currentScreen === 3) {
+        // Tocar de nuevo "Mensajes" → recargar mensajes nuevos
+        if (typeof window.recargarMensajes === 'function') window.recargarMensajes();
         return;
     }
 
@@ -11134,6 +11346,7 @@ window.mostrarFotoGrupo = (el) => {
 let currentChatId = null; 
 let targetUserUid = null;
 let currentChatTargetUid = null;
+let currentChatTargetName = null;
 let privChatRef = null;
 let privUserRef = null;
 const LIMITE_DIARIO_MSGS = 10;
@@ -11344,6 +11557,7 @@ function _abrirChatPrivadoReal(targetUid, targetName) {
     _detenerVigilanciaSolicitud();
     targetUserUid = targetUid;
     currentChatTargetUid = targetUid;
+    currentChatTargetName = targetName;
     chatPrivadoActivo = true;
     window._enChatPrivado = true;
     if (window._resetReplyBars) window._resetReplyBars();
@@ -11368,7 +11582,8 @@ function _abrirChatPrivadoReal(targetUid, targetName) {
         }
     });
 
-    if (typeof AndroidNative !== 'undefined' && AndroidNative.updateMensajesChibolita) AndroidNative.updateMensajesChibolita(0);
+    // 🔥 RESETEAR BADGE AL ABRIR CHAT
+    resetPrivateChatBadge(targetUid);
 
     db.ref(`chats_privados/${currentChatId}`).limitToLast(50).once('value', snap => {
         if (snap.exists()) {
@@ -11425,6 +11640,12 @@ function _abrirChatPrivadoReal(targetUid, targetName) {
     document.getElementById('privChatList').innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando chat...</div>';
 
     cargarMensajesPrivados();
+    
+    // 🔥 MOSTRAR MENSAJES PENDIENTES QUE LLEGARON MIENTRAS ESTABAS EN OTRO CHAT
+    setTimeout(() => {
+        showPendingMessages(targetUid);
+    }, 500);
+    
     checkLimiteDiario();
 }
 
@@ -12190,9 +12411,17 @@ window.cerrarChatPrivado = () => {
         privUserRef = null;
     }
     currentChatId = null;
+    currentChatTargetUid = null;
+    currentChatTargetName = null;
     window._enChatPrivado = false; // Permitir re-render de Mi Chat de nuevo
     try { localStorage.removeItem('chatAbiertoUid'); localStorage.removeItem('chatAbiertoNombre'); } catch(e) {}
     if (window.cancelarRespuesta) window.cancelarRespuesta();
+
+    // Refrescar la lista de Mi Chat al salir del chat (últimos mensajes / no leídos)
+    if (typeof cargarTodosLosUsuariosParaMiChat === 'function') {
+        const contMiChat = document.getElementById('mensajesPrivadosContainer');
+        if (contMiChat && contMiChat.style.display !== 'none') cargarTodosLosUsuariosParaMiChat();
+    }
 };
 
 window.cerrarChatGrupo = () => {
@@ -16470,9 +16699,61 @@ window.cambiarPestanaChat = (pestana) => {
 
         // Renderizar TODOS los usuarios ahora
         cargarTodosLosUsuariosParaMiChat();
+
+        // Red de seguridad: refresco periódico (por si se pierde algún evento)
+        clearInterval(window._mensajesInterval);
+        window._mensajesInterval = setInterval(() => {
+            if (!window._chatsPrivadosRef) return;
+            window._chatsPrivadosRef.once('value', snap => {
+                try {
+                    const chats = procesarSnapshotChats(snap);
+                    localStorage.setItem(CHATS_CACHE_KEY(), JSON.stringify(chats));
+                    localStorage.setItem(CHATS_TS_KEY(), String(Date.now()));
+                } catch(e) {}
+                if (window._pestanaChatActiva === 'michat' && typeof cargarTodosLosUsuariosParaMiChat === 'function') {
+                    cargarTodosLosUsuariosParaMiChat();
+                }
+            });
+        }, 30000);
     }
 
     if (typeof actualizarFabGrupo === 'function') actualizarFabGrupo();
+};
+
+// Recarga manual de la pantalla Mensajes (al tocar de nuevo el botón "Mensajes")
+window.recargarMensajes = () => {
+    // Cerrar cualquier chat abierto para volver a la lista
+    try {
+        const priv = document.getElementById('modalChatPrivado');
+        if (priv && getComputedStyle(priv).display !== 'none' && window.cerrarChatPrivado) window.cerrarChatPrivado();
+        const grup = document.getElementById('modalChatGrupo');
+        if (grup && getComputedStyle(grup).display !== 'none' && window.cerrarChatGrupo) window.cerrarChatGrupo();
+    } catch(e) {}
+
+    const pestana = window._pestanaChatActiva || 'michat';
+
+    // Forzar lectura fresca de los chats privados desde el servidor
+    if (window._chatsPrivadosRef) {
+        window._chatsPrivadosRef.once('value', snap => {
+            try {
+                const chats = procesarSnapshotChats(snap);
+                localStorage.setItem(CHATS_CACHE_KEY(), JSON.stringify(chats));
+                localStorage.setItem(CHATS_TS_KEY(), String(Date.now()));
+            } catch(e) {}
+            if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
+        });
+    } else if (typeof cargarTodosLosUsuariosParaMiChat === 'function') {
+        cargarTodosLosUsuariosParaMiChat();
+    }
+
+    // Recargar la pestaña activa
+    if (pestana === 'solicitudes' && typeof cargarSolicitudesPendientes === 'function') {
+        cargarSolicitudesPendientes();
+    } else if (pestana === 'grupos' && typeof cargarListaDeGrupos === 'function') {
+        cargarListaDeGrupos();
+    }
+
+    if (typeof renderizarUsuariosHorizontal === 'function') renderizarUsuariosHorizontal();
 };
 
 // Muestra el botón flotante "+" solo en la pestaña Grupos
@@ -17892,12 +18173,18 @@ window.cargarChatsPrivadosNoLeidos = () => {
     };
 
     let _chatsChangedDebounce = null;
-    window._chatsPrivadosRef.on('child_changed', () => {
+    const _refrescarChats = () => {
         clearTimeout(_chatsChangedDebounce);
         _chatsChangedDebounce = setTimeout(() => {
+            if (!window._chatsPrivadosRef) return;
             window._chatsPrivadosRef.once('value', procesarYGuardar);
-        }, 500);
-    });
+        }, 400);
+    };
+
+    // Cambios en conversaciones existentes (child_changed)
+    // + conversaciones NUEVAS (child_added) → antes solo se escuchaba child_changed
+    window._chatsPrivadosRef.on('child_changed', _refrescarChats);
+    window._chatsPrivadosRef.on('child_added', _refrescarChats);
 
     window._chatsPrivadosRef.once('value', procesarYGuardar);
 };
