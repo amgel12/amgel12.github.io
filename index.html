@@ -4117,19 +4117,40 @@ Cerrar
 </div>
 
 <!-- MODAL VENDER PRODUCTOS (Google Drive → enlace especial) -->
-<div id="modalVenderProducto" class="modal-overlay" style="z-index: 27000;">
+<!-- MODAL INSTRUCCIONES VENDER (antes de entrar al formulario) -->
+<div id="modalInstruccionesVender" class="modal-overlay" style="z-index: 27100;">
     <div class="modal-content">
-        <h3 style="color:#10b981;">🛍️ Vende tus productos</h3>
+        <button onclick="cerrarInstruccionesVender(); abrirMisVentas()" title="Mis ventas"
+                style="position:absolute; top:12px; right:12px; width:38px; height:38px; border:none; border-radius:50%; background:#f0fdf4; color:#059669; font-size:1.3rem; font-weight:900; cursor:pointer; line-height:1;">⋮</button>
+
+        <h3 style="color:#10b981;">🛍️ Cómo vender</h3>
         <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
             Vende tus <b>videos o fotos</b> con un solo enlace. Sigue estos pasos:
         </p>
 
-        <div style="text-align:left; font-size:0.82rem; color:#334155; background:#f0fdf4; border:1px solid #10b981; border-radius:14px; padding:12px 14px; margin-bottom:14px; line-height:1.5;">
+        <div style="text-align:left; font-size:0.82rem; color:#334155; background:#f0fdf4; border:1px solid #10b981; border-radius:14px; padding:12px 14px; margin-bottom:16px; line-height:1.5;">
             <div style="margin-bottom:8px;"><b style="color:#059669;">1.</b> Sube tus videos o fotos a <b>Google Drive</b>.</div>
             <div style="margin-bottom:8px;"><b style="color:#059669;">2.</b> Toca <b>Compartir → Cualquier persona con el enlace</b> y copia el link.</div>
             <div style="margin-bottom:8px;"><b style="color:#059669;">3.</b> Pega los links (usa <b>＋</b> para agregar más productos), ponle tu precio en PTS y toca <b>Generar enlace especial</b>.</div>
             <div><b style="color:#059669;">4.</b> Copia tu enlace y pégalo en el <b>chat privado</b>: se verá como un botón. ✅</div>
         </div>
+
+        <button class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="continuarInstruccionesVender()">
+            ✅ Continuar
+        </button>
+        <button onclick="omitirInstruccionesVender()" style="background:none; border:none; color:#94a3b8; margin-top:15px; font-size:0.85rem; cursor:pointer;">Omitir</button>
+    </div>
+</div>
+
+<div id="modalVenderProducto" class="modal-overlay" style="z-index: 27000;">
+    <div class="modal-content">
+        <button onclick="cerrarModalVenderProducto(); abrirMisVentas()" title="Mis ventas"
+                style="position:absolute; top:12px; right:12px; width:38px; height:38px; border:none; border-radius:50%; background:#f0fdf4; color:#059669; font-size:1.3rem; font-weight:900; cursor:pointer; line-height:1;">⋮</button>
+
+        <h3 style="color:#10b981;">🛍️ Vende tus productos</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
+            Vende tus <b>videos o fotos</b> con un solo enlace.
+        </p>
 
         <div id="contenedorLinksDrive">
             <div class="fila-link-drive" style="display:flex; gap:6px; margin-bottom:8px;">
@@ -4145,9 +4166,12 @@ Cerrar
 
         <div style="font-size:0.72rem; color:#64748b; margin-bottom:10px;">💰 Tú recibes el <b>5%</b> de cada venta en PTS (el 95% es comisión de la plataforma).</div>
 
-        <button class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="generarEnlaceProducto()">
+        <div id="avisoVerificacionProducto" style="display:none; text-align:left; font-size:0.78rem; color:#b91c1c; background:#fef2f2; border:1px solid #ef4444; border-radius:12px; padding:10px 12px; margin-bottom:10px; line-height:1.45;"></div>
+
+        <button id="btnGenerarEnlaceProducto" class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="generarEnlaceProducto()">
             🔗 Generar enlace especial
         </button>
+        <button id="btnReverificarEnlaces" style="display:none; background:none; border:none; color:#10b981; margin-top:12px; font-size:0.82rem; font-weight:700; cursor:pointer;" onclick="generarEnlaceProducto()">🔄 Verificar de nuevo</button>
 
         <div id="divResultadoProducto" style="display:none; margin-top:14px;">
             <div style="font-size:0.72rem; font-weight:700; color:#64748b; margin-bottom:6px;">TU ENLACE ESPECIAL (pégalo en el chat privado)</div>
@@ -4162,7 +4186,9 @@ Cerrar
             💰 Mis ventas (ver cuánto has vendido)
         </button>
 
-        <button onclick="cerrarModalVenderProducto()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
+        <button onclick="cerrarModalVenderProducto(); abrirInstruccionesVender()" style="background:none; border:none; color:#10b981; margin-top:12px; font-size:0.82rem; font-weight:700; cursor:pointer;">❓ Ver instrucciones</button>
+        <br>
+        <button onclick="cerrarModalVenderProducto()" style="background:none; border:none; color:#94a3b8; margin-top:8px;">Cancelar</button>
     </div>
 </div>
 
@@ -9916,7 +9942,7 @@ window.addEventListener('popstate', (e) => {
     'modalGiftReceived', 'modalCine', 'modalMusicSelector', 'modalComments', 
     'modalGameOver', 'modalLesson', 'modalNoVidas', 'modalRanking',
     'modalInvitar', 'modalSubirFoto', 'modalFotoOptions', 
-    'modalVenderProducto', 'modalComprarProducto', 'modalMisVentas', 'modalProductosComprados', 
+    'modalVenderProducto', 'modalInstruccionesVender', 'modalComprarProducto', 'modalMisVentas', 'modalProductosComprados', 
     'modalConfirmDelete', 'modalChatPrivado',     'modalComprarMensajes', 'modalComprarFoto',
     'modalRetiro',
     'modalFotoDetalle',
@@ -10870,8 +10896,13 @@ window.cerrarModalFoto = () => {
     }
 };
 
-// ── 🛍️ VENDER PRODUCTOS: abrir modal, generar y copiar enlace ──
-window.abrirModalVenderProducto = () => {
+// ── 🛍️ VENDER PRODUCTOS: instrucciones primero, luego el formulario ──
+window._mostrarFormularioVender = () => {
+    if (window._venderVerificacionPendiente && window._venderVerificacionPendiente.timer) clearTimeout(window._venderVerificacionPendiente.timer);
+    window._venderVerificacionPendiente = null;
+    ocultarAvisoVerificacionProducto();
+    const btnGen = document.getElementById('btnGenerarEnlaceProducto');
+    if (btnGen) { btnGen.disabled = false; btnGen.textContent = '🔗 Generar enlace especial'; }
     const cont = document.getElementById('contenedorLinksDrive');
     if (cont) {
         cont.innerHTML = '<div class="fila-link-drive" style="display:flex; gap:6px; margin-bottom:8px;"><input type="url" class="inputDriveLinkFila" placeholder="Link de Google Drive..." style="font-size:0.85rem; background:#f8fafc; margin-bottom:0; flex:1;"></div>';
@@ -10879,6 +10910,36 @@ window.abrirModalVenderProducto = () => {
     const res = document.getElementById('divResultadoProducto');
     if (res) res.style.display = 'none';
     document.getElementById('modalVenderProducto').style.display = 'flex';
+    const scroller = document.querySelector('#modalVenderProducto .modal-content');
+    if (scroller) scroller.scrollTop = 0;
+};
+
+window.abrirModalVenderProducto = () => {
+    let omitidas = false;
+    try { omitidas = localStorage.getItem('codecash_vender_instrucciones_omitidas') === '1'; } catch (e) {}
+    if (omitidas) { window._mostrarFormularioVender(); return; }
+    abrirInstruccionesVender();
+};
+
+window.abrirInstruccionesVender = () => {
+    document.getElementById('modalInstruccionesVender').style.display = 'flex';
+};
+
+window.cerrarInstruccionesVender = () => {
+    document.getElementById('modalInstruccionesVender').style.display = 'none';
+};
+
+// ✅ Continuar: ya leyó las instrucciones, entra al formulario
+window.continuarInstruccionesVender = () => {
+    cerrarInstruccionesVender();
+    window._mostrarFormularioVender();
+};
+
+// Omitir: no volver a mostrar las instrucciones
+window.omitirInstruccionesVender = () => {
+    try { localStorage.setItem('codecash_vender_instrucciones_omitidas', '1'); } catch (e) {}
+    cerrarInstruccionesVender();
+    window._mostrarFormularioVender();
 };
 
 // ＋ Agregar otra fila para otro link de Google Drive
@@ -10903,10 +10964,70 @@ window.cerrarModalVenderProducto = () => {
     document.getElementById('modalVenderProducto').style.display = 'none';
 };
 
+window._generarEnlaceProductoDirecto = (items, precio) => {
+    const codeFinal = items.length === 1
+        ? codificarEnlaceProducto({ tipo: items[0].tipo, id: items[0].id, precio: precio, vendedor: idAuditor })
+        : codificarEnlaceProducto({ items: items, precio: precio, vendedor: idAuditor });
+    document.getElementById('enlaceProductoTexto').textContent = codeFinal;
+    const ganancia = Math.round(precio * (PORCENTAJE_VENDEDOR_PRODUCTO / 100) * 100) / 100;
+    document.getElementById('gananciaProductoTexto').textContent = `💰 Recibirás +${ganancia} PTS por cada venta${items.length > 1 ? ' · 📦 ' + items.length + ' productos en un solo enlace' : ''}`;
+    document.getElementById('divResultadoProducto').style.display = 'block';
+    notify('✅ Enlace especial creado');
+};
+
+window.mostrarAvisoVerificacionProducto = (html) => {
+    const aviso = document.getElementById('avisoVerificacionProducto');
+    const btnRe = document.getElementById('btnReverificarEnlaces');
+    if (aviso) { aviso.innerHTML = html; aviso.style.display = 'block'; }
+    if (btnRe) btnRe.style.display = 'block';
+};
+
+window.ocultarAvisoVerificacionProducto = () => {
+    const aviso = document.getElementById('avisoVerificacionProducto');
+    const btnRe = document.getElementById('btnReverificarEnlaces');
+    if (aviso) aviso.style.display = 'none';
+    if (btnRe) btnRe.style.display = 'none';
+};
+
+// 🔎 Respuesta del verificador nativo: ¿los enlaces son públicos o restringidos?
+window.onVerificacionDrive = (resultados) => {
+    const p = window._venderVerificacionPendiente;
+    if (!p) return;
+    if (p.timer) clearTimeout(p.timer);
+    window._venderVerificacionPendiente = null;
+
+    const btn = document.getElementById('btnGenerarEnlaceProducto');
+    if (btn) { btn.disabled = false; btn.textContent = '🔗 Generar enlace especial'; }
+
+    let restringidos = 0, noExisten = 0, errores = 0;
+    (resultados || []).forEach(r => {
+        const inp = p.inputs && p.inputs[r.indice];
+        if (r.estado === 'restringido' || r.estado === 'no_existe') {
+            if (inp) inp.style.border = '2px solid #ef4444';
+        }
+        if (r.estado === 'restringido') restringidos++;
+        else if (r.estado === 'no_existe') noExisten++;
+        else if (r.estado === 'error') errores++;
+    });
+
+    if (restringidos || noExisten) {
+        const partes = [];
+        if (restringidos) partes.push(`🔒 ${restringidos} enlace(s) son <b>restringidos</b>: solo tú puedes verlos, tus compradores no podrán. En Google Drive abre el archivo, toca <b>Compartir → Cualquier persona con el enlace → Copiar enlace</b> y pégalo aquí de nuevo.`);
+        if (noExisten) partes.push(`🗑️ ${noExisten} enlace(s) no existen o fueron borrados de Drive.`);
+        mostrarAvisoVerificacionProducto(partes.join('<br><br>') + '<br><br>Corrige los enlaces marcados en rojo y toca <b>🔄 Verificar de nuevo</b>.');
+        try { window.playSound('error'); } catch (e) {}
+        return;
+    }
+    ocultarAvisoVerificacionProducto();
+    if (errores) notify(`⚠️ No se pudieron verificar ${errores} enlace(s). Se generará el enlace igual.`);
+    window._generarEnlaceProductoDirecto(p.items, p.precio);
+};
+
 window.generarEnlaceProducto = () => {
     if (!idAuditor) { notify('❌ Inicia sesión para vender'); return; }
     const inputs = document.querySelectorAll('#contenedorLinksDrive .inputDriveLinkFila');
     const items = [];
+    const inputsUsados = [];
     let invalidos = 0;
     inputs.forEach(inp => {
         const val = (inp.value || '').trim();
@@ -10915,6 +11036,7 @@ window.generarEnlaceProducto = () => {
         if (!info) { invalidos++; inp.style.border = '2px solid #ef4444'; return; }
         inp.style.border = '';
         items.push(info);
+        inputsUsados.push(inp);
     });
     if (invalidos > 0) { notify(`⚠️ ${invalidos} link(s) no son de Google Drive. Corrígelos (marcados en rojo).`); return; }
     if (!items.length) {
@@ -10924,14 +11046,32 @@ window.generarEnlaceProducto = () => {
     const precio = parseInt((document.getElementById('inputPrecioProducto').value || '0'), 10);
     if (!precio || precio < 1 || precio > 5000) { notify('⚠️ Escribe un precio entre 1 y 5000 PTS'); return; }
 
-    const codeFinal = items.length === 1
-        ? codificarEnlaceProducto({ tipo: items[0].tipo, id: items[0].id, precio: precio, vendedor: idAuditor })
-        : codificarEnlaceProducto({ items: items, precio: precio, vendedor: idAuditor });
-    document.getElementById('enlaceProductoTexto').textContent = codeFinal;
-    const ganancia = Math.round(precio * (PORCENTAJE_VENDEDOR_PRODUCTO / 100) * 100) / 100;
-    document.getElementById('gananciaProductoTexto').textContent = `💰 Recibirás +${ganancia} PTS por cada venta${items.length > 1 ? ' · 📦 ' + items.length + ' productos en un solo enlace' : ''}`;
-    document.getElementById('divResultadoProducto').style.display = 'block';
-    notify('✅ Enlace especial creado');
+    ocultarAvisoVerificacionProducto();
+
+    // Sin app (navegador) no se puede verificar: genera directo
+    const puedeVerificar = typeof AndroidNative !== 'undefined' && AndroidNative && typeof AndroidNative.verificarEnlacesDrive === 'function';
+    if (!puedeVerificar) { window._generarEnlaceProductoDirecto(items, precio); return; }
+
+    // 🔎 Verifica en la app que los enlaces sean públicos
+    const btn = document.getElementById('btnGenerarEnlaceProducto');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Verificando enlaces...'; }
+    window._venderVerificacionPendiente = {
+        items: items, precio: precio, inputs: inputsUsados,
+        timer: setTimeout(() => {
+            if (!window._venderVerificacionPendiente) return;
+            window._venderVerificacionPendiente = null;
+            if (btn) { btn.disabled = false; btn.textContent = '🔗 Generar enlace especial'; }
+            notify('⚠️ No se pudieron verificar los enlaces a tiempo. Se genera el enlace igual.');
+            window._generarEnlaceProductoDirecto(items, precio);
+        }, 25000)
+    };
+    try {
+        AndroidNative.verificarEnlacesDrive(JSON.stringify(items.map(it => ({ id: it.id, tipo: it.tipo }))));
+    } catch (e) {
+        if (window._venderVerificacionPendiente && window._venderVerificacionPendiente.timer) clearTimeout(window._venderVerificacionPendiente.timer);
+        window._venderVerificacionPendiente = null;
+        window._generarEnlaceProductoDirecto(items, precio);
+    }
 };
 
 window.copiarEnlaceProducto = () => {
