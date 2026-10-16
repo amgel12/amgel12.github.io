@@ -7388,6 +7388,8 @@ async function subirYCobrarFoto(archivoBlob) {
             text: "📷 Te envió una foto privada", extra: idAuditor,
             timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
         });
+        // 🔔 PUSH ONESIGNAL: avisar al receptor aunque la app esté cerrada
+        if (typeof enviarNotificacion === 'function') enviarNotificacion(targetUserUid, miNombre, '📷 Te envió una foto', idAuditor);
 
         registrarHistorial("Foto privada enviada", -2.00);
         notify("✅ Foto enviada (-2.00 PTS)");
@@ -7421,6 +7423,8 @@ async function subirYCobrarFoto(archivoBlob) {
                 text: "📷 Te envió una foto privada", extra: idAuditor,
                 timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
             });
+            // 🔔 PUSH ONESIGNAL: avisar al receptor aunque la app esté cerrada
+            if (typeof enviarNotificacion === 'function') enviarNotificacion(targetUserUid, miNombre, '📷 Te envió una foto', idAuditor);
 
             registrarHistorial("Foto privada enviada", -2.00);
             notify("✅ Foto enviada (-2.00 PTS)");
@@ -12092,6 +12096,10 @@ function _crearSolicitud(reqRef, chatKey, targetUid, targetName) {
                 read: false,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
+            // 🔔 PUSH ONESIGNAL: avisar al receptor aunque la app esté cerrada
+            enviarPushOneSignal(targetUid, "chat_request", "📩 Nueva solicitud de chat", `${getMiNombre()} quiere chatear contigo`, {
+                additional_data: { sender_uid: idAuditor, sender_name: getMiNombre() }
+            });
             if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
             return;
         }
@@ -12125,6 +12133,10 @@ window.aceptarSolicitudChat = (chatKey, fromUid, fromName) => {
             extra: chatKey,
             read: false,
             timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        // 🔔 PUSH ONESIGNAL: avisar al solicitante aunque la app esté cerrada
+        enviarPushOneSignal(fromUid, "chat_request_accepted", "✅ Solicitud aceptada", `${getMiNombre()} aceptó tu solicitud de chat`, {
+            additional_data: { sender_uid: idAuditor, sender_name: getMiNombre() }
         });
         // Refrescar vistas
         if (typeof cargarSolicitudesPendientes === 'function') cargarSolicitudesPendientes();
@@ -13224,6 +13236,8 @@ window.mapaMensajesSinLeer = {};
 // ==========================================
 function iniciarMonitorDeBadges() {
     if(!idAuditor) return;
+    if (window._monitorBadgesIniciado) return; // evitar listeners duplicados
+    window._monitorBadgesIniciado = true;
 
     db.ref(`users/${idAuditor}/notifications`).on('value', snap => {
         window.mapaMensajesSinLeer = {};
@@ -17499,18 +17513,8 @@ window.cambiarPestanaChat = (pestana) => {
         // Red de seguridad: refresco periódico (por si se pierde algún evento)
         clearInterval(window._mensajesInterval);
         window._mensajesInterval = setInterval(() => {
-            if (!window._chatsPrivadosRef) return;
-            window._chatsPrivadosRef.once('value', snap => {
-                try {
-                    const chats = procesarSnapshotChats(snap);
-                    localStorage.setItem(CHATS_CACHE_KEY(), JSON.stringify(chats));
-                    localStorage.setItem(CHATS_TS_KEY(), String(Date.now()));
-                } catch(e) {}
-                if (window._pestanaChatActiva === 'michat' && typeof cargarTodosLosUsuariosParaMiChat === 'function') {
-                    cargarTodosLosUsuariosParaMiChat();
-                }
-            });
-        }, 30000);
+            if (typeof window._sincronizarChatsSilencioso === 'function') window._sincronizarChatsSilencioso();
+        }, 15000);
     }
 
     if (typeof actualizarFabGrupo === 'function') actualizarFabGrupo();
@@ -17551,6 +17555,84 @@ window.recargarMensajes = () => {
 
     if (typeof renderizarUsuariosHorizontal === 'function') renderizarUsuariosHorizontal();
 };
+
+// ==========================================
+// ♻️ SINCRONIZACIÓN EN VIVO (resume / reconexión)
+// El socket de Firebase puede quedar "zombie" cuando la app pasa a
+// segundo plano: los eventos (child_changed) dejan de llegar y los
+// mensajes nuevos solo se veían al refrescar. Estos mecanismos fuerzan
+// la reconexión y re-lectura al volver a la app.
+// ==========================================
+window._sincronizarChatsSilencioso = () => {
+    if (!window._chatsPrivadosRef) return;
+    window._chatsPrivadosRef.once('value', snap => {
+        try {
+            const chats = procesarSnapshotChats(snap);
+            localStorage.setItem(CHATS_CACHE_KEY(), JSON.stringify(chats));
+            localStorage.setItem(CHATS_TS_KEY(), String(Date.now()));
+        } catch(e) {}
+        const cont = document.getElementById('mensajesPrivadosContainer');
+        if (cont && cont.style.display !== 'none' && !window._enChatPrivado
+            && window._pestanaChatActiva === 'michat'
+            && typeof cargarTodosLosUsuariosParaMiChat === 'function') {
+            cargarTodosLosUsuariosParaMiChat();
+        }
+        // Si hay un chat abierto, traer mensajes que pudieron llegar en pausa
+        if (window._enChatPrivado && typeof window.refrescarChatAbiertoAhora === 'function') {
+            window.refrescarChatAbiertoAhora();
+        }
+    });
+};
+
+// Revisa el chat abierto y agrega cualquier mensaje que falte en el DOM
+// (por si el listener child_added no lo recibió, p. ej. tras segundo plano)
+window.refrescarChatAbiertoAhora = () => {
+    if (!window._enChatPrivado || !currentChatId) return;
+    if (!privChatRef) {
+        if (typeof cargarMensajesPrivados === 'function') cargarMensajesPrivados();
+        return;
+    }
+    const list = document.getElementById('privChatList');
+    if (!list) return;
+    db.ref(`chats_privados/${currentChatId}`).limitToLast(15).once('value', snap => {
+        if (!snap.exists()) return;
+        let agregoAlgo = false;
+        snap.forEach(s => {
+            if (document.getElementById(`priv-row-${s.key}`)) return;
+            const spinner = list.querySelector('.priv-loading');
+            if (spinner) spinner.remove();
+            try {
+                list.appendChild(crearFilaMensajePrivado(s));
+                agregoAlgo = true;
+            } catch(e) {}
+        });
+        if (agregoAlgo) list.scrollTop = list.scrollHeight;
+    }).catch(() => {});
+};
+
+// Se llama al volver a la app (nativo) o al recuperar visibilidad/foco/red
+window.onAppResume = () => {
+    const ahora = Date.now();
+    if (window._ultimoAppResume && (ahora - window._ultimoAppResume) < 3000) return;
+    window._ultimoAppResume = ahora;
+
+    // Reconexión limpia del socket de Firebase (por si quedó zombie)
+    try {
+        if (typeof db !== 'undefined' && db && db.goOffline) {
+            db.goOffline();
+            setTimeout(() => { try { db.goOnline(); } catch(e){} }, 250);
+        }
+    } catch(e) {}
+
+    setTimeout(() => { try { window._sincronizarChatsSilencioso(); } catch(e){} }, 700);
+    setTimeout(() => { try { if (window._enChatPrivado) window.refrescarChatAbiertoAhora(); } catch(e){} }, 1000);
+};
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { try { window.onAppResume(); } catch(e){} }
+});
+window.addEventListener('focus', () => { try { window.onAppResume(); } catch(e){} });
+window.addEventListener('online', () => { try { window.onAppResume(); } catch(e){} });
 
 // Muestra el botón flotante "+" solo en la pestaña Grupos
 window.actualizarFabGrupo = () => {
