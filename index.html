@@ -4127,11 +4127,18 @@ Cerrar
         <div style="text-align:left; font-size:0.82rem; color:#334155; background:#f0fdf4; border:1px solid #10b981; border-radius:14px; padding:12px 14px; margin-bottom:14px; line-height:1.5;">
             <div style="margin-bottom:8px;"><b style="color:#059669;">1.</b> Sube tus videos o fotos a <b>Google Drive</b>.</div>
             <div style="margin-bottom:8px;"><b style="color:#059669;">2.</b> Toca <b>Compartir → Cualquier persona con el enlace</b> y copia el link.</div>
-            <div style="margin-bottom:8px;"><b style="color:#059669;">3.</b> Pega el link, ponle tu precio en PTS y toca <b>Generar enlace especial</b>.</div>
+            <div style="margin-bottom:8px;"><b style="color:#059669;">3.</b> Pega los links (usa <b>＋</b> para agregar más productos), ponle tu precio en PTS y toca <b>Generar enlace especial</b>.</div>
             <div><b style="color:#059669;">4.</b> Copia tu enlace y pégalo en el <b>chat privado</b>: se verá como un botón. ✅</div>
         </div>
 
-        <input type="url" id="inputDriveLink" placeholder="Pega aquí el link de Google Drive..." style="font-size:0.85rem; background:#f8fafc; margin-bottom:10px;">
+        <div id="contenedorLinksDrive">
+            <div class="fila-link-drive" style="display:flex; gap:6px; margin-bottom:8px;">
+                <input type="url" class="inputDriveLinkFila" placeholder="Link de Google Drive..." style="font-size:0.85rem; background:#f8fafc; margin-bottom:0; flex:1;">
+            </div>
+        </div>
+        <button type="button" onclick="agregarFilaLinkDrive()" style="width:100%; padding:10px; border:2px dashed #10b981; border-radius:12px; background:#f0fdf4; color:#059669; font-weight:800; font-size:0.85rem; cursor:pointer; margin-bottom:10px;">＋ Agregar otro producto</button>
+
+        <div style="font-size:0.72rem; color:#64748b; margin-bottom:6px;">El precio es para todo el paquete de productos.</div>
 
         <input type="number" id="inputPrecioProducto" min="1" max="5000" value="100" placeholder="Precio en PTS (1 - 5000)"
                style="text-align:center; font-weight:800; font-size:1.05rem; border:2px solid #10b981; background:#f0fdf4; margin-bottom:10px;">
@@ -4171,6 +4178,7 @@ Cerrar
         <div style="background:#f0fdf4; border:2px solid #10b981; border-radius:14px; padding:14px; margin-bottom:14px;">
             <div style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">Precio</div>
             <div id="compraProdPrecio" style="font-size:1.5rem; font-weight:900; color:#059669;">0 PTS</div>
+            <div id="compraProdCantidad" style="font-size:0.72rem; color:#64748b; margin-top:4px;"></div>
             <div style="font-size:0.72rem; color:#64748b; margin-top:6px;">Tu saldo: <b id="compraProdSaldo">0.00 PTS</b></div>
         </div>
 
@@ -4221,6 +4229,17 @@ Cerrar
         <div id="resumenMisVentas" style="font-size:0.8rem; color:#334155; background:#f0fdf4; border:1px solid #10b981; border-radius:12px; padding:10px; margin-bottom:12px;"></div>
         <div id="listaMisVentas" style="max-height:280px; overflow-y:auto;"></div>
         <button onclick="cerrarMisVentas()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cerrar</button>
+    </div>
+</div>
+
+<!-- MODAL PRODUCTOS COMPRADOS (paquete con varios links) -->
+<div id="modalProductosComprados" class="modal-overlay" style="z-index: 30300;">
+    <div class="modal-content" style="max-width: 360px; text-align:center; border-radius:18px; padding:22px;">
+        <div style="font-size:3rem; margin-bottom:6px;">📦</div>
+        <h3 style="color:#10b981; margin:0 0 6px 0;">Tus productos</h3>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom:14px;">Toca cada uno para verlo aquí dentro de la app.</p>
+        <div id="listaProductosComprados" style="max-height:300px; overflow-y:auto;"></div>
+        <button onclick="cerrarProductosComprados()" style="background:none; border:none; color:#94a3b8; margin-top:12px; font-size:0.85rem; cursor:pointer;">Cerrar</button>
     </div>
 </div>
 
@@ -9897,7 +9916,7 @@ window.addEventListener('popstate', (e) => {
     'modalGiftReceived', 'modalCine', 'modalMusicSelector', 'modalComments', 
     'modalGameOver', 'modalLesson', 'modalNoVidas', 'modalRanking',
     'modalInvitar', 'modalSubirFoto', 'modalFotoOptions', 
-    'modalVenderProducto', 'modalComprarProducto', 'modalMisVentas', 
+    'modalVenderProducto', 'modalComprarProducto', 'modalMisVentas', 'modalProductosComprados', 
     'modalConfirmDelete', 'modalChatPrivado',     'modalComprarMensajes', 'modalComprarFoto',
     'modalRetiro',
     'modalFotoDetalle',
@@ -10853,11 +10872,31 @@ window.cerrarModalFoto = () => {
 
 // ── 🛍️ VENDER PRODUCTOS: abrir modal, generar y copiar enlace ──
 window.abrirModalVenderProducto = () => {
-    const inp = document.getElementById('inputDriveLink');
-    if (inp) inp.value = '';
+    const cont = document.getElementById('contenedorLinksDrive');
+    if (cont) {
+        cont.innerHTML = '<div class="fila-link-drive" style="display:flex; gap:6px; margin-bottom:8px;"><input type="url" class="inputDriveLinkFila" placeholder="Link de Google Drive..." style="font-size:0.85rem; background:#f8fafc; margin-bottom:0; flex:1;"></div>';
+    }
     const res = document.getElementById('divResultadoProducto');
     if (res) res.style.display = 'none';
     document.getElementById('modalVenderProducto').style.display = 'flex';
+};
+
+// ＋ Agregar otra fila para otro link de Google Drive
+window.agregarFilaLinkDrive = () => {
+    const cont = document.getElementById('contenedorLinksDrive');
+    if (!cont) return;
+    if (cont.querySelectorAll('.fila-link-drive').length >= 20) return notify('⚠️ Máximo 20 productos por enlace');
+    const div = document.createElement('div');
+    div.className = 'fila-link-drive';
+    div.style.cssText = 'display:flex; gap:6px; margin-bottom:8px;';
+    div.innerHTML = `<input type="url" class="inputDriveLinkFila" placeholder="Link de Google Drive..." style="font-size:0.85rem; background:#f8fafc; margin-bottom:0; flex:1;">
+        <button type="button" onclick="quitarFilaLinkDrive(this)" style="width:38px; flex-shrink:0; border:none; border-radius:10px; background:#fef2f2; color:#ef4444; font-weight:900; cursor:pointer;">✕</button>`;
+    cont.appendChild(div);
+};
+
+window.quitarFilaLinkDrive = (btn) => {
+    const fila = btn.closest('.fila-link-drive');
+    if (fila) fila.remove();
 };
 
 window.cerrarModalVenderProducto = () => {
@@ -10866,18 +10905,31 @@ window.cerrarModalVenderProducto = () => {
 
 window.generarEnlaceProducto = () => {
     if (!idAuditor) { notify('❌ Inicia sesión para vender'); return; }
-    const link = (document.getElementById('inputDriveLink').value || '').trim();
-    const info = extraerDriveInfo(link);
-    if (!info) {
-        notify('⚠️ Pega un link válido de Google Drive. Recuerda: Compartir → Cualquier persona con el enlace → Copiar enlace');
+    const inputs = document.querySelectorAll('#contenedorLinksDrive .inputDriveLinkFila');
+    const items = [];
+    let invalidos = 0;
+    inputs.forEach(inp => {
+        const val = (inp.value || '').trim();
+        if (!val) { inp.style.border = ''; return; }
+        const info = extraerDriveInfo(val);
+        if (!info) { invalidos++; inp.style.border = '2px solid #ef4444'; return; }
+        inp.style.border = '';
+        items.push(info);
+    });
+    if (invalidos > 0) { notify(`⚠️ ${invalidos} link(s) no son de Google Drive. Corrígelos (marcados en rojo).`); return; }
+    if (!items.length) {
+        notify('⚠️ Pega al menos un link de Google Drive. Recuerda: Compartir → Cualquier persona con el enlace → Copiar enlace');
         return;
     }
     const precio = parseInt((document.getElementById('inputPrecioProducto').value || '0'), 10);
     if (!precio || precio < 1 || precio > 5000) { notify('⚠️ Escribe un precio entre 1 y 5000 PTS'); return; }
 
-    document.getElementById('enlaceProductoTexto').textContent = codificarEnlaceProducto({ tipo: info.tipo, id: info.id, precio: precio, vendedor: idAuditor });
+    const codeFinal = items.length === 1
+        ? codificarEnlaceProducto({ tipo: items[0].tipo, id: items[0].id, precio: precio, vendedor: idAuditor })
+        : codificarEnlaceProducto({ items: items, precio: precio, vendedor: idAuditor });
+    document.getElementById('enlaceProductoTexto').textContent = codeFinal;
     const ganancia = Math.round(precio * (PORCENTAJE_VENDEDOR_PRODUCTO / 100) * 100) / 100;
-    document.getElementById('gananciaProductoTexto').textContent = `💰 Recibirás +${ganancia} PTS por cada venta`;
+    document.getElementById('gananciaProductoTexto').textContent = `💰 Recibirás +${ganancia} PTS por cada venta${items.length > 1 ? ' · 📦 ' + items.length + ' productos en un solo enlace' : ''}`;
     document.getElementById('divResultadoProducto').style.display = 'block';
     notify('✅ Enlace especial creado');
 };
@@ -10897,27 +10949,21 @@ window.abrirCompraProducto = (code) => {
     const info = decodificarEnlaceProducto(code);
     if (!info) return notify('❌ Enlace de producto inválido');
     if (window.verificarRecargasProductoPendientes) verificarRecargasProductoPendientes();
-    const urlDrive = resolverUrlDrive(code);
+
+    // Abre el producto: siempre con la lista, para verlo en el reproductor interno
+    const abrirContenido = (mensaje) => {
+        if (mensaje) notify(mensaje);
+        mostrarProductosDeEnlace(info);
+    };
 
     // Sin precio (link viejo o gratis) o sin vendedor → abrir directo
-    if (!info.precio || !info.vendedor) {
-        if (urlDrive) window.open(urlDrive, '_blank');
-        return;
-    }
+    if (!info.precio || !info.vendedor) { abrirContenido(''); return; }
     if (!idAuditor) return notify('❌ Inicia sesión para comprar');
 
     db.ref(`compras_productos/${code}/${idAuditor}`).once('value').then(snap => {
-        if (snap.exists()) {
-            notify('✅ Ya compraste este producto — abriendo...');
-            window.open(urlDrive, '_blank');
-            return;
-        }
-        if (info.vendedor === idAuditor) {
-            notify('🛍️ Es tu propio producto — abriendo...');
-            window.open(urlDrive, '_blank');
-            return;
-        }
-        window._productoCompraActual = { code: code, info: info, urlDrive: urlDrive };
+        if (snap.exists()) { abrirContenido('✅ Ya compraste este producto — abriendo...'); return; }
+        if (info.vendedor === idAuditor) { abrirContenido('🛍️ Es tu propio producto — abriendo...'); return; }
+        window._productoCompraActual = { code: code, info: info };
         mostrarModalCompraProducto(info);
     });
 };
@@ -10925,6 +10971,9 @@ window.abrirCompraProducto = (code) => {
 function mostrarModalCompraProducto(info) {
     document.getElementById('compraProdVendedor').textContent = '...';
     document.getElementById('compraProdPrecio').textContent = info.precio + ' PTS';
+    const items = itemsDeEnlace(info);
+    const cantEl = document.getElementById('compraProdCantidad');
+    if (cantEl) cantEl.textContent = items.length > 1 ? '📦 ' + items.length + ' productos en este enlace' : '';
     const aviso = document.getElementById('compraProdAviso');
     if (aviso) aviso.style.display = 'none';
     const btnRec = document.getElementById('btnRecargarProducto');
@@ -11032,7 +11081,7 @@ window.continuarCompraProductoPendiente = () => {
 window.ejecutarCompraProducto = () => {
     const act = window._productoCompraActual;
     if (!act) return;
-    const info = act.info; const code = act.code; const urlDrive = act.urlDrive;
+    const info = act.info; const code = act.code;
     if (!idAuditor) return notify('❌ Inicia sesión primero');
     if (info.vendedor === idAuditor) return notify('❌ Es tu propio producto');
 
@@ -11067,11 +11116,11 @@ window.ejecutarCompraProducto = () => {
                 updates[`compras_productos/${code}/${idAuditor}`] = { fecha: ts, precio: info.precio, vendedor: info.vendedor };
 
                 db.ref().update(updates).then(() => {
-                    notify(`✅ Producto comprado por ${info.precio} PTS — abriendo...`);
+                    notify(`✅ Producto comprado por ${info.precio} PTS`);
                     registrarHistorial('Compra producto', -info.precio);
                     document.getElementById('modalComprarProducto').style.display = 'none';
                     try { window.playSound('win'); } catch (e) {}
-                    window.open(urlDrive, '_blank');
+                    mostrarProductosDeEnlace(info);
                     window._productoCompraActual = null;
                 }).catch(err => {
                     notify('Error: ' + err.message);
@@ -11091,6 +11140,36 @@ window.cerrarModalCompraProducto = () => {
     document.getElementById('modalComprarProducto').style.display = 'none';
     window._productoCompraActual = null;
     window._productoCompraPendiente = null;
+};
+
+// ── 📦 LISTA DE PRODUCTOS (paquete comprado o propio) ──
+window._productosListaActual = [];
+
+window.mostrarProductosDeEnlace = (info) => {
+    const items = itemsDeEnlace(info);
+    window._productosListaActual = items.map(it => ({ id: it.id, tipo: it.tipo, url: urlDriveDeItem(it) }));
+    const cont = document.getElementById('listaProductosComprados');
+    cont.innerHTML = items.map((it, i) => `
+        <button onclick="abrirItemProducto(${i})" style="width:100%; text-align:left; padding:12px 14px; margin-bottom:8px; border:1px solid #d1fae5; border-radius:12px; background:#f0fdf4; color:#065f46; font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; gap:10px;">
+            <span style="font-size:1.2rem;">${it.tipo === 'c' ? '📁' : '🎬'}</span> ${it.tipo === 'c' ? 'Abrir carpeta ' : 'Ver producto '}${i + 1}
+        </button>`).join('');
+    document.getElementById('modalProductosComprados').style.display = 'flex';
+};
+
+// 🎬 En la app: reproductor interno (ExoPlayer) — el usuario nunca ve Google Drive
+// ni tiene botón de descarga. En navegador: se abre el enlace normal.
+window.abrirItemProducto = (i) => {
+    const item = (window._productosListaActual || [])[i];
+    if (!item) return;
+    const puedeNativo = typeof AndroidNative !== 'undefined' && AndroidNative && typeof AndroidNative.abrirProducto === 'function';
+    if (item.tipo !== 'c' && puedeNativo) {
+        try { AndroidNative.abrirProducto(item.id, 'Producto ' + (i + 1)); return; } catch (e) {}
+    }
+    if (item.url) window.open(item.url, '_blank');
+};
+
+window.cerrarProductosComprados = () => {
+    document.getElementById('modalProductosComprados').style.display = 'none';
 };
 
 // ── 💰 MIS VENTAS: resumen de lo que el usuario ha vendido ──
@@ -14094,21 +14173,37 @@ function extraerDriveInfo(link) {
 }
 
 function codificarEnlaceProducto(info) {
-    // Formato nuevo: "p" + base64(JSON) con Drive ID, tipo, precio y vendedor
-    const payload = { t: info.tipo === 'c' ? 'c' : 'a', i: info.id, p: Number(info.precio) || 0, u: info.vendedor || '' };
+    // Formato nuevo: "p" + base64(JSON) con Drive ID(s), precio y vendedor
+    // Un solo producto: {t, i, p, u} · Paquete: {t:'m', f:[{t,i},...], p, u}
+    let payload;
+    if (Array.isArray(info.items)) {
+        payload = { t: 'm', f: info.items.map(it => ({ t: it.tipo === 'c' ? 'c' : 'a', i: it.id })), p: Number(info.precio) || 0, u: info.vendedor || '' };
+    } else {
+        payload = { t: info.tipo === 'c' ? 'c' : 'a', i: info.id, p: Number(info.precio) || 0, u: info.vendedor || '' };
+    }
     const b64 = btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     return 'https://' + CAS_DOMINIO_PRODUCTO + '/?v=p' + b64;
 }
 
 function decodificarEnlaceProducto(code) {
     if (!code || code.length < 2) return null;
-    // Formato nuevo: "p" + base64(JSON) {t, i, p, u}
+    // Formato nuevo: "p" + base64(JSON) {t, i, p, u} o paquete {t:'m', f:[...], p, u}
     if (code[0] === 'p') {
         try {
             const b64 = code.slice(1).replace(/-/g, '+').replace(/_/g, '/');
             const obj = JSON.parse(atob(b64));
-            if (!obj || !obj.i || !/^[A-Za-z0-9_-]{10,}$/.test(obj.i)) return null;
-            return { tipo: obj.t === 'c' ? 'c' : 'a', id: obj.i, precio: Number(obj.p) || 0, vendedor: obj.u || '' };
+            if (!obj) return null;
+            const precio = Number(obj.p) || 0;
+            const vendedor = obj.u || '';
+            if (obj.t === 'm' && Array.isArray(obj.f)) {
+                const items = obj.f
+                    .filter(it => it && it.i && /^[A-Za-z0-9_-]{10,}$/.test(it.i))
+                    .map(it => ({ tipo: it.t === 'c' ? 'c' : 'a', id: it.i }));
+                if (!items.length) return null;
+                return { tipo: 'm', items: items, id: items[0].id, precio: precio, vendedor: vendedor };
+            }
+            if (!obj.i || !/^[A-Za-z0-9_-]{10,}$/.test(obj.i)) return null;
+            return { tipo: obj.t === 'c' ? 'c' : 'a', id: obj.i, precio: precio, vendedor: vendedor };
         } catch (e) {
             return null;
         }
@@ -14125,12 +14220,21 @@ function decodificarEnlaceProducto(code) {
     }
 }
 
+function urlDriveDeItem(item) {
+    return item.tipo === 'c'
+        ? 'https://drive.google.com/drive/folders/' + item.id
+        : 'https://drive.google.com/file/d/' + item.id + '/view';
+}
+
+function itemsDeEnlace(info) {
+    if (info && info.tipo === 'm' && Array.isArray(info.items)) return info.items;
+    return [{ tipo: info.tipo, id: info.id }];
+}
+
 function resolverUrlDrive(code) {
     const info = decodificarEnlaceProducto(code);
     if (!info) return null;
-    return info.tipo === 'c'
-        ? 'https://drive.google.com/drive/folders/' + info.id
-        : 'https://drive.google.com/file/d/' + info.id + '/view';
+    return urlDriveDeItem(itemsDeEnlace(info)[0]);
 }
 
 // Si abren la app con un enlace especial (?v=...):
@@ -14156,6 +14260,17 @@ function resolverUrlDrive(code) {
                 document.title = 'Producto CodeCash';
                 setTimeout(() => notify('🛍️ Este producto se compra dentro de la app CodeCash. Descárgala gratis y abre el enlace desde ahí.'), 1500);
             }
+            return;
+        }
+        // En la app: lista + reproductor interno (sin mostrar Google Drive)
+        if (typeof AndroidNative !== 'undefined') {
+            let intentos = 0;
+            const abrir = () => {
+                intentos++;
+                if (typeof mostrarProductosDeEnlace === 'function') { mostrarProductosDeEnlace(info); }
+                else if (intentos < 10) { setTimeout(abrir, 700); }
+            };
+            setTimeout(abrir, 1200);
             return;
         }
         const destino = resolverUrlDrive(code);
