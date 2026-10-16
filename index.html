@@ -4116,6 +4116,114 @@ Cerrar
     </div>
 </div>
 
+<!-- MODAL VENDER PRODUCTOS (Google Drive → enlace especial) -->
+<div id="modalVenderProducto" class="modal-overlay" style="z-index: 27000;">
+    <div class="modal-content">
+        <h3 style="color:#10b981;">🛍️ Vende tus productos</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
+            Vende tus <b>videos o fotos</b> con un solo enlace. Sigue estos pasos:
+        </p>
+
+        <div style="text-align:left; font-size:0.82rem; color:#334155; background:#f0fdf4; border:1px solid #10b981; border-radius:14px; padding:12px 14px; margin-bottom:14px; line-height:1.5;">
+            <div style="margin-bottom:8px;"><b style="color:#059669;">1.</b> Sube tus videos o fotos a <b>Google Drive</b>.</div>
+            <div style="margin-bottom:8px;"><b style="color:#059669;">2.</b> Toca <b>Compartir → Cualquier persona con el enlace</b> y copia el link.</div>
+            <div style="margin-bottom:8px;"><b style="color:#059669;">3.</b> Pega el link, ponle tu precio en PTS y toca <b>Generar enlace especial</b>.</div>
+            <div><b style="color:#059669;">4.</b> Copia tu enlace y pégalo en el <b>chat privado</b>: se verá como un botón. ✅</div>
+        </div>
+
+        <input type="url" id="inputDriveLink" placeholder="Pega aquí el link de Google Drive..." style="font-size:0.85rem; background:#f8fafc; margin-bottom:10px;">
+
+        <input type="number" id="inputPrecioProducto" min="1" max="5000" value="100" placeholder="Precio en PTS (1 - 5000)"
+               style="text-align:center; font-weight:800; font-size:1.05rem; border:2px solid #10b981; background:#f0fdf4; margin-bottom:10px;">
+
+        <div style="font-size:0.72rem; color:#64748b; margin-bottom:10px;">💰 Tú recibes el <b>5%</b> de cada venta en PTS (el 95% es comisión de la plataforma).</div>
+
+        <button class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" onclick="generarEnlaceProducto()">
+            🔗 Generar enlace especial
+        </button>
+
+        <div id="divResultadoProducto" style="display:none; margin-top:14px;">
+            <div style="font-size:0.72rem; font-weight:700; color:#64748b; margin-bottom:6px;">TU ENLACE ESPECIAL (pégalo en el chat privado)</div>
+            <div id="enlaceProductoTexto" style="word-break:break-all; font-size:0.8rem; font-weight:700; color:#059669; background:#f0fdf4; border:2px dashed #10b981; border-radius:12px; padding:10px; margin-bottom:10px;"></div>
+            <div id="gananciaProductoTexto" style="font-size:0.75rem; color:#059669; font-weight:700; margin-bottom:10px;"></div>
+            <button class="btn-blue" style="background:#0070ba; margin-bottom:10px;" onclick="copiarEnlaceProducto()">📋 Copiar enlace</button>
+            <div style="font-size:0.72rem; color:#64748b; margin-bottom:6px;">Así se verá cuando lo pegues en el chat privado:</div>
+            <span style="display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; font-weight:800; padding:10px 18px; border-radius:50px; box-shadow:0 4px 12px rgba(16,185,129,0.35);">🎬 Ver producto</span>
+        </div>
+
+        <button class="btn-blue" style="background:linear-gradient(135deg,#f59e0b,#d97706); box-shadow:0 4px 15px rgba(245,158,11,0.4); margin-bottom:8px;" onclick="cerrarModalVenderProducto(); abrirMisVentas()">
+            💰 Mis ventas (ver cuánto has vendido)
+        </button>
+
+        <button onclick="cerrarModalVenderProducto()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
+    </div>
+</div>
+
+<!-- MODAL COMPRAR PRODUCTO (estilo Google Play) -->
+<div id="modalComprarProducto" class="modal-overlay" style="z-index: 30200;">
+    <div class="modal-content" style="max-width: 360px; text-align:center; border-radius:18px; padding:22px;">
+        <div style="font-size:3rem; margin-bottom:6px;">🛍️</div>
+        <h3 style="color:#10b981; margin:0 0 6px 0;">Comprar producto</h3>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom:14px;">
+            Producto de <b id="compraProdVendedor" style="color:#334155;">...</b>
+        </p>
+
+        <div style="background:#f0fdf4; border:2px solid #10b981; border-radius:14px; padding:14px; margin-bottom:14px;">
+            <div style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">Precio</div>
+            <div id="compraProdPrecio" style="font-size:1.5rem; font-weight:900; color:#059669;">0 PTS</div>
+            <div style="font-size:0.72rem; color:#64748b; margin-top:6px;">Tu saldo: <b id="compraProdSaldo">0.00 PTS</b></div>
+        </div>
+
+        <button id="btnPagarProducto" onclick="ejecutarCompraProducto()"
+          style="width:100%; padding:14px; border:none; border-radius:14px;
+                 background:linear-gradient(135deg,#10b981,#059669); color:white;
+                 font-weight:800; font-size:0.95rem; display:flex; align-items:center;
+                 justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(16,185,129,0.35);
+                 margin-bottom:12px; cursor:pointer;">
+          💳 Pagar
+        </button>
+
+        <button id="btnRecargarProducto" onclick="recargarPuntosProducto()"
+          style="width:100%; padding:14px; border:none; border-radius:14px;
+                 background:linear-gradient(135deg,#0f9d58,#059669); color:white;
+                 font-weight:800; font-size:0.95rem; display:none; align-items:center;
+                 justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(16,185,129,0.35);
+                 margin-bottom:6px; cursor:pointer;">
+          <i class="fab fa-google-play" style="font-size: 1.2rem;"></i>
+          Recargar 100 puntos — $2.00
+        </button>
+
+        <button id="btnRecargarPaypalProducto" onclick="recargarPuntosProductoPayPal()"
+          style="width:100%; padding:14px; border:none; border-radius:14px;
+                 background:linear-gradient(135deg,#0070ba,#005c99); color:white;
+                 font-weight:800; font-size:0.95rem; display:none; align-items:center;
+                 justify-content:center; gap:10px; box-shadow:0 6px 18px rgba(0,112,186,0.35);
+                 margin-bottom:6px; cursor:pointer;">
+          <i class="fab fa-paypal" style="font-size: 1.2rem;"></i>
+          Recargar 100 puntos — $2.00 (PayPal)
+        </button>
+        <div id="compraProdAviso" style="font-size:0.7rem; color:#ef4444; margin-bottom:12px; display:none;">
+          Saldo insuficiente. Recarga con Google Play o PayPal, o gana puntos y vuelve a intentar.
+        </div>
+        <div style="font-size:0.7rem; color:#059669; margin-bottom:4px;">💵 Pago seguro con Google Play o PayPal · 100 pts = $2.00 USD</div>
+
+        <button onclick="cerrarModalCompraProducto()"
+          style="background:none; border:none; color:#94a3b8; margin-top:12px; font-size:0.85rem; cursor:pointer;">
+          Cancelar
+        </button>
+    </div>
+</div>
+
+<!-- MODAL MIS VENTAS -->
+<div id="modalMisVentas" class="modal-overlay" style="z-index: 26000;">
+    <div class="modal-content">
+        <h3 style="color:#10b981;">💰 Mis ventas</h3>
+        <div id="resumenMisVentas" style="font-size:0.8rem; color:#334155; background:#f0fdf4; border:1px solid #10b981; border-radius:12px; padding:10px; margin-bottom:12px;"></div>
+        <div id="listaMisVentas" style="max-height:280px; overflow-y:auto;"></div>
+        <button onclick="cerrarMisVentas()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cerrar</button>
+    </div>
+</div>
+
 <!-- MODAL SUBIR FOTO PRIVADA -->
 <div id="modalFotoPrivada" class="modal-overlay" style="z-index: 30000;">
     <div class="modal-content">
@@ -5323,6 +5431,14 @@ style="display:none;">
             <i class="fas fa-users menu-icon" style="color:#10b981;"></i>
             <span style="font-weight:700; color:#334155; font-size:0.9rem;">Mis referidos</span>
         </div>
+        <div class="menu-card-btn" onclick="abrirModalVenderProducto()">
+            <i class="fas fa-store menu-icon" style="color:#ec4899;"></i>
+            <span style="font-weight:700; color:#334155; font-size:0.9rem;">Vender productos</span>
+        </div>
+        <div class="menu-card-btn" onclick="abrirMisVentas()">
+            <i class="fas fa-coins menu-icon" style="color:#f59e0b;"></i>
+            <span style="font-weight:700; color:#334155; font-size:0.9rem;">Mis ventas</span>
+        </div>
         <div class="menu-card-btn" onclick="abrirHistorial()">
             <i class="fas fa-list-ul menu-icon" style="color:#3b82f6;"></i>
             <span style="font-weight:700; color:#334155; font-size:0.9rem;">Historial de puntos</span>
@@ -5469,6 +5585,11 @@ style="display:none;">
     <button class="nav-item active" id="nav2" onclick="goToScreen(2, true)">
         <span class="nav-icon"><i class="fas fa-feather-alt"></i></span>
         <span>Feed</span>
+    </button>
+
+    <button class="nav-item" id="navVender" onclick="abrirModalVenderProducto()" style="color:#8b5cf6;">
+        <span class="nav-icon"><i class="fas fa-store"></i></span>
+        <span>Vender</span>
     </button>
 
     <button class="nav-item" id="nav3" onclick="goToScreen(3, true)" style="position: relative;">
@@ -7663,6 +7784,8 @@ window.manejarAuth = async () => {
         // 1. Configuración Inicial
         idAuditor = user.uid;
         document.getElementById('authScreen').style.display = 'none';
+        // Verificar recargas de puntos por PayPal pendientes de confirmación del admin
+        setTimeout(() => { if (window.verificarRecargasProductoPendientes) verificarRecargasProductoPendientes(); }, 1500);
         // 🔥 CARGA ANTICIPADA DE GRUPOS (Para que no tarden 4 segundos)
         if(typeof cargarListaDeGrupos === 'function') cargarListaDeGrupos();
 
@@ -9774,6 +9897,7 @@ window.addEventListener('popstate', (e) => {
     'modalGiftReceived', 'modalCine', 'modalMusicSelector', 'modalComments', 
     'modalGameOver', 'modalLesson', 'modalNoVidas', 'modalRanking',
     'modalInvitar', 'modalSubirFoto', 'modalFotoOptions', 
+    'modalVenderProducto', 'modalComprarProducto', 'modalMisVentas', 
     'modalConfirmDelete', 'modalChatPrivado',     'modalComprarMensajes', 'modalComprarFoto',
     'modalRetiro',
     'modalFotoDetalle',
@@ -10725,6 +10849,287 @@ window.cerrarModalFoto = () => {
         btn.disabled = true;
         btn.innerHTML = "💰 Publicar y Ganar";
     }
+};
+
+// ── 🛍️ VENDER PRODUCTOS: abrir modal, generar y copiar enlace ──
+window.abrirModalVenderProducto = () => {
+    const inp = document.getElementById('inputDriveLink');
+    if (inp) inp.value = '';
+    const res = document.getElementById('divResultadoProducto');
+    if (res) res.style.display = 'none';
+    document.getElementById('modalVenderProducto').style.display = 'flex';
+};
+
+window.cerrarModalVenderProducto = () => {
+    document.getElementById('modalVenderProducto').style.display = 'none';
+};
+
+window.generarEnlaceProducto = () => {
+    if (!idAuditor) { notify('❌ Inicia sesión para vender'); return; }
+    const link = (document.getElementById('inputDriveLink').value || '').trim();
+    const info = extraerDriveInfo(link);
+    if (!info) {
+        notify('⚠️ Pega un link válido de Google Drive. Recuerda: Compartir → Cualquier persona con el enlace → Copiar enlace');
+        return;
+    }
+    const precio = parseInt((document.getElementById('inputPrecioProducto').value || '0'), 10);
+    if (!precio || precio < 1 || precio > 5000) { notify('⚠️ Escribe un precio entre 1 y 5000 PTS'); return; }
+
+    document.getElementById('enlaceProductoTexto').textContent = codificarEnlaceProducto({ tipo: info.tipo, id: info.id, precio: precio, vendedor: idAuditor });
+    const ganancia = Math.round(precio * (PORCENTAJE_VENDEDOR_PRODUCTO / 100) * 100) / 100;
+    document.getElementById('gananciaProductoTexto').textContent = `💰 Recibirás +${ganancia} PTS por cada venta`;
+    document.getElementById('divResultadoProducto').style.display = 'block';
+    notify('✅ Enlace especial creado');
+};
+
+window.copiarEnlaceProducto = () => {
+    const el = document.getElementById('enlaceProductoTexto');
+    if (!el || !el.textContent) return;
+    copiarTextoChat(el.textContent);
+    toastCopiado('Enlace copiado');
+};
+
+// ── 🛒 COMPRA DE PRODUCTOS: modal estilo Google Play, pago con puntos y 5% al vendedor ──
+window._productoCompraActual = null;
+window._productoCompraPendiente = null;
+
+window.abrirCompraProducto = (code) => {
+    const info = decodificarEnlaceProducto(code);
+    if (!info) return notify('❌ Enlace de producto inválido');
+    if (window.verificarRecargasProductoPendientes) verificarRecargasProductoPendientes();
+    const urlDrive = resolverUrlDrive(code);
+
+    // Sin precio (link viejo o gratis) o sin vendedor → abrir directo
+    if (!info.precio || !info.vendedor) {
+        if (urlDrive) window.open(urlDrive, '_blank');
+        return;
+    }
+    if (!idAuditor) return notify('❌ Inicia sesión para comprar');
+
+    db.ref(`compras_productos/${code}/${idAuditor}`).once('value').then(snap => {
+        if (snap.exists()) {
+            notify('✅ Ya compraste este producto — abriendo...');
+            window.open(urlDrive, '_blank');
+            return;
+        }
+        if (info.vendedor === idAuditor) {
+            notify('🛍️ Es tu propio producto — abriendo...');
+            window.open(urlDrive, '_blank');
+            return;
+        }
+        window._productoCompraActual = { code: code, info: info, urlDrive: urlDrive };
+        mostrarModalCompraProducto(info);
+    });
+};
+
+function mostrarModalCompraProducto(info) {
+    document.getElementById('compraProdVendedor').textContent = '...';
+    document.getElementById('compraProdPrecio').textContent = info.precio + ' PTS';
+    const aviso = document.getElementById('compraProdAviso');
+    if (aviso) aviso.style.display = 'none';
+    const btnRec = document.getElementById('btnRecargarProducto');
+    if (btnRec) btnRec.style.display = 'none';
+    const btnRecPP = document.getElementById('btnRecargarPaypalProducto');
+    if (btnRecPP) btnRecPP.style.display = 'none';
+    document.getElementById('modalComprarProducto').style.display = 'flex';
+
+    db.ref(`users/${info.vendedor}`).once('value').then(s => {
+        const u = s.val() || {};
+        document.getElementById('compraProdVendedor').textContent = u.apodo || u.nombre || u.myInviteKey || 'Usuario';
+    });
+    actualizarBotonPagoProducto(info.precio);
+}
+
+function actualizarBotonPagoProducto(precio) {
+    if (!idAuditor) return;
+    db.ref(`users/${idAuditor}/earnings`).once('value', s => {
+        const saldo = parseFloat(s.val() || 0);
+        const saldoEl = document.getElementById('compraProdSaldo');
+        if (saldoEl) saldoEl.textContent = saldo.toFixed(2) + ' PTS';
+        const btnPagar = document.getElementById('btnPagarProducto');
+        const btnRecargar = document.getElementById('btnRecargarProducto');
+        const btnRecargarPP = document.getElementById('btnRecargarPaypalProducto');
+        const aviso = document.getElementById('compraProdAviso');
+        if (saldo >= precio) {
+            btnPagar.disabled = false;
+            btnPagar.textContent = '💳 Pagar ' + precio + ' PTS';
+            if (btnRecargar) btnRecargar.style.display = 'none';
+            if (btnRecargarPP) btnRecargarPP.style.display = 'none';
+            if (aviso) aviso.style.display = 'none';
+        } else {
+            btnPagar.disabled = true;
+            btnPagar.textContent = '💳 Pagar ' + precio + ' PTS';
+            if (btnRecargar) btnRecargar.style.display = 'flex';
+            if (btnRecargarPP) btnRecargarPP.style.display = 'flex';
+            if (aviso) aviso.style.display = 'block';
+        }
+    });
+}
+
+window.recargarPuntosProducto = () => {
+    const act = window._productoCompraActual;
+    if (!act) return;
+    if (typeof AndroidNative !== 'undefined' && AndroidNative.comprarFoto) {
+        window._productoCompraPendiente = act.code;
+        notify('⏳ Abriendo Google Play para recargar 100 puntos...');
+        AndroidNative.comprarFoto("100comprasdepuntos");
+    } else {
+        notify('⚠️ Google Play no disponible. Recarga desde el botón de puntos.');
+    }
+};
+
+// Recarga los 100 puntos pagando con PayPal (el admin confirma y se acreditan)
+window.recargarPuntosProductoPayPal = () => {
+    const act = window._productoCompraActual;
+    if (!act) return;
+    if (!idAuditor) return notify('❌ Inicia sesión primero');
+    notify('💳 Abriendo PayPal para recargar 100 puntos...');
+    db.ref(`recargas_puntos_pendientes/${idAuditor}`).push({
+        puntos: 100,
+        tipo: 'producto',
+        producto: act.code,
+        fecha: firebase.database.ServerValue.TIMESTAMP,
+        estado: 'pendiente'
+    });
+    document.getElementById('modalComprarProducto').style.display = 'none';
+    setTimeout(() => {
+        window.open('https://www.paypal.com/ncp/payment/GJBMF2C7A6Y9J', '_blank');
+        notify('⏳ Tras pagar, tus 100 puntos se acreditan cuando el administrador confirme');
+    }, 400);
+};
+
+// Verifica recargas de puntos por PayPal ya confirmadas por el admin
+window.verificarRecargasProductoPendientes = () => {
+    if (!idAuditor) return;
+    db.ref(`recargas_puntos_pendientes/${idAuditor}`).once('value', snap => {
+        if (!snap.exists()) return;
+        snap.forEach(child => {
+            const c = child.val();
+            if (c.estado === 'completado' && !c.acreditado) {
+                const pts = Number(c.puntos) || 100;
+                db.ref(`users/${idAuditor}/earnings`).set(firebase.database.ServerValue.increment(pts)).then(() => {
+                    child.ref.update({ acreditado: true });
+                    notify(`✅ +${pts} PTS acreditados (recarga PayPal)`);
+                    try { window.playSound('win'); } catch (e) {}
+                    const modal = document.getElementById('modalComprarProducto');
+                    if (window._productoCompraActual && modal && modal.style.display === 'flex') {
+                        actualizarBotonPagoProducto(window._productoCompraActual.info.precio);
+                    }
+                }).catch(err => notify('Error al acreditar puntos: ' + err.message));
+            }
+        });
+    });
+};
+
+window.continuarCompraProductoPendiente = () => {
+    const code = window._productoCompraPendiente;
+    window._productoCompraPendiente = null;
+    if (!code || !window._productoCompraActual || window._productoCompraActual.code !== code) return;
+    notify('✅ Recargaste 100 puntos');
+    actualizarBotonPagoProducto(window._productoCompraActual.info.precio);
+};
+
+window.ejecutarCompraProducto = () => {
+    const act = window._productoCompraActual;
+    if (!act) return;
+    const info = act.info; const code = act.code; const urlDrive = act.urlDrive;
+    if (!idAuditor) return notify('❌ Inicia sesión primero');
+    if (info.vendedor === idAuditor) return notify('❌ Es tu propio producto');
+
+    const btn = document.getElementById('btnPagarProducto');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Procesando...'; }
+
+    db.ref(`users/${idAuditor}/earnings`).once('value', s => {
+        const saldo = parseFloat(s.val() || 0);
+        if (saldo < info.precio) {
+            actualizarBotonPagoProducto(info.precio);
+            return notify('❌ Saldo insuficiente: recarga puntos con Google Play');
+        }
+
+        const gananciaVendedor = Math.round(info.precio * (PORCENTAJE_VENDEDOR_PRODUCTO / 100) * 100) / 100;
+
+        // 1) Descontar al comprador
+        db.ref(`users/${idAuditor}/earnings`).set(firebase.database.ServerValue.increment(-info.precio)).then(() => {
+            db.ref(`users/${idAuditor}`).once('value').then(us => {
+                const ud = us.val() || {};
+                const compradorNombre = ud.apodo || ud.nombre || ud.myInviteKey || 'Usuario';
+                const ts = firebase.database.ServerValue.TIMESTAMP;
+                const ventaKey = db.ref(`users/${info.vendedor}/mis_ventas`).push().key;
+                const updates = {};
+                // 2) Acreditar el % al vendedor (lo demás queda para la plataforma)
+                updates[`users/${info.vendedor}/earnings`] = firebase.database.ServerValue.increment(gananciaVendedor);
+                updates[`users/${info.vendedor}/mis_ventas/${ventaKey}`] = {
+                    code: code, precio: info.precio, ganancia: gananciaVendedor,
+                    comprador: idAuditor, compradorNombre: compradorNombre, fecha: ts
+                };
+                updates[`users/${info.vendedor}/historial/${ventaKey}`] = { motivo: 'Venta producto', puntos: gananciaVendedor, fecha: ts };
+                // 3) Marcar como comprado (para todos los dispositivos)
+                updates[`compras_productos/${code}/${idAuditor}`] = { fecha: ts, precio: info.precio, vendedor: info.vendedor };
+
+                db.ref().update(updates).then(() => {
+                    notify(`✅ Producto comprado por ${info.precio} PTS — abriendo...`);
+                    registrarHistorial('Compra producto', -info.precio);
+                    document.getElementById('modalComprarProducto').style.display = 'none';
+                    try { window.playSound('win'); } catch (e) {}
+                    window.open(urlDrive, '_blank');
+                    window._productoCompraActual = null;
+                }).catch(err => {
+                    notify('Error: ' + err.message);
+                    // Revertir el descuento
+                    db.ref(`users/${idAuditor}/earnings`).set(firebase.database.ServerValue.increment(info.precio));
+                    if (btn) { btn.disabled = false; btn.textContent = '💳 Pagar ' + info.precio + ' PTS'; }
+                });
+            });
+        }).catch(err => {
+            notify('Error al procesar: ' + err.message);
+            if (btn) { btn.disabled = false; btn.textContent = '💳 Pagar ' + info.precio + ' PTS'; }
+        });
+    });
+};
+
+window.cerrarModalCompraProducto = () => {
+    document.getElementById('modalComprarProducto').style.display = 'none';
+    window._productoCompraActual = null;
+    window._productoCompraPendiente = null;
+};
+
+// ── 💰 MIS VENTAS: resumen de lo que el usuario ha vendido ──
+window.abrirMisVentas = () => {
+    document.getElementById('modalMisVentas').style.display = 'flex';
+    const cont = document.getElementById('listaMisVentas');
+    const resumen = document.getElementById('resumenMisVentas');
+    cont.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:0.85rem; padding:20px;">⏳ Cargando ventas...</div>';
+    resumen.textContent = '';
+    if (!idAuditor) return;
+    db.ref(`users/${idAuditor}/mis_ventas`).limitToLast(50).once('value', snap => {
+        const ventas = [];
+        snap.forEach(c => { ventas.push(c.val()); });
+        ventas.reverse();
+        const totalPrecio = ventas.reduce((a, v) => a + (parseFloat(v.precio) || 0), 0);
+        const totalGanancia = ventas.reduce((a, v) => a + (parseFloat(v.ganancia) || 0), 0);
+        resumen.innerHTML = `🛍️ <b>${ventas.length}</b> ventas · Total vendido: <b>${totalPrecio.toFixed(2)} PTS</b><br>🎁 Has ganado: <b style="color:#10b981;">+${totalGanancia.toFixed(2)} PTS</b>`;
+        if (!ventas.length) {
+            cont.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:0.85rem; padding:20px;">🛍️ Aún no tienes ventas.<br>Comparte tu enlace especial en el chat privado 📩</div>';
+            return;
+        }
+        cont.innerHTML = ventas.map(v => {
+            const fecha = v.fecha ? new Date(v.fecha).toLocaleString() : '';
+            return `<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 12px; margin-bottom:8px;">
+                <div style="text-align:left;">
+                    <div style="font-size:0.85rem; font-weight:700; color:#334155;">🛍️ ${escapeHtml(v.compradorNombre || 'Usuario')}</div>
+                    <div style="font-size:0.68rem; color:#94a3b8;">${fecha}</div>
+                </div>
+                <div style="text-align:right; font-size:0.78rem;">
+                    <div style="color:#64748b;">Venta: <b>${(parseFloat(v.precio) || 0).toFixed(2)} PTS</b></div>
+                    <div style="color:#10b981; font-weight:800;">+${(parseFloat(v.ganancia) || 0).toFixed(2)} PTS</div>
+                </div>
+            </div>`;
+        }).join('');
+    });
+};
+
+window.cerrarMisVentas = () => {
+    document.getElementById('modalMisVentas').style.display = 'none';
 };
 
 // 4. FUNCIÓN STUB PARA EVITAR EL CRASH POR LLAMADAS ANTIGUAS (MANTENER SIEMPRE)
@@ -13436,6 +13841,7 @@ window.comprarFotoPayPal = (key) => {
 
 // Comprar 100 puntos con Google Play
 window.iniciarCompraFotoGooglePlay = () => {
+    window._productoCompraPendiente = null;
     const key = window._fotoCompraPendienteKey || currentPhotoKey;
     if (!key) return notify("Error: foto no identificada");
 
@@ -13450,6 +13856,13 @@ window.iniciarCompraFotoGooglePlay = () => {
 
 // Callback desde Kotlin cuando la compra Google Play es exitosa — acredita 100 puntos
 window.onCompraFotoExitosa = (productId) => {
+    // ¿La recarga fue para comprar un producto? → acreditar puntos y continuar la compra
+    if (window._productoCompraPendiente) {
+        db.ref(`users/${idAuditor}/earnings`).set(firebase.database.ServerValue.increment(100)).then(() => {
+            if (window.continuarCompraProductoPendiente) window.continuarCompraProductoPendiente();
+        }).catch(err => notify("Error al acreditar puntos: " + err.message));
+        return;
+    }
     const key = window._fotoCompraPendienteKey;
     if (!key) return notify("Error: no hay foto pendiente");
 
@@ -13661,9 +14074,104 @@ window.enviarVideoA = (targetUid, targetName) => {
     try { window.playSound('coin'); } catch(e){}
 };
 
+// ==========================================
+// 🛍️ VENDER PRODUCTOS: Google Drive → enlace especial tipo codecash.space/?v=XXXX
+// ==========================================
+const CAS_DOMINIO_PRODUCTO = 'codecash.space';
+const PORCENTAJE_VENDEDOR_PRODUCTO = 5; // % del precio que recibe el vendedor (el resto es de la plataforma)
+
+function extraerDriveInfo(link) {
+    if (!link) return null;
+    const limpio = String(link).trim();
+    if (!/drive\.google\.com|docs\.google\.com/i.test(limpio)) return null;
+    let m = limpio.match(/\/folders\/([A-Za-z0-9_-]{10,})/);
+    if (m) return { tipo: 'c', id: m[1] };
+    m = limpio.match(/\/file\/d\/([A-Za-z0-9_-]{10,})/);
+    if (m) return { tipo: 'a', id: m[1] };
+    m = limpio.match(/[?&]id=([A-Za-z0-9_-]{10,})/);
+    if (m) return { tipo: 'a', id: m[1] };
+    return null;
+}
+
+function codificarEnlaceProducto(info) {
+    // Formato nuevo: "p" + base64(JSON) con Drive ID, tipo, precio y vendedor
+    const payload = { t: info.tipo === 'c' ? 'c' : 'a', i: info.id, p: Number(info.precio) || 0, u: info.vendedor || '' };
+    const b64 = btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return 'https://' + CAS_DOMINIO_PRODUCTO + '/?v=p' + b64;
+}
+
+function decodificarEnlaceProducto(code) {
+    if (!code || code.length < 2) return null;
+    // Formato nuevo: "p" + base64(JSON) {t, i, p, u}
+    if (code[0] === 'p') {
+        try {
+            const b64 = code.slice(1).replace(/-/g, '+').replace(/_/g, '/');
+            const obj = JSON.parse(atob(b64));
+            if (!obj || !obj.i || !/^[A-Za-z0-9_-]{10,}$/.test(obj.i)) return null;
+            return { tipo: obj.t === 'c' ? 'c' : 'a', id: obj.i, precio: Number(obj.p) || 0, vendedor: obj.u || '' };
+        } catch (e) {
+            return null;
+        }
+    }
+    // Formato viejo (sin precio): "a" o "c" + base64 del Drive ID
+    const tipo = code[0];
+    const b64 = code.slice(1).replace(/-/g, '+').replace(/_/g, '/');
+    try {
+        const id = atob(b64);
+        if (!/^[A-Za-z0-9_-]{10,}$/.test(id)) return null;
+        return { tipo: tipo === 'c' ? 'c' : 'a', id: id, precio: 0, vendedor: '' };
+    } catch (e) {
+        return null;
+    }
+}
+
+function resolverUrlDrive(code) {
+    const info = decodificarEnlaceProducto(code);
+    if (!info) return null;
+    return info.tipo === 'c'
+        ? 'https://drive.google.com/drive/folders/' + info.id
+        : 'https://drive.google.com/file/d/' + info.id + '/view';
+}
+
+// Si abren la app con un enlace especial (?v=...):
+//  - producto gratis o antiguo → saltar directo a Google Drive
+//  - producto de pago → abrir el modal de compra (requiere iniciar sesión)
+(function resolverEnlaceProductoAlAbrir() {
+    try {
+        const code = new URLSearchParams(window.location.search).get('v');
+        if (!code) return;
+        const info = decodificarEnlaceProducto(code);
+        if (!info) return;
+        if (info.precio > 0) {
+            if (typeof AndroidNative !== 'undefined') {
+                let intentos = 0;
+                const abrir = () => {
+                    intentos++;
+                    if (typeof abrirCompraProducto === 'function' && idAuditor) { abrirCompraProducto(code); }
+                    else if (intentos < 10) { setTimeout(abrir, 700); }
+                    else if (typeof abrirCompraProducto === 'function') { abrirCompraProducto(code); }
+                };
+                setTimeout(abrir, 1200);
+            } else {
+                document.title = 'Producto CodeCash';
+                setTimeout(() => notify('🛍️ Este producto se compra dentro de la app CodeCash. Descárgala gratis y abre el enlace desde ahí.'), 1500);
+            }
+            return;
+        }
+        const destino = resolverUrlDrive(code);
+        if (!destino) return;
+        document.title = 'Abriendo enlace...';
+        window.location.replace(destino);
+    } catch (e) { /* silencioso */ }
+})();
+
 function hacerEnlacesClickeables(texto) {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return texto.replace(urlRegex, function(url) {
+        const prodMatch = url.match(/codecash\.space\/\?v=([A-Za-z0-9_-]+)/);
+        if (prodMatch && prodMatch[1]) {
+            return `<span onclick="event.stopPropagation(); abrirCompraProducto('${prodMatch[1]}')" style="display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; font-weight:800; padding:10px 18px; border-radius:50px; margin:4px 0; box-shadow:0 4px 12px rgba(16,185,129,0.35); cursor:pointer;">🎬 Ver producto</span>`;
+        }
         const ytMatch = url.match(/(?:v=|be\/)([\w-]{11})/);
         if (ytMatch && ytMatch[1]) {
             const videoId = ytMatch[1];
