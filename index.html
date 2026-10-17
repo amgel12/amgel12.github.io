@@ -12859,6 +12859,7 @@ function cargarMensajesPrivados() {
         window._p2pPollId = setInterval(() => {
             if (!currentChatId || document.hidden) return;
             try { p2pBuscarOfertaReciente(); } catch (e) {}
+            try { p2pBuscarRespuesta(); } catch (e) {}
         }, 6000);
     } catch (e) {}
 }
@@ -13418,6 +13419,7 @@ async function p2pEnviarVideo(file, dur) {
 
     const sid = db.ref(`chats_privados/${currentChatId}`).push().key;
     const peerUid = targetUserUid;
+    const chatP2P = currentChatId;
     const meta = {
         name: file.name || 'video.mp4',
         size: file.size,
@@ -13431,6 +13433,15 @@ async function p2pEnviarVideo(file, dur) {
 
     const pc = new RTCPeerConnection(P2P_ICE);
     window._p2p.pc = pc;
+    pc.onicecandidate = (e) => {
+        try {
+            if (!e.candidate) return;
+            db.ref(`chats_privados/${chatP2P}`).push({
+                p2p: true, p2pType: 'ice', sid, from: idAuditor, to: peerUid,
+                cand: e.candidate.toJSON(), fecha: firebase.database.ServerValue.TIMESTAMP
+            }).catch(() => {});
+        } catch (err) {}
+    };
     pc.oniceconnectionstatechange = () => {
         const s = window._p2p;
         if (pc.iceConnectionState === 'failed' && s && s.sid === sid && !s.done) {
@@ -13447,13 +13458,13 @@ async function p2pEnviarVideo(file, dur) {
     try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        await p2pEsperarICE(pc, 4000);
+        await p2pEsperarICE(pc, 2000);
     } catch (e) {
         p2pFallo(sid, "❌ Error de conexión");
         return;
     }
 
-    db.ref(`chats_privados/${currentChatId}`).push({
+    db.ref(`chats_privados/${chatP2P}`).push({
         p2p: true, p2pType: 'offer', sid, from: idAuditor, to: peerUid,
         meta: meta,
         sdp: { type: 'offer', sdp: pc.localDescription.sdp },
@@ -13546,6 +13557,7 @@ window.p2pAceptarOferta = async () => {
     window._p2pOffer = null;
 
     const sid = o.sid;
+    const chatP2P = currentChatId;
     const meta = o.meta || {};
     window._p2p = { role: 'receiver', sid, chatId: currentChatId, pc: null, dc: null, chunks: [], received: 0, total: meta.size || 0, meta, peerUid: o.from, done: false, creado: Date.now() };
     p2pFilaUI(sid, "🎥 Video entrante", meta, false);
@@ -13553,6 +13565,15 @@ window.p2pAceptarOferta = async () => {
 
     const pc = new RTCPeerConnection(P2P_ICE);
     window._p2p.pc = pc;
+    pc.onicecandidate = (e) => {
+        try {
+            if (!e.candidate) return;
+            db.ref(`chats_privados/${chatP2P}`).push({
+                p2p: true, p2pType: 'ice', sid, from: idAuditor, to: o.from,
+                cand: e.candidate.toJSON(), fecha: firebase.database.ServerValue.TIMESTAMP
+            }).catch(() => {});
+        } catch (err) {}
+    };
     pc.oniceconnectionstatechange = () => {
         const s = window._p2p;
         if (pc.iceConnectionState === 'failed' && s && s.sid === sid && !s.done) {
@@ -13589,15 +13610,28 @@ window.p2pAceptarOferta = async () => {
 
     try {
         await pc.setRemoteDescription(new RTCSessionDescription(o.sdp));
+        const pend0 = window._p2p.icePendientes || [];
+        window._p2p.icePendientes = null;
+        pend0.forEach(c => { try { pc.addIceCandidate(c).catch(() => {}); } catch (e) {} });
+        try {
+            db.ref(`chats_privados/${chatP2P}`).limitToLast(40).once('value', snap => {
+                const arr = [];
+                snap.forEach(ch => {
+                    const mm = ch.val();
+                    if (mm && mm.p2p && mm.p2pType === 'ice' && mm.sid === sid && mm.to === idAuditor && mm.cand) arr.push(mm.cand);
+                });
+                arr.forEach(cd => { try { pc.addIceCandidate(new RTCIceCandidate(cd)).catch(() => {}); } catch (e) {} });
+            }).catch(() => {});
+        } catch (e) {}
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        await p2pEsperarICE(pc, 5500);
+        await p2pEsperarICE(pc, 2000);
     } catch (e) {
         p2pFallo(sid, "❌ Error de conexión");
         return;
     }
 
-    db.ref(`chats_privados/${currentChatId}`).push({
+    db.ref(`chats_privados/${chatP2P}`).push({
         p2p: true, p2pType: 'answer', sid, from: idAuditor, to: o.from,
         sdp: { type: 'answer', sdp: pc.localDescription.sdp },
         fecha: firebase.database.ServerValue.TIMESTAMP
@@ -13926,6 +13960,7 @@ function p2pBuscarOfertaReciente() {
         snap.forEach(s => {
             const m = s.val();
             if (m && m.p2p && m.p2pType === 'cancel' && m.to === idAuditor && m.sid) cancelados[m.sid] = true;
+            if (m && m.p2p && m.p2pType === 'ice' && (Date.now() - (m.fecha || 0)) > 600000) { p2pBorrarSeñal(s.key); return; }
         });
         let mejor = null;
         snap.forEach(s => {
@@ -13943,6 +13978,30 @@ function p2pBuscarOfertaReciente() {
             try { notify('🎥 Recibiendo video en vivo…'); } catch (e) {}
             p2pAceptarOferta();
         }
+    }).catch(() => {});
+}
+
+function p2pAplicarAnswer(m) {
+    const s = window._p2p;
+    if (!s || s.role !== 'sender' || s.sid !== m.sid || !s.pc || s.answerAplicada) return;
+    s.answerAplicada = true;
+    s.pc.setRemoteDescription(new RTCSessionDescription(m.sdp)).then(() => {
+        const pend = s.icePendientes || [];
+        s.icePendientes = null;
+        pend.forEach(c => { try { s.pc.addIceCandidate(c).catch(() => {}); } catch (e) {} });
+    }).catch(e => console.error("🎥 P2P answer:", e));
+    p2pSetEstado(s.sid, "2/3 Emparejando conexión…", 0);
+}
+
+function p2pBuscarRespuesta() {
+    const s = window._p2p;
+    if (!s || s.role !== 'sender' || s.done || s.answerAplicada || !currentChatId) return;
+    db.ref(`chats_privados/${currentChatId}`).limitToLast(30).once('value', snap => {
+        if (!snap.exists()) return;
+        snap.forEach(ch => {
+            const m = ch.val();
+            if (m && m.p2p && m.p2pType === 'answer' && m.sid === s.sid && m.to === idAuditor) p2pAplicarAnswer(m);
+        });
     }).catch(() => {});
 }
 
@@ -13975,12 +14034,19 @@ function p2pOnSignal(snap) {
         }
 
         const s = window._p2p;
-        if (m.p2pType === 'answer') {
-            if (s && s.role === 'sender' && s.sid === m.sid && s.pc && !s.answerAplicada) {
-                s.answerAplicada = true;
-                s.pc.setRemoteDescription(new RTCSessionDescription(m.sdp)).catch(e => console.error("🎥 P2P answer:", e));
-                p2pSetEstado(s.sid, "2/3 Emparejando conexión…", 0);
+        if (m.p2pType === 'ice') {
+            if (s && s.sid === m.sid && s.pc && m.cand) {
+                const cand = new RTCIceCandidate(m.cand);
+                let listo = false;
+                if (s.role === 'sender') listo = !!s.answerAplicada; else listo = !!s.pc.remoteDescription;
+                if (listo) { s.pc.addIceCandidate(cand).catch(() => {}); }
+                else { (s.icePendientes = s.icePendientes || []).push(cand); }
+                p2pBorrarSeñal(snap.key);
             }
+            return;
+        }
+        if (m.p2pType === 'answer') {
+            p2pAplicarAnswer(m);
             return;
         }
         if (m.p2pType === 'decline') {
