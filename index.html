@@ -4167,7 +4167,7 @@ Cerrar
 </div> <!-- 1. Cierra barra blanca -->
 </div> <!-- 2. Cierra contenido del modal -->
 </div> <!-- 3. Cierra overlay del modal -->
-<div id="p2pAcceptModal" class="modal-overlay" style="display:none; z-index: 27000;">
+<div id="p2pAcceptModal" class="modal-overlay" style="display:none; z-index: 33000;">
     <div class="modal-content" style="max-width:340px;">
         <div style="font-size:2.2rem; margin-bottom:6px;">🎥</div>
         <h3 style="color:#6366f1; margin-bottom:8px;">Video en vivo</h3>
@@ -13230,7 +13230,7 @@ window._p2pSigRef = null;
 window._p2pSigChat = null;
 
 const P2P_CHUNK = 64 * 1024;
-const P2P_OFFER_MAX_MS = 90000;
+const P2P_OFFER_MAX_MS = 300000;
 const P2P_ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
 
 window.p2pAbrirSelectorVideo = () => {
@@ -13348,10 +13348,16 @@ async function p2pEnviarVideo(file, dur) {
         });
     } catch (e) {}
 
+    try {
+        if (typeof enviarNotificacion === 'function') {
+            enviarNotificacion(peerUid, miNombre, "🎥 Quiere enviarte un video (en vivo)", idAuditor);
+        }
+    } catch (e) {}
+
     window._p2p.timeoutId = setTimeout(() => {
         const s = window._p2p;
         if (s && s.sid === sid && !s.done && !s.open) {
-            p2pCancelarEnvio(sid, "⏱ Sin respuesta (debe estar en línea)");
+            p2pCancelarEnvio(sid, "⏱ Sin respuesta — debe abrir la app y aceptar");
         }
     }, P2P_OFFER_MAX_MS);
 }
@@ -13435,7 +13441,15 @@ window.p2pAceptarOferta = async () => {
         dc.binaryType = 'arraybuffer';
         window._p2p.dc = dc;
         dc.onmessage = (e) => p2pRecibirMensaje(sid, e);
-        dc.onopen = () => p2pSetEstado(sid, "Recibiendo…", 0);
+        dc.onopen = () => {
+            const s2 = window._p2p;
+            if (s2 && s2.connectId) { clearTimeout(s2.connectId); s2.connectId = null; }
+            p2pSetEstado(sid, "Recibiendo…", 0);
+        };
+        dc.onclose = () => {
+            const s2 = window._p2p;
+            if (s2 && s2.sid === sid && !s2.done) p2pFallo(sid, "❌ Se cerró la conexión");
+        };
     };
 
     try {
@@ -13453,6 +13467,13 @@ window.p2pAceptarOferta = async () => {
         sdp: { type: 'answer', sdp: pc.localDescription.sdp },
         fecha: firebase.database.ServerValue.TIMESTAMP
     }).catch(() => {});
+
+    window._p2p.connectId = setTimeout(() => {
+        const s2 = window._p2p;
+        if (s2 && s2.sid === sid && !s2.done && (!s2.dc || s2.dc.readyState !== 'open')) {
+            p2pFallo(sid, "❌ No se pudo conectar (¿el remitente sigue en la app?)");
+        }
+    }, 45000);
 };
 
 window.p2pRechazarOferta = () => {
@@ -13688,6 +13709,7 @@ function p2pLimpiarSesion(sid) {
     if (!s || s.sid !== sid) return;
     try { if (s.timeoutId) clearTimeout(s.timeoutId); } catch (e) {}
     try { if (s.cleanupId) clearTimeout(s.cleanupId); } catch (e) {}
+    try { if (s.connectId) clearTimeout(s.connectId); } catch (e) {}
     try { if (s.dc) s.dc.close(); } catch (e) {}
     try { if (s.pc) s.pc.close(); } catch (e) {}
     window._p2p = null;
@@ -13735,11 +13757,16 @@ function p2pBuscarOfertaReciente() {
     if (window._p2pOffer) return;
     db.ref(`chats_privados/${currentChatId}`).limitToLast(20).once('value', snap => {
         if (!snap.exists()) return;
+        const cancelados = {};
+        snap.forEach(s => {
+            const m = s.val();
+            if (m && m.p2p && m.p2pType === 'cancel' && m.to === idAuditor && m.sid) cancelados[m.sid] = true;
+        });
         let mejor = null;
         snap.forEach(s => {
             const m = s.val();
             if (!m || !m.p2p || m.p2pType !== 'offer' || m.to !== idAuditor) return;
-            if (window._p2pSidsUsados[m.sid]) { p2pBorrarSeñal(s.key); return; }
+            if (window._p2pSidsUsados[m.sid] || cancelados[m.sid]) { p2pBorrarSeñal(s.key); return; }
             const edad = Date.now() - (m.fecha || 0);
             if (edad > P2P_OFFER_MAX_MS) { p2pBorrarSeñal(s.key); return; }
             if (!mejor || (m.fecha || 0) > (mejor.fecha || 0)) {
@@ -13797,6 +13824,16 @@ function p2pOnSignal(snap) {
                 window._p2pOffer = null;
                 p2pOcultarModalOferta();
             }
+            const sc = window._p2p;
+            if (sc && sc.sid === m.sid && !sc.done) {
+                if (sc.role === 'receiver') {
+                    p2pSetEstado(sc.sid, "❌ Se canceló la transferencia", null);
+                    p2pLimpiarSesion(sc.sid);
+                } else {
+                    p2pFallo(sc.sid, "❌ El otro dispositivo no pudo conectar");
+                }
+            }
+            p2pBorrarSeñal(snap.key);
             return;
         }
         if (m.p2pType === 'ack') {
