@@ -12793,6 +12793,16 @@ function cargarMensajesPrivados() {
         list.innerHTML = '<div class="priv-loading" style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i></div>';
     }
 
+    // 1b. Si hay una transferencia P2P activa en este chat, repintar su fila
+    try {
+        const sAct = window._p2p;
+        if (sAct && !sAct.done && sAct.chatId === currentChatId && !document.getElementById('p2p-row-' + sAct.sid)) {
+            const tit = sAct.role === 'sender' ? "🎥 Video en vivo" : "🎥 Video entrante";
+            p2pFilaUI(sAct.sid, tit, sAct.meta || {}, sAct.role === 'sender');
+            p2pSetEstado(sAct.sid, sAct.role === 'sender' ? "→ Conectando con el otro teléfono…" : "→ Conectando con el emisor…", null);
+        }
+    } catch (e) {}
+
     // 2. ESCUCHAR MENSAJES NUEVOS
     privChatRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(15);
     privChatRef.on('child_added', snap => {
@@ -13811,8 +13821,14 @@ function p2pFilaUI(sid, titulo, meta, esMio) {
 }
 
 function p2pSetEstado(sid, texto, pct) {
-    const fila = document.getElementById('p2p-row-' + sid);
-    if (!fila) return;
+    const s = window._p2p;
+    let fila = document.getElementById('p2p-row-' + sid);
+    if (!fila) {
+        if (!s || s.sid !== sid || s.chatId !== currentChatId) return;
+        const tit = s.role === 'sender' ? "🎥 Video en vivo" : "🎥 Video entrante";
+        fila = p2pFilaUI(sid, tit, s.meta || {}, s.role === 'sender');
+        if (!fila) return;
+    }
     const st = fila.querySelector('.p2p-status');
     if (st) st.textContent = texto;
     if (pct != null) {
