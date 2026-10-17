@@ -13309,6 +13309,21 @@ function p2pQuitarInvitacion(sid) {
     if (el) el.remove();
 }
 
+function p2pAbandonarSesion() {
+    const s = window._p2p;
+    if (!s) return;
+    try {
+        if (s.role === 'sender') {
+            db.ref(`chats_privados/${s.chatId || currentChatId}`).push({
+                p2p: true, p2pType: 'cancel', sid: s.sid, from: idAuditor, to: s.peerUid,
+                fecha: firebase.database.ServerValue.TIMESTAMP
+            }).catch(() => {});
+        }
+    } catch (e) {}
+    try { p2pSetEstado(s.sid, "⏹ Cancelado", null); } catch (e) {}
+    try { p2pLimpiarSesion(s.sid); } catch (e) {}
+}
+
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden && currentChatId && !window._p2pOffer) {
         try { p2pBuscarOfertaReciente(); } catch (e) {}
@@ -13320,9 +13335,16 @@ window.p2pAbrirSelectorVideo = () => {
         notify("Abre un chat privado primero");
         return;
     }
-    if (window._p2p && !window._p2p.done) {
-        notify("⚠️ Ya hay una transferencia de video en curso");
-        return;
+    const s = window._p2p;
+    if (s && !s.done) {
+        const mismoChat = (s.chatId === currentChatId);
+        const activa = s.open || (s.dc && s.dc.readyState === 'open');
+        const reciente = (Date.now() - (s.creado || 0)) < 45000;
+        if (mismoChat && (activa || reciente)) {
+            notify("⚠️ Ya hay una transferencia de video en curso");
+            return;
+        }
+        p2pAbandonarSesion();
     }
     const input = document.getElementById('p2pVideoInput');
     if (input) input.click();
@@ -13375,7 +13397,14 @@ function p2pDuracion(file) {
 }
 
 async function p2pEnviarVideo(file, dur) {
-    if (window._p2p && !window._p2p.done) return notify("⚠️ Ya hay una transferencia en curso");
+    if (window._p2p && !window._p2p.done) {
+        const s0 = window._p2p;
+        const mismoChat = (s0.chatId === currentChatId);
+        const activa = s0.open || (s0.dc && s0.dc.readyState === 'open');
+        const reciente = (Date.now() - (s0.creado || 0)) < 45000;
+        if (mismoChat && (activa || reciente)) return notify("⚠️ Ya hay una transferencia en curso");
+        p2pAbandonarSesion();
+    }
 
     const sid = db.ref(`chats_privados/${currentChatId}`).push().key;
     const peerUid = targetUserUid;
