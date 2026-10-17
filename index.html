@@ -12845,6 +12845,11 @@ function cargarMensajesPrivados() {
             setTimeout(p2pBuscarOfertaReciente, 3000);
             setTimeout(p2pBuscarOfertaReciente, 8000);
         }
+        if (window._p2pPollId) clearInterval(window._p2pPollId);
+        window._p2pPollId = setInterval(() => {
+            if (!currentChatId || document.hidden) return;
+            try { p2pBuscarOfertaReciente(); } catch (e) {}
+        }, 6000);
     } catch (e) {}
 }
 // ==========================================
@@ -13375,9 +13380,9 @@ async function p2pEnviarVideo(file, dur) {
         mime: file.type || 'video/mp4'
     };
 
-    window._p2p = { role: 'sender', sid, chatId: currentChatId, pc: null, dc: null, file, meta, peerUid, done: false, open: false };
+    window._p2p = { role: 'sender', sid, chatId: currentChatId, pc: null, dc: null, file, meta, peerUid, done: false, open: false, creado: Date.now() };
     p2pFilaUI(sid, "🎥 Video en vivo", meta, true);
-    p2pSetEstado(sid, "Esperando que acepte…", 0);
+    p2pSetEstado(sid, "Conectando con el otro teléfono…", 0);
 
     const pc = new RTCPeerConnection(P2P_ICE);
     window._p2p.pc = pc;
@@ -13414,21 +13419,21 @@ async function p2pEnviarVideo(file, dur) {
     try {
         db.ref(`users/${peerUid}/notifications`).push({
             from: myCurrentKey, fromName: miNombre, type: 'chat_privado',
-            text: "🎥 Quiere enviarte un video (en vivo)",
+            text: "🎥 Te está enviando un video (en vivo)",
             extra: idAuditor, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
         });
     } catch (e) {}
 
     try {
         if (typeof enviarNotificacion === 'function') {
-            enviarNotificacion(peerUid, miNombre, "🎥 Quiere enviarte un video (en vivo)", idAuditor);
+            enviarNotificacion(peerUid, miNombre, "🎥 Te está enviando un video (en vivo)", idAuditor);
         }
     } catch (e) {}
 
     window._p2p.timeoutId = setTimeout(() => {
         const s = window._p2p;
         if (s && s.sid === sid && !s.done && !s.open) {
-            p2pCancelarEnvio(sid, "⏱ Sin respuesta — debe abrir la app y aceptar");
+            p2pCancelarEnvio(sid, "⏱ El otro teléfono no está disponible (abre la app)");
         }
     }, P2P_OFFER_MAX_MS);
 }
@@ -13877,21 +13882,15 @@ function p2pBuscarOfertaReciente() {
             if (!m || !m.p2p || m.p2pType !== 'offer' || m.to !== idAuditor) return;
             if (window._p2pSidsUsados[m.sid] || cancelados[m.sid]) { p2pBorrarSeñal(s.key); return; }
             const edad = Date.now() - (m.fecha || 0);
-            if (edad > P2P_OFFER_MAX_MS) { p2pBorrarSeñal(s.key); return; }
+            if (edad > 1800000) { p2pBorrarSeñal(s.key); return; }
             if (!mejor || (m.fecha || 0) > (mejor.fecha || 0)) {
                 mejor = { sid: m.sid, sdp: m.sdp, meta: m.meta || {}, from: m.from, key: s.key, fecha: m.fecha || Date.now() };
             }
         });
         if (mejor) {
             window._p2pOffer = mejor;
-            try { p2pFilaInvitacion(mejor.sid, mejor.meta, mejor.from); } catch (e) {}
-            try {
-                if (!window._p2pToasts[mejor.sid]) {
-                    window._p2pToasts[mejor.sid] = 1;
-                    notify('🎥 Solicitud de video en vivo');
-                }
-            } catch (e) {}
-            p2pMostrarModalOferta();
+            try { notify('🎥 Recibiendo video en vivo…'); } catch (e) {}
+            p2pAceptarOferta();
         }
     }).catch(() => {});
 }
@@ -13904,8 +13903,10 @@ function p2pOnSignal(snap) {
 
         if (m.p2pType === 'offer') {
             const edad = Date.now() - (m.fecha || Date.now());
-            if (edad > P2P_OFFER_MAX_MS || window._p2pSidsUsados[m.sid]) { p2pBorrarSeñal(snap.key); return; }
+            if (edad > 1800000 || window._p2pSidsUsados[m.sid]) { p2pBorrarSeñal(snap.key); return; }
             if (p2pSesionViva()) {
+                const sc = window._p2p;
+                if (sc && sc.sid === m.sid) return;
                 try {
                     db.ref(`chats_privados/${currentChatId}`).push({
                         p2p: true, p2pType: 'decline', sid: m.sid, from: idAuditor, to: m.from,
@@ -13917,14 +13918,8 @@ function p2pOnSignal(snap) {
             }
             if (window._p2pOffer && window._p2pOffer.sid === m.sid) return;
             window._p2pOffer = { sid: m.sid, sdp: m.sdp, meta: m.meta || {}, from: m.from, key: snap.key, fecha: m.fecha || Date.now() };
-            try { p2pFilaInvitacion(m.sid, m.meta || {}, m.from); } catch (e) {}
-            try {
-                if (!window._p2pToasts[m.sid]) {
-                    window._p2pToasts[m.sid] = 1;
-                    notify('🎥 Solicitud de video en vivo');
-                }
-            } catch (e) {}
-            p2pMostrarModalOferta();
+            try { notify('🎥 Recibiendo video en vivo…'); } catch (e) {}
+            p2pAceptarOferta();
             return;
         }
 
@@ -14119,6 +14114,7 @@ window.cerrarChatPrivado = () => {
     currentChatId = null;
     currentChatTargetUid = null;
     currentChatTargetName = null;
+    if (window._p2pPollId) { try { clearInterval(window._p2pPollId); } catch(e) {} window._p2pPollId = null; }
     window._enChatPrivado = false; // Permitir re-render de Mi Chat de nuevo
     try { localStorage.removeItem('chatAbiertoUid'); localStorage.removeItem('chatAbiertoNombre'); } catch(e) {}
     if (window.cancelarRespuesta) window.cancelarRespuesta();
