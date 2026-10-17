@@ -3226,6 +3226,34 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
 
+        <div style="text-align: left; margin-bottom: 20px; background:#f8fafc; border:2px solid #e2e8f0; border-radius:14px; padding:12px;">
+            <label style="font-size: 0.75rem; color: #6366f1; font-weight: 800;">⚙️ Permisos del grupo</label>
+
+            <div style="margin-top: 8px;">
+                <div style="font-size: 0.72rem; color: #475569; font-weight: 700; margin-bottom: 4px;">✏️ ¿Quién puede editar la descripción?</div>
+                <select id="selectPermEditarDesc" style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 8px; width: 100%; font-size: 0.82rem; font-weight: 700; color: #334155; background: white;">
+                    <option value="todos">Todos</option>
+                    <option value="creador">Solo tú (creador)</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <div style="font-size: 0.72rem; color: #475569; font-weight: 700; margin-bottom: 4px;">💬 ¿Quién puede enviar mensajes?</div>
+                <select id="selectPermEnviar" style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 8px; width: 100%; font-size: 0.82rem; font-weight: 700; color: #334155; background: white;">
+                    <option value="todos">Todos</option>
+                    <option value="creador">Solo tú (creador)</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <div style="font-size: 0.72rem; color: #475569; font-weight: 700; margin-bottom: 4px;">👤➕ ¿Quién puede añadir miembros?</div>
+                <select id="selectPermAnadir" style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 8px; width: 100%; font-size: 0.82rem; font-weight: 700; color: #334155; background: white;">
+                    <option value="todos">Todos</option>
+                    <option value="creador">Solo tú (creador)</option>
+                </select>
+            </div>
+        </div>
+
         <button onclick="guardarNuevoGrupo()" class="btn-blue" style="background: linear-gradient(135deg, #6366f1, #4f46e5); width: 100%;">
             Crear Grupo
         </button>
@@ -3250,7 +3278,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <textarea id="inputEditarDescGrupo" placeholder="De qué trata el grupo..." maxlength="120" rows="2" style="border: 2px solid #e2e8f0; margin-top: 5px; width:100%; resize:none;"></textarea>
         </div>
 
-        <div style="text-align: left; margin-bottom: 20px;">
+        <div id="bloqueFotoEditarGrupo" style="text-align: left; margin-bottom: 20px;">
             <label style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Foto del grupo:</label>
             <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
                 <div id="previewFotoEditarGrupo" style="width:56px; height:56px; border-radius:14px; background:#eef2ff; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; color:#6366f1; font-size:1.4rem;">👥</div>
@@ -3262,12 +3290,52 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
 
+        <div id="bloquePermisosEditarGrupo" style="text-align: left; margin-bottom: 20px; background:#f8fafc; border:2px solid #e2e8f0; border-radius:14px; padding:12px;">
+            <label style="font-size: 0.75rem; color: #6366f1; font-weight: 800;">⚙️ Permisos del grupo</label>
+
+            <div style="margin-top: 8px;">
+                <div style="font-size: 0.72rem; color: #475569; font-weight: 700; margin-bottom: 4px;">✏️ ¿Quién puede editar la descripción?</div>
+                <select id="selectEditPermDesc" style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 8px; width: 100%; font-size: 0.82rem; font-weight: 700; color: #334155; background: white;">
+                    <option value="todos">Todos</option>
+                    <option value="creador">Solo tú (creador)</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <div style="font-size: 0.72rem; color: #475569; font-weight: 700; margin-bottom: 4px;">💬 ¿Quién puede enviar mensajes?</div>
+                <select id="selectEditPermEnviar" style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 8px; width: 100%; font-size: 0.82rem; font-weight: 700; color: #334155; background: white;">
+                    <option value="todos">Todos</option>
+                    <option value="creador">Solo tú (creador)</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 10px;">
+                <div style="font-size: 0.72rem; color: #475569; font-weight: 700; margin-bottom: 4px;">👤➕ ¿Quién puede añadir miembros?</div>
+                <select id="selectEditPermAnadir" style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 8px; width: 100%; font-size: 0.82rem; font-weight: 700; color: #334155; background: white;">
+                    <option value="todos">Todos</option>
+                    <option value="creador">Solo tú (creador)</option>
+                </select>
+            </div>
+        </div>
+
         <button onclick="guardarEdicionGrupo()" class="btn-blue" style="background: linear-gradient(135deg, #6366f1, #4f46e5); width: 100%;">
             Guardar Cambios
         </button>
         <button onclick="document.getElementById('modalEditarGrupo').style.display='none'" style="background: none; border: none; color: #94a3b8; margin-top: 15px; cursor: pointer; font-weight: bold;">
             Cancelar
         </button>
+    </div>
+</div>
+
+<!-- MODAL AÑADIR MIEMBRO AL GRUPO -->
+<div id="modalAnadirMiembroGrupo" class="modal-overlay" style="z-index: 31000; display:none;">
+    <div class="modal-content" style="text-align:center;">
+        <h3 style="color:#10b981; margin-bottom:6px;">👤➕ Añadir miembro</h3>
+        <p style="font-size:0.75rem; color:#64748b; margin-bottom:14px;">Elige un amigo para añadirlo a este grupo.</p>
+        <div id="listaAmigosAnadir" style="max-height:45vh; overflow-y:auto; text-align:left;">
+            <div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando amigos...</div>
+        </div>
+        <button onclick="document.getElementById('modalAnadirMiembroGrupo').style.display='none'" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer; font-weight:bold;">Cerrar</button>
     </div>
 </div>
 
@@ -3287,14 +3355,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             
-            <!-- BOTÓN EDITAR GRUPO (solo creador/admin) -->
-            <button id="btnEditarGrupo" onclick="abrirModalEditarGrupo()" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: none; width: 40px; height: 40px; border-radius: 50%; display:none; align-items:center; justify-content:center; font-size:1.1rem; cursor:pointer; transition:0.2s; margin-right:8px;">
-                <i class="fas fa-pen"></i>
-            </button>
-            <!-- BOTÓN COMPARTIR -->
-            <button onclick="compartirLinkGrupo()" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s;">
-                <i class="fas fa-share-nodes"></i>
-            </button>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <!-- BOTÓN AÑADIR MIEMBRO (según permisos) -->
+                <button id="btnAnadirMiembroGrupo" onclick="abrirAnadirMiembroGrupo()" title="Añadir miembro" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: none; width: 40px; height: 40px; border-radius: 50%; display:none; align-items:center; justify-content:center; font-size:1rem; cursor:pointer; transition:0.2s;">
+                    <i class="fas fa-user-plus"></i>
+                </button>
+                <!-- BOTÓN EDITAR GRUPO (creador o si el permiso lo permite) -->
+                <button id="btnEditarGrupo" onclick="abrirModalEditarGrupo()" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: none; width: 40px; height: 40px; border-radius: 50%; display:none; align-items:center; justify-content:center; font-size:1.1rem; cursor:pointer; transition:0.2s;">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <!-- BOTÓN COMPARTIR -->
+                <button onclick="compartirLinkGrupo()" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s;">
+                    <i class="fas fa-share-nodes"></i>
+                </button>
+            </div>
         </div>
         <!-- Lista de Mensajes -->
         <div id="grupoChatList" style="flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:8px;">
@@ -3335,8 +3409,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <input type="text" id="inputGrupoMsg" placeholder="Escribe al grupo..." onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensajeGrupo();}" style="flex:1; background:#f0f2f5; border:none; padding:10px 15px; border-radius:20px; outline:none;">
-                <button type="button" onclick="abrirSelectorEmoji(event, 'inputGrupoMsg')" aria-label="Emojis" style="width:40px; height:40px; border-radius:50%; background:#f0f2f5; border:none; font-size:1.2rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">😊</button>
-                <button onclick="enviarMensajeGrupo()" class="btn-blue" style="width:40px; height:40px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">➤</button>
+                <button type="button" id="btnEmojiGrupo" onclick="abrirSelectorEmoji(event, 'inputGrupoMsg')" aria-label="Emojis" style="width:40px; height:40px; border-radius:50%; background:#f0f2f5; border:none; font-size:1.2rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">😊</button>
+                <button id="btnEnviarGrupoMsg" onclick="enviarMensajeGrupo()" class="btn-blue" style="width:40px; height:40px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">➤</button>
                 <span id="chatGrupoCount" style="font-size:0.6rem; color:#ef4444; font-weight:700; white-space:nowrap;">0/20</span>
             </div>
         </div>
@@ -4060,6 +4134,10 @@ Cerrar
                 <i class="fas fa-image" style="color:#10b981;"></i>
                 <span style="font-weight:700; color:#475569; font-size:0.85rem;">Enviar Imagen</span>
             </div>
+            <div onclick="p2pAbrirSelectorVideo(); toggleMenuChatPrivado();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; border-bottom:1px solid #f8fafc;">
+                <i class="fas fa-video" style="color:#6366f1;"></i>
+                <span style="font-weight:700; color:#475569; font-size:0.85rem;">Enviar Video (en vivo)</span>
+            </div>
             <div onclick="abrirSelectorSticker('privado'); toggleMenuChatPrivado();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; border-bottom:1px solid #f8fafc;">
                 <span style="font-size:1.1rem;">🩷</span>
                 <span style="font-weight:700; color:#475569; font-size:0.85rem;">Stickers</span>
@@ -4077,6 +4155,7 @@ Cerrar
 
     <!-- Input oculto para galería -->
     <input type="file" id="fileInputDirecto" accept="image/*" style="display:none;" onchange="procesarYEnviarFotoDirecto(this)">
+    <input type="file" id="p2pVideoInput" accept="video/*" style="display:none;" onchange="p2pProcesarVideoSeleccionado(this)">
 
     <input type="text" id="inputPrivMsg" placeholder="Escribe un mensaje..." style="flex:1; background:#f1f5f9; border:none; padding:12px 16px; border-radius:22px; outline:none; font-size:0.9rem; color:#333;">
 
@@ -4088,6 +4167,16 @@ Cerrar
 </div> <!-- 1. Cierra barra blanca -->
 </div> <!-- 2. Cierra contenido del modal -->
 </div> <!-- 3. Cierra overlay del modal -->
+<div id="p2pAcceptModal" class="modal-overlay" style="display:none; z-index: 27000;">
+    <div class="modal-content" style="max-width:340px;">
+        <div style="font-size:2.2rem; margin-bottom:6px;">🎥</div>
+        <h3 style="color:#6366f1; margin-bottom:8px;">Video en vivo</h3>
+        <p id="p2pAcceptInfo" style="font-size:0.85rem; color:#475569; line-height:1.5; margin-bottom:10px; white-space:pre-line;"></p>
+        <p style="font-size:0.7rem; color:#94a3b8; line-height:1.4; margin-bottom:16px;">Se envía directo de teléfono a teléfono. No se guarda en ningún servidor.</p>
+        <button class="btn-blue" style="background:#10b981; margin-bottom:10px;" onclick="p2pAceptarOferta()">✅ Aceptar y recibir</button>
+        <button style="background:none; border:none; color:#ef4444; font-weight:700; font-size:0.9rem;" onclick="p2pRechazarOferta()">Rechazar</button>
+    </div>
+</div>
 <div id="modalSubirFoto" class="modal-overlay" style="z-index: 26000;">
     <div class="modal-content">
         <h3 style="color:#10b981;">📸 Sube y Vende tu Foto</h3>
@@ -4103,6 +4192,15 @@ Cerrar
                 <p style="font-size:0.65rem; opacity:0.8;">Selfie • Paisaje • Meme</p>
             </div>
             <input type="file" id="inputFotoArchivo" accept="image/*" onchange="procesarFotoSeleccionada()" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+        </div>
+
+        <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px; background:#fef2f2; border:1px solid #fca5a5; border-radius:12px; padding:10px;">
+            <input type="checkbox" id="chkFoto18" onchange="toggleFoto18()" style="width:18px; height:18px; margin:0; accent-color:#ef4444;">
+            <label for="chkFoto18" style="font-size:0.8rem; font-weight:700; color:#b91c1c; flex:1;">🔞 Es foto +18 (desnudo/sensual)</label>
+        </div>
+
+        <div id="avisoFoto18" style="display:none; font-size:0.72rem; color:#b91c1c; background:#fef2f2; border:1px solid #ef4444; border-radius:10px; padding:8px 10px; margin-bottom:12px; line-height:1.45;">
+            🔞 Las fotos +18 <b>solo se publican en venta</b>: es obligatorio ponerles precio.
         </div>
 
         <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px; background:#fff7ed; border:1px solid #f59e0b; border-radius:12px; padding:10px;">
@@ -4123,13 +4221,28 @@ Cerrar
         </div>
 
         <div style="font-size:0.65rem; color:#ef4444; margin-bottom:15px; background: #fef2f2; padding: 8px; border-radius: 8px;">
-            ⚠️ Prohibido contenido +18 o violento. Serás baneado.
+            ⚠️ Prohibido contenido violento. Las fotos +18 solo se permiten en venta (con precio).
         </div>
 
         <button id="btnPublicarFoto" class="btn-blue" style="background:#10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);" disabled onclick="subirFotoReal()">
             💰 Publicar y Ganar
         </button>
         <button onclick="cerrarModalFoto()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
+    </div>
+</div>
+
+<!-- AVISO: FOTO +18 SIN VENDER (OBLIGATORIO VENDERLA) -->
+<div id="modalFoto18Obligatorio" class="modal-overlay" style="z-index: 26900;">
+    <div class="modal-content" style="text-align:center;">
+        <div style="font-size:2.2rem; margin-bottom:6px;">🔞</div>
+        <h3 style="color:#ef4444;">Es obligatorio vender tu foto</h3>
+        <p style="font-size:0.85rem; color:#475569; line-height:1.5; margin-bottom:15px;">
+            Tu foto está marcada como <b>+18</b>. Por ser contenido adulto, <b>debes venderla con un precio (1 - 500 PTS)</b>. No se puede publicar gratis.
+        </p>
+        <button class="btn-blue" style="background:#ef4444; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);" onclick="activarVentaFoto18()">
+            💰 Vender mi foto +18
+        </button>
+        <button onclick="foto18NoEs()" style="background:none; border:none; color:#94a3b8; margin-top:12px; font-size:0.85rem; cursor:pointer;">Mi foto no es +18</button>
     </div>
 </div>
 
@@ -10806,6 +10919,16 @@ window.procesarFotoSeleccionada = () => {
             // Convertir a texto comprimido (JPEG 60%)
             fotoBase64Actual = canvas.toDataURL('image/jpeg', 0.6);
 
+            // Detección automática de posible contenido +18 (tono de piel)
+            try {
+                window._fotoSkinRatio = window.detectarPosibleFoto18(canvas);
+                const chk18 = document.getElementById('chkFoto18');
+                if (chk18 && window._fotoSkinRatio >= UMBRAL_PIEL_FOTO18 && !chk18.checked) {
+                    chk18.checked = true;
+                    window.toggleFoto18(true);
+                }
+            } catch (e) {}
+
             // Mostrar Preview
             document.getElementById('imgPreview').src = fotoBase64Actual;
             document.getElementById('imgPreview').style.display = 'block';
@@ -10830,6 +10953,89 @@ window.togglePrecioFoto = () => {
 };
 
 // =================================================================
+// 🔞 FOTOS +18: OBLIGATORIO VENDERLAS (NO SE PUBLICAN GRATIS)
+// =================================================================
+const UMBRAL_PIEL_FOTO18 = 0.6; // % de piel en el centro de la imagen para sugerir +18
+
+window.evaluarPixelPiel = (r, g, b) => {
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    if (r > 95 && g > 40 && b > 20 && (max - min) > 15 && Math.abs(r - g) > 15 && r > g && r > b) return true;
+    const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+    const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+    return cb >= 80 && cb <= 120 && cr >= 133 && cr <= 173;
+};
+
+// Heurística (no es 100% exacta): mide el % de tono de piel en el centro de la imagen
+window.detectarPosibleFoto18 = (origen) => {
+    try {
+        const W = 64, H = 64;
+        const c = document.createElement('canvas');
+        c.width = W; c.height = H;
+        const cx = c.getContext('2d');
+        const w = origen.width || W, h = origen.height || H;
+        cx.drawImage(origen, w * 0.075, h * 0.075, w * 0.85, h * 0.85, 0, 0, W, H);
+        const d = cx.getImageData(0, 0, W, H).data;
+        let piel = 0, total = 0;
+        for (let i = 0; i < d.length; i += 4) {
+            if (d[i + 3] < 100) continue;
+            total++;
+            if (window.evaluarPixelPiel(d[i], d[i + 1], d[i + 2])) piel++;
+        }
+        return total ? (piel / total) : 0;
+    } catch (e) { return 0; }
+};
+
+// Al marcar/desmarcar la casilla +18
+window.toggleFoto18 = (esAuto) => {
+    const chk = document.getElementById('chkFoto18');
+    const aviso = document.getElementById('avisoFoto18');
+    if (!chk) return;
+    if (aviso) aviso.style.display = chk.checked ? 'block' : 'none';
+    if (chk.checked) {
+        const sell = document.getElementById('chkVenderFoto');
+        if (sell && !sell.checked) { sell.checked = true; window.togglePrecioFoto(); }
+        if (esAuto) notify("🔍 Posible foto +18: es obligatorio venderla");
+    }
+};
+
+// ¿Está intentando publicar una foto +18 sin venta válida? (bloquea y avisa)
+window._esFoto18ObligatoriaVenta = () => {
+    const chk = document.getElementById('chkFoto18');
+    if (!chk || !chk.checked) return false;
+    const sell = document.getElementById('chkVenderFoto');
+    const precio = (sell && sell.checked) ? parseInt(document.getElementById('inputPrecioFoto').value) : 0;
+    if (!(precio >= 1 && precio <= 500)) {
+        const m = document.getElementById('modalFoto18Obligatorio');
+        if (m) m.style.display = 'flex';
+        return true;
+    }
+    return false;
+};
+
+// Botón del aviso: activa la venta y lleva al precio
+window.activarVentaFoto18 = () => {
+    document.getElementById('modalFoto18Obligatorio').style.display = 'none';
+    const sell = document.getElementById('chkVenderFoto');
+    if (sell) { sell.checked = true; window.togglePrecioFoto(); }
+    const inp = document.getElementById('inputPrecioFoto');
+    if (inp) setTimeout(() => { try { inp.focus(); inp.scrollIntoView({ block: 'center' }); } catch (e) {} }, 150);
+    notify("💰 Ponle precio (1 - 500) y publica");
+};
+
+// Botón del aviso: era falsa alarma
+window.foto18NoEs = () => {
+    document.getElementById('modalFoto18Obligatorio').style.display = 'none';
+    const chk = document.getElementById('chkFoto18');
+    if (chk) chk.checked = false;
+    window.toggleFoto18();
+};
+
+// Abrir el modal de subir foto (lo usa la misión diaria M4)
+window.subirFoto = () => {
+    document.getElementById('modalSubirFoto').style.display = 'flex';
+};
+
+// =================================================================
 // 📸 MONETIZAR FOTOS - MURO DE LA COMUNIDAD (CÓDIGO UNIFICADO FINAL)
 // =================================================================
 
@@ -10837,6 +11043,7 @@ window.togglePrecioFoto = () => {
 // 1. EL BOTÓN PIDE EL ANUNCIO A KOTLIN (CORREGIDO)
 window.subirFotoReal = () => {
     if (!fotoBase64Actual) return notify("Elige una foto primero");
+    if (window._esFoto18ObligatoriaVenta()) return;
 
     const btn = document.getElementById('btnPublicarFoto');
     if (btn) {
@@ -10856,12 +11063,22 @@ window.subirFotoReal = () => {
 
 // 2. KOTLIN LLAMA A ESTA FUNCIÓN AL TERMINAR EL ANUNCIO CON ÉXITO
 window.ejecutarSubidaFotoFirebase = () => {
+    if (!fotoBase64Actual) return notify("Elige una foto primero");
+    if (window._esFoto18ObligatoriaVenta()) {
+        const b18 = document.getElementById('btnPublicarFoto');
+        if (b18) { b18.disabled = false; b18.innerHTML = "💰 Publicar y Ganar"; }
+        return;
+    }
+
     const btn = document.getElementById('btnPublicarFoto');
     if (btn) btn.innerHTML = "Subiendo...";
 
     const chkVender = document.getElementById('chkVenderFoto');
     const tienePrecio = chkVender && chkVender.checked;
     const precioPts = tienePrecio ? parseInt(document.getElementById('inputPrecioFoto').value) || 0 : 0;
+
+    const chk18 = document.getElementById('chkFoto18');
+    const es18 = !!(chk18 && chk18.checked);
 
     const inputDesc = document.getElementById('inputDescripcionFoto');
     const descripcionTexto = inputDesc ? inputDesc.value.trim() : "";
@@ -10874,6 +11091,9 @@ window.ejecutarSubidaFotoFirebase = () => {
     };
     if (tienePrecio && precioPts >= 1 && precioPts <= 500) {
         fotoData.precio = precioPts;
+    }
+    if (es18) {
+        fotoData.adulto = true;
     }
     if (descripcionTexto) {
         fotoData.descripcion = descripcionTexto;
@@ -10924,6 +11144,13 @@ window.cerrarModalFoto = () => {
     document.getElementById('inputPrecioFoto').value = '10';
     const inpDesc = document.getElementById('inputDescripcionFoto');
     if (inpDesc) inpDesc.value = "";
+    const chk18Reset = document.getElementById('chkFoto18');
+    if (chk18Reset) chk18Reset.checked = false;
+    const aviso18Reset = document.getElementById('avisoFoto18');
+    if (aviso18Reset) aviso18Reset.style.display = 'none';
+    const modal18Reset = document.getElementById('modalFoto18Obligatorio');
+    if (modal18Reset) modal18Reset.style.display = 'none';
+    window._fotoSkinRatio = 0;
     fotoBase64Actual = "";
     
     // Restaurar el botón al estado inicial
@@ -11481,6 +11708,7 @@ function cargarGaleriaComunidad() {
 
             const blurStyle = mostrarBorrosa ? 'filter:blur(9px);' : '';
             const precioBadge = esVendible ? `<div style="position:absolute; top:8px; left:8px; background:linear-gradient(135deg,#f59e0b,#d97706); color:white; font-size:0.65rem; font-weight:800; padding:4px 8px; border-radius:8px; box-shadow:0 2px 8px rgba(245,158,11,0.4); z-index:5;display:flex;align-items:center;gap:3px;">⭐ ${f.precio}</div>` : '';
+            const badge18 = f.adulto ? `<div style="position:absolute; bottom:8px; left:8px; background:rgba(239,68,68,0.92); color:white; font-size:0.65rem; font-weight:800; padding:4px 8px; border-radius:8px; box-shadow:0 2px 8px rgba(239,68,68,0.4); z-index:5;">🔞 +18</div>` : '';
             const comprarBtn = (mostrarBorrosa) ? `
                 <button onclick="event.stopPropagation(); window.abrirCompraFoto('${f.k}')" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10; background:#6366f1; color:white; border:none; padding:10px 16px; border-radius:12px; font-weight:800; font-size:0.8rem; cursor:pointer; box-shadow:0 4px 15px rgba(99,102,241,0.5); white-space:nowrap;">
                     🔓 Comprar
@@ -11492,12 +11720,13 @@ function cargarGaleriaComunidad() {
                 <div style="position:relative;">
                     ${esFijado}
                     ${precioBadge}
+                    ${badge18}
                     <img src="${f.foto}" class="photo-img-content" ${lazyTag} style="width:100%; display:block; border-radius:12px; ${blurStyle}">
                     ${comprarBtn}
                 </div>
                 
                 <div style="padding:10px 10px 0; display:flex; align-items:center; gap:8px;">
-                    <div style="width:22px; height:22px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; border:1px solid #eee;"></div>
+                    <div class="muro-avatar" data-uid="${f.uid}" style="width:22px; height:22px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; border:1px solid #eee;"></div>
                     
                     <div style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                         <span style="font-weight:600; font-size:0.75rem; color:#334155;">${escapeHtml(nombre)}</span>
@@ -11532,6 +11761,21 @@ function cargarGaleriaComunidad() {
         if (limiteFotosMuro === 20) {
             localStorage.setItem(CACHE_MURO_KEY, htmlFinal);
         }
+
+        // Fotos de perfil reales de los autores (se piden una sola vez y se actualizan todas sus tarjetas)
+        window._muroAvataresPedidos = window._muroAvataresPedidos || {};
+        const uidsAutores = [...new Set(fotos.map(f => f.uid).filter(u => u && !cacheFotosPerfil[u] && !window._muroAvataresPedidos[u]))];
+        uidsAutores.forEach(uid => {
+            window._muroAvataresPedidos[uid] = true;
+            db.ref(`users/${uid}/fotoPerfil`).once('value').then(s => {
+                const fotoReal = s.val();
+                if (!fotoReal) return;
+                cacheFotosPerfil[uid] = fotoReal;
+                document.querySelectorAll('.muro-avatar[data-uid="' + uid + '"]').forEach(el => {
+                    el.style.backgroundImage = "url('" + fotoReal + "')";
+                });
+            }).catch(() => {});
+        });
         
         // Esperamos 150ms para asegurar que el navegador ya pintó las fotos nuevas antes de activar el vigía
         setTimeout(activarScrollInfinito, 100); 
@@ -11902,6 +12146,7 @@ window.procesarFotoGrupo = () => {
 window.enviarFotoGrupo = async () => {
     if (!fotoGrupoBase64) return notify("Elige una foto primero");
     if (!currentGrupoId) return notify("Grupo no activo");
+    if (!window._puedeEnviarEnGrupoActual()) return;
 
     const btn = document.getElementById('btnEnviarFotoGrupo');
     btn.disabled = true;
@@ -12386,6 +12631,13 @@ function crearFilaMensajePrivado(s) {
     const m = s.val();
     const key = s.key;
 
+    // 🎥 Señales P2P del video en vivo: no se muestran como mensajes
+    if (m && m.p2p) {
+        const oculto = document.createElement('div');
+        oculto.style.display = 'none';
+        return oculto;
+    }
+
     // --- 📸 AVISO DE CAPTURA DE PANTALLA ---
     if (m.sistema || m.captura) {
         const esMioAviso = m.uid === idAuditor;
@@ -12535,6 +12787,7 @@ function cargarMensajesPrivados() {
     const cached = localStorage.getItem(LLAVE_MEMORIA);
     if (cached) {
         list.innerHTML = cached;
+        list.querySelectorAll('[data-p2p-row]').forEach(el => el.remove());
         list.scrollTop = list.scrollHeight;
     } else {
         list.innerHTML = '<div class="priv-loading" style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i></div>';
@@ -12557,7 +12810,10 @@ function cargarMensajesPrivados() {
         if (timerGuardadoCache) clearTimeout(timerGuardadoCache);
         timerGuardadoCache = setTimeout(() => {
             try {
-                const html = list.innerHTML;
+                const tmp = document.createElement('div');
+                tmp.innerHTML = list.innerHTML;
+                tmp.querySelectorAll('[data-p2p-row]').forEach(el => el.remove());
+                const html = tmp.innerHTML;
                 if (html.length < 500000) localStorage.setItem(LLAVE_MEMORIA, html);
             } catch (e) {}
         }, 2000); // Espera 2 segundos de calma para guardar
@@ -12580,6 +12836,12 @@ function cargarMensajesPrivados() {
             }, 300);
         }
     });
+
+    // 🎥 P2P: escuchar señales del video en vivo + ofertas recientes en este chat
+    try {
+        if (typeof p2pAttachSignalListener === 'function') p2pAttachSignalListener();
+        if (typeof p2pBuscarOfertaReciente === 'function') setTimeout(p2pBuscarOfertaReciente, 400);
+    } catch (e) {}
 }
 // ==========================================
 // 👆 SWIPE PARA RESPONDER (CHAT PRIVADO)
@@ -12953,6 +13215,603 @@ function checkLimiteDiario(uid) {
         }
     });
 }
+
+// ==========================================
+// 🎥 VIDEO P2P EN CHAT PRIVADO (sin Firebase Storage)
+// El video viaja directo teléfono → teléfono (WebRTC).
+// Por Firebase solo viajan unos KB de texto para "conectar" (señales).
+// El receptor debe estar en línea para recibirlo.
+// ==========================================
+window._p2p = null;
+window._p2pOffer = null;
+window._p2pVideos = {};
+window._p2pSidsUsados = {};
+window._p2pSigRef = null;
+window._p2pSigChat = null;
+
+const P2P_CHUNK = 64 * 1024;
+const P2P_OFFER_MAX_MS = 90000;
+const P2P_ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+
+window.p2pAbrirSelectorVideo = () => {
+    if (!chatPrivadoActivo || !currentChatTargetUid || !currentChatId) {
+        notify("Abre un chat privado primero");
+        return;
+    }
+    if (window._p2p && !window._p2p.done) {
+        notify("⚠️ Ya hay una transferencia de video en curso");
+        return;
+    }
+    const input = document.getElementById('p2pVideoInput');
+    if (input) input.click();
+};
+
+window.p2pProcesarVideoSeleccionado = async (input) => {
+    try {
+        const file = input && input.files ? input.files[0] : null;
+        input.value = "";
+        if (!file) return;
+        if (!file.type || !file.type.startsWith('video/')) {
+            notify("❌ El archivo no es un video");
+            return;
+        }
+        if (file.size > 300 * 1024 * 1024) {
+            notify("❌ Video demasiado grande (máx 300 MB)");
+            return;
+        }
+        const dur = await p2pDuracion(file);
+        if (!dur || dur < 1 || dur > 61) {
+            notify("❌ El video debe durar entre 1 y 60 segundos");
+            return;
+        }
+        await p2pEnviarVideo(file, dur);
+    } catch (e) {
+        console.error("🎥 P2P error preparando video:", e);
+        notify("❌ No se pudo preparar el video");
+    }
+};
+
+function p2pDuracion(file) {
+    return new Promise((resolve) => {
+        const url = URL.createObjectURL(file);
+        const v = document.createElement('video');
+        v.preload = 'metadata';
+        v.muted = true;
+        const fin = (d) => {
+            try { URL.revokeObjectURL(url); } catch (e) {}
+            resolve(isFinite(d) && d > 0 ? d : 0);
+        };
+        v.onloadedmetadata = () => {
+            if (isFinite(v.duration) && v.duration > 0) { fin(v.duration); return; }
+            v.currentTime = 1e101;
+            v.ontimeupdate = () => { v.ontimeupdate = null; fin(v.duration); };
+            setTimeout(() => fin(v.duration), 2500);
+        };
+        v.onerror = () => fin(0);
+        v.src = url;
+    });
+}
+
+async function p2pEnviarVideo(file, dur) {
+    if (window._p2p && !window._p2p.done) return notify("⚠️ Ya hay una transferencia en curso");
+
+    const sid = db.ref(`chats_privados/${currentChatId}`).push().key;
+    const peerUid = targetUserUid;
+    const meta = {
+        name: file.name || 'video.mp4',
+        size: file.size,
+        dur: Math.round(dur * 10) / 10,
+        mime: file.type || 'video/mp4'
+    };
+
+    window._p2p = { role: 'sender', sid, chatId: currentChatId, pc: null, dc: null, file, meta, peerUid, done: false, open: false };
+    p2pFilaUI(sid, "🎥 Video en vivo", meta, true);
+    p2pSetEstado(sid, "Esperando que acepte…", 0);
+
+    const pc = new RTCPeerConnection(P2P_ICE);
+    window._p2p.pc = pc;
+    pc.oniceconnectionstatechange = () => {
+        const s = window._p2p;
+        if (pc.iceConnectionState === 'failed' && s && s.sid === sid && !s.done) {
+            p2pFallo(sid, "❌ No se pudo conectar (red). Intenta con WiFi.");
+        }
+    };
+
+    const dc = pc.createDataChannel('video', { ordered: true });
+    dc.binaryType = 'arraybuffer';
+    window._p2p.dc = dc;
+    dc.onopen = () => p2pEnviarPorCanal(sid);
+    dc.onerror = () => console.warn("🎥 P2P: error de canal");
+
+    try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        await p2pEsperarICE(pc, 3000);
+    } catch (e) {
+        p2pFallo(sid, "❌ Error de conexión");
+        return;
+    }
+
+    db.ref(`chats_privados/${currentChatId}`).push({
+        p2p: true, p2pType: 'offer', sid, from: idAuditor, to: peerUid,
+        meta: meta,
+        sdp: { type: 'offer', sdp: pc.localDescription.sdp },
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    }).catch(() => {});
+
+    const miNombre = document.getElementById('profKey') ? document.getElementById('profKey').textContent : myCurrentKey;
+    try {
+        db.ref(`users/${peerUid}/notifications`).push({
+            from: myCurrentKey, fromName: miNombre, type: 'chat_privado',
+            text: "🎥 Quiere enviarte un video (en vivo)",
+            extra: idAuditor, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
+        });
+    } catch (e) {}
+
+    window._p2p.timeoutId = setTimeout(() => {
+        const s = window._p2p;
+        if (s && s.sid === sid && !s.done && !s.open) {
+            p2pCancelarEnvio(sid, "⏱ Sin respuesta (debe estar en línea)");
+        }
+    }, P2P_OFFER_MAX_MS);
+}
+
+async function p2pEnviarPorCanal(sid) {
+    const s = window._p2p;
+    if (!s || s.sid !== sid || !s.dc) return;
+    const dc = s.dc;
+    s.open = true;
+    if (s.timeoutId) { clearTimeout(s.timeoutId); s.timeoutId = null; }
+    p2pSetEstado(sid, "Conectado, enviando…", 0);
+    try {
+        dc.send(JSON.stringify({ t: 'meta', name: s.meta.name, size: s.meta.size, mime: s.meta.mime, dur: s.meta.dur }));
+        let pos = 0;
+        while (pos < s.meta.size) {
+            if (dc.readyState !== 'open') throw new Error('canal cerrado');
+            if (dc.bufferedAmount > 4 * 1024 * 1024) await p2pEsperarBuffer(dc);
+            const buf = await s.file.slice(pos, pos + P2P_CHUNK).arrayBuffer();
+            dc.send(buf);
+            pos += buf.byteLength;
+            if (pos % (P2P_CHUNK * 16) < P2P_CHUNK) p2pSetEstado(sid, "Enviando…", Math.round(pos / s.meta.size * 100));
+        }
+        p2pSetEstado(sid, "Enviando…", 100);
+        dc.send(JSON.stringify({ t: 'end' }));
+        s.done = true;
+        p2pSetEstado(sid, "✓ Enviado — esperando confirmación", 100);
+        s.cleanupId = setTimeout(() => {
+            if (window._p2p && window._p2p.sid === sid) window._p2p = null;
+        }, 45000);
+    } catch (e) {
+        console.error("🎥 P2P envío:", e);
+        p2pFallo(sid, "❌ Se cortó el envío");
+    }
+}
+
+function p2pEsperarBuffer(dc) {
+    return new Promise(res => {
+        let hecho = false;
+        const fin = () => { if (hecho) return; hecho = true; dc.onbufferedamountlow = null; res(); };
+        dc.bufferedAmountLowThreshold = 1024 * 1024;
+        dc.onbufferedamountlow = fin;
+        setTimeout(fin, 2500);
+    });
+}
+
+function p2pEsperarICE(pc, ms) {
+    return new Promise(res => {
+        if (pc.iceGatheringState === 'complete') return res();
+        let hecho = false;
+        const chk = () => { if (pc.iceGatheringState === 'complete') fin(); };
+        const fin = () => { if (hecho) return; hecho = true; pc.removeEventListener('icegatheringstatechange', chk); res(); };
+        pc.addEventListener('icegatheringstatechange', chk);
+        setTimeout(fin, ms);
+    });
+}
+
+window.p2pAceptarOferta = async () => {
+    const o = window._p2pOffer;
+    if (!o) return;
+    p2pOcultarModalOferta();
+    window._p2pSidsUsados[o.sid] = true;
+    if (o.key) p2pBorrarSeñal(o.key);
+    window._p2pOffer = null;
+
+    const sid = o.sid;
+    const meta = o.meta || {};
+    window._p2p = { role: 'receiver', sid, chatId: currentChatId, pc: null, dc: null, chunks: [], received: 0, total: meta.size || 0, meta, peerUid: o.from, done: false };
+    p2pFilaUI(sid, "🎥 Video entrante", meta, false);
+    p2pSetEstado(sid, "Conectando…", 0);
+
+    const pc = new RTCPeerConnection(P2P_ICE);
+    window._p2p.pc = pc;
+    pc.oniceconnectionstatechange = () => {
+        const s = window._p2p;
+        if (pc.iceConnectionState === 'failed' && s && s.sid === sid && !s.done) {
+            p2pFallo(sid, "❌ No se pudo conectar (red)");
+        }
+    };
+    pc.ondatachannel = (ev) => {
+        const dc = ev.channel;
+        dc.binaryType = 'arraybuffer';
+        window._p2p.dc = dc;
+        dc.onmessage = (e) => p2pRecibirMensaje(sid, e);
+        dc.onopen = () => p2pSetEstado(sid, "Recibiendo…", 0);
+    };
+
+    try {
+        await pc.setRemoteDescription(new RTCSessionDescription(o.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await p2pEsperarICE(pc, 3000);
+    } catch (e) {
+        p2pFallo(sid, "❌ Error de conexión");
+        return;
+    }
+
+    db.ref(`chats_privados/${currentChatId}`).push({
+        p2p: true, p2pType: 'answer', sid, from: idAuditor, to: o.from,
+        sdp: { type: 'answer', sdp: pc.localDescription.sdp },
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    }).catch(() => {});
+};
+
+window.p2pRechazarOferta = () => {
+    const o = window._p2pOffer;
+    p2pOcultarModalOferta();
+    if (!o) return;
+    window._p2pSidsUsados[o.sid] = true;
+    if (o.key) p2pBorrarSeñal(o.key);
+    db.ref(`chats_privados/${currentChatId}`).push({
+        p2p: true, p2pType: 'decline', sid: o.sid, from: idAuditor, to: o.from,
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    }).catch(() => {});
+    window._p2pOffer = null;
+};
+
+function p2pRecibirMensaje(sid, e) {
+    const s = window._p2p;
+    if (!s || s.sid !== sid) return;
+    try {
+        if (typeof e.data === 'string') {
+            const j = JSON.parse(e.data);
+            if (j.t === 'meta') {
+                if (j.size) s.total = j.size;
+                if (j.mime) s.meta.mime = j.mime;
+                if (j.name) s.meta.name = j.name;
+                p2pSetEstado(sid, "Recibiendo…", 0);
+            } else if (j.t === 'end') {
+                p2pFinalizarRecepcion(sid);
+            }
+            return;
+        }
+        if (e.data && e.data.byteLength != null) {
+            s.chunks.push(e.data);
+            s.received += e.data.byteLength || 0;
+            const pct = s.total ? Math.min(100, Math.round(s.received / s.total * 100)) : 0;
+            if (pct % 2 === 0) p2pSetEstado(sid, "Recibiendo… " + (s.received / (1024 * 1024)).toFixed(1) + " MB", pct);
+        }
+    } catch (err) {
+        console.warn("🎥 P2P recv:", err);
+    }
+}
+
+function p2pFinalizarRecepcion(sid) {
+    const s = window._p2p;
+    if (!s || s.sid !== sid || s.done) return;
+    s.done = true;
+    const totalRecibido = s.received;
+    if (!totalRecibido) return p2pFallo(sid, "❌ No llegó el video");
+    const mime = (s.meta && s.meta.mime) || 'video/mp4';
+    const blob = new Blob(s.chunks, { type: mime });
+    s.chunks = [];
+    window._p2pVideos[sid] = blob;
+    const url = URL.createObjectURL(blob);
+
+    const fila = document.getElementById('p2p-row-' + sid);
+    if (fila) {
+        const caja = fila.querySelector('.p2p-caja');
+        if (caja) {
+            caja.innerHTML = '';
+            const vid = document.createElement('video');
+            vid.controls = true;
+            vid.playsInline = true;
+            vid.src = url;
+            vid.style.cssText = "max-width:240px; border-radius:12px; display:block; background:#000;";
+            caja.appendChild(vid);
+            const info = document.createElement('div');
+            info.style.cssText = "font-size:0.7rem; opacity:0.8; margin-top:6px;";
+            info.textContent = (blob.size / (1024 * 1024)).toFixed(1) + " MB • en vivo (no quedó en servidores)";
+            caja.appendChild(info);
+            const btn = document.createElement('button');
+            btn.textContent = "💾 Guardar en el teléfono";
+            btn.style.cssText = "margin-top:8px; background:#10b981; color:white; border:none; border-radius:10px; padding:8px 12px; font-weight:700; font-size:0.78rem;";
+            btn.onclick = () => p2pGuardarVideo(sid, btn);
+            caja.appendChild(btn);
+            const st = document.createElement('div');
+            st.className = 'p2p-status';
+            st.style.cssText = "font-size:0.7rem; opacity:0.75; margin-top:6px;";
+            st.textContent = "✓ Video recibido";
+            caja.appendChild(st);
+        }
+    }
+    db.ref(`chats_privados/${s.chatId || currentChatId}`).push({
+        p2p: true, p2pType: 'ack', sid, from: idAuditor, to: s.peerUid,
+        fecha: firebase.database.ServerValue.TIMESTAMP
+    }).catch(() => {});
+    try { window.playSound('win'); } catch (e) {}
+    const pe = s;
+    try { if (pe.dc) pe.dc.close(); } catch (e) {}
+    try { if (pe.pc) pe.pc.close(); } catch (e) {}
+    if (window._p2p && window._p2p.sid === sid) window._p2p = null;
+}
+
+async function p2pGuardarVideo(sid, btn) {
+    const blob = window._p2pVideos[sid];
+    if (!blob) return notify("❌ Video no disponible");
+    const bridge = (typeof AndroidNative !== 'undefined' && AndroidNative && typeof AndroidNative.videoSaveStart === 'function') ? AndroidNative : null;
+    if (!bridge) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'codecash_video_' + Date.now() + '.mp4';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+    }
+    try {
+        if (btn) { btn.disabled = true; btn.textContent = "Guardando…"; }
+        if (!bridge.videoSaveStart('codecash_video_' + Date.now() + '.mp4')) throw new Error('start');
+        const paso = 192 * 1024;
+        for (let p = 0; p < blob.size; p += paso) {
+            const b64 = await p2pBlobABase64(blob.slice(p, p + paso));
+            bridge.videoSaveChunk(b64);
+            if (btn) btn.textContent = "Guardando… " + Math.round(Math.min(1, (p + paso) / blob.size) * 100) + "%";
+            await new Promise(r => setTimeout(r, 0));
+        }
+        const res = bridge.videoSaveFinish();
+        if (res === 'ok') {
+            if (btn) { btn.textContent = "✅ Guardado (Galería/CodeCash)"; btn.disabled = true; }
+            notify("✅ Video guardado en tu teléfono");
+            try { window.playSound('win'); } catch (e) {}
+        } else {
+            throw new Error('finish');
+        }
+    } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = "💾 Guardar en el teléfono"; }
+        notify("❌ No se pudo guardar el video");
+    }
+}
+
+function p2pBlobABase64(blob) {
+    return new Promise((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => {
+            const s = String(fr.result);
+            const i = s.indexOf(',');
+            res(i >= 0 ? s.slice(i + 1) : '');
+        };
+        fr.onerror = rej;
+        fr.readAsDataURL(blob);
+    });
+}
+
+function p2pFilaUI(sid, titulo, meta, esMio) {
+    const list = document.getElementById('privChatList');
+    if (!list) return null;
+    const row = document.createElement('div');
+    row.id = 'p2p-row-' + sid;
+    row.setAttribute('data-p2p-row', '1');
+    row.className = 'chat-row ' + (esMio ? 'mine' : 'other');
+    row.style.cssText = 'display:flex; width:100%; margin-bottom:12px; padding:0 15px; ' + (esMio ? 'justify-content:flex-end;' : 'justify-content:flex-start;');
+
+    const caja = document.createElement('div');
+    caja.className = 'msg-bubble ' + (esMio ? 'msg-mine' : 'msg-other') + ' p2p-caja';
+    caja.style.cssText = 'max-width:85%; padding:10px 12px; cursor:default;';
+
+    const t = document.createElement('div');
+    t.style.cssText = 'font-weight:700; font-size:0.85rem; margin-bottom:4px;';
+    t.textContent = titulo;
+    caja.appendChild(t);
+
+    const info = document.createElement('div');
+    info.style.cssText = 'font-size:0.7rem; opacity:0.8; margin-bottom:6px;';
+    if (meta && meta.size) {
+        const mb = (meta.size / (1024 * 1024)).toFixed(1) + " MB";
+        const seg = meta.dur ? Math.round(meta.dur) + "s" : "";
+        info.textContent = (seg ? seg + " • " : "") + mb;
+    }
+    caja.appendChild(info);
+
+    const bar = document.createElement('div');
+    bar.style.cssText = 'height:6px; background:rgba(0,0,0,0.15); border-radius:3px; overflow:hidden;';
+    const fill = document.createElement('div');
+    fill.className = 'p2p-bar';
+    fill.style.cssText = 'height:6px; width:0%; border-radius:3px; background:' + (esMio ? '#ffffff' : '#6366f1') + '; transition:width 0.15s;';
+    bar.appendChild(fill);
+    caja.appendChild(bar);
+
+    const st = document.createElement('div');
+    st.className = 'p2p-status';
+    st.style.cssText = 'font-size:0.72rem; opacity:0.75; margin-top:6px;';
+    st.textContent = 'Preparando…';
+    caja.appendChild(st);
+
+    row.appendChild(caja);
+    list.appendChild(row);
+    list.scrollTop = list.scrollHeight;
+    return row;
+}
+
+function p2pSetEstado(sid, texto, pct) {
+    const fila = document.getElementById('p2p-row-' + sid);
+    if (!fila) return;
+    const st = fila.querySelector('.p2p-status');
+    if (st) st.textContent = texto;
+    if (pct != null) {
+        const bar = fila.querySelector('.p2p-bar');
+        if (bar) bar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    }
+    const list = document.getElementById('privChatList');
+    if (list && list.lastElementChild === fila) list.scrollTop = list.scrollHeight;
+}
+
+function p2pFallo(sid, msg) {
+    p2pSetEstado(sid, msg, null);
+    const s = window._p2p;
+    if (s && s.sid === sid) {
+        try {
+            db.ref(`chats_privados/${s.chatId || currentChatId}`).push({
+                p2p: true, p2pType: 'cancel', sid, from: idAuditor, to: s.peerUid,
+                fecha: firebase.database.ServerValue.TIMESTAMP
+            }).catch(() => {});
+        } catch (e) {}
+        p2pLimpiarSesion(sid);
+    }
+}
+
+function p2pCancelarEnvio(sid, msg) {
+    p2pSetEstado(sid, msg, null);
+    const s = window._p2p;
+    if (s && s.sid === sid) {
+        try {
+            db.ref(`chats_privados/${s.chatId || currentChatId}`).push({
+                p2p: true, p2pType: 'cancel', sid, from: idAuditor, to: s.peerUid,
+                fecha: firebase.database.ServerValue.TIMESTAMP
+            }).catch(() => {});
+        } catch (e) {}
+        p2pLimpiarSesion(sid);
+    }
+}
+
+function p2pLimpiarSesion(sid) {
+    const s = window._p2p;
+    if (!s || s.sid !== sid) return;
+    try { if (s.timeoutId) clearTimeout(s.timeoutId); } catch (e) {}
+    try { if (s.cleanupId) clearTimeout(s.cleanupId); } catch (e) {}
+    try { if (s.dc) s.dc.close(); } catch (e) {}
+    try { if (s.pc) s.pc.close(); } catch (e) {}
+    window._p2p = null;
+}
+
+function p2pMostrarModalOferta() {
+    const o = window._p2pOffer;
+    if (!o) return;
+    if (!chatPrivadoActivo || currentChatTargetUid !== o.from) return;
+    const info = document.getElementById('p2pAcceptInfo');
+    if (info) {
+        const mb = o.meta && o.meta.size ? (o.meta.size / (1024 * 1024)).toFixed(1) + " MB" : "";
+        const seg = o.meta && o.meta.dur ? Math.round(o.meta.dur) + " segundos" : "";
+        const nombre = o.meta && o.meta.name ? " (" + o.meta.name + ")" : "";
+        info.textContent = "Tu amigo quiere enviarte un video" + nombre + "\n" +
+            (seg && mb ? "Duración: " + seg + " • " + mb : (seg || mb)) + "\n" +
+            "Debes estar conectado ahora para recibirlo.";
+    }
+    const modal = document.getElementById('p2pAcceptModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function p2pOcultarModalOferta() {
+    const modal = document.getElementById('p2pAcceptModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function p2pBorrarSeñal(key) {
+    if (!key || !window._p2pSigChat) return;
+    try { db.ref(`chats_privados/${window._p2pSigChat}/${key}`).remove().catch(() => {}); } catch (e) {}
+}
+
+function p2pAttachSignalListener() {
+    if (!currentChatId) return;
+    if (window._p2pSigChat === currentChatId && window._p2pSigRef) return;
+    if (window._p2pSigRef) { try { window._p2pSigRef.off(); } catch (e) {} window._p2pSigRef = null; }
+    window._p2pSigChat = currentChatId;
+    window._p2pSigRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(50);
+    window._p2pSigRef.on('child_added', p2pOnSignal);
+}
+
+function p2pBuscarOfertaReciente() {
+    if (!currentChatId || !currentChatTargetUid) return;
+    if (window._p2p && !window._p2p.done) return;
+    if (window._p2pOffer) return;
+    db.ref(`chats_privados/${currentChatId}`).limitToLast(20).once('value', snap => {
+        if (!snap.exists()) return;
+        let mejor = null;
+        snap.forEach(s => {
+            const m = s.val();
+            if (!m || !m.p2p || m.p2pType !== 'offer' || m.to !== idAuditor) return;
+            if (window._p2pSidsUsados[m.sid]) { p2pBorrarSeñal(s.key); return; }
+            const edad = Date.now() - (m.fecha || 0);
+            if (edad > P2P_OFFER_MAX_MS) { p2pBorrarSeñal(s.key); return; }
+            if (!mejor || (m.fecha || 0) > (mejor.fecha || 0)) {
+                mejor = { sid: m.sid, sdp: m.sdp, meta: m.meta || {}, from: m.from, key: s.key, fecha: m.fecha || Date.now() };
+            }
+        });
+        if (mejor) {
+            window._p2pOffer = mejor;
+            p2pMostrarModalOferta();
+        }
+    }).catch(() => {});
+}
+
+function p2pOnSignal(snap) {
+    try {
+        const m = snap.val();
+        if (!m || !m.p2p || !m.p2pType) return;
+        if (m.to !== idAuditor) return;
+
+        if (m.p2pType === 'offer') {
+            const edad = Date.now() - (m.fecha || Date.now());
+            if (edad > P2P_OFFER_MAX_MS || window._p2pSidsUsados[m.sid]) { p2pBorrarSeñal(snap.key); return; }
+            if (window._p2p && !window._p2p.done) {
+                try {
+                    db.ref(`chats_privados/${currentChatId}`).push({
+                        p2p: true, p2pType: 'decline', sid: m.sid, from: idAuditor, to: m.from,
+                        fecha: firebase.database.ServerValue.TIMESTAMP
+                    }).catch(() => {});
+                } catch (e) {}
+                p2pBorrarSeñal(snap.key);
+                return;
+            }
+            if (window._p2pOffer && window._p2pOffer.sid === m.sid) return;
+            window._p2pOffer = { sid: m.sid, sdp: m.sdp, meta: m.meta || {}, from: m.from, key: snap.key, fecha: m.fecha || Date.now() };
+            p2pMostrarModalOferta();
+            return;
+        }
+
+        const s = window._p2p;
+        if (m.p2pType === 'answer') {
+            if (s && s.role === 'sender' && s.sid === m.sid && s.pc && !s.answerAplicada) {
+                s.answerAplicada = true;
+                s.pc.setRemoteDescription(new RTCSessionDescription(m.sdp)).catch(e => console.error("🎥 P2P answer:", e));
+                p2pSetEstado(s.sid, "Conectando…", 0);
+            }
+            return;
+        }
+        if (m.p2pType === 'decline') {
+            if (s && s.sid === m.sid) p2pFallo(s.sid, "❌ Rechazó el video");
+            p2pBorrarSeñal(snap.key);
+            return;
+        }
+        if (m.p2pType === 'cancel') {
+            if (window._p2pOffer && window._p2pOffer.sid === m.sid) {
+                window._p2pOffer = null;
+                p2pOcultarModalOferta();
+            }
+            return;
+        }
+        if (m.p2pType === 'ack') {
+            if (s && s.sid === m.sid) {
+                p2pSetEstado(s.sid, "✓✓ Entregado en su teléfono", 100);
+                p2pLimpiarSesion(s.sid);
+            }
+            p2pBorrarSeñal(snap.key);
+            return;
+        }
+    } catch (e) {
+        console.warn("🎥 P2P señal:", e);
+    }
+}
+
 
 // ==========================================
 // 💎 COMPRAR / DESBLOQUEAR MÁS MENSAJES PRIVADOS
@@ -15443,6 +16302,7 @@ window.enviarStickerPrivado = (st) => {
 
 window.enviarStickerGrupo = (st) => {
     if (!currentGrupoId) return notify("No hay grupo activo");
+    if (!window._puedeEnviarEnGrupoActual()) return;
     const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey || 'Usuario';
     const msgData = {
         uid: idAuditor,
@@ -17909,14 +18769,23 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
     actualizarBadgeGrupoCard(idGrupo);
     document.getElementById('modalChatGrupo').style.display = 'flex';
 
-    // Cargar info completa del grupo: avatar (foto), descripción y botón editar
+    // Cargar info completa del grupo: avatar (foto), descripción, permisos y botones
+    window._grupoPermisosActuales = {};
     db.ref(`grupos_chat/${idGrupo}/info`).once('value').then(snap => {
         const info = snap.val() || {};
         currentGrupoCreador = info.creador || null;
+        window._grupoPermisosActuales = info.permisos || {};
+        const esCreadorActual = (idAuditor === currentGrupoCreador || isAdmin);
+        const perms = window._grupoPermisosActuales;
         const btn = document.getElementById('btnEditarGrupo');
         if (btn) {
-            btn.style.display = (idAuditor === currentGrupoCreador || isAdmin) ? 'flex' : 'none';
+            btn.style.display = (esCreadorActual || perms.editarDesc === 'todos') ? 'flex' : 'none';
         }
+        const btnAdd = document.getElementById('btnAnadirMiembroGrupo');
+        if (btnAdd) {
+            btnAdd.style.display = (esCreadorActual || perms.anadir === 'todos') ? 'flex' : 'none';
+        }
+        if (typeof window._aplicarPermisosGrupoUI === 'function') window._aplicarPermisosGrupoUI();
         const titleEl = document.getElementById('grupoChatTitle');
         if (titleEl && info.nombre) titleEl.innerText = info.nombre;
         const descEl = document.getElementById('grupoChatDesc');
@@ -18172,12 +19041,43 @@ window.mencionarEnChatGrupo = (nombre) => {
     if (navigator.vibrate) navigator.vibrate(30);
 };
 
+// ==========================================
+// ⚙️ PERMISOS DEL GRUPO (según lo elegido al crearlo)
+// ==========================================
+window._soyCreadorDelGrupo = () => (idAuditor === currentGrupoCreador) || isAdmin;
+
+window._puedeEnviarEnGrupoActual = () => {
+    const perms = window._grupoPermisosActuales || {};
+    if (!window._soyCreadorDelGrupo() && perms.enviar === 'creador') {
+        notify("🔒 Solo el creador puede enviar mensajes en este grupo");
+        return false;
+    }
+    return true;
+};
+
+// Bloquea/desbloquea la barra de escritura según el permiso de enviar
+window._aplicarPermisosGrupoUI = () => {
+    const perms = window._grupoPermisosActuales || {};
+    const puedeEnviar = window._soyCreadorDelGrupo() || perms.enviar !== 'creador';
+    const inp = document.getElementById('inputGrupoMsg');
+    const btnPlus = document.getElementById('btnGrupoPlus');
+    const btnEmoji = document.getElementById('btnEmojiGrupo');
+    const btnSend = document.getElementById('btnEnviarGrupoMsg');
+    [inp, btnPlus, btnEmoji, btnSend].forEach(el => {
+        if (!el) return;
+        el.disabled = !puedeEnviar;
+        el.style.opacity = puedeEnviar ? '1' : '0.4';
+    });
+    if (inp) inp.placeholder = puedeEnviar ? 'Escribe al grupo...' : '🔒 Solo el creador puede enviar mensajes';
+};
+
 // ENVIAR MENSAJE AL GRUPO
 window.enviarMensajeGrupo = () => {
     const input = document.getElementById('inputGrupoMsg');
     const txt = input.value.trim();
     if (!txt) return;
     if (!currentGrupoId) return notify('Error: No hay grupo activo');
+    if (!window._puedeEnviarEnGrupoActual()) return;
 
     if (chatGrupoMsgCount >= CHAT_MSG_LIMIT) {
         chatPendingMsg = txt;
@@ -18262,11 +19162,121 @@ const texto = `¡Únete a mi grupo "${nombreGrupo}" en PAGOCODE! 🚀\nEntra al 
         try { window.playSound('coin'); } catch(e){}
     }
 };
+
+// ==========================================
+// 👤➕ AÑADIR MIEMBROS AL GRUPO (según permisos)
+// ==========================================
+window._puedeAnadirMiembrosAlGrupo = () => {
+    const perms = window._grupoPermisosActuales || {};
+    return window._soyCreadorDelGrupo() || perms.anadir === 'todos';
+};
+
+window.abrirAnadirMiembroGrupo = () => {
+    if (!currentGrupoId) return notify("❌ No hay grupo activo");
+    if (!window._puedeAnadirMiembrosAlGrupo()) return notify("🔒 Solo el creador puede añadir miembros");
+    document.getElementById('modalAnadirMiembroGrupo').style.display = 'flex';
+    window._cargarAmigosParaAnadir();
+};
+
+window._cargarAmigosParaAnadir = () => {
+    const cont = document.getElementById('listaAmigosAnadir');
+    if (!cont) return;
+    cont.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Cargando amigos...</div>';
+
+    db.ref(`grupos_chat/${currentGrupoId}/info/miembros`).once('value').then(snapMiembros => {
+        const miembros = snapMiembros.val() || {};
+        const amigos = [];
+        const vistos = {};
+        const agregar = (uid, nombre) => {
+            if (!uid || uid === idAuditor || vistos[uid]) return;
+            vistos[uid] = true;
+            amigos.push({ uid, nombre });
+        };
+        db.ref('chat_requests').orderByChild('receiver').equalTo(idAuditor).once('value', snapReceptor => {
+            if (snapReceptor.exists()) {
+                snapReceptor.forEach(child => {
+                    const req = child.val();
+                    if (req.status === 'accepted') agregar(req.requester, req.requesterName);
+                });
+            }
+            db.ref('chat_requests').orderByChild('requester').equalTo(idAuditor).once('value', snapEmisor => {
+                if (snapEmisor.exists()) {
+                    snapEmisor.forEach(child => {
+                        const req = child.val();
+                        if (req.status === 'accepted') agregar(req.receiver, req.receiverName);
+                    });
+                }
+                if (!amigos.length) {
+                    cont.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8; font-size:0.8rem;">No tienes amigos para añadir.<br>Haz amigos desde el chat privado.</div>';
+                    return;
+                }
+                let html = '';
+                amigos.forEach(a => {
+                    const foto = getUserProfilePhoto(a.uid);
+                    const yaEsta = !!miembros[a.uid];
+                    const nombreEsc = (a.nombre || 'Usuario').replace(/'/g, "\\'");
+                    html += `
+                    <div style="display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid #f1f5f9;">
+                        <div style="width:38px; height:38px; border-radius:50%; background-image:url('${foto}'); background-size:cover; border:1px solid #eee; flex-shrink:0;"></div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-weight:700; color:#334155; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(a.nombre || 'Usuario')}</div>
+                            <div style="font-size:0.68rem; color:${yaEsta ? '#10b981' : '#94a3b8'};">${yaEsta ? '✔ Ya está en el grupo' : 'Toca para añadirlo'}</div>
+                        </div>
+                        <button ${yaEsta ? 'disabled style="background:#e2e8f0; color:#94a3b8; border:none; padding:8px 12px; border-radius:10px; font-weight:800; font-size:0.75rem;"' : `onclick="agregarAmigoAlGrupo('${a.uid}', '${nombreEsc}', this)" style="background:#10b981; color:white; border:none; padding:8px 12px; border-radius:10px; font-weight:800; font-size:0.75rem; cursor:pointer;"`}>
+                            ${yaEsta ? '✔' : '➕ Añadir'}
+                        </button>
+                    </div>`;
+                });
+                cont.innerHTML = html;
+            });
+        });
+    }).catch(() => {
+        cont.innerHTML = '<div style="text-align:center; padding:20px; color:#ef4444; font-size:0.8rem;">Error al cargar amigos</div>';
+    });
+};
+
+window.agregarAmigoAlGrupo = (uid, nombre, btn) => {
+    if (!currentGrupoId) return notify("❌ No hay grupo activo");
+    if (!uid) return;
+    if (!window._puedeAnadirMiembrosAlGrupo()) return notify("🔒 Solo el creador puede añadir miembros");
+    if (btn) { btn.disabled = true; btn.textContent = 'Añadiendo...'; }
+
+    db.ref(`grupos_chat/${currentGrupoId}/info/miembros/${uid}`).set(true).then(() => {
+        if (btn) { btn.textContent = '✔ Añadido'; btn.style.background = '#e2e8f0'; btn.style.color = '#64748b'; }
+        notify("✅ " + (nombre || 'Amigo') + " fue añadido al grupo");
+        try { window.playSound('win'); } catch(e) {}
+        // Avisar al nuevo miembro (campanita + push de grupo)
+        try {
+            const nombreGrupo = document.getElementById('grupoChatTitle') ? document.getElementById('grupoChatTitle').innerText : 'un grupo';
+            const texto = '👥 Te añadieron al grupo "' + nombreGrupo + '"';
+            db.ref(`users/${uid}/notifications`).push({
+                from: idAuditor,
+                fromName: (typeof getMiNombre === 'function') ? getMiNombre() : (myCurrentKey || 'Usuario'),
+                type: 'grupo_chat',
+                text: texto,
+                extra: currentGrupoId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                read: false
+            }).catch(() => {});
+            if (typeof avisarSocial === 'function') avisarSocial([uid], texto, "grupo_chat");
+        } catch(e) {}
+    }).catch(err => {
+        notify("❌ Error al añadir: " + err.message);
+        if (btn) { btn.disabled = false; btn.textContent = '➕ Añadir'; }
+    });
+};
+
 // Función auxiliar para limpiar y abrir el modal
 function abrirModalCreacionGrupo() {
     document.getElementById('inputNombreGrupo').value = '';
     document.getElementById('inputDescGrupo').value = '';
     window._fotoGrupoNueva = '';
+    const selDesc = document.getElementById('selectPermEditarDesc');
+    const selEnv = document.getElementById('selectPermEnviar');
+    const selAnad = document.getElementById('selectPermAnadir');
+    if (selDesc) selDesc.value = 'todos';
+    if (selEnv) selEnv.value = 'todos';
+    if (selAnad) selAnad.value = 'todos';
     const prev = document.getElementById('previewFotoNuevoGrupo');
     if (prev) { prev.style.backgroundImage = ''; prev.innerText = '👥'; }
     const file = document.getElementById('inputFotoNuevoGrupo');
@@ -18328,6 +19338,17 @@ window.guardarNuevoGrupo = () => {
         btn.textContent = "Creando...";
     }
 
+    // Permisos elegidos en el modal (Todos o Solo el creador)
+    const _valPerm = (id) => {
+        const el = document.getElementById(id);
+        return (el && el.value === 'creador') ? 'creador' : 'todos';
+    };
+    const permisos = {
+        editarDesc: _valPerm('selectPermEditarDesc'),
+        enviar: _valPerm('selectPermEnviar'),
+        anadir: _valPerm('selectPermAnadir')
+    };
+
     // Guardamos en una nueva rama llamada 'grupos_chat'
     const ref = db.ref('grupos_chat').push();
     ref.set({
@@ -18337,7 +19358,8 @@ window.guardarNuevoGrupo = () => {
             foto: foto,
             creador: idAuditor,
             fecha: firebase.database.ServerValue.TIMESTAMP,
-            miembros: { [idAuditor]: true }
+            miembros: { [idAuditor]: true },
+            permisos: permisos
         }
     }).then(() => {
         document.getElementById('modalCrearGrupo').style.display = 'none';
@@ -18374,9 +19396,13 @@ window.abrirModalEditarGrupo = () => {
         const info = snap.val();
         if (!info) return notify("❌ No se encontró el grupo");
         currentGrupoCreador = info.creador || null;
-        if (idAuditor !== currentGrupoCreador && !isAdmin) {
-            return notify("❌ Solo el creador del grupo puede editarlo");
+        window._grupoPermisosActuales = info.permisos || window._grupoPermisosActuales || {};
+        const esCreador = window._soyCreadorDelGrupo();
+        const puedeDesc = esCreador || window._grupoPermisosActuales.editarDesc === 'todos';
+        if (!puedeDesc) {
+            return notify("❌ Solo el creador puede editar el grupo");
         }
+
         document.getElementById('inputEditarNombreGrupo').value = info.nombre || '';
         document.getElementById('inputEditarDescGrupo').value = info.descripcion || '';
         window._fotoGrupoEditar = info.foto || '';
@@ -18385,6 +19411,24 @@ window.abrirModalEditarGrupo = () => {
             if (info.foto) { prev.style.backgroundImage = `url('${info.foto}')`; prev.innerText = ''; }
             else { prev.style.backgroundImage = ''; prev.innerText = '👥'; }
         }
+
+        // Quien no es creador solo puede tocar la descripción
+        const bloqueFoto = document.getElementById('bloqueFotoEditarGrupo');
+        if (bloqueFoto) bloqueFoto.style.display = esCreador ? 'block' : 'none';
+        const bloquePerms = document.getElementById('bloquePermisosEditarGrupo');
+        if (bloquePerms) bloquePerms.style.display = esCreador ? 'block' : 'none';
+        const inpNombre = document.getElementById('inputEditarNombreGrupo');
+        if (inpNombre) {
+            inpNombre.disabled = !esCreador;
+            inpNombre.style.opacity = esCreador ? '1' : '0.5';
+        }
+        const selD = document.getElementById('selectEditPermDesc');
+        const selE = document.getElementById('selectEditPermEnviar');
+        const selA = document.getElementById('selectEditPermAnadir');
+        if (selD) selD.value = window._grupoPermisosActuales.editarDesc || 'todos';
+        if (selE) selE.value = window._grupoPermisosActuales.enviar || 'todos';
+        if (selA) selA.value = window._grupoPermisosActuales.anadir || 'todos';
+
         document.getElementById('modalEditarGrupo').style.display = 'flex';
     }).catch(() => notify("❌ Error al cargar datos del grupo"));
 };
@@ -18409,37 +19453,64 @@ window.quitarFotoEditarGrupo = () => {
 
 window.guardarEdicionGrupo = () => {
     if (!currentGrupoId || !idAuditor) return notify("❌ Inicia sesión primero");
-    if (idAuditor !== currentGrupoCreador && !isAdmin) return notify("❌ Solo el creador puede editar el grupo");
+    const esCreador = window._soyCreadorDelGrupo();
+    const perms = window._grupoPermisosActuales || {};
+    if (!esCreador && perms.editarDesc !== 'todos') return notify("❌ Solo el creador puede editar el grupo");
 
     const inputNombre = document.getElementById('inputEditarNombreGrupo');
     const inputDesc = document.getElementById('inputEditarDescGrupo');
     const nombre = inputNombre.value.trim();
     const descripcion = inputDesc ? inputDesc.value.trim() : '';
     const foto = window._fotoGrupoEditar || null;
-    if (!nombre) return notify("❌ El nombre no puede estar vacío");
+    if (esCreador && !nombre) return notify("❌ El nombre no puede estar vacío");
 
     const btn = document.querySelector('#modalEditarGrupo .btn-blue');
     if (btn) { btn.disabled = true; btn.textContent = "Guardando..."; }
 
-    db.ref(`grupos_chat/${currentGrupoId}/info`).update({ nombre, descripcion, foto })
+    // El creador guarda todo; los demás solo la descripción
+    let cambios;
+    if (esCreador) {
+        const _valPerm = (id) => {
+            const el = document.getElementById(id);
+            return (el && el.value === 'creador') ? 'creador' : 'todos';
+        };
+        const permisos = {
+            editarDesc: _valPerm('selectEditPermDesc'),
+            enviar: _valPerm('selectEditPermEnviar'),
+            anadir: _valPerm('selectEditPermAnadir')
+        };
+        cambios = { nombre, descripcion, foto, permisos };
+    } else {
+        cambios = { descripcion };
+    }
+
+    db.ref(`grupos_chat/${currentGrupoId}/info`).update(cambios)
         .then(() => {
             document.getElementById('modalEditarGrupo').style.display = 'none';
-            document.getElementById('grupoChatTitle').innerText = nombre;
+            if (esCreador) {
+                document.getElementById('grupoChatTitle').innerText = nombre;
+                window._grupoPermisosActuales = cambios.permisos;
+            }
             const descEl = document.getElementById('grupoChatDesc');
             if (descEl) descEl.innerText = descripcion || 'Chat Grupal';
-            // Actualizar avatar del header
-            const header = document.getElementById('grupoIconoHeader');
-            if (header) {
-                if (foto) {
-                    header.style.backgroundImage = `url('${foto}')`;
-                    header.style.backgroundSize = 'cover';
-                    header.style.backgroundPosition = 'center';
-                    header.innerText = '';
-                } else {
-                    header.style.backgroundImage = '';
-                    header.innerText = '👥';
+            // Actualizar avatar del header (solo el creador)
+            if (esCreador) {
+                const header = document.getElementById('grupoIconoHeader');
+                if (header) {
+                    if (foto) {
+                        header.style.backgroundImage = `url('${foto}')`;
+                        header.style.backgroundSize = 'cover';
+                        header.style.backgroundPosition = 'center';
+                        header.innerText = '';
+                    } else {
+                        header.style.backgroundImage = '';
+                        header.innerText = '👥';
+                    }
                 }
+                const btnAdd = document.getElementById('btnAnadirMiembroGrupo');
+                if (btnAdd) btnAdd.style.display = (cambios.permisos.anadir === 'todos') ? 'flex' : 'none';
             }
+            if (typeof window._aplicarPermisosGrupoUI === 'function') window._aplicarPermisosGrupoUI();
             notify("✅ Grupo actualizado");
             if (btn) { btn.disabled = false; btn.textContent = "Guardar Cambios"; }
         })
