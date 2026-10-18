@@ -12803,6 +12803,9 @@ function cargarMensajesPrivados() {
         }
     } catch (e) {}
 
+    // 1c. Pintar videos recibidos guardados en este chat (persistentes)
+    try { if (typeof p2pPintarVideosGuardados === 'function') p2pPintarVideosGuardados(currentChatId); } catch (e) {}
+
     // 2. ESCUCHAR MENSAJES NUEVOS
     privChatRef = db.ref(`chats_privados/${currentChatId}`).limitToLast(15);
     privChatRef.on('child_added', snap => {
@@ -13580,6 +13583,7 @@ window.p2pAceptarOferta = async () => {
     p2pFilaUI(sid, "🎥 Video entrante", meta, false);
     p2pSetEstado(sid, "1/3 Conectando con el emisor…", 0);
     p2pDiag(sid, "Oferta detectada ✓");
+    try { p2pActualizarPuntos(); } catch (e) {}
 
     const pc = new RTCPeerConnection(P2P_ICE);
     window._p2p.pc = pc;
@@ -13721,6 +13725,14 @@ function p2pFinalizarRecepcion(sid) {
     const blob = new Blob(s.chunks, { type: mime });
     s.chunks = [];
     window._p2pVideos[sid] = blob;
+    try {
+        p2pGuardarVideoDB({
+            sid, chatId: s.chatId || currentChatId,
+            name: (s.meta && s.meta.name) || ('video_' + sid + '.mp4'),
+            size: blob.size, mime: mime, dur: (s.meta && s.meta.dur) || 0,
+            fecha: Date.now(), blob
+        }).catch(() => {});
+    } catch (e) {}
     const url = URL.createObjectURL(blob);
 
     const fila = document.getElementById('p2p-row-' + sid) || p2pFilaUI(sid, "🎥 Video en vivo", s.meta || {}, false);
@@ -13752,6 +13764,11 @@ function p2pFinalizarRecepcion(sid) {
             btn.style.cssText = "margin-top:8px; background:#10b981; color:white; border:none; border-radius:10px; padding:8px 12px; font-weight:700; font-size:0.78rem;";
             btn.onclick = () => p2pGuardarVideo(sid, btn);
             caja.appendChild(btn);
+            const delBtn = document.createElement('button');
+            delBtn.textContent = "🗑 Eliminar";
+            delBtn.style.cssText = "margin-top:8px; margin-left:8px; background:#ef4444; color:white; border:none; border-radius:10px; padding:8px 12px; font-weight:700; font-size:0.78rem;";
+            delBtn.onclick = () => window.p2pEliminarVideo(sid);
+            caja.appendChild(delBtn);
             const st = document.createElement('div');
             st.className = 'p2p-status';
             st.style.cssText = "font-size:0.7rem; opacity:0.75; margin-top:6px;";
@@ -13773,10 +13790,21 @@ function p2pFinalizarRecepcion(sid) {
     try { if (pe.dc) pe.dc.close(); } catch (e) {}
     try { if (pe.pc) pe.pc.close(); } catch (e) {}
     if (window._p2p && window._p2p.sid === sid) window._p2p = null;
+    try { p2pActualizarPuntos(); } catch (e) {}
 }
 
 async function p2pGuardarVideo(sid, btn) {
-    const blob = window._p2pVideos[sid];
+    let blob = window._p2pVideos[sid];
+    if (!blob) {
+        try {
+            const db = await p2pDB();
+            blob = await new Promise((res) => {
+                const req = db.transaction('videos', 'readonly').objectStore('videos').get(sid);
+                req.onsuccess = () => res(req.result && req.result.blob);
+                req.onerror = () => res(null);
+            });
+        } catch (e) {}
+    }
     if (!blob) return notify("❌ Video no disponible");
     const bridge = (typeof AndroidNative !== 'undefined' && AndroidNative && typeof AndroidNative.videoSaveStart === 'function') ? AndroidNative : null;
     if (!bridge) {
@@ -13824,6 +13852,161 @@ function p2pBlobABase64(blob) {
         fr.readAsDataURL(blob);
     });
 }
+
+function p2pDB() {
+    return new Promise((res, rej) => {
+        try {
+            if (window._p2pDB) return res(window._p2pDB);
+            const req = indexedDB.open('codecashMedia', 1);
+            req.onupgradeneeded = () => {
+                const db = req.result;
+                if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos', { keyPath: 'sid' });
+            };
+            req.onsuccess = () => { window._p2pDB = req.result; res(req.result); };
+            req.onerror = () => rej(req.error);
+        } catch (e) { rej(e); }
+    });
+}
+
+async function p2pGuardarVideoDB(rec) {
+    const db = await p2pDB();
+    return new Promise((res, rej) => {
+        const tx = db.transaction('videos', 'readwrite');
+        tx.objectStore('videos').put(rec);
+        tx.oncomplete = () => res(true);
+        tx.onerror = () => rej(tx.error);
+    });
+}
+
+async function p2pVideosDeChat(chatId) {
+    const db = await p2pDB();
+    return new Promise((res) => {
+        const out = [];
+        try {
+            const req = db.transaction('videos', 'readonly').objectStore('videos').openCursor();
+            req.onsuccess = (e) => {
+                const c = e.target.result;
+                if (c) { if (c.value && c.value.chatId === chatId) out.push(c.value); c.continue(); }
+                else res(out);
+            };
+            req.onerror = () => res(out);
+        } catch (e) { res(out); }
+    });
+}
+
+window.p2pEliminarVideo = (sid) => {
+    let ok = true;
+    try { ok = confirm("¿Eliminar este video del chat?"); } catch (e) { ok = true; }
+    if (!ok) return;
+    p2pEliminarVideoDB(sid).then(() => {
+        const el = document.getElementById('p2p-vid-' + sid) || document.getElementById('p2p-row-' + sid);
+        if (el) el.remove();
+        try { delete window._p2pVideos[sid]; } catch (e) {}
+        notify("🗑 Video eliminado");
+    });
+};
+
+async function p2pEliminarVideoDB(sid) {
+    try {
+        const db = await p2pDB();
+        return await new Promise((res) => {
+            const tx = db.transaction('videos', 'readwrite');
+            tx.objectStore('videos').delete(sid);
+            tx.oncomplete = () => res(true);
+            tx.onerror = () => res(false);
+        });
+    } catch (e) { return false; }
+}
+
+async function p2pPintarVideosGuardados(chatId) {
+    let vids = [];
+    try { vids = await p2pVideosDeChat(chatId); } catch (e) { return; }
+    if (!vids.length || currentChatId !== chatId) return;
+    const list = document.getElementById('privChatList');
+    if (!list) return;
+    vids.sort((a, b) => (a.fecha || 0) - (b.fecha || 0));
+    vids.forEach(v => {
+        if (!v.blob) return;
+        if (document.getElementById('p2p-vid-' + v.sid) || document.getElementById('p2p-row-' + v.sid)) return;
+        const row = document.createElement('div');
+        row.id = 'p2p-vid-' + v.sid;
+        row.setAttribute('data-p2p-row', '1');
+        row.className = 'chat-row other';
+        row.style.cssText = 'display:flex; width:100%; margin-bottom:12px; padding:0 15px; justify-content:flex-start;';
+        const caja = document.createElement('div');
+        caja.className = 'msg-bubble msg-other p2p-caja';
+        caja.style.cssText = 'max-width:85%; padding:10px 12px;';
+        const tit = document.createElement('div');
+        tit.style.cssText = 'font-weight:700; font-size:0.85rem; margin-bottom:4px;';
+        tit.textContent = "🎥 Video recibido";
+        caja.appendChild(tit);
+        const vid = document.createElement('video');
+        vid.controls = true;
+        vid.playsInline = true;
+        vid.setAttribute('playsinline', '');
+        vid.setAttribute('controls', '');
+        vid.preload = 'metadata';
+        try { vid.src = URL.createObjectURL(v.blob); } catch (e) {}
+        vid.style.cssText = "width:100%; max-width:260px; min-height:110px; border-radius:12px; display:block; background:#000;";
+        vid.onerror = () => {
+            const av = document.createElement('div');
+            av.style.cssText = "font-size:0.78rem; color:#b45309; background:#fef3c7; border-radius:10px; padding:8px 10px;";
+            av.textContent = "⚠️ Este teléfono no reproduce este formato, pero puedes guardarlo con el botón de abajo.";
+            vid.replaceWith(av);
+        };
+        caja.appendChild(vid);
+        const info = document.createElement('div');
+        info.style.cssText = 'font-size:0.7rem; opacity:0.8; margin-top:6px;';
+        const mb = (((v.size || (v.blob && v.blob.size)) || 0) / (1024 * 1024)).toFixed(1) + " MB";
+        const seg = v.dur ? " • " + Math.round(v.dur) + "s" : "";
+        info.textContent = mb + seg;
+        caja.appendChild(info);
+        const btns = document.createElement('div');
+        btns.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;';
+        const btn = document.createElement('button');
+        btn.textContent = "💾 Guardar en el teléfono";
+        btn.style.cssText = "background:#10b981; color:white; border:none; border-radius:10px; padding:8px 12px; font-weight:700; font-size:0.78rem;";
+        btn.onclick = () => p2pGuardarVideo(v.sid, btn);
+        btns.appendChild(btn);
+        const del = document.createElement('button');
+        del.textContent = "🗑 Eliminar";
+        del.style.cssText = "background:#ef4444; color:white; border:none; border-radius:10px; padding:8px 12px; font-weight:700; font-size:0.78rem;";
+        del.onclick = () => window.p2pEliminarVideo(v.sid);
+        btns.appendChild(del);
+        caja.appendChild(btns);
+        row.appendChild(caja);
+        list.appendChild(row);
+    });
+    try { list.scrollTop = list.scrollHeight; } catch (e) {}
+}
+
+function p2pActualizarPuntos() {
+    try {
+        if (!document.getElementById('p2p-punto-css')) {
+            const st = document.createElement('style');
+            st.id = 'p2p-punto-css';
+            st.textContent = '.p2p-punto{position:absolute;bottom:-3px;left:-3px;width:12px;height:12px;background:#00e676;border:2px solid #fff;border-radius:50%;z-index:130;box-shadow:0 0 8px #00e676;animation:p2pPulse 1.2s ease-in-out infinite;}@keyframes p2pPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}';
+            document.head.appendChild(st);
+        }
+        const s = window._p2p;
+        const chatRecibiendo = (s && s.role === 'receiver' && !s.done) ? s.chatId : null;
+        document.querySelectorAll('.story-item[data-uid]').forEach(el => {
+            const uid = el.getAttribute('data-uid');
+            const activo = chatRecibiendo && chatRecibiendo === [idAuditor, uid].sort().join('_');
+            const cajaAv = el.querySelector('.story-avatar-box') || el;
+            let dot = cajaAv.querySelector('.p2p-punto');
+            if (activo && !dot) {
+                dot = document.createElement('div');
+                dot.className = 'p2p-punto';
+                dot.title = '🎥 Recibiendo video';
+                cajaAv.appendChild(dot);
+            } else if (!activo && dot) {
+                dot.remove();
+            }
+        });
+    } catch (e) {}
+}
+setInterval(p2pActualizarPuntos, 4000);
 
 function p2pFilaUI(sid, titulo, meta, esMio) {
     const list = document.getElementById('privChatList');
@@ -13930,6 +14113,7 @@ function p2pLimpiarSesion(sid) {
     try { if (s.dc) s.dc.close(); } catch (e) {}
     try { if (s.pc) s.pc.close(); } catch (e) {}
     window._p2p = null;
+    try { p2pActualizarPuntos(); } catch (e) {}
 }
 
 function p2pMostrarModalOferta() {
@@ -14683,7 +14867,7 @@ function renderizarUsuariosHorizontal() {
 
         // --- 2. CONSTRUIR CADA ITEM DE LA LISTA ---
         html += `
-        <div class="story-item" style="min-width: 70px; position:relative; margin-top: 35px;" 
+        <div class="story-item" style="min-width: 70px; position:relative; margin-top: 35px;" data-uid="${user.key}"
              onclick="${esMio ? '' : `abrirChatPrivado('${user.key}', '${user.nombre.replace(/'/g, "\\'")}')`}">
 
             ${nubeHtml} <div class="story-avatar-box" style="border: 3px solid ${bordeColor} !important; position:relative; width:58px; height:58px; margin: 0 auto; transition: 0.3s; border-radius: 50%;">
