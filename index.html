@@ -13725,17 +13725,25 @@ function p2pFinalizarRecepcion(sid) {
     const blob = new Blob(s.chunks, { type: mime });
     s.chunks = [];
     window._p2pVideos[sid] = blob;
+    let refKey = null;
+    try {
+        const listRef = document.getElementById('privChatList');
+        if (listRef) {
+            const rows = listRef.querySelectorAll('[id^="priv-row-"]');
+            if (rows.length) refKey = rows[rows.length - 1].id.replace('priv-row-', '');
+        }
+    } catch (e) {}
     try {
         p2pGuardarVideoDB({
             sid, chatId: s.chatId || currentChatId,
             name: (s.meta && s.meta.name) || ('video_' + sid + '.mp4'),
             size: blob.size, mime: mime, dur: (s.meta && s.meta.dur) || 0,
-            fecha: Date.now(), blob
+            fecha: Date.now(), refKey, blob
         }).catch(() => {});
     } catch (e) {}
     const url = URL.createObjectURL(blob);
 
-    const fila = document.getElementById('p2p-row-' + sid) || p2pFilaUI(sid, "🎥 Video en vivo", s.meta || {}, false);
+    const fila = document.getElementById('p2p-row-' + sid) || ((s.chatId === currentChatId) ? p2pFilaUI(sid, "🎥 Video en vivo", s.meta || {}, false) : null);
     if (fila) {
         const caja = fila.querySelector('.p2p-caja');
         if (caja) {
@@ -13918,6 +13926,21 @@ async function p2pEliminarVideoDB(sid) {
     } catch (e) { return false; }
 }
 
+function p2pInsertarFila(row, refKey) {
+    const list = document.getElementById('privChatList');
+    if (!list) return;
+    if (!refKey) { list.appendChild(row); return; }
+    const ref = document.getElementById('priv-row-' + refKey);
+    if (ref && ref.parentElement === list) { ref.insertAdjacentElement('afterend', row); return; }
+    let antes = null;
+    list.querySelectorAll('[id^="priv-row-"]').forEach(el => {
+        if (antes) return;
+        const k = el.id.replace('priv-row-', '');
+        if (k > refKey) antes = el;
+    });
+    if (antes) list.insertBefore(row, antes); else list.appendChild(row);
+}
+
 async function p2pPintarVideosGuardados(chatId) {
     let vids = [];
     try { vids = await p2pVideosDeChat(chatId); } catch (e) { return; }
@@ -13975,7 +13998,7 @@ async function p2pPintarVideosGuardados(chatId) {
         btns.appendChild(del);
         caja.appendChild(btns);
         row.appendChild(caja);
-        list.appendChild(row);
+        p2pInsertarFila(row, v.refKey);
     });
     try { list.scrollTop = list.scrollHeight; } catch (e) {}
 }
