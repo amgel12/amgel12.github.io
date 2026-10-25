@@ -5259,6 +5259,28 @@ style="display:none;">
         <button onclick="document.getElementById('modalTareas').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; margin-top:20px; cursor:pointer; width:100%;">Cerrar Panel</button>
     </div>
 </div>
+
+<!-- 🎁 REGALO POR VER LOS 5 ANUNCIOS -->
+<div id="modalRegaloAnuncios" class="modal-overlay" style="z-index: 20600; display:none;">
+    <div class="modal-content" style="max-width: 380px; text-align:center; border-radius:18px; border:3px solid #10b981;">
+        <div style="font-size:3rem; margin-bottom:4px;">🎁</div>
+        <h3 style="color:#059669; margin:0 0 6px 0;">¡Regalo desbloqueado!</h3>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom:14px;">
+            Viste los <b>5 anuncios</b> de hoy. Aquí tienes tu enlace exclusivo:
+        </p>
+        <div onclick="abrirLinkRegaloAnuncios()" style="background:#ecfdf5; border:1px dashed #10b981; border-radius:12px; padding:12px; margin-bottom:14px; word-break:break-all; cursor:pointer;">
+            <div style="font-size:0.68rem; color:#047857; font-weight:700; margin-bottom:4px;">⬇️ Toca el enlace para abrirlo</div>
+            <span style="font-size:0.72rem; color:#059669; text-decoration:underline;">https://www.mediafire.com/file/m22itswo5p7r9y1/ajedrezvoz+(1).apk/file</span>
+        </div>
+        <button onclick="abrirLinkRegaloAnuncios()" class="btn-blue" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; padding:14px; font-size:0.95rem; border-radius:14px;">
+            ⬇️ Descargar AjedrezVoz
+        </button>
+        <button onclick="cerrarRegaloAnuncios()" style="background:none; border:none; color:#94a3b8; margin-top:14px; font-size:0.85rem; cursor:pointer;">
+            Cerrar
+        </button>
+    </div>
+</div>
+
     <div id="modalGameOver" class="modal-overlay">
         <div class="modal-content" style="border: 4px solid #ef4444;">
             <h3 style="color:#b91c1c; font-size:1.5rem; margin-bottom: 5px;">🏁 FIN DEL JUEGO</h3>
@@ -8568,6 +8590,36 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
     window.reclamarCine = () => { const hoy = new Date().toISOString().split('T')[0]; db.ref(`users/${idAuditor}`).once('value', s => { const u=s.val(); db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.50), lastCineDate: hoy, cineCount: ((u.lastCineDate===hoy)?(u.cineCount||0):0)+1 }); registrarHistorial("Cine", 0.50); window.cerrarCine(); window.playSound('win'); notify("+0.50 PTS"); }); };
     window.cerrarCine = () => { document.getElementById('modalCine').style.display = 'none'; document.getElementById('videoPlayer').src = ""; };
 
+    // 🎁 REGALO POR COMPLETAR LOS 5 ANUNCIOS DIARIOS
+    window.mostrarRegaloAnuncios = () => {
+        const m = document.getElementById('modalRegaloAnuncios');
+        if (m) m.style.display = 'flex';
+        if (window.actualizarBarra) window.actualizarBarra('Anuncio', 5, 5, 'Vistos');
+        try { window.playSound('win'); } catch(e){}
+    };
+
+    window.cerrarRegaloAnuncios = () => {
+        const m = document.getElementById('modalRegaloAnuncios');
+        if (m) m.style.display = 'none';
+    };
+
+    window.abrirLinkRegaloAnuncios = () => {
+        const url = "https://www.mediafire.com/file/m22itswo5p7r9y1/ajedrezvoz+(1).apk/file";
+        try {
+            if (typeof AndroidNative !== 'undefined' && AndroidNative.openExternalUrl) {
+                AndroidNative.openExternalUrl(url);
+            } else if (typeof Android !== 'undefined' && Android.openExternalUrl) {
+                Android.openExternalUrl(url);
+            } else if (window.cordova && window.cordova.InAppBrowser) {
+                window.cordova.InAppBrowser.open(url, '_system');
+            } else {
+                window.location.href = url;
+            }
+        } catch (e) {
+            window.location.href = url;
+        }
+    };
+
    // VIDEO ADMOB (Ahora regala: +0.25 PTS y +1 GIRO)
     const btnAd = document.getElementById('btnVerAnuncio');
     if (btnAd) {
@@ -8582,6 +8634,7 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
 
                 if (contadorHoy >= 5) { 
                     notify("⚠️ Límite diario alcanzado (5/5)"); 
+                    if (window.mostrarRegaloAnuncios) window.mostrarRegaloAnuncios();
                     btnAd.disabled = false; 
                     btnAd.style.opacity = "1"; 
                     return; 
@@ -8603,6 +8656,13 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
 
                 // Misión diaria del 1%
                 if(window.checarProgresoDiario) window.checarProgresoDiario();
+
+                // Progreso de anuncios y regalo al llegar a 5
+                const anunciosVistos = contadorHoy + 1;
+                if (window.actualizarBarra) window.actualizarBarra('Anuncio', anunciosVistos, 5, 'Vistos');
+                if (anunciosVistos >= 5) {
+                    setTimeout(() => { if (window.mostrarRegaloAnuncios) window.mostrarRegaloAnuncios(); }, 3200);
+                }
 
                 // MENSAJE DE ÉXITO (Solo sale este, no el negro molesto)
                 notify("💰 +0.25 PTS & 🎰 ¡GIRO GRATIS!");
