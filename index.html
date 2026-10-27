@@ -12540,6 +12540,78 @@ window.abrirChatPrivado = (targetUid, targetName) => {
         }
     });
 };
+function _claveLeidoChat(uid) {
+    return 'pgc_leido_' + (idAuditor || '') + '_' + uid;
+}
+
+function _leidoHasta(uid) {
+    try {
+        return parseInt(localStorage.getItem(_claveLeidoChat(uid)) || '0', 10) || 0;
+    } catch(e) {
+        return 0;
+    }
+}
+
+function _marcarLeidoHasta(uid, fecha) {
+    if (!uid) return;
+    const f = Number(fecha) || 0;
+    if (f <= 0 || f <= _leidoHasta(uid)) return;
+    try {
+        localStorage.setItem(_claveLeidoChat(uid), String(f));
+    } catch(e) {}
+}
+
+function _nuevosChat(uid, chat) {
+    if (!chat) return 0;
+    if (typeof chat.nuevosDesdeLectura === 'number') return chat.nuevosDesdeLectura;
+    const leidoHasta = _leidoHasta(uid);
+    const ultimaFecha = chat.ultimoMsg ? (Number(chat.ultimoMsg.fecha) || 0) : 0;
+    if (leidoHasta === 0) return Number(chat.mensajesNoLeidos) || 0;
+    return ultimaFecha > leidoHasta ? Math.max(1, Number(chat.mensajesNoLeidos) || 0) : 0;
+}
+
+function _limpiarNoLeidosChat(uid) {
+    if (!uid) return;
+    if (window.mapaMensajesSinLeer && window.mapaMensajesSinLeer[uid]) {
+        delete window.mapaMensajesSinLeer[uid];
+    }
+    try {
+        const cacheKey = CHATS_CACHE_KEY();
+        const chatsCache = JSON.parse(localStorage.getItem(cacheKey) || '[]');
+        let cambio = false;
+        let fechaUltima = 0;
+        chatsCache.forEach(c => {
+            if (c.otroUid === uid) {
+                if (c.mensajesNoLeidos > 0 || c.nuevosDesdeLectura > 0) {
+                    c.mensajesNoLeidos = 0;
+                    c.nuevosDesdeLectura = 0;
+                    cambio = true;
+                }
+                if (c.ultimoMsg && Number(c.ultimoMsg.fecha) > fechaUltima) {
+                    fechaUltima = Number(c.ultimoMsg.fecha);
+                }
+            }
+        });
+        if (cambio) localStorage.setItem(cacheKey, JSON.stringify(chatsCache));
+        if (fechaUltima > 0) _marcarLeidoHasta(uid, fechaUltima);
+    } catch(e) {}
+    if (idAuditor) {
+        db.ref(`users/${idAuditor}/notifications`).once('value', snap => {
+            if (!snap.exists()) return;
+            const updates = {};
+            snap.forEach(s => {
+                const n = s.val() || {};
+                if (n.type === 'chat_privado' && n.extra === uid) updates[s.key] = null;
+            });
+            if (Object.keys(updates).length) {
+                db.ref(`users/${idAuditor}/notifications`).update(updates);
+            }
+        }).catch(() => {});
+    }
+    if (typeof renderizarUsuariosHorizontal === 'function') renderizarUsuariosHorizontal();
+    if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
+}
+
 // Función interna que abre el chat (sin verificación de solicitud)
 function _abrirChatPrivadoReal(targetUid, targetName) {
     if(!idAuditor) return notify("Inicia sesión primero");
@@ -12562,16 +12634,7 @@ function _abrirChatPrivadoReal(targetUid, targetName) {
         localStorage.setItem('chatAbiertoNombre', targetName || 'Usuario');
     } catch(e) {}
 
-    db.ref(`users/${idAuditor}/notifications`).once('value', snap => {
-        if (snap.exists()) {
-            snap.forEach(s => {
-                const notif = s.val();
-                if (notif.type === 'chat_privado' && notif.extra === targetUid) {
-                    db.ref(`users/${idAuditor}/notifications/${s.key}`).remove();
-                }
-            });
-        }
-    });
+    _limpiarNoLeidosChat(targetUid);
 
     // 🔥 RESETEAR BADGE AL ABRIR CHAT
     resetPrivateChatBadge(targetUid);
@@ -12590,12 +12653,6 @@ function _abrirChatPrivadoReal(targetUid, targetName) {
             }
         }
     });
-
-    if (window.mapaMensajesSinLeer && window.mapaMensajesSinLeer[targetUid]) {
-        delete window.mapaMensajesSinLeer[targetUid];
-        if (typeof renderizarUsuariosHorizontal === 'function') renderizarUsuariosHorizontal();
-        if (typeof cargarTodosLosUsuariosParaMiChat === 'function') cargarTodosLosUsuariosParaMiChat();
-    }
 
     document.getElementById('privChatTitle').innerText = targetName;
     document.getElementById('privAvatar').style.backgroundImage = "url('" + getUserProfilePhoto(targetUid) + "')";
@@ -12874,6 +12931,14 @@ function cargarMensajesPrivados() {
 
         if (document.getElementById(`priv-row-${snap.key}`)) return;
         if (list.innerHTML.includes('🔒')) list.innerHTML = '';
+
+        const msgVal = snap.val() || {};
+        if (currentChatId && msgVal.uid && msgVal.uid !== idAuditor && !msgVal.leido && !msgVal.p2p) {
+            db.ref(`chats_privados/${currentChatId}/${snap.key}/leido`).set(true).catch(() => {});
+        }
+        if (currentChatTargetUid && msgVal.fecha) {
+            _marcarLeidoHasta(currentChatTargetUid, msgVal.fecha);
+        }
 
         const row = crearFilaMensajePrivado(snap);
         list.appendChild(row);
@@ -14490,6 +14555,7 @@ window.otorgarMensajesPorAd = () => {
 };
 
 window.cerrarChatPrivado = () => {
+    const uidChatCerrado = currentChatTargetUid;
     // Limpiar TODOS los temporizadores y estados
     try {
         clearTimeout(chatPressTimer);
@@ -14525,10 +14591,7 @@ window.cerrarChatPrivado = () => {
     if (window.cancelarRespuesta) window.cancelarRespuesta();
 
     // Refrescar la lista de Mi Chat al salir del chat (últimos mensajes / no leídos)
-    if (typeof cargarTodosLosUsuariosParaMiChat === 'function') {
-        const contMiChat = document.getElementById('mensajesPrivadosContainer');
-        if (contMiChat && contMiChat.style.display !== 'none') cargarTodosLosUsuariosParaMiChat();
-    }
+    _limpiarNoLeidosChat(uidChatCerrado);
 };
 
 window.cerrarChatGrupo = () => {
@@ -20448,13 +20511,17 @@ function procesarSnapshotChats(snap) {
         const partes = chatSnap.key.split('_');
         if (!partes.includes(idAuditor)) return;
         const otroUid = partes[0] === idAuditor ? partes[1] : partes[0];
-        let ultimoMsg = null, noLeidos = 0;
+        const leidoHasta = _leidoHasta(otroUid);
+        let ultimoMsg = null, noLeidos = 0, nuevos = 0;
         chatSnap.forEach(msgSnap => {
             const msg = msgSnap.val();
             if (!ultimoMsg || (msg.fecha && msg.fecha > (ultimoMsg.fecha || 0))) ultimoMsg = msg;
-            if (msg.uid !== idAuditor && !msg.leido) noLeidos++;
+            if (msg.uid !== idAuditor && !msg.leido && !msg.p2p) {
+                noLeidos++;
+                if (!leidoHasta || (Number(msg.fecha) || 0) > leidoHasta) nuevos++;
+            }
         });
-        if (ultimoMsg) chats.push({ otroUid, ultimoMsg, mensajesNoLeidos: noLeidos });
+        if (ultimoMsg) chats.push({ otroUid, ultimoMsg, mensajesNoLeidos: noLeidos, nuevosDesdeLectura: nuevos });
     });
     chats.sort((a, b) => {
         if (a.mensajesNoLeidos > 0 && b.mensajesNoLeidos === 0) return -1;
@@ -20494,8 +20561,8 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
         // Ordenar: solicitud recibida pendiente > nuevos mensajes > online > pensamiento > último visto
         todos.sort((a, b) => {
             const cA = chatsByUid[a.key], cB = chatsByUid[b.key];
-            const nA = cA && cA.mensajesNoLeidos > 0 ? 1 : 0;
-            const nB = cB && cB.mensajesNoLeidos > 0 ? 1 : 0;
+            const nA = _nuevosChat(a.key, cA) > 0 ? 1 : 0;
+            const nB = _nuevosChat(b.key, cB) > 0 ? 1 : 0;
             if (nA !== nB) return nB - nA;
 
             // Priorizar solicitudes recibidas pendientes
@@ -20520,8 +20587,9 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
             const hasPensamiento = nube && (ahora - nube.timestamp < 86400000) && nube.texto;
             
             const mensajesEnRadar = (window.mapaMensajesSinLeer && window.mapaMensajesSinLeer[uid]) ? window.mapaMensajesSinLeer[uid] : 0;
-            const tieneNuevos = (chat && chat.mensajesNoLeidos > 0) || (mensajesEnRadar > 0);
-            const numeroAviso = mensajesEnRadar > 0 ? mensajesEnRadar : (chat ? chat.mensajesNoLeidos : 0);
+            let cantidadNuevos = _nuevosChat(uid, chat);
+            if (_leidoHasta(uid) === 0) cantidadNuevos = Math.max(cantidadNuevos, mensajesEnRadar);
+            const tieneNuevos = cantidadNuevos > 0;
 
             // Estado de solicitud
             const sol = requestStatusMap[uid];
@@ -20539,9 +20607,6 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
             if (esSolicitudRecibida) {
                 borderColor = '#f59e0b';
                 borderGlow = 'rgba(245,158,11,0.35)';
-            } else if (tieneNuevos) {
-                borderColor = '#ef4444';
-                borderGlow = 'rgba(239,68,68,0.3)';
             } else if (hasPensamiento) {
                 borderColor = '#3b82f6';
                 borderGlow = 'rgba(59,130,246,0.3)';
@@ -20585,7 +20650,10 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
             if (textoResumen.length > 38) textoResumen = textoResumen.substring(0, 36) + '…';
 
             const badge = tieneNuevos
-                ? `<div style="background:#ef4444;color:white;font-size:0.65rem;font-weight:800;padding:2px 10px;border-radius:10px;margin-top:4px;display:inline-block;">🔴 ${numeroAviso} sin leer</div>` : '';
+                ? `<div title="${cantidadNuevos} sin leer" style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                       <div style="min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:#25D366; color:#fff; font-size:10px; font-weight:800; line-height:16px; text-align:center; box-shadow:0 0 0 2px #fff;">${cantidadNuevos > 99 ? '99+' : cantidadNuevos}</div>
+                       <div style="width:9px; height:9px; border-radius:50%; background:#25D366;"></div>
+                   </div>` : '';
 
             // Acción: perfil primero (para ver su información antes de enviar solicitud)
             const nombreE = escapeHtml(nombre).replace(/'/g, "\\'");
@@ -20610,8 +20678,6 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
             if (esSolicitudRecibida) {
                 cardBg = 'linear-gradient(135deg, #fffbeb 0%, white 100%)';
                 cardExtra = 'border-left:4px solid #f59e0b;';
-            } else if (tieneNuevos) {
-                cardExtra = 'border-left:4px solid #ef4444; background:#fff5f5;';
             }
 
             html += `
@@ -20630,9 +20696,11 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
                     <div style="flex:1; min-width:0;">
                         <div style="font-weight:800; color:#1e293b; font-size:0.93rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(nombre)}</div>
                         <div style="font-size:.81rem; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${escapeHtml(textoResumen)}</div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; text-align:right;">
+                        <div style="font-size:.7rem; font-weight:600;">${textoEstadoDerecha}</div>
                         ${badge}
                     </div>
-                    <div style="font-size:.7rem; font-weight:600; flex-shrink:0; text-align:right;">${textoEstadoDerecha}</div>
                 </div>
             </div>`;
         });
