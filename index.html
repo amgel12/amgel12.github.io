@@ -1293,6 +1293,7 @@
   @keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
   @keyframes floatCloud { 0%, 100% { transform: translateX(-50%) translateY(0px); } 50% { transform: translateX(-50%) translateY(-4px); } }
   @keyframes floatCloudCard { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-3px); } }
+  @keyframes alarmaRing { 0%, 100% { transform: rotate(-14deg) scale(1); } 50% { transform: rotate(14deg) scale(1.12); } }
 
   /* PERFIL */
   .profile-header { padding: 0; background: transparent; text-align: center; }
@@ -4083,6 +4084,16 @@ Cerrar
       </div>
     </div>
 
+    <div id="modalAlarmaChat" class="modal-overlay" style="z-index: 2000000; background: rgba(15,23,42,0.9);">
+        <div style="background:linear-gradient(160deg,#fff7ed,#ffedd5); border-radius:26px; padding:30px 24px; width:86%; max-width:330px; text-align:center; box-shadow:0 24px 70px rgba(0,0,0,0.5); animation: popIn 0.25s ease-out;">
+            <div style="font-size:4.2rem; line-height:1; animation: alarmaRing 0.9s ease-in-out infinite;">⏰</div>
+            <div id="alarmaChatNombre" style="margin-top:16px; font-size:1.1rem; font-weight:900; color:#9a3412; line-height:1.35;">Alguien te está llamando</div>
+            <div style="margin-top:6px; font-size:0.88rem; color:#7c2d12; font-weight:600;">te pide que respondas los mensajes</div>
+            <div id="alarmaChatCuenta" style="margin-top:18px; font-size:1.7rem; font-weight:900; color:#ea580c;">30</div>
+            <div style="font-size:0.7rem; color:#b45309; margin-top:2px;">La alarma sonará durante 30 segundos</div>
+        </div>
+    </div>
+
     <div id="modalChatPrivado" class="modal-overlay" style="z-index: 29000;">
     <div class="modal-content" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; padding:0; display:flex; flex-direction:column; background:#e5e5f7;">
 
@@ -4099,6 +4110,7 @@ Cerrar
                     <i class="fab fa-facebook-f"></i>
                 </button>
                 <div id="privAvatar" onclick="mostrarPerfilUsuario(currentChatTargetUid, document.getElementById('privChatTitle').innerText)" style="width:35px; height:35px; border-radius:50%; background-color:#ccc; background-size:cover; cursor:pointer;"></div>
+                <button id="btnAlarmaChat" onclick="enviarAlarmaChat()" title="Avisar con alarma (30 s)" style="width:35px; height:35px; border-radius:50%; border:none; background:linear-gradient(135deg,#f59e0b,#ea580c); color:white; font-size:1.05rem; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(234,88,12,0.35); cursor:pointer; flex-shrink:0;"><i class="fas fa-clock"></i></button>
             </div>
         </div>
 
@@ -5885,7 +5897,8 @@ window.receiveOneSignalNotification = function(data) {
         const title = data.title || "CodeCash";
         const body = data.body || "";
         const type = data.type || "other";
-        
+        if (type === 'alarma_chat') return;
+
         console.log("🔔 OneSignal notificación:", type, title, body);
         
         // Toast visual
@@ -14594,6 +14607,101 @@ window.cerrarChatPrivado = () => {
     _limpiarNoLeidosChat(uidChatCerrado);
 };
 
+window._alarmaChatAudio = null;
+window._alarmaChatTimers = [];
+
+function _detenerAlarmaChat() {
+    try {
+        window._alarmaChatTimers.forEach(t => { clearTimeout(t); clearInterval(t); });
+    } catch(e) {}
+    window._alarmaChatTimers = [];
+    const est = window._alarmaChatAudio;
+    if (est) {
+        try { est.osc.stop(); } catch(e) {}
+        try { est.ctx.close(); } catch(e) {}
+        window._alarmaChatAudio = null;
+    }
+    const modal = document.getElementById('modalAlarmaChat');
+    if (modal) modal.style.display = 'none';
+}
+
+function _sonarAlarmaChat() {
+    try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        const ctx = new AC();
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const t0 = ctx.currentTime;
+        for (let i = 0; i < 30; i++) {
+            const t = t0 + i;
+            osc.frequency.setValueAtTime(i % 2 ? 660 : 990, t);
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.exponentialRampToValueAtTime(0.7, t + 0.03);
+            gain.gain.setValueAtTime(0.7, t + 0.55);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+        }
+        osc.start(t0);
+        osc.stop(t0 + 30);
+        window._alarmaChatAudio = { ctx, osc };
+    } catch(e) { console.warn('Alarma sin audio:', e); }
+}
+
+window.recibirAlarmaChat = (notif) => {
+    const nombre = (notif && (notif.fromName || notif.from)) || 'Alguien';
+    _detenerAlarmaChat();
+    const modal = document.getElementById('modalAlarmaChat');
+    if (!modal) return;
+    const nom = document.getElementById('alarmaChatNombre');
+    const cuenta = document.getElementById('alarmaChatCuenta');
+    if (nom) nom.textContent = nombre + ' te está llamando';
+    if (cuenta) cuenta.textContent = '30';
+    modal.style.display = 'flex';
+    _sonarAlarmaChat();
+    let restante = 30;
+    const int = setInterval(() => {
+        restante--;
+        if (cuenta) cuenta.textContent = String(Math.max(0, restante));
+        if (restante <= 0) clearInterval(int);
+    }, 1000);
+    const fin = setTimeout(() => { _detenerAlarmaChat(); }, 30000);
+    window._alarmaChatTimers.push(int, fin);
+    try { if (navigator.vibrate) navigator.vibrate([600, 300, 600, 300, 600]); } catch(e) {}
+};
+
+window.enviarAlarmaChat = () => {
+    const targetUid = currentChatTargetUid;
+    if (!idAuditor || !targetUid) { notify('⏳ Espera un momento...'); return; }
+    const miNombre = (typeof getMiNombre === 'function') ? getMiNombre() : (myCurrentKey || 'Usuario');
+    db.ref(`users/${targetUid}/notifications`).push({
+        from: idAuditor,
+        fromName: miNombre,
+        type: 'alarma_chat',
+        text: '⏰ Te pide que respondas los mensajes',
+        extra: idAuditor,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        read: false
+    }).then(() => {
+        notify('⏰ Alarma enviada. Sonará 30 segundos.');
+        try { window.playSound('win'); } catch(e) {}
+    }).catch(err => {
+        console.error('Error al enviar alarma:', err);
+        notify('❌ No se pudo enviar la alarma');
+    });
+    try {
+        if (typeof enviarPushOneSignal === 'function') {
+            enviarPushOneSignal(targetUid, 'alarma_chat', '⏰ ' + miNombre + ' te pide que respondas', 'Abre CodeCash para escuchar la alarma', {
+                additional_data: { sender_uid: idAuditor, sender_name: miNombre, text: '⏰ Te pide que respondas los mensajes' }
+            });
+        }
+    } catch(e) {}
+};
+
 window.cerrarChatGrupo = () => {
     document.getElementById('modalChatGrupo').style.display = 'none';
     if (grupoChatRef) {
@@ -14753,6 +14861,19 @@ function iniciarMonitorDeBadges() {
             snap.forEach(s => {
                 const notif = s.val() || {};
                 const k = s.key;
+
+                if (notif.type === 'alarma_chat') {
+                    if (!window._alarmasProcesadas) window._alarmasProcesadas = {};
+                    if (!window._alarmasProcesadas[k]) {
+                        window._alarmasProcesadas[k] = true;
+                        const ts = Number(notif.timestamp) || 0;
+                        db.ref(`users/${idAuditor}/notifications/${k}`).remove().catch(() => {});
+                        if (!ts || Date.now() - ts < 120000) {
+                            if (typeof window.recibirAlarmaChat === 'function') window.recibirAlarmaChat(notif);
+                        }
+                    }
+                    return;
+                }
 
                 // Badge: contar cualquier notif no leída
                 if (!notif.read) {
