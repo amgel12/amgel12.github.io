@@ -19268,6 +19268,18 @@ window.actualizarFabGrupo = () => {
 // ==========================================
 // 📩 SOLICITUDES PENDIENTES (Global sin chat)
 // ==========================================
+function _formatearHoraAceptado(ts) {
+    const t = Number(ts) || 0;
+    if (!t) return '';
+    const d = new Date(t);
+    const hora = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const hoy = new Date();
+    if (d.toDateString() === hoy.toDateString()) return 'Hoy ' + hora;
+    const ayer = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1);
+    if (d.toDateString() === ayer.toDateString()) return 'Ayer ' + hora;
+    return d.toLocaleDateString([], { day: '2-digit', month: '2-digit' }) + ' ' + hora;
+}
+
 window.cargarSolicitudesPendientes = () => {
     if (!idAuditor) return;
     const container = document.getElementById('solicitudesPendientesList');
@@ -19426,11 +19438,15 @@ if (p.esReceptor) {
                 amigos.forEach(a => {
                     const foto = getUserProfilePhoto(a.uid);
                     const nombreEsc = (a.nombre || 'Usuario').replace(/'/g, "\\'");
+                    const horaAceptado = _formatearHoraAceptado(a.ts);
                     amigosHtml += `
                     <div class="solicitud-card" style="border-left-color:#10b981; cursor:pointer;" onclick="window.abrirChatPrivado('${a.uid}','${nombreEsc}')">
                         <div class="solicitud-avatar" style="background-image:url('${foto}')"></div>
                         <div class="solicitud-info">
-                            <div class="solicitud-name" id="amigo-name-${a.uid}">${escapeHtml(a.nombre || 'Usuario')}</div>
+                            <div class="solicitud-name" style="display:flex; align-items:baseline; gap:6px;">
+                                <span id="amigo-name-${a.uid}" style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(a.nombre || 'Usuario')}</span>
+                                ${horaAceptado ? `<span style="font-size:0.65rem; font-weight:600; color:#94a3b8; white-space:nowrap;">Aceptado ${horaAceptado}</span>` : ''}
+                            </div>
                             <div class="solicitud-sub" style="color:#10b981;">💬 Toca para chatear</div>
                         </div>
                     </div>`;
