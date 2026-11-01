@@ -19306,23 +19306,25 @@ window.cargarSolicitudesPendientes = () => {
             // Solicitudes ACEPTADAS conmigo = MIS AMIGOS
             const amigos = [];
             const _amigosVistos = {};
-            const _addAmigo = (uid, nombre) => {
+            const _addAmigo = (uid, nombre, ts) => {
                 if (!uid || uid === idAuditor || _amigosVistos[uid]) return;
                 _amigosVistos[uid] = true;
-                amigos.push({ uid, nombre });
+                amigos.push({ uid, nombre, ts: Number(ts) || 0 });
             };
             if (snapReceiver.exists()) {
                 snapReceiver.forEach(child => {
                     const req = child.val();
-                    if (req.status === 'accepted') _addAmigo(req.requester, req.requesterName);
+                    if (req.status === 'accepted') _addAmigo(req.requester, req.requesterName, req.acceptedAt || req.createdAt);
                 });
             }
             if (snapRequester.exists()) {
                 snapRequester.forEach(child => {
                     const req = child.val();
-                    if (req.status === 'accepted') _addAmigo(req.receiver, req.receiverName);
+                    if (req.status === 'accepted') _addAmigo(req.receiver, req.receiverName, req.acceptedAt || req.createdAt);
                 });
             }
+            // 🔥 Amigo agregado más recientemente primero
+            amigos.sort((a, b) => b.ts - a.ts);
 
             if (pendientes.length === 0 && enviadas.length === 0 && amigos.length === 0) {
                 container.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;"><div style="font-size:2rem; margin-bottom:8px;">✅</div><div style="font-size:0.85rem; font-weight:600;">Todo al día</div><div style="font-size:0.75rem; margin-top:4px;">No tienes solicitudes pendientes</div></div>';
@@ -19933,25 +19935,27 @@ window._cargarAmigosParaAnadir = () => {
         const miembros = snapMiembros.val() || {};
         const amigos = [];
         const vistos = {};
-        const agregar = (uid, nombre) => {
+        const agregar = (uid, nombre, ts) => {
             if (!uid || uid === idAuditor || vistos[uid]) return;
             vistos[uid] = true;
-            amigos.push({ uid, nombre });
+            amigos.push({ uid, nombre, ts: Number(ts) || 0 });
         };
         db.ref('chat_requests').orderByChild('receiver').equalTo(idAuditor).once('value', snapReceptor => {
             if (snapReceptor.exists()) {
                 snapReceptor.forEach(child => {
                     const req = child.val();
-                    if (req.status === 'accepted') agregar(req.requester, req.requesterName);
+                    if (req.status === 'accepted') agregar(req.requester, req.requesterName, req.acceptedAt || req.createdAt);
                 });
             }
             db.ref('chat_requests').orderByChild('requester').equalTo(idAuditor).once('value', snapEmisor => {
                 if (snapEmisor.exists()) {
                     snapEmisor.forEach(child => {
                         const req = child.val();
-                        if (req.status === 'accepted') agregar(req.receiver, req.receiverName);
+                        if (req.status === 'accepted') agregar(req.receiver, req.receiverName, req.acceptedAt || req.createdAt);
                     });
                 }
+                // 🔥 Amigo agregado más recientemente primero
+                amigos.sort((a, b) => b.ts - a.ts);
                 if (!amigos.length) {
                     cont.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8; font-size:0.8rem;">No tienes amigos para añadir.<br>Haz amigos desde el chat privado.</div>';
                     return;
@@ -20679,7 +20683,7 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
 
     // 📩 Cargar estados de solicitudes de chat (2 queries: enviado + recibido)
     const _renderLista = (requestStatusMap) => {
-        // Ordenar: solicitud recibida pendiente > nuevos mensajes > online > pensamiento > último visto
+        // Ordenar: nuevos mensajes > solicitud recibida pendiente > chats recientes > online > pensamiento > último visto
         todos.sort((a, b) => {
             const cA = chatsByUid[a.key], cB = chatsByUid[b.key];
             const nA = _nuevosChat(a.key, cA) > 0 ? 1 : 0;
@@ -20693,6 +20697,18 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
             const pendingInB = solB && solB.status === 'pending' && solB.receiver === idAuditor ? 1 : 0;
             if (pendingInA !== pendingInB) return pendingInB - pendingInA;
 
+            // 🔥 Actividad reciente: último mensaje o solicitud aceptada (recién agregado)
+            const fechaA = Math.max(
+                cA && cA.ultimoMsg ? (Number(cA.ultimoMsg.fecha) || 0) : 0,
+                solA && solA.status === 'accepted' ? (Number(solA.acceptedAt || solA.createdAt) || 0) : 0
+            );
+            const fechaB = Math.max(
+                cB && cB.ultimoMsg ? (Number(cB.ultimoMsg.fecha) || 0) : 0,
+                solB && solB.status === 'accepted' ? (Number(solB.acceptedAt || solB.createdAt) || 0) : 0
+            );
+            if (fechaA !== fechaB) return fechaB - fechaA;
+
+            // Usuarios sin conversación: online, pensamiento y último visto
             if (a.online !== b.online) return a.online ? -1 : 1;
             if (a.pensamiento && !b.pensamiento) return -1;
             if (!a.pensamiento && b.pensamiento) return 1;
