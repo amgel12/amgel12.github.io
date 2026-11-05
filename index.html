@@ -3409,9 +3409,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                 </div>
-                <input type="text" id="inputGrupoMsg" placeholder="Escribe al grupo..." onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensajeGrupo();}" style="flex:1; background:#f0f2f5; border:none; padding:10px 15px; border-radius:20px; outline:none;">
+                <div id="indicadorEscribiendoGrupo" style="padding:6px 16px; font-size:0.8rem; color:#6b7280; font-style:italic; display:none; flex-shrink:0;"></div>
+                <input type="text" id="inputGrupoMsg" placeholder="Escribe al grupo..." oninput="toggleBtnEnviarGrupo()" onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensajeGrupo();}" style="flex:1; background:#f0f2f5; border:none; padding:10px 15px; border-radius:20px; outline:none;">
                 <button type="button" id="btnEmojiGrupo" onclick="abrirSelectorEmoji(event, 'inputGrupoMsg')" aria-label="Emojis" style="width:40px; height:40px; border-radius:50%; background:#f0f2f5; border:none; font-size:1.2rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">😊</button>
-                <button id="btnEnviarGrupoMsg" onclick="enviarMensajeGrupo()" class="btn-blue" style="width:40px; height:40px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center;">➤</button>
+                <button id="btnEnviarGrupoMsg" onclick="enviarMensajeGrupo()" class="btn-blue" style="width:40px; height:40px; border-radius:50%; padding:0; display:none; align-items:center; justify-content:center;">➤</button>
                 <span id="chatGrupoCount" style="font-size:0.6rem; color:#ef4444; font-weight:700; white-space:nowrap;">0/20</span>
             </div>
         </div>
@@ -4169,16 +4170,34 @@ Cerrar
     <input type="file" id="fileInputDirecto" accept="image/*" style="display:none;" onchange="procesarYEnviarFotoDirecto(this)">
     <input type="file" id="p2pVideoInput" accept="video/*" style="display:none;" onchange="p2pProcesarVideoSeleccionado(this)">
 
-    <input type="text" id="inputPrivMsg" placeholder="Escribe un mensaje..." style="flex:1; background:#f1f5f9; border:none; padding:12px 16px; border-radius:22px; outline:none; font-size:0.9rem; color:#333;">
+    <div id="indicadorEscribiendo" style="padding:6px 16px; font-size:0.8rem; color:#6b7280; font-style:italic; display:none; flex-shrink:0;">
+        Escribiendo...
+    </div>
+
+    <input type="text" id="inputPrivMsg" placeholder="Escribe un mensaje..." oninput="toggleBtnEnviarPriv(); marcarEscribiendoEnPrivado()" style="flex:1; background:#f1f5f9; border:none; padding:12px 16px; border-radius:22px; outline:none; font-size:0.9rem; color:#333;">
 
     <button type="button" onclick="abrirSelectorEmoji(event, 'inputPrivMsg')" aria-label="Emojis" style="width:42px; height:42px; border-radius:50%; background:#f1f5f9; border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">😊</button>
 
-    <button onclick="enviarMensajePrivado()" style="width:42px; height:42px; border-radius:50%; background:#0070ba; color:white; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+    <button id="btnEnviarPriv" onclick="enviarMensajePrivado()" style="width:42px; height:42px; border-radius:50%; background:#0070ba; color:white; border:none; display:none; align-items:center; justify-content:center; cursor:pointer;">
         <i class="fas fa-paper-plane"></i>
     </button>
 </div> <!-- 1. Cierra barra blanca -->
 </div> <!-- 2. Cierra contenido del modal -->
 </div> <!-- 3. Cierra overlay del modal -->
+
+<!-- Modal: pedir clave única al enviar solicitud de chat -->
+<div id="modalClaveUnica" class="modal-overlay" style="z-index: 36000; display:none; align-items:center; justify-content:center;" onclick="if(event.target===this) cerrarModalClaveUnica()">
+    <div style="background:#fff; border-radius:16px; padding:18px 22px; width:min(90vw,340px); box-shadow:0 12px 34px rgba(0,0,0,0.16);">
+        <h3 style="margin:0 0 10px; font-size:1rem; color:#1e293b;">Clave única</h3>
+        <p style="margin:0 0 14px; font-size:0.85rem; color:#64748b;">Ingresa la clave única del usuario para enviar la solicitud</p>
+        <input id="inputClaveUnica" placeholder="Clave única" style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:10px; outline:none; font-size:0.95rem; margin-bottom:14px; box-sizing:border-box;">
+        <div style="display:flex; gap:10px;">
+            <button onclick="omitirClaveUnica()" style="flex:1; padding:10px; border:none; border-radius:10px; background:#f1f5f9; color:#64748b; font-weight:700; cursor:pointer;">Omitir</button>
+            <button onclick="confirmarClaveUnica()" style="flex:1; padding:10px; border:none; border-radius:10px; background:#6366f1; color:#fff; font-weight:700; cursor:pointer;">Enviar solicitud</button>
+        </div>
+    </div>
+</div>
+
 <div id="p2pAcceptModal" class="modal-overlay" style="display:none; z-index: 33000;">
     <div class="modal-content" style="max-width:340px;">
         <div style="font-size:2.2rem; margin-bottom:6px;">🎥</div>
@@ -7398,7 +7417,14 @@ window.toggleMenuChatPrivado = () => {
         menu.style.display = 'block';
         menu.classList.add('menu-privado-abierto');
         icono.style.transform = 'rotate(45deg)';
+        clearTimeout(window.menuPrivadoTimer);
+        window.menuPrivadoTimer = setTimeout(() => {
+            menu.style.display = 'none';
+            menu.classList.remove('menu-privado-abierto');
+            icono.style.transform = 'rotate(0deg)';
+        }, 3000);
     } else {
+        clearTimeout(window.menuPrivadoTimer);
         menu.style.display = 'none';
         menu.classList.remove('menu-privado-abierto');
         icono.style.transform = 'rotate(0deg)';
@@ -12389,17 +12415,17 @@ window.enviarSolicitudChat = (targetUid, targetName) => {
             }
             // Si fue rechazada → reenviar solicitud
             if (existing.status === 'rejected') {
-                _crearSolicitud(reqRef, chatKey, targetUid, targetName);
+                abrirModalClaveUnica(targetUid, targetName, reqRef, chatKey);
                 return;
             }
         } else {
             // No existe → crear nueva solicitud
-            _crearSolicitud(reqRef, chatKey, targetUid, targetName);
+            abrirModalClaveUnica(targetUid, targetName, reqRef, chatKey);
         }
     });
 };
 
-function _crearSolicitud(reqRef, chatKey, targetUid, targetName) {
+function _crearSolicitud(reqRef, chatKey, targetUid, targetName, claveUnica = '') {
     // Transacción sobre el valor REAL del servidor: si ya existe una solicitud
     // (por ejemplo ya aceptada) NO la sobrescribimos.
     reqRef.transaction(current => {
@@ -12409,6 +12435,7 @@ function _crearSolicitud(reqRef, chatKey, targetUid, targetName) {
                 requesterName: getMiNombre(),
                 receiver: targetUid,
                 receiverName: targetName || 'Usuario',
+                claveUnica: claveUnica || '',
                 status: 'pending',
                 createdAt: firebase.database.ServerValue.TIMESTAMP
             };
@@ -12708,6 +12735,15 @@ function _abrirChatPrivadoReal(targetUid, targetName) {
     }, 500);
     
     checkLimiteDiario();
+
+    // Escuchar si el otro usuario está escribiendo
+    window.privTypingRef = db.ref(`typingTo/${targetUid}/${idAuditor}`);
+    window.privTypingRef.on('value', snap => {
+      const ind = document.getElementById('indicadorEscribiendo');
+      const v = snap.val();
+      const activo = v && v.at && (Date.now() - Number(v.at) < 5000);
+      if(ind) ind.style.display = activo ? 'block' : 'none';
+    });
 }
 
 window.abrirFacebookDesdeChat = () => {
@@ -13291,6 +13327,12 @@ window.enviarMensajePrivado = () => {
         enviarNotificacion(targetUserUid, miNombre, txt, idAuditor);
 
         input.value = "";
+        const btnEnviar=document.getElementById('btnEnviarPriv');
+        if(btnEnviar) btnEnviar.style.display='none';
+        const ind=document.getElementById('indicadorEscribiendo');
+        if(ind) ind.style.display='none';
+        clearTimeout(timerEscribiendo);
+        if (typeof limpiarEscribiendoPrivado === 'function') limpiarEscribiendoPrivado(targetUserUid);
         checkLimiteDiario();
         try { window.playSound('click'); } catch(e){}
         return;
@@ -13311,7 +13353,15 @@ window.enviarMensajePrivado = () => {
             return;
         }
 
-        db.ref(`chats_privados/${currentChatId}`).push(msgData);
+        db.ref(`chats_privados/${currentChatId}`).push(msgData).then(()=>{
+            input.value = "";
+            const btnEnviar=document.getElementById('btnEnviarPriv');
+            if(btnEnviar) btnEnviar.style.display='none';
+            const ind=document.getElementById('indicadorEscribiendo');
+            if(ind) ind.style.display='none';
+            clearTimeout(timerEscribiendo);
+            if (typeof limpiarEscribiendoPrivado === 'function') limpiarEscribiendoPrivado(targetUserUid);
+        });
 
         detectarYEnvarMenciones(txt, "chat");
 
@@ -13339,6 +13389,10 @@ window.enviarMensajePrivado = () => {
         enviarNotificacion(targetUserUid, miNombre, txt, idAuditor);
 
         input.value = "";
+        const ind=document.getElementById('indicadorEscribiendo');
+        if(ind) ind.style.display='none';
+        clearTimeout(timerEscribiendo);
+        if (typeof limpiarEscribiendoPrivado === 'function') limpiarEscribiendoPrivado(targetUserUid);
         checkLimiteDiario(targetUserUid);
         try { window.playSound('click'); } catch(e){}
     });
@@ -19666,6 +19720,25 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
         list.innerHTML = html;
         setTimeout(() => list.scrollTop = list.scrollHeight, 100);
     });
+
+    // Escuchar quién está escribiendo en el grupo
+    window.grupoTypingRef = db.ref('typingGroup/'+idGrupo);
+    window.grupoTypingRef.on('value', snap => {
+      const ind = document.getElementById('indicadorEscribiendoGrupo');
+      if(!ind) return;
+      const typing = {};
+      snap.forEach(child => {
+        const v = child.val();
+        if(v && v.at && (Date.now() - Number(v.at) < 5000)) typing[child.key] = v.nombre || 'Usuario';
+      });
+      const nombres = Object.values(typing);
+      if(nombres.length > 0){
+        ind.textContent = nombres.length === 1 ? nombres[0] + ' está escribiendo...' : nombres.length + ' personas escribiendo...';
+        ind.style.display = 'block';
+      } else {
+        ind.style.display = 'none';
+      }
+    });
 }
 
 // --- SWIPE PARA MENCIONAR (CHAT GRUPO) ---
@@ -19885,6 +19958,9 @@ window.enviarMensajeGrupo = () => {
             detectarYEnvarMenciones(txt, "chat");
             input.value = '';
             input.focus();
+            const btnSendGrupo=document.getElementById('btnEnviarGrupoMsg');
+            if(btnSendGrupo) btnSendGrupo.style.display='none';
+            if (typeof limpiarEscribiendoGrupo === 'function') limpiarEscribiendoGrupo();
         })
         .catch(err => notify('Error al enviar: ' + err.message));
 
@@ -19905,13 +19981,13 @@ window.compartirLinkGrupo = () => {
     const nombreGrupo = document.getElementById('grupoChatTitle').innerText;
     // URL que usaremos para que entren (cambia el link si usas otro dominio)
     const urlInvitacion = `https://codecash.space/?grupo=${currentGrupoId}`;
-const texto = `¡Únete a mi grupo "${nombreGrupo}" en PAGOCODE! 🚀\nEntra al chat aquí:\n${urlInvitacion}`;
+const texto = `¡Únete a mi grupo "${nombreGrupo}" en CodeCash! 🚀\nEntra al chat aquí:\n${urlInvitacion}`;
 
     // Si el celular soporta compartir nativo (WhatsApp, Facebook, etc)
     if (navigator.share) {
         navigator.share({
             title: `Grupo: ${nombreGrupo}`,
-            text: `¡Únete a mi grupo en PAGOCODE! 🚀`,
+            text: `¡Únete a mi grupo en CodeCash! 🚀`,
             url: urlInvitacion
         }).catch(e => console.log("Compartir cancelado"));
     } else {
@@ -20852,13 +20928,27 @@ window.cargarTodosLosUsuariosParaMiChat = () => {
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; text-align:right;">
                         <div style="font-size:.7rem; font-weight:600;">${textoEstadoDerecha}</div>
-                        ${badge}
+                        <div id="typing-${uid}" style="font-size:.72rem; font-weight:800; color:#6366f1; margin-top:2px; white-space:nowrap; display:none;">Escribiendo...</div>
                     </div>
                 </div>
             </div>`;
         });
 
         container.innerHTML = html;
+        if (!window._typingListeners) window._typingListeners = {};
+        todos.forEach(u => {
+            const uid = u.key;
+            const el = document.getElementById('typing-'+uid);
+            if (el && !window._typingListeners[uid]) {
+                window._typingListeners[uid] = true;
+                db.ref('typingTo/' + idAuditor + '/' + uid).on('value', snap => {
+                    const v = snap.val();
+                    const activo = v && v.at && (Date.now() - Number(v.at) < 5000);
+                    el.style.display = activo ? 'block' : 'none';
+                    if (activo) el.textContent = 'Escribiendo...';
+                });
+            }
+        });
     };
 
     // Cargar estados de solicitudes y luego renderizar
@@ -21780,5 +21870,91 @@ window.guardarBioCompleta = () => {
 
     </div>
 </div>
+
+<script>
+let timerEscribiendo = null;
+
+function toggleBtnEnviarPriv(){
+  const input=document.getElementById('inputPrivMsg');
+  const btn=document.getElementById('btnEnviarPriv');
+  if(!input || !btn) return;
+  btn.style.display = (input.value.trim().length>0)?'flex':'none';
+}
+
+let timerEscribiendoPrivado = null;
+function marcarEscribiendoEnPrivado(){
+  if(!targetUserUid) return;
+  if (typeof marcarEscribiendoPrivado === 'function') marcarEscribiendoPrivado(targetUserUid);
+  clearTimeout(timerEscribiendoPrivado);
+  timerEscribiendoPrivado = setTimeout(()=>{
+    if (typeof limpiarEscribiendoPrivado === 'function') limpiarEscribiendoPrivado(targetUserUid);
+  }, 2000);
+}
+  }
+}
+
+let timerEscribiendoGrupo = null;
+function toggleBtnEnviarGrupo(){
+  const input=document.getElementById('inputGrupoMsg');
+  const btn=document.getElementById('btnEnviarGrupoMsg');
+  if(!input || !btn) return;
+  const escribiendo = input.value.trim().length>0;
+  btn.style.display = escribiendo?'flex':'none';
+  if(escribiendo && currentGrupoId && idAuditor){
+    marcarEscribiendoGrupo();
+    clearTimeout(timerEscribiendoGrupo);
+    timerEscribiendoGrupo = setTimeout(()=>{
+      limpiarEscribiendoGrupo();
+    }, 2000);
+  }
+}
+function marcarEscribiendoGrupo(){
+  if(!currentGrupoId || !idAuditor) return;
+  db.ref('typingGroup/'+currentGrupoId+'/'+idAuditor).set({ at: firebase.database.ServerValue.TIMESTAMP, nombre: getMiNombre() }).catch(()=>{});
+}
+function limpiarEscribiendoGrupo(){
+  if(!currentGrupoId || !idAuditor) return;
+  db.ref('typingGroup/'+currentGrupoId+'/'+idAuditor).remove().catch(()=>{});
+}
+</script>
+
+<script>
+let pendingCrearSolicitud = null;
+
+function abrirModalClaveUnica(targetUid, targetName, reqRef, chatKey) {
+    pendingCrearSolicitud = { reqRef, chatKey, targetUid, targetName };
+    document.getElementById('inputClaveUnica').value = '';
+    document.getElementById('modalClaveUnica').style.display = 'flex';
+}
+
+function cerrarModalClaveUnica() {
+    pendingCrearSolicitud = null;
+    document.getElementById('modalClaveUnica').style.display = 'none';
+}
+
+function confirmarClaveUnica() {
+    const clave = document.getElementById('inputClaveUnica').value.trim();
+    const p = pendingCrearSolicitud;
+    pendingCrearSolicitud = null;
+    cerrarModalClaveUnica();
+    if (p) _crearSolicitud(p.reqRef, p.chatKey, p.targetUid, p.targetName, clave);
+}
+
+function omitirClaveUnica() {
+    const p = pendingCrearSolicitud;
+    pendingCrearSolicitud = null;
+    cerrarModalClaveUnica();
+    if (p) _crearSolicitud(p.reqRef, p.chatKey, p.targetUid, p.targetName, '');
+}
+
+function marcarEscribiendoPrivado(uid){
+  if(!idAuditor || !uid) return;
+  db.ref('typingTo/'+idAuditor+'/'+uid).set({ at: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
+}
+function limpiarEscribiendoPrivado(uid){
+  if(!idAuditor || !uid) return;
+  db.ref('typingTo/'+idAuditor+'/'+uid).remove().catch(()=>{});
+}
+</script>
 </body>
 </html>
