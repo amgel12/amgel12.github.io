@@ -12736,9 +12736,12 @@ function _abrirChatPrivadoReal(targetUid, targetName) {
     
     checkLimiteDiario();
 
-    // Escuchar si el otro usuario está escribiendo
+    // Escuchar si el OTRO usuario está escribiendo (solo el chat actual)
+    if (window.privTypingRef) window.privTypingRef.off();
     window.privTypingRef = db.ref(`typingTo/${targetUid}/${idAuditor}`);
     window.privTypingRef.on('value', snap => {
+      // Solo mostrar si este listener corresponde al chat actualmente abierto
+      if (targetUid !== currentChatTargetUid) return;
       const ind = document.getElementById('indicadorEscribiendo');
       const v = snap.val();
       const activo = v && v.at && (Date.now() - Number(v.at) < 5000);
@@ -14649,6 +14652,10 @@ window.cerrarChatPrivado = () => {
         privUserRef.off();
         privUserRef = null;
     }
+    if (window.privTypingRef) {
+        window.privTypingRef.off();
+        window.privTypingRef = null;
+    }
     currentChatId = null;
     currentChatTargetUid = null;
     currentChatTargetName = null;
@@ -14757,6 +14764,11 @@ window.enviarAlarmaChat = () => {
 };
 
 window.cerrarChatGrupo = () => {
+    if (typeof limpiarEscribiendoGrupo === 'function') limpiarEscribiendoGrupo();
+    if (window.grupoTypingRef) {
+        window.grupoTypingRef.off();
+        window.grupoTypingRef = null;
+    }
     document.getElementById('modalChatGrupo').style.display = 'none';
     if (grupoChatRef) {
         grupoChatRef.off();
@@ -17170,9 +17182,7 @@ window.validarLeccionIngles = function () {
     if (valor === 'am') {
         resultado.innerHTML = '✅ Correcto. Ganaste 5 puntos';
         resultado.style.color = '#16a34a';
-        sumarPuntosMision(5);
-        registrarHistorial("Misión completada", 5);
-        marcarMisionCompletada('mision_ingles_1');
+        marcarMisionCompletada('mision_ingles_1', 5);
     } else {
         resultado.innerHTML = '❌ Respuesta incorrecta. Intenta otra vez';
         resultado.style.color = '#dc2626';
@@ -17260,22 +17270,32 @@ function renderizarMisionesAprender() {
 }
 
 function marcarMisionCompletada(clave, recompensa = 5) {
-    if (localStorage.getItem(clave) === '1') return;
+    if (localStorage.getItem(clave) === '1') return false;
     localStorage.setItem(clave, '1');
     // Guardar timestamp de última misión completada (para el check de 12h)
     localStorage.setItem('ultima_mision_ts', Date.now().toString());
     sumarPuntosMision(recompensa);
+    if (typeof registrarHistorial === 'function') registrarHistorial('Misión completada', recompensa);
     renderizarMisionesAprender();
     notify(`🎉 Misión completada. Ganaste ${recompensa} puntos`);
+    return true;
 }
 
 function sumarPuntosMision(cantidad) {
+    const pts = parseFloat(cantidad);
+    if (!idAuditor || !pts || pts <= 0) return;
     try {
-        const ptsActual = parseFloat(localStorage.getItem('pagocode_pts') || '0');
-        const nuevo = ptsActual + cantidad;
-        localStorage.setItem('pagocode_pts', nuevo.toFixed(2));
-        const label = document.getElementById('mainPts');
-        if (label) label.textContent = `${nuevo.toFixed(2)} PTS`;
+        db.ref(`users/${idAuditor}/earnings`)
+            .transaction(current => (Number(current) || 0) + pts)
+            .then(snapshot => {
+                const total = snapshot && snapshot.val();
+                if (typeof total === 'number') {
+                    currentEarnings = total;
+                    const label = document.getElementById('mainPts');
+                    if (label) label.textContent = `${total.toFixed(2)} PTS`;
+                }
+            })
+            .catch(e => console.error('Error sumando puntos:', e));
     } catch (e) { console.error('Error sumando puntos:', e); }
 }
 
@@ -17731,7 +17751,7 @@ function completarMision(misionId, puntos) {
     const nuevoSaldo = saldoActual + puntos;
     localStorage.setItem('saldoPuntos', nuevoSaldo.toString());
     actualizarSaldoUI(nuevoSaldo);
-    marcarMisionCompletada(misionId);
+    marcarMisionCompletadaUI(misionId);
     mostrarNotificacion(`✅ Misión completada: +${puntos} PTS`);
     return true;
 }
@@ -17741,7 +17761,7 @@ function actualizarSaldoUI(saldo) {
     elementosSaldo.forEach(el => { el.textContent = saldo.toFixed(2) + ' PTS'; });
 }
 
-function marcarMisionCompletada(misionId) {
+function marcarMisionCompletadaUI(misionId) {
     const elemento = document.getElementById(`mision-${misionId}`);
     if (elemento) {
         elemento.classList.add('completada');
@@ -19574,6 +19594,11 @@ window.abrirChatDeGrupo = (idGrupo, nombreGrupo, iconoGrupo) => {
 
 // Función auxiliar que abre la sala de chat del grupo
 function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
+    if (typeof limpiarEscribiendoGrupo === 'function') limpiarEscribiendoGrupo();
+    if (window.grupoTypingRef) {
+        window.grupoTypingRef.off();
+        window.grupoTypingRef = null;
+    }
     currentGrupoId = idGrupo;
     if (window._resetReplyBars) window._resetReplyBars();
     // Recordar que ya entró: el modal "¿Entrar al grupo?" no volverá a mostrarse
@@ -19728,6 +19753,7 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
       if(!ind) return;
       const typing = {};
       snap.forEach(child => {
+        if (child.key === idAuditor) return;
         const v = child.val();
         if(v && v.at && (Date.now() - Number(v.at) < 5000)) typing[child.key] = v.nombre || 'Usuario';
       });
