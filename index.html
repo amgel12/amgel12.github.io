@@ -3412,7 +3412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div id="indicadorEscribiendoGrupo" style="padding:6px 16px; font-size:0.8rem; color:#6b7280; font-style:italic; display:none; flex-shrink:0;"></div>
                 <input type="text" id="inputGrupoMsg" placeholder="Escribe al grupo..." oninput="toggleBtnEnviarGrupo()" onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensajeGrupo();}" style="flex:1; background:#f0f2f5; border:none; padding:10px 15px; border-radius:20px; outline:none;">
                 <button type="button" id="btnEmojiGrupo" onclick="abrirSelectorEmoji(event, 'inputGrupoMsg')" aria-label="Emojis" style="width:40px; height:40px; border-radius:50%; background:#f0f2f5; border:none; font-size:1.2rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">😊</button>
-                <button id="btnEnviarGrupoMsg" onclick="enviarMensajeGrupo()" class="btn-blue" style="width:40px; height:40px; border-radius:50%; padding:0; display:none; align-items:center; justify-content:center;">➤</button>
+                <button id="btnEnviarGrupoMsg" onclick="enviarMensajeGrupo()" class="btn-blue" style="width:40px; height:40px; border-radius:50%; padding:0; display:none; cursor:pointer;">➤</button>
                 <span id="chatGrupoCount" style="font-size:0.6rem; color:#ef4444; font-weight:700; white-space:nowrap;">0/20</span>
             </div>
         </div>
@@ -4178,7 +4178,7 @@ Cerrar
 
     <button type="button" onclick="abrirSelectorEmoji(event, 'inputPrivMsg')" aria-label="Emojis" style="width:42px; height:42px; border-radius:50%; background:#f1f5f9; border:none; font-size:1.3rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">😊</button>
 
-    <button id="btnEnviarPriv" onclick="enviarMensajePrivado()" style="width:42px; height:42px; border-radius:50%; background:#0070ba; color:white; border:none; display:none; align-items:center; justify-content:center; cursor:pointer;">
+    <button id="btnEnviarPriv" onclick="enviarMensajePrivado()" style="width:42px; height:42px; border-radius:50%; background:#0070ba; color:white; border:none; display:none; cursor:pointer;">
         <i class="fas fa-paper-plane"></i>
     </button>
 </div> <!-- 1. Cierra barra blanca -->
@@ -21878,7 +21878,7 @@ function toggleBtnEnviarPriv(){
   const input=document.getElementById('inputPrivMsg');
   const btn=document.getElementById('btnEnviarPriv');
   if(!input || !btn) return;
-  btn.style.display = (input.value.trim().length>0)?'flex':'none';
+  btn.style.display = (input.value.trim().length>0)?'block':'none';
 }
 
 let timerEscribiendoPrivado = null;
@@ -21890,8 +21890,6 @@ function marcarEscribiendoEnPrivado(){
     if (typeof limpiarEscribiendoPrivado === 'function') limpiarEscribiendoPrivado(targetUserUid);
   }, 2000);
 }
-  }
-}
 
 let timerEscribiendoGrupo = null;
 function toggleBtnEnviarGrupo(){
@@ -21899,7 +21897,7 @@ function toggleBtnEnviarGrupo(){
   const btn=document.getElementById('btnEnviarGrupoMsg');
   if(!input || !btn) return;
   const escribiendo = input.value.trim().length>0;
-  btn.style.display = escribiendo?'flex':'none';
+  btn.style.display = escribiendo?'block':'none';
   if(escribiendo && currentGrupoId && idAuditor){
     marcarEscribiendoGrupo();
     clearTimeout(timerEscribiendoGrupo);
