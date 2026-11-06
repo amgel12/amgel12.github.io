@@ -2898,7 +2898,7 @@ function mostrarOverlaySonido(key) {
 // 🎵 SOLO videos de música de YouTube (lista curada verificada, sin API key).
 // Se reproducen con el reproductor de YouTube (YT IFrame API), que reproduce
 // video real en el WebView (nunca imagen estática). El orden es aleatorio.
-const YT_MAX_RANDOM = 15;
+const YT_MAX_RANDOM = 12;
 const YT_RANDOM_YT = [
     // Hits latinos
     { id: "kJQP7kiw5Fk", titulo: "Despacito", canal: "Luis Fonsi" },
@@ -2979,44 +2979,7 @@ const YT_RANDOM_YT = [
     { id: "pAgnJDJN4VA", titulo: "Back In Black", canal: "AC/DC" },
     { id: "4fndeDfaWCg", titulo: "I Want It That Way", canal: "Backstreet Boys" },
     { id: "djV11Xbc914", titulo: "Take On Me", canal: "a-ha" },
-    { id: "rog8ou-ZepE", titulo: "Ice Ice Baby", canal: "Vanilla Ice" },
-    // ── Curaduría: 5 videos por categoría ───────────────────────────────
-    // Fidel Funes y su Marimba Orquesta
-    { id: "OV3yqFjWYPU", titulo: "Concierto de Feria", canal: "Fidel Funes y su Marimba Orquesta", nuevo: true },
-    { id: "UEyLgW2Hxso", titulo: "Una Casa En El Aire", canal: "Fidel Funes y su Marimba Orquesta", nuevo: true },
-    { id: "adK68rqwKgQ", titulo: "Flor De Capomo 4K", canal: "Fidel Funes y su Marimba Orquesta", nuevo: true },
-    { id: "yuh7szx3bB8", titulo: "La Hierba Se Movía", canal: "Fidel Funes y su Marimba Orquesta", nuevo: true },
-    { id: "VoJMxEuYbMY", titulo: "Flor De Capomo", canal: "Fidel Funes y su Marimba Orquesta", nuevo: true },
-    // Rauw Alejandro
-    { id: "CFPLIaMpGrY", titulo: "Todo De Ti", canal: "Rauw Alejandro", nuevo: true },
-    { id: "fViYgfgFbNY", titulo: "Ni Me Conozco", canal: "Rauw Alejandro", nuevo: true },
-    { id: "Gs8wHV1pE0c", titulo: "Buenos Términos", canal: "Rauw Alejandro", nuevo: true },
-    { id: "Bp3Ytv-v918", titulo: "DILUVIO", canal: "Rauw Alejandro", nuevo: true },
-    { id: "UUzmHevEneY", titulo: "Déjame Entrar", canal: "Rauw Alejandro", nuevo: true },
-    // Los Player's de Tuzantla
-    { id: "wKHkzI8tgQw", titulo: "Lo De Nosotros", canal: "Los Player's de Tuzantla", nuevo: true },
-    { id: "dOywGiws6fI", titulo: "En Realidad", canal: "Los Player's de Tuzantla", nuevo: true },
-    { id: "t05HWGnRlz8", titulo: "Destino", canal: "Los Player's de Tuzantla", nuevo: true },
-    { id: "9BWLWDUUQtg", titulo: "Ya Te Olvidé", canal: "Los Player's de Tuzantla", nuevo: true },
-    { id: "11t7pY_bZH4", titulo: "La Moneda Está en El Aire", canal: "Los Player's de Tuzantla", nuevo: true },
-    // Reggaetón
-    { id: "y8trd3gjJt0", titulo: "Pepas", canal: "Farruko", nuevo: true },
-    { id: "QaXhVryxVBk", titulo: "Bichota", canal: "Karol G", nuevo: true },
-    { id: "TmKh7lAwnBI", titulo: "Dákiti", canal: "Bad Bunny x Jhay Cortez", nuevo: true },
-    { id: "pK060iUFWXg", titulo: "Hawái", canal: "Maluma", nuevo: true },
-    { id: "GtSRKwDCaZM", titulo: "Yo Perreo Sola", canal: "Bad Bunny", nuevo: true },
-    // Electrónica
-    { id: "gCYcHz2k5x0", titulo: "Animals", canal: "Martin Garrix", nuevo: true },
-    { id: "_ovdm2yX4MA", titulo: "Levels", canal: "Avicii", nuevo: true },
-    { id: "JRfuAukYTKg", titulo: "Titanium", canal: "David Guetta ft. Sia", nuevo: true },
-    { id: "IcrbM1l_BoI", titulo: "Wake Me Up", canal: "Avicii", nuevo: true },
-    { id: "ebXbLfLACGM", titulo: "Summer", canal: "Calvin Harris", nuevo: true },
-    // Vicente Fernández
-    { id: "_9-oddWM_9k", titulo: "Acá Entre Nos", canal: "Vicente Fernández", nuevo: true },
-    { id: "gfm2zSgQ8cQ", titulo: "Por Tu Maldito Amor", canal: "Vicente Fernández", nuevo: true },
-    { id: "xa2GLqL12Zk", titulo: "Mujeres Divinas", canal: "Vicente Fernández", nuevo: true },
-    { id: "ugNQ5uIN09Q", titulo: "Volver Volver", canal: "Vicente Fernández", nuevo: true },
-    { id: "DjnhGwxQkFk", titulo: "El Rey", canal: "Vicente Fernández", nuevo: true }
+    { id: "rog8ou-ZepE", titulo: "Ice Ice Baby", canal: "Vanilla Ice" }
 ];
 let ytRandomCargados  = false;
 let ytRandomUsados    = new Set();
@@ -3029,7 +2992,7 @@ function agregarVideoYTAlFeed(item) {
     if (!container || !item || !item.id) return;
     const key = 'ytmusic-' + item.id;
     if (document.getElementById(key)) return;
-    if (postOcultoParaMi(key)) { ytRandomUsados.add(item.id); return; }
+    if (postOcultoParaMi(key)) return;
     ytRandomUsados.add(item.id);
 
     const post = {
@@ -3062,10 +3025,7 @@ function cargarLoteVideosYT() {
         ytRandomUsados = new Set(); // pool agotado → reiniciar
         pool = YT_RANDOM_YT.slice();
     }
-    // Mostrar primero la curaduría nueva; luego seguir con el resto al azar
-    const prioritarios = pool.filter(m => m.nuevo);
-    const fuente = prioritarios.length ? prioritarios : pool;
-    const seleccion = fuente.slice().sort(() => Math.random() - 0.5).slice(0, YT_MAX_RANDOM);
+    const seleccion = pool.slice().sort(() => Math.random() - 0.5).slice(0, YT_MAX_RANDOM);
     seleccion.forEach(m => agregarVideoYTAlFeed(m));
     ytRandomCargando = false;
 }
@@ -3156,7 +3116,7 @@ function forzarDescargaApp() {
                     </a>
                     <button onclick="document.getElementById('overlayDescarga').remove()" 
                             style="background:none; border:none; color:#94a3b8; font-size:0.8rem; font-weight:600; cursor:pointer; text-decoration:underline;">
-                            Continuar en la web (limitado)
+                            
                     </button>
 
                 </div>
@@ -3439,11 +3399,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <i id="iconoRotarPlusGrupo" class="fas fa-plus" style="transition:0.3s;"></i>
                     </button>
                     <div id="boxMenuGrupo" style="display:none; position:absolute; bottom:50px; left:0; background:white; border-radius:15px; box-shadow:0 8px 30px rgba(0,0,0,0.15); width:170px; z-index:9999; overflow:hidden; border:1px solid #f1f5f9;">
-                        <div onclick="abrirModoMedia('imagen','grupo'); toggleMenuChatGrupo();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; border-bottom:1px solid #f8fafc;">
+                        <div onclick="abrirModalFotoGrupo(); toggleMenuChatGrupo();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; border-bottom:1px solid #f8fafc;">
                             <i class="fas fa-image" style="color:#10b981;"></i>
                             <span style="font-weight:700; color:#475569; font-size:0.85rem;">Enviar Imagen</span>
                         </div>
-                        <div onclick="abrirModoMedia('video','grupo'); toggleMenuChatGrupo();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; border-bottom:1px solid #f8fafc;">
+                        <div onclick="abrirSelectorVideoGrupo(); toggleMenuChatGrupo();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; border-bottom:1px solid #f8fafc;">
                             <i class="fas fa-video" style="color:#6366f1;"></i>
                             <span style="font-weight:700; color:#475569; font-size:0.85rem;">Enviar Video (en vivo)</span>
                         </div>
@@ -4192,7 +4152,7 @@ Cerrar
                 <i class="fas fa-image" style="color:#10b981;"></i>
                 <span style="font-weight:700; color:#475569; font-size:0.85rem;">Enviar Imagen</span>
             </div>
-            <div onclick="abrirModoMedia('video','privado'); toggleMenuChatPrivado();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; border-bottom:1px solid #f8fafc;">
+            <div onclick="p2pAbrirSelectorVideo(); toggleMenuChatPrivado();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; border-bottom:1px solid #f8fafc;">
                 <i class="fas fa-video" style="color:#6366f1;"></i>
                 <span style="font-weight:700; color:#475569; font-size:0.85rem;">Enviar Video (en vivo)</span>
             </div>
@@ -4520,10 +4480,9 @@ Cerrar
 <div id="modalFotoGrupo" class="modal-overlay" style="z-index: 30000;">
     <div class="modal-content">
         <h3 style="color:#10b981;">📷 Enviar Foto al Grupo</h3>
-        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 8px;">
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">
             Todos los miembros del grupo verán esta foto.
         </p>
-        <div id="modoFotoGrupoInfo" style="font-size:0.72rem; font-weight:700; color:#6366f1; margin-bottom:12px;"></div>
 
         <div style="background:#f0fdf4; border:2px dashed #10b981; border-radius:15px; height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:15px; position:relative;">
             <img id="imgPreviewGrupo" style="width:100%; height:100%; object-fit:contain; display:none;">
@@ -4545,34 +4504,6 @@ Cerrar
         <button onclick="cerrarModalFotoGrupo()" style="background:none; border:none; color:#94a3b8; margin-top:15px;">Cancelar</button>
     </div>
 </div>
-<!-- MODAL ELEGIR MODO DE ENVÍO (VER UNA VEZ / PERMANENTE) -->
-<div id="modalModoMedia" class="modal-overlay" style="z-index:41000; display:none;" onclick="if(event.target===this) cerrarModoMedia()">
-    <div class="modal-content" style="max-width:360px; text-align:center;">
-        <h3 id="modoMediaTitulo" style="color:#0f172a; margin-bottom:6px;">📤 Enviar archivo</h3>
-        <p id="modoMediaSubtitulo" style="font-size:0.78rem; color:#64748b; margin-bottom:18px;">Elige cómo quieres enviarlo.</p>
-        <div style="display:flex; flex-direction:column; gap:10px;">
-            <button onclick="elegirModoMedia('una_vez')" style="border:none; border-radius:14px; padding:14px 16px; text-align:left; cursor:pointer; background:linear-gradient(135deg,#7c3aed,#a855f7); color:white; box-shadow:0 6px 18px rgba(124,58,237,0.3);">
-                <div style="font-weight:800; font-size:0.9rem;">👁 Ver una vez</div>
-                <div style="font-size:0.68rem; opacity:0.9; margin-top:2px;">Se abrirá una sola vez y se eliminará al cerrar.</div>
-            </button>
-            <button onclick="elegirModoMedia('permanente')" style="border:1.5px solid #e2e8f0; border-radius:14px; padding:14px 16px; text-align:left; cursor:pointer; background:#f8fafc; color:#334155;">
-                <div style="font-weight:800; font-size:0.9rem;">📌 Permanente</div>
-                <div style="font-size:0.68rem; color:#64748b; margin-top:2px;">Se quedará en el chat y se podrá volver a ver.</div>
-            </button>
-        </div>
-        <button onclick="cerrarModoMedia()" style="background:none; border:none; color:#94a3b8; margin-top:14px; cursor:pointer;">Cancelar</button>
-    </div>
-</div>
-
-<!-- MODAL VER UNA VEZ -->
-<div id="modalMediaUnaVez" class="modal-overlay" style="z-index:42000; background:rgba(0,0,0,0.92); display:none; align-items:center; justify-content:center;" onclick="if(event.target===this) cerrarMediaUnaVez()">
-    <div class="modal-content" style="max-width:380px; background:#0f172a; padding:12px; border-radius:18px; border:1px solid #334155;">
-        <div id="mediaUnaVezContenido" style="display:flex; align-items:center; justify-content:center; min-height:180px; max-height:70vh; overflow:hidden;"></div>
-        <div style="font-size:0.68rem; color:#cbd5e1; text-align:center; margin-top:10px;">👁 Este contenido se eliminará al cerrar</div>
-        <button onclick="cerrarMediaUnaVez()" style="width:100%; margin-top:10px; border:none; border-radius:12px; padding:11px; background:#334155; color:white; font-weight:800; cursor:pointer;">Cerrar</button>
-    </div>
-</div>
-
 <div id="modalFotoDetalle" class="modal-overlay" style="z-index:29000; background:black; align-items:center; justify-content:center; display:none;">
   <div id="galeriaContainer" style="width:100%; height:100%; position:relative; overflow:hidden;">
 
@@ -7518,172 +7449,6 @@ window.toggleMenuChatGrupo = () => {
     }
 };
 
-window._modoMedia = 'permanente';
-window._mediaPendiente = null;
-window._mediaUnaVezActual = null;
-
-window.abrirModoMedia = (tipo, contexto) => {
-    window._mediaPendiente = { tipo: tipo, contexto: contexto };
-    const titulo = document.getElementById('modoMediaTitulo');
-    const sub = document.getElementById('modoMediaSubtitulo');
-    if (titulo) titulo.textContent = tipo === 'video' ? '🎥 Enviar video' : '📷 Enviar imagen';
-    if (sub) sub.textContent = contexto === 'grupo'
-        ? 'Se enviará al grupo. Elige cómo quieres que lo vean.'
-        : 'Se enviará a este chat. Elige cómo quieres que lo vea.';
-    const modal = document.getElementById('modalModoMedia');
-    if (modal) modal.style.display = 'flex';
-};
-
-window.cerrarModoMedia = () => {
-    window._mediaPendiente = null;
-    window._modoMedia = 'permanente';
-    const modal = document.getElementById('modalModoMedia');
-    if (modal) modal.style.display = 'none';
-};
-
-window.elegirModoMedia = (modo) => {
-    const pend = window._mediaPendiente || {};
-    window._modoMedia = modo === 'una_vez' ? 'una_vez' : 'permanente';
-    const modal = document.getElementById('modalModoMedia');
-    if (modal) modal.style.display = 'none';
-    window._mediaPendiente = null;
-
-    if (pend.tipo === 'imagen' && pend.contexto === 'privado') {
-        const input = document.getElementById('fileInputDirecto');
-        if (input) input.click();
-        return;
-    }
-    if (pend.tipo === 'video' && pend.contexto === 'privado') {
-        if (typeof p2pAbrirSelectorVideo === 'function') p2pAbrirSelectorVideo();
-        return;
-    }
-    if (pend.tipo === 'imagen' && pend.contexto === 'grupo') {
-        if (typeof abrirModalFotoGrupo === 'function') abrirModalFotoGrupo();
-        setTimeout(() => {
-            const input = document.getElementById('inputFotoGrupo');
-            if (input) input.click();
-        }, 80);
-        return;
-    }
-    if (pend.tipo === 'video' && pend.contexto === 'grupo') {
-        if (typeof abrirSelectorVideoGrupo === 'function') abrirSelectorVideoGrupo();
-    }
-};
-
-window.abrirMediaUnaVez = (tipo, src, opts) => {
-    const cont = document.getElementById('mediaUnaVezContenido');
-    const modal = document.getElementById('modalMediaUnaVez');
-    if (!cont || !modal || !src) return;
-    cont.innerHTML = '';
-    let media;
-    if (tipo === 'video') {
-        media = document.createElement('video');
-        media.src = src;
-        media.controls = true;
-        media.autoplay = true;
-        media.playsInline = true;
-        media.setAttribute('controlsList', 'nodownload noplaybackrate');
-        media.setAttribute('oncontextmenu', 'return false');
-        media.style.cssText = 'width:100%; max-height:65vh; border-radius:12px; background:#000; display:block;';
-    } else {
-        media = document.createElement('img');
-        media.src = src;
-        media.setAttribute('oncontextmenu', 'return false');
-        media.style.cssText = 'max-width:100%; max-height:65vh; object-fit:contain; border-radius:12px; display:block;';
-    }
-    cont.appendChild(media);
-    window._mediaUnaVezActual = Object.assign({ tipo: tipo, src: src, media: media }, opts || {});
-    modal.style.display = 'flex';
-    try {
-        if (window._mediaUnaVezActual && typeof window._mediaUnaVezActual.alAbrir === 'function') window._mediaUnaVezActual.alAbrir();
-    } catch (e) {}
-};
-
-window.cerrarMediaUnaVez = () => {
-    const actual = window._mediaUnaVezActual;
-    if (!actual) return;
-    window._mediaUnaVezActual = null;
-    const modal = document.getElementById('modalMediaUnaVez');
-    const cont = document.getElementById('mediaUnaVezContenido');
-    if (modal) modal.style.display = 'none';
-    if (cont) cont.innerHTML = '';
-    try { if (actual.media && typeof actual.media.pause === 'function') actual.media.pause(); } catch (e) {}
-    try { if (actual.urlBlob) URL.revokeObjectURL(actual.urlBlob); } catch (e) {}
-    try {
-        if (typeof actual.alCerrar === 'function') actual.alCerrar();
-    } catch (e) {}
-};
-
-window.abrirFotoUnaVezPrivada = (el) => {
-    if (!el) return;
-    const key = el.getAttribute('data-key');
-    const src = el.getAttribute('data-foto');
-    if (!key || !src) return;
-    const chatId = currentChatId;
-    window.abrirMediaUnaVez('imagen', src, {
-        contexto: 'privado',
-        msgKey: key,
-        alCerrar: () => {
-            if (chatId) db.ref(`chats_privados/${chatId}/${key}`).remove().catch(() => {});
-            notify("👁 Foto vista y eliminada");
-        }
-    });
-};
-
-window.abrirFotoUnaVezGrupo = (el) => {
-    if (!el) return;
-    const key = el.getAttribute('data-key');
-    const src = el.getAttribute('data-foto');
-    if (!key || !src) return;
-    const grupoId = currentGrupoId;
-    window.abrirMediaUnaVez('imagen', src, {
-        contexto: 'grupo',
-        msgKey: key,
-        alAbrir: () => {
-            if (grupoId) db.ref(`grupos_chat/${grupoId}/mensajes/${key}/vistoPor/${idAuditor}`).set(true).catch(() => {});
-        }
-    });
-};
-
-window.abrirVideoUnaVezPrivado = (sid) => {
-    const blob = window._p2pVideos && window._p2pVideos[sid];
-    if (!blob) { notify("❌ Video no disponible"); return; }
-    let url = '';
-    try { url = URL.createObjectURL(blob); } catch (e) { notify("❌ No se pudo abrir el video"); return; }
-    window.abrirMediaUnaVez('video', url, {
-        contexto: 'privado',
-        sid: sid,
-        urlBlob: url,
-        alCerrar: () => {
-            try { delete window._p2pVideos[sid]; } catch (e) {}
-            const row = document.getElementById('p2p-vid-' + sid) || document.getElementById('p2p-row-' + sid);
-            if (row) row.remove();
-            try { if (typeof p2pEliminarVideoDB === 'function') p2pEliminarVideoDB(sid).catch(() => {}); } catch (e) {}
-            notify("👁 Video visto y eliminado");
-        }
-    });
-};
-
-window.abrirVideoUnaVezGrupo = (sid) => {
-    const cache = window._gp2pVideosCache && window._gp2pVideosCache[sid];
-    const blob = cache && (cache.blob || cache);
-    if (!blob) { notify("❌ Video no disponible"); return; }
-    let url = '';
-    try { url = URL.createObjectURL(blob); } catch (e) { notify("❌ No se pudo abrir el video"); return; }
-    window.abrirMediaUnaVez('video', url, {
-        contexto: 'grupo',
-        sid: sid,
-        urlBlob: url,
-        alCerrar: () => {
-            try { delete window._gp2pVideosCache[sid]; } catch (e) {}
-            const row = document.getElementById('gp2p-vid-' + sid) || document.getElementById('gp2p-row-' + sid);
-            if (row) row.remove();
-            try { if (typeof gp2pEliminarDB === 'function') gp2pEliminarDB(sid).catch(() => {}); } catch (e) {}
-            notify("👁 Video visto y eliminado");
-        }
-    });
-};
-
 window.clickGaleriaDirecta = () => {
     toggleMenuChatPrivado();
     if (currentEarnings < 2) {
@@ -7691,7 +7456,8 @@ window.clickGaleriaDirecta = () => {
         document.getElementById('modalSinPuntosFoto').style.display = 'flex';
         return;
     }
-    window.abrirModoMedia('imagen', 'privado');
+    const input = document.getElementById('fileInputDirecto');
+    if(input) input.click();
 };
 
 window.verAnuncioFotoPrivado = () => {
@@ -7712,7 +7478,8 @@ window.onFotoAdComplete = () => {
         currentEarnings += 3.00;
         notify("🎁 +3.00 PTS ganados por ver anuncio");
         try { window.playSound('win'); } catch(e){}
-        window.abrirModoMedia('imagen', 'privado');
+        const input = document.getElementById('fileInputDirecto');
+        if (input) input.click();
     });
 };
 
@@ -7789,7 +7556,6 @@ window.procesarYEnviarFotoDirecto = (input) => {
 async function subirYCobrarFoto(archivoBlob) {
     const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
     const btn = document.getElementById('btnAbrirMenuAcciones');
-    const verUnaVez = window._modoMedia === 'una_vez';
     if (btn) btn.disabled = true;
 
     try {
@@ -7804,10 +7570,9 @@ async function subirYCobrarFoto(archivoBlob) {
         updates[`chats_privados/${currentChatId}/${chatKey}`] = {
             uid: idAuditor,
             autor: miNombre,
-            texto: verUnaVez ? "👁 Foto para ver una vez" : "📷 Foto",
+            texto: "📷 Foto",
             foto: urlPublica,
             esFoto: true,
-            verUnaVez: verUnaVez,
             fecha: firebase.database.ServerValue.TIMESTAMP
         };
 
@@ -7816,15 +7581,14 @@ async function subirYCobrarFoto(archivoBlob) {
         db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) - 2.00);
         db.ref(`users/${targetUserUid}/notifications`).push({
             from: idAuditor, fromName: miNombre, type: 'chat_privado',
-            text: verUnaVez ? "👁 Te envió una foto para ver una vez" : "📷 Te envió una foto privada", extra: idAuditor,
+            text: "📷 Te envió una foto privada", extra: idAuditor,
             timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
         });
         // 🔔 PUSH ONESIGNAL: avisar al receptor aunque la app esté cerrada
-        if (typeof enviarNotificacion === 'function') enviarNotificacion(targetUserUid, miNombre, verUnaVez ? '👁 Te envió una foto para ver una vez' : '📷 Te envió una foto', idAuditor);
+        if (typeof enviarNotificacion === 'function') enviarNotificacion(targetUserUid, miNombre, '📷 Te envió una foto', idAuditor);
 
-        registrarHistorial(verUnaVez ? "Foto para ver una vez enviada" : "Foto privada enviada", -2.00);
-        notify(verUnaVez ? "✅ Foto enviada para ver una vez (-2.00 PTS)" : "✅ Foto enviada (-2.00 PTS)");
-        window._modoMedia = 'permanente';
+        registrarHistorial("Foto privada enviada", -2.00);
+        notify("✅ Foto enviada (-2.00 PTS)");
         if (btn) btn.disabled = false;
 
     } catch (e) {
@@ -7842,10 +7606,9 @@ async function subirYCobrarFoto(archivoBlob) {
             updates[`chats_privados/${currentChatId}/${chatKey}`] = {
                 uid: idAuditor,
                 autor: miNombre,
-                texto: verUnaVez ? "👁 Foto para ver una vez" : "📷 Foto",
+                texto: "📷 Foto",
                 foto: base64Data,
                 esFoto: true,
-                verUnaVez: verUnaVez,
                 fecha: firebase.database.ServerValue.TIMESTAMP
             };
             await db.ref().update(updates);
@@ -7853,15 +7616,14 @@ async function subirYCobrarFoto(archivoBlob) {
             db.ref(`users/${idAuditor}/earnings`).transaction(c => (c || 0) - 2.00);
             db.ref(`users/${targetUserUid}/notifications`).push({
                 from: idAuditor, fromName: miNombre, type: 'chat_privado',
-                text: verUnaVez ? "👁 Te envió una foto para ver una vez" : "📷 Te envió una foto privada", extra: idAuditor,
+                text: "📷 Te envió una foto privada", extra: idAuditor,
                 timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
             });
             // 🔔 PUSH ONESIGNAL: avisar al receptor aunque la app esté cerrada
-            if (typeof enviarNotificacion === 'function') enviarNotificacion(targetUserUid, miNombre, verUnaVez ? '👁 Te envió una foto para ver una vez' : '📷 Te envió una foto', idAuditor);
+            if (typeof enviarNotificacion === 'function') enviarNotificacion(targetUserUid, miNombre, '📷 Te envió una foto', idAuditor);
 
-            registrarHistorial(verUnaVez ? "Foto para ver una vez enviada" : "Foto privada enviada", -2.00);
-            notify(verUnaVez ? "✅ Foto enviada para ver una vez (-2.00 PTS)" : "✅ Foto enviada (-2.00 PTS)");
-            window._modoMedia = 'permanente';
+            registrarHistorial("Foto privada enviada", -2.00);
+            notify("✅ Foto enviada (-2.00 PTS)");
             if (btn) btn.disabled = false;
         } catch (rtbErr) {
             console.error("Error enviando foto:", rtbErr);
@@ -9908,39 +9670,6 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             setTimeout(() => {
                 if (typeof cambiarPestanaChat === 'function') cambiarPestanaChat('michat');
             }, 400);
-        }
-        else if (type === 'referido') {
-            // Alguien usó tu código: si ya existe chat aceptado, abrir esa
-            // conversación; si no, mostrar la lista de referidos.
-            const invKey = String(fromUid || '').trim();
-            const mostrarReferidos = () => {
-                if (typeof window.verReferidos === 'function') window.verReferidos();
-            };
-            const abrirChatDelReferido = (uid, nombre) => {
-                if (!uid) return mostrarReferidos();
-                _getSolicitudStatus(uid, (req) => {
-                    if (req && req.status === 'accepted') {
-                        _abrirChatPrivadoReal(uid, nombre || nombreEmisor);
-                    } else {
-                        mostrarReferidos();
-                    }
-                });
-            };
-            if (extra) {
-                abrirChatDelReferido(extra, nombreEmisor);
-            } else if (invKey && !/^INV-/i.test(invKey)) {
-                abrirChatDelReferido(invKey, nombreEmisor);
-            } else if (invKey) {
-                db.ref('users').orderByChild('myInviteKey').equalTo(invKey).once('value').then(snap => {
-                    if (!snap.exists()) return mostrarReferidos();
-                    const data = snap.val() || {};
-                    const uid = Object.keys(data)[0];
-                    const user = data[uid] || {};
-                    abrirChatDelReferido(uid, user.apodo || nombreEmisor);
-                }).catch(mostrarReferidos);
-            } else {
-                mostrarReferidos();
-            }
         }
         else if (type === 'grupo_chat') {
             // Nuevo mensaje en un grupo → abrir el chat de ese grupo
@@ -12450,8 +12179,6 @@ window.abrirModalFotoGrupo = () => {
     document.getElementById('placeholderUploadGrupo').style.display = 'block';
     document.getElementById('btnEnviarFotoGrupo').disabled = true;
     document.getElementById('btnEnviarFotoGrupo').innerHTML = '📷 Enviar Foto al Grupo';
-    const info = document.getElementById('modoFotoGrupoInfo');
-    if (info) info.textContent = window._modoMedia === 'una_vez' ? '👁 Se enviará para ver una vez' : '📌 Se enviará permanente';
     fotoGrupoBase64 = "";
 };
 
@@ -12532,13 +12259,11 @@ window.enviarFotoGrupo = async () => {
     btn.innerHTML = 'Enviando...';
 
     const miNombre = document.getElementById('profKey')?.textContent || myCurrentKey;
-    const verUnaVez = window._modoMedia === 'una_vez';
     const msgData = {
         uid: idAuditor,
         autor: miNombre,
-        texto: verUnaVez ? "👁 Foto para ver una vez" : "📷 Foto",
+        texto: "📷 Foto",
         esFoto: true,
-        verUnaVez: verUnaVez,
         fecha: firebase.database.ServerValue.TIMESTAMP
     };
 
@@ -12563,22 +12288,20 @@ window.enviarFotoGrupo = async () => {
 
         msgData.foto = urlPublica;
         await db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push(msgData);
-        avisarCreadorGrupo(verUnaVez ? "envió una foto para ver una vez" : "envió una foto");
+        avisarCreadorGrupo("envió una foto");
 
         cerrarModalFotoGrupo();
-        notify(verUnaVez ? "✅ Foto enviada al grupo para ver una vez" : "✅ Foto enviada al grupo");
-        window._modoMedia = 'permanente';
+        notify("✅ Foto enviada al grupo");
         try { window.playSound('win'); } catch(e){}
     } catch (storageErr) {
         console.error("Storage falló, intentando Base64 en RTDB:", storageErr);
         try {
             msgData.foto = fotoGrupoBase64;
             await db.ref(`grupos_chat/${currentGrupoId}/mensajes`).push(msgData);
-            avisarCreadorGrupo(verUnaVez ? "envió una foto para ver una vez" : "envió una foto");
+            avisarCreadorGrupo("envió una foto");
 
             cerrarModalFotoGrupo();
-            notify(verUnaVez ? "✅ Foto enviada al grupo para ver una vez" : "✅ Foto enviada al grupo");
-            window._modoMedia = 'permanente';
+            notify("✅ Foto enviada al grupo");
             try { window.playSound('win'); } catch(e){}
         } catch (rtbErr) {
             console.error("Error enviando foto al grupo:", rtbErr);
@@ -12691,7 +12414,7 @@ window.procesarVideoGrupo = async (input) => {
         if (!dur || dur < 1 || dur > 61) return notify("❌ El video debe durar entre 1 y 60 segundos");
         if (!currentGrupoId) return notify("Grupo no activo");
         if (typeof window._puedeEnviarEnGrupoActual === 'function' && !window._puedeEnviarEnGrupoActual()) return;
-        await gp2pIniciarEnvioGrupal(file, dur, window._modoMedia === 'una_vez');
+        await gp2pIniciarEnvioGrupal(file, dur);
     } catch (e) {
         console.error("Error enviando video al grupo:", e);
         notify("❌ No se pudo enviar el video" + (e && e.message ? ": " + e.message : ""));
@@ -13186,14 +12909,6 @@ function crearFilaMensajePrivado(s) {
     let fotoHTML = '';
     if (m.esSticker && m.foto) {
         fotoHTML = `<div style="margin:4px 0;"><img src="${m.foto}" style="width:100px; height:100px; object-fit:contain; display:block;" loading="lazy"></div>`;
-    } else if (m.esFoto && m.verUnaVez) {
-        if (esMio) {
-            fotoHTML = `<div style="margin:8px 0; background:#f5f3ff; border:1px solid #c4b5fd; color:#6d28d9; padding:12px 16px; border-radius:12px; font-weight:700; font-size:0.8rem; display:inline-flex; align-items:center; gap:8px;">👁 Foto enviada para ver una vez</div>`;
-        } else if (m.foto) {
-            fotoHTML = `<div style="margin:8px 0; cursor:pointer; background:#f5f3ff; border:1px solid #c4b5fd; color:#6d28d9; padding:12px 16px; border-radius:12px; font-weight:800; font-size:0.8rem; display:inline-flex; align-items:center; gap:8px;" onclick="event.stopPropagation();abrirFotoUnaVezPrivada(this)" data-key="${key}" data-foto="${m.foto.replace(/"/g, '&quot;')}">👁 Ver una vez <span style="font-size:0.65rem; font-weight:600; opacity:0.8;">(se borra al cerrar)</span></div>`;
-        } else {
-            fotoHTML = `<div style="margin:8px 0; background:#f5f3ff; border:1px solid #c4b5fd; color:#6d28d9; padding:12px 16px; border-radius:12px; font-weight:700; font-size:0.8rem;">👁 Foto para ver una vez</div>`;
-        }
     } else if (m.esFoto && m.foto) {
         fotoHTML = `<div style="margin:8px 0; cursor:pointer;" onclick="event.stopPropagation();mostrarFotoPrivada(this)" data-foto="${m.foto.replace(/"/g, '&quot;')}"><img src="${m.foto}" style="max-width:220px; max-height:220px; border-radius:12px; object-fit:cover; display:block;" loading="lazy"></div>`;
     }
@@ -13941,7 +13656,7 @@ window.p2pProcesarVideoSeleccionado = async (input) => {
             notify("❌ El video debe durar entre 1 y 60 segundos");
             return;
         }
-        await p2pEnviarVideo(file, dur, window._modoMedia === 'una_vez');
+        await p2pEnviarVideo(file, dur);
     } catch (e) {
         console.error("🎥 P2P error preparando video:", e);
         notify("❌ No se pudo preparar el video");
@@ -13969,7 +13684,7 @@ function p2pDuracion(file) {
     });
 }
 
-async function p2pEnviarVideo(file, dur, viewOnce) {
+async function p2pEnviarVideo(file, dur) {
     if (window._p2p && !window._p2p.done) {
         const s0 = window._p2p;
         const mismoChat = (s0.chatId === currentChatId);
@@ -13986,13 +13701,11 @@ async function p2pEnviarVideo(file, dur, viewOnce) {
         name: file.name || 'video.mp4',
         size: file.size,
         dur: Math.round(dur * 10) / 10,
-        mime: file.type || 'video/mp4',
-        viewOnce: !!viewOnce
+        mime: file.type || 'video/mp4'
     };
 
     window._p2p = { role: 'sender', sid, chatId: currentChatId, pc: null, dc: null, file, meta, peerUid, done: false, open: false, creado: Date.now() };
-    window._modoMedia = 'permanente';
-    p2pFilaUI(sid, viewOnce ? "🎥 Video para ver una vez" : "🎥 Video en vivo", meta, true);
+    p2pFilaUI(sid, "🎥 Video en vivo", meta, true);
     p2pSetEstado(sid, "1/3 Conectando con el otro teléfono…", 0);
 
     const pc = new RTCPeerConnection(P2P_ICE);
@@ -14039,14 +13752,14 @@ async function p2pEnviarVideo(file, dur, viewOnce) {
     try {
         db.ref(`users/${peerUid}/notifications`).push({
             from: idAuditor, fromName: miNombre, type: 'chat_privado',
-            text: viewOnce ? "👁 Te está enviando un video para ver una vez" : "🎥 Te está enviando un video (en vivo)",
+            text: "🎥 Te está enviando un video (en vivo)",
             extra: idAuditor, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
         });
     } catch (e) {}
 
     try {
         if (typeof enviarNotificacion === 'function') {
-            enviarNotificacion(peerUid, miNombre, viewOnce ? "👁 Te está enviando un video para ver una vez" : "🎥 Te está enviando un video (en vivo)", idAuditor);
+            enviarNotificacion(peerUid, miNombre, "🎥 Te está enviando un video (en vivo)", idAuditor);
         }
     } catch (e) {}
 
@@ -14066,7 +13779,7 @@ async function p2pEnviarPorCanal(sid) {
     if (s.timeoutId) { clearTimeout(s.timeoutId); s.timeoutId = null; }
     p2pSetEstado(sid, "3/3 Conectado, enviando…", 0);
     try {
-        dc.send(JSON.stringify({ t: 'meta', name: s.meta.name, size: s.meta.size, mime: s.meta.mime, dur: s.meta.dur, viewOnce: !!s.meta.viewOnce }));
+        dc.send(JSON.stringify({ t: 'meta', name: s.meta.name, size: s.meta.size, mime: s.meta.mime, dur: s.meta.dur }));
         let pos = 0;
         while (pos < s.meta.size) {
             if (dc.readyState !== 'open') throw new Error('canal cerrado');
@@ -14124,7 +13837,7 @@ window.p2pAceptarOferta = async () => {
     const chatP2P = currentChatId;
     const meta = o.meta || {};
     window._p2p = { role: 'receiver', sid, chatId: currentChatId, pc: null, dc: null, chunks: [], received: 0, total: meta.size || 0, meta, peerUid: o.from, done: false, creado: Date.now() };
-    p2pFilaUI(sid, meta.viewOnce ? "👁 Video para ver una vez" : "🎥 Video entrante", meta, false);
+    p2pFilaUI(sid, "🎥 Video entrante", meta, false);
     p2pSetEstado(sid, "1/3 Conectando con el emisor…", 0);
     p2pDiag(sid, "Oferta detectada ✓");
     try { p2pActualizarPuntos(); } catch (e) {}
@@ -14238,7 +13951,6 @@ function p2pRecibirMensaje(sid, e) {
                 if (j.size) s.total = j.size;
                 if (j.mime) s.meta.mime = j.mime;
                 if (j.name) s.meta.name = j.name;
-                if (j.viewOnce) s.meta.viewOnce = true;
                 p2pSetEstado(sid, "Recibiendo…", 0);
             } else if (j.t === 'end') {
                 p2pFinalizarRecepcion(sid);
@@ -14270,10 +13982,6 @@ function p2pFinalizarRecepcion(sid) {
     const blob = new Blob(s.chunks, { type: mime });
     s.chunks = [];
     window._p2pVideos[sid] = blob;
-    if (s.meta && s.meta.viewOnce) {
-        p2pMostrarVideoUnaVezRecibido(sid, blob);
-        return;
-    }
     let refKey = null;
     try {
         const listRef = document.getElementById('privChatList');
@@ -14346,53 +14054,6 @@ function p2pFinalizarRecepcion(sid) {
     try { if (pe.stallId) clearInterval(pe.stallId); } catch (e) {}
     try { if (pe.dc) pe.dc.close(); } catch (e) {}
     try { if (pe.pc) pe.pc.close(); } catch (e) {}
-    if (window._p2p && window._p2p.sid === sid) window._p2p = null;
-    try { p2pActualizarPuntos(); } catch (e) {}
-}
-
-function p2pMostrarVideoUnaVezRecibido(sid, blob) {
-    const s = window._p2p;
-    if (!s) return;
-    const meta = s.meta || {};
-    let fila = document.getElementById('p2p-row-' + sid);
-    if (!fila && s.chatId === currentChatId) fila = p2pFilaUI(sid, "👁 Video para ver una vez", meta, false);
-    if (fila) {
-        fila.id = 'p2p-vid-' + sid;
-        const caja = fila.querySelector('.p2p-caja');
-        if (caja) {
-            caja.innerHTML = '';
-            const aviso = document.createElement('div');
-            aviso.style.cssText = 'font-size:0.8rem; font-weight:800; color:#6d28d9; background:#f5f3ff; border:1px solid #c4b5fd; border-radius:12px; padding:12px 14px; text-align:center;';
-            aviso.textContent = '👁 Video para ver una vez';
-            caja.appendChild(aviso);
-            const info = document.createElement('div');
-            info.style.cssText = 'font-size:0.7rem; opacity:0.8; margin-top:6px;';
-            info.textContent = (blob.size / (1024 * 1024)).toFixed(1) + ' MB • se elimina al verlo';
-            caja.appendChild(info);
-            const btn = document.createElement('button');
-            btn.textContent = '👁 Ver una vez';
-            btn.style.cssText = 'margin-top:8px; width:100%; background:#7c3aed; color:white; border:none; border-radius:10px; padding:10px 12px; font-weight:800; font-size:0.8rem; cursor:pointer;';
-            btn.onclick = () => window.abrirVideoUnaVezPrivado(sid);
-            caja.appendChild(btn);
-            const st = document.createElement('div');
-            st.className = 'p2p-status';
-            st.style.cssText = 'font-size:0.7rem; opacity:0.75; margin-top:6px;';
-            st.textContent = '✓ Recibido';
-            caja.appendChild(st);
-        }
-        const list = document.getElementById('privChatList');
-        if (list) list.scrollTop = list.scrollHeight;
-    }
-    db.ref(`chats_privados/${s.chatId || currentChatId}`).push({
-        p2p: true, p2pType: 'ack', sid, from: idAuditor, to: s.peerUid, uid: idAuditor, autor: (typeof getMiNombre === 'function') ? getMiNombre() : (myCurrentKey || 'Usuario'),
-        fecha: firebase.database.ServerValue.TIMESTAMP
-    }).catch(() => {});
-    try { notify("👁 Video para ver una vez recibido"); } catch (e) {}
-    try { window.playSound('win'); } catch (e) {}
-    try { if (s.finTimer) clearTimeout(s.finTimer); } catch (e) {}
-    try { if (s.stallId) clearInterval(s.stallId); } catch (e) {}
-    try { if (s.dc) s.dc.close(); } catch (e) {}
-    try { if (s.pc) s.pc.close(); } catch (e) {}
     if (window._p2p && window._p2p.sid === sid) window._p2p = null;
     try { p2pActualizarPuntos(); } catch (e) {}
 }
@@ -14490,7 +14151,7 @@ async function p2pVideosDeChat(chatId) {
             const req = db.transaction('videos', 'readonly').objectStore('videos').openCursor();
             req.onsuccess = (e) => {
                 const c = e.target.result;
-                if (c) { if (c.value && c.value.chatId === chatId && !c.value.viewOnce) out.push(c.value); c.continue(); }
+                if (c) { if (c.value && c.value.chatId === chatId) out.push(c.value); c.continue(); }
                 else res(out);
             };
             req.onerror = () => res(out);
@@ -14744,7 +14405,7 @@ function p2pMostrarModalOferta() {
         const mb = o.meta && o.meta.size ? (o.meta.size / (1024 * 1024)).toFixed(1) + " MB" : "";
         const seg = o.meta && o.meta.dur ? Math.round(o.meta.dur) + " segundos" : "";
         const nombre = o.meta && o.meta.name ? " (" + o.meta.name + ")" : "";
-        info.textContent = (o.meta && o.meta.viewOnce ? "Tu amigo quiere enviarte un video para ver una vez" : "Tu amigo quiere enviarte un video") + nombre + "\n" +
+        info.textContent = "Tu amigo quiere enviarte un video" + nombre + "\n" +
             (seg && mb ? "Duración: " + seg + " • " + mb : (seg || mb)) + "\n" +
             "Debes estar conectado ahora para recibirlo.";
     }
@@ -14993,7 +14654,7 @@ async function gp2pVideosDeGrupo(gid) {
             req.onsuccess = (e) => {
                 const c = e.target.result;
                 if (c) {
-                    if (c.value && c.value.groupId === gid && c.value.blob && !c.value.viewOnce) out.push(c.value);
+                    if (c.value && c.value.groupId === gid && c.value.blob) out.push(c.value);
                     c.continue();
                 } else res(out);
             };
@@ -15043,7 +14704,7 @@ function gp2pInsertarFila(row) {
 }
 
 function gp2pPintarFilaGuardada(rec) {
-    if (!rec || !rec.sid || !rec.blob || rec.viewOnce) return;
+    if (!rec || !rec.sid || !rec.blob) return;
     if (document.getElementById('gp2p-vid-' + rec.sid)) return;
     const list = document.getElementById('grupoChatList');
     if (!list) return;
@@ -15108,7 +14769,7 @@ function gp2pPintarFilaRecepcion(sid) {
         const caja = document.createElement('div');
         caja.className = 'msg-bubble msg-other';
         caja.style.cssText = 'max-width:85%; padding:10px 12px;';
-        caja.innerHTML = '<div style="font-weight:700; font-size:0.85rem; margin-bottom:4px;">' + (s.meta && s.meta.viewOnce ? '👁 Video para ver una vez de ' : '🎥 Video entrante de ') + escapeHtml(s.peerName || 'un miembro') + '</div>' +
+        caja.innerHTML = '<div style="font-weight:700; font-size:0.85rem; margin-bottom:4px;">🎥 Video entrante de ' + escapeHtml(s.peerName || 'un miembro') + '</div>' +
             '<div style="font-size:0.7rem; opacity:0.8; margin-bottom:6px;">' + (s.meta && s.meta.size ? (s.meta.size / (1024 * 1024)).toFixed(1) + ' MB' : '') + (s.meta && s.meta.dur ? ' • ' + Math.round(s.meta.dur) + 's' : '') + '</div>' +
             '<div class="gp2p-estado" style="font-size:0.74rem; opacity:0.9;">' + escapeHtml(s.estado || 'Conectando…') + '</div>' +
             '<div style="font-size:0.66rem; opacity:0.6; margin-top:6px;">Sin Firebase Storage: se recibe en vivo.</div>';
@@ -15133,7 +14794,7 @@ function gp2pPintarFilaEnvio() {
         const caja = document.createElement('div');
         caja.className = 'msg-bubble msg-mine';
         caja.style.cssText = 'max-width:85%; padding:10px 12px;';
-        caja.innerHTML = '<div style="font-weight:700; font-size:0.86rem;">' + (e.meta && e.meta.viewOnce ? '👁 Video para ver una vez al grupo' : '🎥 Video en vivo al grupo') + '</div>' +
+        caja.innerHTML = '<div style="font-weight:700; font-size:0.86rem;">🎥 Video en vivo al grupo</div>' +
             '<div class="gp2p-meta" style="font-size:0.7rem; opacity:0.8; margin-top:3px;"></div>' +
             '<div class="gp2p-lista" style="margin-top:6px;"></div>' +
             '<div style="font-size:0.66rem; opacity:0.65; margin-top:6px;">Sin Firebase Storage: solo miembros conectados.</div>';
@@ -15218,7 +14879,6 @@ function gp2pGuardarEnvioLocal() {
     const e = window._gp2pEnvio;
     if (!e || e.guardado) return;
     e.guardado = true;
-    if (e.meta && e.meta.viewOnce) return;
     const rec = {
         sid: e.gtid,
         chatId: 'grupo:' + e.grupoId,
@@ -15298,7 +14958,7 @@ async function gp2pEnviarPorCanal(s) {
     try { clearTimeout(s.timeoutId); s.timeoutId = null; } catch (e) {}
     gp2pSetEstadoSesion(s, '3/3 Conectado, enviando…', 0);
     try {
-        dc.send(JSON.stringify({ t: 'meta', name: s.meta.name, size: s.meta.size, mime: s.meta.mime, dur: s.meta.dur, viewOnce: !!s.meta.viewOnce }));
+        dc.send(JSON.stringify({ t: 'meta', name: s.meta.name, size: s.meta.size, mime: s.meta.mime, dur: s.meta.dur }));
         let pos = 0;
         while (pos < s.meta.size) {
             if (dc.readyState !== 'open') throw new Error('canal cerrado');
@@ -15350,7 +15010,6 @@ function gp2pRecibirMensaje(s, e) {
                 if (j.size) s.total = j.size;
                 if (j.mime) s.meta.mime = j.mime;
                 if (j.name) s.meta.name = j.name;
-                if (j.viewOnce) s.meta.viewOnce = true;
                 gp2pSetEstadoSesion(s, 'Recibiendo…', 0);
             } else if (j.t === 'end') {
                 gp2pFinalizarRecepcion(s.sid);
@@ -15392,56 +15051,15 @@ function gp2pFinalizarRecepcion(sid) {
         fecha: Date.now(),
         blob,
         outgoing: false,
-        fromName: s.peerName || 'un miembro',
-        viewOnce: !!(s.meta && s.meta.viewOnce)
+        fromName: s.peerName || 'un miembro'
     };
     try { window._gp2pVideosCache[sid] = rec; } catch (e) {}
-    if (rec.viewOnce) {
-        gp2pMostrarVideoUnaVezRecibido(s, rec);
-        return;
-    }
     const rowRec = document.getElementById('gp2p-rec-' + sid);
     if (rowRec) rowRec.remove();
     gp2pPintarFilaGuardada(rec);
     gp2pGuardarDB(rec).catch(() => {});
     gp2pSenal(s.grupoId, { p2pType: 'ack', sid, gtid: s.gtid, to: s.peerUid });
     gp2pAviso('🎥 Video recibido del grupo');
-    try { window.playSound('win'); } catch (e) {}
-    gp2pCerrarSesion(sid);
-}
-
-function gp2pMostrarVideoUnaVezRecibido(s, rec) {
-    if (!s || !rec) return;
-    const sid = rec.sid;
-    const rowRec = document.getElementById('gp2p-rec-' + sid);
-    if (rowRec) rowRec.remove();
-    if (gp2pGrupoAbierto(s.grupoId)) {
-        const row = document.createElement('div');
-        row.id = 'gp2p-vid-' + sid;
-        row.setAttribute('data-gp2p-row', '1');
-        row.className = 'chat-row other';
-        row.style.cssText = 'display:flex; width:100%; margin-bottom:12px; padding:0 15px; justify-content:flex-start;';
-        const caja = document.createElement('div');
-        caja.className = 'msg-bubble msg-other';
-        caja.style.cssText = 'max-width:85%; padding:10px 12px;';
-        const tit = document.createElement('div');
-        tit.style.cssText = 'font-weight:700; font-size:0.85rem; margin-bottom:6px; color:#6d28d9;';
-        tit.textContent = '👁 Video de ' + (rec.fromName || 'un miembro') + ' para ver una vez';
-        caja.appendChild(tit);
-        const info = document.createElement('div');
-        info.style.cssText = 'font-size:0.7rem; opacity:0.8; margin-bottom:6px;';
-        info.textContent = (rec.size / (1024 * 1024)).toFixed(1) + ' MB • se elimina al verlo';
-        caja.appendChild(info);
-        const btn = document.createElement('button');
-        btn.textContent = '👁 Ver una vez';
-        btn.style.cssText = 'width:100%; background:#7c3aed; color:white; border:none; border-radius:10px; padding:10px 12px; font-weight:800; font-size:0.8rem; cursor:pointer;';
-        btn.onclick = () => window.abrirVideoUnaVezGrupo(sid);
-        caja.appendChild(btn);
-        row.appendChild(caja);
-        gp2pInsertarFila(row);
-    }
-    gp2pSenal(s.grupoId, { p2pType: 'ack', sid, gtid: s.gtid, to: s.peerUid });
-    gp2pAviso('👁 Video para ver una vez recibido del grupo');
     try { window.playSound('win'); } catch (e) {}
     gp2pCerrarSesion(sid);
 }
@@ -15629,7 +15247,7 @@ function gp2pCargarMiembrosConectados(gid) {
     }).catch(() => []);
 }
 
-async function gp2pIniciarEnvioGrupal(file, dur, viewOnce) {
+async function gp2pIniciarEnvioGrupal(file, dur) {
     if (window._gp2pEnvio && !window._gp2pEnvio.finalizado) {
         gp2pAviso('⏳ Ya se está enviando un video al grupo');
         return;
@@ -15650,17 +15268,15 @@ async function gp2pIniciarEnvioGrupal(file, dur, viewOnce) {
         name: file.name || 'video.mp4',
         size: file.size,
         dur: Math.round(dur * 10) / 10,
-        mime: file.type || 'video/mp4',
-        viewOnce: !!viewOnce
+        mime: file.type || 'video/mp4'
     };
     const gtid = db.ref('grupos_p2p/' + gid).push().key;
     window._gp2pEnvio = {
         gtid, grupoId: gid, grupoNombre: nombreGrupo, file, meta,
         sessions: {}, activo: true, guardado: false, finalizado: false, creado: Date.now()
     };
-    window._modoMedia = 'permanente';
     gp2pPintarFilaEnvio();
-    gp2pAviso(viewOnce ? '👁 Enviando video para ver una vez a ' + members.length + ' miembro(s)…' : '🎥 Enviando a ' + members.length + ' miembro(s) conectado(s)…');
+    gp2pAviso('🎥 Enviando a ' + members.length + ' miembro(s) conectado(s)…');
     await Promise.all(members.map(m => gp2pCrearSesionEmisor(gid, gtid, m.uid, m.nombre, file, meta, nombreGrupo).catch(() => {})));
     gp2pActualizarEnvioFinal();
 }
@@ -16851,7 +16467,6 @@ window.validarCodigoAmigo = () => {
             const notiKey = db.ref(`users/${ownerId}/notifications`).push().key;
             updates[`users/${ownerId}/notifications/${notiKey}`] = {
                 from: myCurrentKey, fromName: getMiNombre(), type: 'referido',
-                extra: idAuditor,
                 text: "🎉 ¡Alguien usó tu código! (+0.50 PTS)",
                 timestamp: fecha, read: false
             };
@@ -19935,9 +19550,8 @@ function cargarRanking() {
         let html = '';
 
         usuarios.forEach((u, i) => {
-            const pts = Number(u.earnings) || 0;
-            const puntos = pts.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const dolares = (pts / 1000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const nombre = u.apodo || u.myInviteKey || 'Usuario';
+            const puntos = parseFloat(u.earnings || 0).toFixed(2);
             const avatar = getUserProfilePhoto(u.uid);
 
             html += `
@@ -19949,8 +19563,8 @@ function cargarRanking() {
                             background-image: url('${avatar}'); background-size: cover; 
                             border: 2px solid #fbbf24; flex-shrink: 0;"></div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 800; color: white; font-size: 0.95rem;">${puntos} PTS</div>
-                    <div style="font-size: 0.75rem; color: #fbbf24; font-weight: 700;">≈ $${dolares} USD</div>
+                    <div style="font-weight: 800; color: white; font-size: 0.95rem;">${nombre}</div>
+                    <div style="font-size: 0.75rem; color: #fbbf24; font-weight: 700;">${puntos} PTS</div>
                 </div>
             </div>`;
         });
@@ -21079,17 +20693,6 @@ function entrarAlGrupo(idGrupo, nombreGrupo, iconoGrupo) {
                         <img src="${m.foto}" style="width:100px; height:100px; object-fit:contain; display:block;" loading="lazy">
                     </div>
                 `;
-            } else if (m.esFoto && m.verUnaVez) {
-                const yaVista = !!(m.vistoPor && m.vistoPor[idAuditor]);
-                if (esMio) {
-                    fotoHTML = `<div style="margin:8px 0; background:#f5f3ff; border:1px solid #c4b5fd; color:#6d28d9; padding:12px 16px; border-radius:12px; font-weight:700; font-size:0.8rem; display:inline-flex; align-items:center; gap:8px;">👁 Foto enviada para ver una vez</div>`;
-                } else if (!fotoEscapada) {
-                    fotoHTML = `<div style="margin:8px 0; background:#f5f3ff; border:1px solid #c4b5fd; color:#6d28d9; padding:12px 16px; border-radius:12px; font-weight:700; font-size:0.8rem;">👁 Foto para ver una vez</div>`;
-                } else if (yaVista) {
-                    fotoHTML = `<div style="margin:8px 0; background:#f1f5f9; border:1px solid #e2e8f0; color:#64748b; padding:12px 16px; border-radius:12px; font-weight:700; font-size:0.8rem; display:inline-flex; align-items:center; gap:8px;">👁 Foto vista una vez</div>`;
-                } else {
-                    fotoHTML = `<div style="margin:8px 0; cursor:pointer; background:#f5f3ff; border:1px solid #c4b5fd; color:#6d28d9; padding:12px 16px; border-radius:12px; font-weight:800; font-size:0.8rem; display:inline-flex; align-items:center; gap:8px;" onclick="event.stopPropagation();abrirFotoUnaVezGrupo(this)" data-key="${s.key}" data-foto="${fotoEscapada}">👁 Ver una vez <span style="font-size:0.65rem; font-weight:600; opacity:0.8;">(se borra al cerrar)</span></div>`;
-                }
             } else if (m.esFoto && m.foto) {
                 fotoHTML = `
                     <div style="margin:8px 0; cursor:pointer;" onclick="mostrarFotoGrupo(this)" data-foto="${fotoEscapada}">
