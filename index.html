@@ -6879,13 +6879,18 @@ function actualizarBarraProgreso() {
     const text = document.getElementById('videoProgressText');
 
     const porcentaje = Math.min((videoWatchSeconds / VIDEO_REWARD_SECONDS) * 100, 100);
-    fill.style.width = porcentaje + '%';
+    if (fill) fill.style.width = porcentaje + '%';
 
     if (videoWatchSeconds >= VIDEO_REWARD_SECONDS) {
-        text.textContent = '✅ +0.50 PTS ganados';
-        fill.style.background = 'linear-gradient(90deg, #10b981, #059669)';
+        let yaGanado = false;
+        try {
+            const hoy = new Date().toISOString().split('T')[0];
+            yaGanado = !!localStorage.getItem('v2_' + hoy + '_' + videoWatchId);
+        } catch(e) {}
+        if (text) text.textContent = yaGanado ? '✅ Ya ganaste por este video hoy' : '✅ +0.50 PTS ganados';
+        if (fill) fill.style.background = 'linear-gradient(90deg, #10b981, #059669)';
     } else {
-        text.textContent = videoWatchSeconds + 's / ' + VIDEO_REWARD_SECONDS + 's → +0.50 PTS';
+        if (text) text.textContent = videoWatchSeconds + 's / ' + VIDEO_REWARD_SECONDS + 's → +0.50 PTS';
     }
 }
 
@@ -6893,34 +6898,30 @@ function otorgarPuntosVideo(ytId) {
     // Clave con fecha: permite ganar puntos del mismo video UNA VEZ POR DÍA
     const hoy = new Date().toISOString().split('T')[0];
     const claveHoy = 'v2_' + hoy + '_' + ytId;
-    const yaGanado = localStorage.getItem(claveHoy);
-    if (yaGanado) return;
+    if (localStorage.getItem(claveHoy)) return;
+    if (!idAuditor) { notify('⚠️ Inicia sesión para ganar puntos'); return; }
 
-    localStorage.setItem(claveHoy, '1');
-
-    // Sumar puntos en Firebase
-// ✅ Forma ultra-barata de sumar puntos sin descargar datos
-if (idAuditor) {
-    db.ref(`users/${idAuditor}/earnings`).transaction(current => (current || 0) + VIDEO_REWARD_POINTS);
-    registrarHistorial("Video Feed", VIDEO_REWARD_POINTS);
-}
-
-    // Actualizar display local
-    let puntos = parseFloat(localStorage.getItem('puntos') || '0');
-    puntos += VIDEO_REWARD_POINTS;
-    localStorage.setItem('puntos', puntos.toString());
-
-    const display = document.getElementById('mainPts');
-    if (display) display.textContent = puntos.toFixed(2) + ' PTS';
-
-    const snakeDisplay = document.getElementById('snakeWalletDisplay');
-    if (snakeDisplay) snakeDisplay.textContent = '👾 ' + puntos.toFixed(2);
-
-    notify('💰 +0.50 PTS por ver video');
-    try { window.playSound('win'); } catch(e){}
-
-    if (videoProgressInterval) clearInterval(videoProgressInterval);
-    actualizarBarraProgreso();
+    // Sumar puntos en Firebase y usar el saldo real del servidor para la UI
+    db.ref(`users/${idAuditor}/earnings`).transaction(current => (Number(current) || 0) + VIDEO_REWARD_POINTS)
+        .then(result => {
+            if (!result || !result.committed) return;
+            const total = Number(result.snapshot.val()) || 0;
+            localStorage.setItem(claveHoy, '1');
+            localStorage.setItem('puntos', total.toString());
+            if (typeof currentEarnings !== 'undefined') currentEarnings = total;
+            const display = document.getElementById('mainPts');
+            if (display) display.textContent = total.toFixed(2) + ' PTS';
+            registrarHistorial("Video Feed", VIDEO_REWARD_POINTS);
+            notify('💰 +0.50 PTS por ver video');
+            try { window.playSound('win'); } catch(e){}
+            // Solo actualizar la barra si el usuario sigue en el mismo video.
+            // No tocar videoProgressInterval: puede pertenecer al siguiente video.
+            if (videoWatchId === ytId) actualizarBarraProgreso();
+        })
+        .catch(err => {
+            console.error('Error sumando puntos por video:', err);
+            notify('⚠️ No se pudo sumar el punto. Intenta de nuevo.');
+        });
 }
 
 function detenerProgresoVideo() {
@@ -12422,6 +12423,25 @@ window.mostrarFotoPrivada = (el) => {
         const modal = document.getElementById('modalFotoDetalle');
         const img = document.getElementById('detalleFotoImg');
         if (!modal || !img) return;
+
+        // Esta foto es del chat privado: NO tiene relación con la compra del muro.
+        // Invalidar la foto del muro evita que respuestas atrasadas de Firebase
+        // le apliquen blur o la barra de compra encima.
+        currentPhotoKey = null;
+        currentPhotoOwner = null;
+        window._privPhotoView = true;
+
+        const barraCompra = document.getElementById('barraCompraFoto');
+        if (barraCompra) barraCompra.style.display = 'none';
+        const btnComprar = document.getElementById('btnComprarFotoDetalle');
+        if (btnComprar) btnComprar.style.display = 'none';
+        ['msgPuntosInsuficientes','msgFotoYaComprada'].forEach(id => {
+            const e = document.getElementById(id);
+            if (e) e.style.display = 'none';
+        });
+        img.style.transition = 'none';
+        img.style.filter = 'none';
+
         const ocultar = ['btnGaleriaAnt','btnGaleriaSig','fotoContador','btnSaludarFoto','btnLikeFoto','galeriaIndicadores','btnComentarFoto','btnDescripcionFoto'];
         ocultar.forEach(id => { const e = document.getElementById(id); if(e) e.style.display = 'none'; });
         ['btnSaludarFoto','btnLikeFoto','btnShareFoto'].forEach(id => {
@@ -12434,7 +12454,6 @@ window.mostrarFotoPrivada = (el) => {
         if (privDescBox) privDescBox.style.display = 'none';
         img.src = fotoSrc;
         modal.style.display = 'flex';
-        window._privPhotoView = true;
     } catch (e) {}
 };
 
@@ -16916,7 +16935,30 @@ function mostrarFotoGaleria() {
     const indicadores = document.getElementById('galeriaIndicadores');
     const barraCompra = document.getElementById('barraCompraFoto');
 
-    if (img) img.src = foto.foto || "";
+    if (img) {
+        img.src = foto.foto || "";
+        img.style.transition = 'filter 0.5s ease';
+    }
+
+    const precioLocal = Number(foto.precio) || 0;
+    const esVendibleLocal = precioLocal >= 1 && precioLocal <= 500;
+    const esPropiaLocal = (foto.uid || '') === idAuditor;
+    const yaCompradaLocal = !!(foto.compras && foto.compras[idAuditor]);
+    const necesitaBlurLocal = esVendibleLocal && !esPropiaLocal && !yaCompradaLocal;
+    const btnComprarDetalle = document.getElementById('btnComprarFotoDetalle');
+    const msgPuntosInsuficientes = document.getElementById('msgPuntosInsuficientes');
+    const msgFotoYaComprada = document.getElementById('msgFotoYaComprada');
+    const precioFotoLabel = document.getElementById('precioFotoLabel');
+
+    // Reset inmediato: evita heredar "Ya comprada" o el blur de la foto anterior
+    if (img) img.style.filter = necesitaBlurLocal ? 'blur(20px)' : 'none';
+    if (barraCompra) {
+        barraCompra.style.display = (necesitaBlurLocal || (esVendibleLocal && yaCompradaLocal && !esPropiaLocal)) ? 'block' : 'none';
+        if (msgPuntosInsuficientes) msgPuntosInsuficientes.style.display = 'none';
+        if (msgFotoYaComprada) msgFotoYaComprada.style.display = 'none';
+        if (btnComprarDetalle) btnComprarDetalle.style.display = necesitaBlurLocal ? 'block' : 'none';
+        if (precioFotoLabel) precioFotoLabel.textContent = precioLocal;
+    }
 
     // ── Descripción de la foto ──
     const descBox = document.getElementById('fotoDescripcionBox');
@@ -16933,7 +16975,10 @@ function mostrarFotoGaleria() {
     // ── Lógica de compra (fotos con precio) ──
     // Forzar lectura desde Firebase para tener datos frescos
     if (foto.k) {
-      db.ref(`galeria_comunidad/${foto.k}`).once('value', snap => {
+      const keyFoto = foto.k;
+      db.ref(`galeria_comunidad/${keyFoto}`).once('value', snap => {
+        // Si el usuario ya cambió de foto, ignorar esta respuesta atrasada
+        if (currentPhotoKey !== keyFoto) return;
         const fd = snap.val();
         if (!fd) return;
         const cb = document.getElementById('fotoCommentCount');
@@ -16942,32 +16987,29 @@ function mostrarFotoGaleria() {
         if (btnDesc) btnDesc.style.display = fd.descripcion ? 'flex' : 'none';
         const p = Number(fd.precio) || 0;
         const esVendible = p >= 1 && p <= 500;
-        const esPropia = (fd.uid || foto.uid) === idAuditor;
-        const yaComprada = fd.compras && fd.compras[idAuditor];
+        const esPropia = ((fd.uid || foto.uid) || '') === idAuditor;
+        const yaComprada = !!(fd.compras && fd.compras[idAuditor]);
         const necesitaBlur = esVendible && !esPropia && !yaComprada;
 
-        if (img) {
-          img.style.filter = necesitaBlur ? 'blur(20px)' : 'none';
-          img.style.transition = 'filter 0.5s ease';
-        }
+        if (img) img.style.filter = necesitaBlur ? 'blur(20px)' : 'none';
         if (barraCompra) {
-          document.getElementById('barraCompraFoto').style.display = (necesitaBlur || (esVendible && yaComprada)) ? 'block' : 'none';
+          barraCompra.style.display = (necesitaBlur || (esVendible && yaComprada && !esPropia)) ? 'block' : 'none';
+          if (msgPuntosInsuficientes) msgPuntosInsuficientes.style.display = 'none';
+          if (msgFotoYaComprada) msgFotoYaComprada.style.display = 'none';
+          if (btnComprarDetalle) btnComprarDetalle.style.display = 'none';
+          if (precioFotoLabel) precioFotoLabel.textContent = p;
           if (necesitaBlur) {
-            document.getElementById('precioFotoLabel').textContent = p;
-            document.getElementById('msgPuntosInsuficientes').style.display = 'none';
-            document.getElementById('msgFotoYaComprada').style.display = 'none';
-            document.getElementById('btnComprarFotoDetalle').style.display = 'block';
+            if (btnComprarDetalle) btnComprarDetalle.style.display = 'block';
             if (idAuditor) {
               db.ref(`users/${idAuditor}/earnings`).once('value', s => {
+                if (currentPhotoKey !== keyFoto) return;
                 if (Number(s.val() || 0) < p) {
-                  document.getElementById('msgPuntosInsuficientes').style.display = 'block';
+                  if (msgPuntosInsuficientes) msgPuntosInsuficientes.style.display = 'block';
                 }
               });
             }
-          } else if (esVendible && yaComprada) {
-            document.getElementById('btnComprarFotoDetalle').style.display = 'none';
-            document.getElementById('msgPuntosInsuficientes').style.display = 'none';
-            document.getElementById('msgFotoYaComprada').style.display = 'block';
+          } else if (esVendible && yaComprada && !esPropia) {
+            if (msgFotoYaComprada) msgFotoYaComprada.style.display = 'block';
           }
         }
       });
@@ -17092,7 +17134,10 @@ window.ejecutarCompraFoto = (key, ownerUid, btn) => {
         if (foto.compras && foto.compras[idAuditor]) {
             notify("✅ Ya compraste esta foto");
             if(btn) btn.disabled = false;
-            mostrarFotoGaleria();
+            const modalFotoAbierto = document.getElementById('modalFotoDetalle')?.style.display === 'flex';
+            if (!window._privPhotoView && modalFotoAbierto && currentPhotoKey === key) {
+                mostrarFotoGaleria();
+            }
             return;
         }
 
@@ -17131,7 +17176,11 @@ window.ejecutarCompraFoto = (key, ownerUid, btn) => {
                         if (!galeriaFotosArray[idx].compras) galeriaFotosArray[idx].compras = {};
                         galeriaFotosArray[idx].compras[idAuditor] = true;
                     }
-                    mostrarFotoGaleria();
+                    window._fotoCompraPendienteKey = null;
+                    const modalFotoAbierto = document.getElementById('modalFotoDetalle')?.style.display === 'flex';
+                    if (!window._privPhotoView && modalFotoAbierto && currentPhotoKey === key) {
+                        mostrarFotoGaleria();
+                    }
                     // Recargar grid para quitar blur
                     cargarGaleriaComunidad();
                     try { window.playSound('win'); } catch(e){}
@@ -17258,59 +17307,31 @@ window.abrirFotoDetalle = (key, ownerUid, ownerName, url) => {
     if (index !== -1) {
         abrirGaleriaFotos(index);
     } else {
-        // Fallback si no está en el array
-        currentPhotoKey = key;
-        currentPhotoOwner = ownerUid;
-        const modal = document.getElementById('modalFotoDetalle');
-        const img = document.getElementById('detalleFotoImg');
-        const btnLike = document.getElementById('btnLikeFoto');
-        const btnSaludar = document.getElementById('btnSaludarFoto');
-        const btnShare = document.getElementById('btnShareFoto');
+        // Fallback: agregar al array y reutilizar toda la lógica de la galería
+        // (incluye blur, compra y el mensaje "Ya comprada" correcto).
+        galeriaFotosArray.push({ k: key, uid: ownerUid, autor: ownerName, foto: url });
+        galeriaIndexActual = galeriaFotosArray.length - 1;
         const btnComentarFallback = document.getElementById('btnComentarFoto');
         if (btnComentarFallback) btnComentarFallback.style.display = 'flex';
-        const descBtnFallback = document.getElementById('btnDescripcionFoto');
-        if (descBtnFallback) descBtnFallback.style.display = 'none';
-        const descBoxFallback = document.getElementById('fotoDescripcionBox');
-        if (descBoxFallback) descBoxFallback.style.display = 'none';
-        const panelFallback = document.getElementById('fotoComentariosPanel');
-        if (panelFallback) panelFallback.style.display = 'none';
-        img.src = url;
-        if (ownerUid === idAuditor) {
-            btnSaludar.style.display = 'none'; 
-        } else {
-            btnSaludar.style.display = 'flex';
-            btnSaludar.onclick = () => {
-                cerrarFotoDetalle();
-                abrirChatPrivado(ownerUid, ownerName);
-            };
-        }
-        if(btnShare) {
-            btnShare.onclick = () => {
-                abrirModalCompartir(key, "📸 Foto de " + ownerName, 'foto');
-            };
-        }
-        btnLike.onclick = () => likePhoto(key, ownerUid, btnLike);
-        db.ref(`galeria_comunidad/${key}`).once('value', snap => {
-            const data = snap.val() || {};
-            const likes = data.likes || {};
-            const count = data.vCount || 0;
-            btnLike.querySelector('span').textContent = count;
-            const icon = btnLike.querySelector('i');
-            if (likes[idAuditor]) {
-                icon.className = 'fas fa-heart liked';
-                icon.style.color = '#e11d48';
-            } else {
-                icon.className = 'far fa-heart';
-                icon.style.color = 'white';
-            }
-        });
-        modal.style.display = 'flex';
+        mostrarFotoGaleria();
+        document.getElementById('modalFotoDetalle').style.display = 'flex';
     }
 };
 
 window.cerrarFotoDetalle = () => {
     document.getElementById('modalFotoDetalle').style.display = 'none';
-    document.getElementById('detalleFotoImg').src = "";
+    const imgDetalle = document.getElementById('detalleFotoImg');
+    if (imgDetalle) {
+        imgDetalle.src = "";
+        imgDetalle.style.filter = 'none';
+        imgDetalle.style.transition = 'none';
+    }
+    const barraCompra = document.getElementById('barraCompraFoto');
+    if (barraCompra) barraCompra.style.display = 'none';
+    ['msgPuntosInsuficientes','msgFotoYaComprada'].forEach(id => {
+        const e = document.getElementById(id);
+        if (e) e.style.display = 'none';
+    });
     const ids = ['btnSaludarFoto','btnLikeFoto'];
     ids.forEach(id => { const e = document.getElementById(id); if(e) e.style.display = ''; });
     const panelCom = document.getElementById('fotoComentariosPanel');
@@ -17318,6 +17339,8 @@ window.cerrarFotoDetalle = () => {
     const descBox = document.getElementById('fotoDescripcionBox');
     if (descBox) descBox.style.display = 'none';
     if (typeof fotoCommentsRef !== 'undefined' && fotoCommentsRef) { fotoCommentsRef.off(); fotoCommentsRef = null; }
+    currentPhotoKey = null;
+    currentPhotoOwner = null;
     window._privPhotoView = false;
     history.pushState({ modalClosed: 'fotoDetalle' }, "");
 };
