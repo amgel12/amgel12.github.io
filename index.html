@@ -3583,8 +3583,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button onclick="volverAuthInicio()" style="all:unset; cursor:pointer; color:#94a3b8; font-size:1.1rem; padding:2px 12px 2px 0;"><i class="fas fa-arrow-left"></i></button>
                 <h3 id="authTitle" style="margin:0; color: #e2e8f0; font-size:1.1rem; font-weight:700;">Crear Cuenta</h3>
             </div>
-            <input type="email" id="email" placeholder="tucorreo@gmail.com" style="width:100%; box-sizing:border-box; text-align: left; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; margin-bottom: 12px; padding: 14px; border-radius: 14px;">
-            <input type="password" id="pass" placeholder="Contraseña (6+ caracteres)" style="width:100%; box-sizing:border-box; text-align: left; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; margin-bottom: 20px; padding: 14px; border-radius: 14px;">
+            <input type="email" id="email" placeholder="tucorreo@gmail.com" autocomplete="email" autocapitalize="none" spellcheck="false" oninput="limpiarFeedbackAuth(); marcarCampoAuth('email', false)" style="width:100%; box-sizing:border-box; text-align: left; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; margin-bottom: 12px; padding: 14px; border-radius: 14px;">
+            <input type="password" id="pass" placeholder="Contraseña (6 dígitos)" maxlength="6" inputmode="numeric" autocomplete="new-password" oninput="limpiarFeedbackAuth(); marcarCampoAuth('pass', false)" style="width:100%; box-sizing:border-box; text-align: left; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; margin-bottom: 12px; padding: 14px; border-radius: 14px;">
+
+            <div id="authFeedback" role="alert" aria-live="polite" style="display:none; margin:0 0 14px; padding:10px 12px; border-radius:12px; font-size:0.78rem; font-weight:600; line-height:1.4; text-align:left; border:1px solid rgba(239,68,68,0.45); background:rgba(239,68,68,0.12); color:#fca5a5;"></div>
 
             <button id="btnAuth" onclick="manejarAuth()" class="btn-blue" style="background: linear-gradient(135deg, #6366f1, #4f46e5); padding: 15px; border-radius: 14px; font-size:0.95rem; box-shadow: 0 6px 20px rgba(99,102,241,0.35);">REGISTRARME</button>
         </div>
@@ -8205,17 +8207,87 @@ window.cerrarModalComentarios = () => {
 // --- AUTH (CORREGIDO Y CERRADO) ---
 let isLoginMode = false;
 
+function limpiarFeedbackAuth() {
+    const el = document.getElementById('authFeedback');
+    if (!el) return;
+    el.textContent = '';
+    el.style.display = 'none';
+}
+
+function mostrarFeedbackAuth(mensaje, tipo) {
+    const el = document.getElementById('authFeedback');
+    if (!el) return;
+    const ok = tipo === 'ok';
+    el.textContent = String(mensaje || '');
+    el.style.display = mensaje ? 'block' : 'none';
+    el.style.borderColor = ok ? 'rgba(16,185,129,0.45)' : 'rgba(239,68,68,0.45)';
+    el.style.background = ok ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+    el.style.color = ok ? '#6ee7b7' : '#fca5a5';
+}
+
+function marcarCampoAuth(campo, invalido) {
+    const el = document.getElementById(campo === 'email' ? 'email' : 'pass');
+    if (!el) return;
+    el.style.borderColor = invalido ? '#f87171' : 'rgba(255,255,255,0.1)';
+    el.style.boxShadow = invalido ? '0 0 0 3px rgba(239,68,68,0.12)' : 'none';
+}
+
+function correoAuthValido(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(email || ''));
+}
+
+function mensajeErrorAuth(err) {
+    const code = String((err && err.code) || '');
+    const mensajes = {
+        'auth/invalid-email': '❌ Correo incorrecto. Escríbelo bien (ejemplo: tucorreo@gmail.com).',
+        'auth/missing-email': '❌ Escribe tu correo.',
+        'auth/missing-password': '❌ Escribe tu contraseña.',
+        'auth/user-not-found': '❌ Este correo no está registrado. Crea una cuenta primero.',
+        'auth/wrong-password': '❌ Contraseña incorrecta. Inténtalo de nuevo.',
+        'auth/invalid-credential': '❌ Correo o contraseña incorrectos.',
+        'auth/invalid-login-credentials': '❌ Correo o contraseña incorrectos.',
+        'auth/email-already-in-use': '❌ Este correo ya fue usado. Inicia sesión o usa otro correo.',
+        'auth/weak-password': '❌ Contraseña muy corta. Debe tener exactamente 6 dígitos.',
+        'auth/too-many-requests': '❌ Demasiados intentos. Espera un momento e inténtalo de nuevo.',
+        'auth/network-request-failed': '❌ Sin conexión. Revisa tu internet e inténtalo de nuevo.',
+        'auth/user-disabled': '❌ Esta cuenta está deshabilitada.',
+        'auth/operation-not-allowed': '❌ El registro con correo no está habilitado.'
+    };
+    return mensajes[code] || '❌ No se pudo completar. Revisa tus datos e inténtalo de nuevo.';
+}
+
+window.limpiarFeedbackAuth = limpiarFeedbackAuth;
+window.marcarCampoAuth = marcarCampoAuth;
+
 window.mostrarFormAuth = (login) => {
     isLoginMode = !!login;
     const authTitle = document.getElementById('authTitle');
     const btnAuth = document.getElementById('btnAuth');
     const choice = document.getElementById('authChoice');
     const form = document.getElementById('authForm');
+    const passInput = document.getElementById('pass');
+
+    limpiarFeedbackAuth();
+    marcarCampoAuth('email', false);
+    marcarCampoAuth('pass', false);
 
     if (authTitle) authTitle.textContent = isLoginMode ? "Iniciar Sesión" : "Crear Cuenta";
     if (btnAuth) {
         btnAuth.disabled = false;
         btnAuth.textContent = isLoginMode ? "ENTRAR" : "REGISTRARME";
+    }
+    if (passInput) {
+        if (isLoginMode) {
+            passInput.removeAttribute('maxlength');
+            passInput.inputMode = 'text';
+            passInput.autocomplete = 'current-password';
+            passInput.placeholder = 'Tu contraseña';
+        } else {
+            passInput.maxLength = 6;
+            passInput.inputMode = 'numeric';
+            passInput.autocomplete = 'new-password';
+            passInput.placeholder = 'Contraseña (6 dígitos)';
+        }
     }
     if (choice) choice.style.display = 'none';
     if (form) form.style.display = 'block';
@@ -8230,26 +8302,72 @@ window.volverAuthInicio = () => {
     const pass = document.getElementById('pass');
     if (email) email.value = '';
     if (pass) pass.value = '';
+    limpiarFeedbackAuth();
+    marcarCampoAuth('email', false);
+    marcarCampoAuth('pass', false);
 };
 
 window.manejarAuth = async () => {
-    const email = document.getElementById('email').value;
-    const pass = document.getElementById('pass').value;
+    const emailInput = document.getElementById('email');
+    const passInput = document.getElementById('pass');
     const btn = document.getElementById('btnAuth');
+    const email = String(emailInput ? emailInput.value : '').trim().toLowerCase();
+    const pass = String(passInput ? passInput.value : '');
 
-    if (!email || !pass) return notify("Completa los campos");
+    limpiarFeedbackAuth();
+    marcarCampoAuth('email', false);
+    marcarCampoAuth('pass', false);
 
-    btn.disabled = true;
-    btn.textContent = isLoginMode ? "Entrando..." : "Registrando...";
+    if (!email) {
+        marcarCampoAuth('email', true);
+        mostrarFeedbackAuth('❌ Escribe tu correo.', 'error');
+        if (emailInput) emailInput.focus();
+        return;
+    }
+    if (!correoAuthValido(email)) {
+        marcarCampoAuth('email', true);
+        mostrarFeedbackAuth('❌ Correo incorrecto. Escríbelo bien (ejemplo: tucorreo@gmail.com).', 'error');
+        if (emailInput) emailInput.focus();
+        return;
+    }
+    if (!pass) {
+        marcarCampoAuth('pass', true);
+        mostrarFeedbackAuth('❌ Escribe tu contraseña.', 'error');
+        if (passInput) passInput.focus();
+        return;
+    }
+    if (isLoginMode) {
+        if (pass.length < 6) {
+            marcarCampoAuth('pass', true);
+            mostrarFeedbackAuth('❌ Contraseña muy corta. Debe tener al menos 6 caracteres.', 'error');
+            if (passInput) passInput.focus();
+            return;
+        }
+    } else if (!/^\d{6}$/.test(pass)) {
+        marcarCampoAuth('pass', true);
+        const mensajePass = pass.length < 6
+            ? '❌ Contraseña muy corta. Debe tener exactamente 6 dígitos.'
+            : pass.length > 6
+                ? '❌ La contraseña debe tener exactamente 6 dígitos.'
+                : '❌ La contraseña debe tener 6 dígitos numéricos (solo números).';
+        mostrarFeedbackAuth(mensajePass, 'error');
+        if (passInput) passInput.focus();
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = isLoginMode ? "Entrando..." : "Registrando...";
+    }
 
     try {
         if (isLoginMode) {
             const userCredential = await firebase.auth().signInWithEmailAndPassword(email, pass);
             const user = userCredential.user;
+            mostrarFeedbackAuth('✅ Sesión iniciada correctamente.', 'ok');
             AndroidNative.onLoginSuccess(user.uid);
             notify("Sesión iniciada. Generando token...");
 
-            // Generar token DESPUÉS del login
             setTimeout(() => {
                 if (window.generarTokenFCMDirecto) {
                     window.generarTokenFCMDirecto(user.uid);
@@ -8264,14 +8382,25 @@ window.manejarAuth = async () => {
                 myInviteKey: nuevoCodigo,
                 earnings: 0.25
             });
+            mostrarFeedbackAuth('✅ Cuenta creada correctamente.', 'ok');
             AndroidNative.onLoginSuccess(u.user.uid);
             notify("Cuenta creada");
         }
     } catch (err) {
         console.error("Error detallado:", err);
-        notify("Error: " + err.message);
-        btn.disabled = false;
-        btn.textContent = isLoginMode ? "ENTRAR" : "REGISTRARME";
+        const code = String((err && err.code) || '');
+        mostrarFeedbackAuth(mensajeErrorAuth(err), 'error');
+        if (code === 'auth/email-already-in-use' || code === 'auth/invalid-email') {
+            marcarCampoAuth('email', true);
+        }
+        if (code === 'auth/wrong-password' || code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials' || code === 'auth/weak-password') {
+            marcarCampoAuth('pass', true);
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = isLoginMode ? "ENTRAR" : "REGISTRARME";
+        }
     }
 };
 
@@ -11743,7 +11872,14 @@ window.abrirCompraProducto = (code) => {
     if (!info.precio || !info.vendedor) { abrirContenido(''); return; }
     if (!idAuditor) return notify('❌ Inicia sesión para comprar');
 
-    db.ref(`compras_productos/${code}/${idAuditor}`).once('value').then(snap => {
+    let compraRef;
+    try {
+        compraRef = db.ref(`compras_productos/${claveCompraProducto(code)}/${idAuditor}`);
+    } catch (e) {
+        notify('❌ Enlace de producto inválido o demasiado largo');
+        return;
+    }
+    compraRef.once('value').then(snap => {
         if (snap.exists()) { abrirContenido('✅ Ya compraste este producto — abriendo...'); return; }
         if (info.vendedor === idAuditor) { abrirContenido('🛍️ Es tu propio producto — abriendo...'); return; }
         window._productoCompraActual = { code: code, info: info };
@@ -11896,7 +12032,7 @@ window.ejecutarCompraProducto = () => {
                 };
                 updates[`users/${info.vendedor}/historial/${ventaKey}`] = { motivo: 'Venta producto', puntos: gananciaVendedor, fecha: ts };
                 // 3) Marcar como comprado (para todos los dispositivos)
-                updates[`compras_productos/${code}/${idAuditor}`] = { fecha: ts, precio: info.precio, vendedor: info.vendedor };
+                updates[`compras_productos/${claveCompraProducto(code)}/${idAuditor}`] = { fecha: ts, precio: info.precio, vendedor: info.vendedor };
 
                 db.ref().update(updates).then(() => {
                     notify(`✅ Producto comprado por ${info.precio} PTS`);
@@ -17504,6 +17640,20 @@ function decodificarEnlaceProducto(code) {
     }
 }
 
+function claveCompraProducto(code) {
+    const raw = String(code || '');
+    if (raw.length <= 760) return raw;
+    let h1 = 0x811c9dc5;
+    let h2 = 0x01000193;
+    for (let i = 0; i < raw.length; i++) {
+        const c = raw.charCodeAt(i);
+        h1 = Math.imul(h1 ^ c, 0x01000193);
+        h2 = Math.imul(h2 ^ c, 0x85ebca6b);
+        h2 ^= h2 >>> 13;
+    }
+    return 'h_' + (h1 >>> 0).toString(36) + '_' + (h2 >>> 0).toString(36) + '_' + raw.length;
+}
+
 function urlDriveDeItem(item) {
     return item.tipo === 'c'
         ? 'https://drive.google.com/drive/folders/' + item.id
@@ -19910,19 +20060,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', guardarPaypalNuevo);
     }
 
-    // Auth
-    const btnAuth = document.getElementById('btnAuthAction');
-    if (btnAuth) {
-        btnAuth.addEventListener('click', manejarAuth);
-    }
-
-    const toggleLink = document.getElementById('toggleAuthLink');
-    if (toggleLink) {
-        toggleLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (typeof volverAuthInicio === 'function') volverAuthInicio();
-        });
-    }
 });
 // === CERRAR MODAL DE NOTIFICACIONES ===
 window.cerrarModalNotif = () => {
