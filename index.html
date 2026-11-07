@@ -16894,6 +16894,13 @@ let currentPhotoOwner = null;
 let touchStartX = 0;
 let touchEndX = 0;
 
+function restaurarBotonComprarFoto() {
+    const btn = document.getElementById('btnComprarFotoDetalle');
+    if (!btn) return;
+    btn.disabled = false;
+    btn.innerHTML = '🔓 Comprar por <span id="precioFotoLabel">0</span> PTS';
+}
+
 window.abrirGaleriaFotos = (index) => {
     if (!galeriaFotosArray || !galeriaFotosArray[index]) return;
 
@@ -16948,6 +16955,7 @@ function mostrarFotoGaleria() {
     const btnComprarDetalle = document.getElementById('btnComprarFotoDetalle');
     const msgPuntosInsuficientes = document.getElementById('msgPuntosInsuficientes');
     const msgFotoYaComprada = document.getElementById('msgFotoYaComprada');
+    if (btnComprarDetalle) restaurarBotonComprarFoto();
     const precioFotoLabel = document.getElementById('precioFotoLabel');
 
     // Reset inmediato: evita heredar "Ya comprada" o el blur de la foto anterior
@@ -17126,16 +17134,16 @@ window.ejecutarCompraFoto = (key, ownerUid, btn) => {
 
     db.ref(`galeria_comunidad/${key}`).once('value', snap => {
         const foto = snap.val();
-        if (!foto) { notify("❌ Foto no encontrada"); if(btn) btn.disabled = false; return; }
+        if (!foto) { notify("❌ Foto no encontrada"); restaurarBotonComprarFoto(); return; }
         const precio = foto.precio;
-        if (!precio || precio < 1 || precio > 500) { notify("❌ Esta foto no está a la venta"); if(btn) btn.disabled = false; return; }
+        if (!precio || precio < 1 || precio > 500) { notify("❌ Esta foto no está a la venta"); restaurarBotonComprarFoto(); return; }
 
         // Verificar que no la haya comprado ya
         if (foto.compras && foto.compras[idAuditor]) {
             notify("✅ Ya compraste esta foto");
-            if(btn) btn.disabled = false;
+            restaurarBotonComprarFoto();
             const modalFotoAbierto = document.getElementById('modalFotoDetalle')?.style.display === 'flex';
-            if (!window._privPhotoView && modalFotoAbierto && currentPhotoKey === key) {
+            if (!window._privPhotoView && modalFotoAbierto) {
                 mostrarFotoGaleria();
             }
             return;
@@ -17145,7 +17153,7 @@ window.ejecutarCompraFoto = (key, ownerUid, btn) => {
         db.ref(`users/${idAuditor}/earnings`).once('value', s => {
             const saldo = parseFloat(s.val() || 0);
             if (saldo < precio) {
-                if(btn) btn.disabled = false;
+                restaurarBotonComprarFoto();
                 window._fotoCompraPendienteKey = key;
                 document.getElementById('modalComprarFoto').style.display = 'flex';
                 return;
@@ -17177,8 +17185,9 @@ window.ejecutarCompraFoto = (key, ownerUid, btn) => {
                         galeriaFotosArray[idx].compras[idAuditor] = true;
                     }
                     window._fotoCompraPendienteKey = null;
+                    restaurarBotonComprarFoto();
                     const modalFotoAbierto = document.getElementById('modalFotoDetalle')?.style.display === 'flex';
-                    if (!window._privPhotoView && modalFotoAbierto && currentPhotoKey === key) {
+                    if (!window._privPhotoView && modalFotoAbierto) {
                         mostrarFotoGaleria();
                     }
                     // Recargar grid para quitar blur
@@ -17188,11 +17197,11 @@ window.ejecutarCompraFoto = (key, ownerUid, btn) => {
                     notify("Error: " + err.message);
                     // Revertir descuento
                     db.ref(`users/${idAuditor}/earnings`).set(firebase.database.ServerValue.increment(precio));
-                    if(btn) btn.disabled = false;
+                    restaurarBotonComprarFoto();
                 });
             }).catch(err => {
                 notify("Error al procesar: " + err.message);
-                if(btn) btn.disabled = false;
+                restaurarBotonComprarFoto();
             });
         });
     });
@@ -20656,29 +20665,38 @@ window.recargarMensajes = () => {
 
 // ==========================================
 // ♻️ SINCRONIZACIÓN EN VIVO (resume / reconexión)
-// El socket de Firebase puede quedar "zombie" cuando la app pasa a
-// segundo plano: los eventos (child_changed) dejan de llegar y los
-// mensajes nuevos solo se veían al refrescar. Estos mecanismos fuerzan
-// la reconexión y re-lectura al volver a la app.
+// Al volver del segundo plano se refresca solo el chat abierto o la lista
+// desde caché; se evita la lectura completa de chats_privados para no
+// competir con la apertura de una conversación.
 // ==========================================
 window._sincronizarChatsSilencioso = () => {
     if (!window._chatsPrivadosRef) return;
+
+    if (window._enChatPrivado) {
+        if (typeof window.refrescarChatAbiertoAhora === 'function') {
+            window.refrescarChatAbiertoAhora();
+        }
+        return;
+    }
+
+    if (window._syncChatsEnCurso) return;
+    window._syncChatsEnCurso = true;
+
     window._chatsPrivadosRef.once('value', snap => {
+        window._syncChatsEnCurso = false;
         try {
             const chats = procesarSnapshotChats(snap);
             localStorage.setItem(CHATS_CACHE_KEY(), JSON.stringify(chats));
             localStorage.setItem(CHATS_TS_KEY(), String(Date.now()));
         } catch(e) {}
         const cont = document.getElementById('mensajesPrivadosContainer');
-        if (cont && cont.style.display !== 'none' && !window._enChatPrivado
+        if (cont && cont.style.display !== 'none'
             && window._pestanaChatActiva === 'michat'
             && typeof cargarTodosLosUsuariosParaMiChat === 'function') {
             cargarTodosLosUsuariosParaMiChat();
         }
-        // Si hay un chat abierto, traer mensajes que pudieron llegar en pausa
-        if (window._enChatPrivado && typeof window.refrescarChatAbiertoAhora === 'function') {
-            window.refrescarChatAbiertoAhora();
-        }
+    }, () => {
+        window._syncChatsEnCurso = false;
     });
 };
 
@@ -20714,16 +20732,26 @@ window.onAppResume = () => {
     if (window._ultimoAppResume && (ahora - window._ultimoAppResume) < 3000) return;
     window._ultimoAppResume = ahora;
 
-    // Reconexión limpia del socket de Firebase (por si quedó zombie)
     try {
-        if (typeof db !== 'undefined' && db && db.goOffline) {
-            db.goOffline();
-            setTimeout(() => { try { db.goOnline(); } catch(e){} }, 250);
-        }
+        if (typeof db !== 'undefined' && db && db.goOnline) db.goOnline();
     } catch(e) {}
 
-    setTimeout(() => { try { window._sincronizarChatsSilencioso(); } catch(e){} }, 700);
-    setTimeout(() => { try { if (window._enChatPrivado) window.refrescarChatAbiertoAhora(); } catch(e){} }, 1000);
+    if (window._enChatPrivado) {
+        setTimeout(() => {
+            try { if (window._enChatPrivado) window.refrescarChatAbiertoAhora(); } catch(e){}
+        }, 150);
+        return;
+    }
+
+    const cont = document.getElementById('mensajesPrivadosContainer');
+    if (cont && cont.style.display !== 'none'
+        && window._pestanaChatActiva === 'michat') {
+        try {
+            if (typeof cargarTodosLosUsuariosParaMiChat === 'function') {
+                cargarTodosLosUsuariosParaMiChat();
+            }
+        } catch(e) {}
+    }
 };
 
 document.addEventListener('visibilitychange', () => {
