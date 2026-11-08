@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-08-retiros-admin-perfil-fotos -->
+<!-- CODECASH_BUILD 2026-11-08-retiros-admin-perfil-fotos-bio-redes -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -3925,7 +3925,7 @@ Cerrar
             💬 Enviar mensaje / solicitud
         </button>
 
-        <!-- 🔎 Más información: fotos publicadas en el muro -->
+        <!-- 🔎 Más información: biografía, redes sociales y fotos publicadas en el muro -->
         <button onclick="abrirFotosUsuario()" style="width: 100%; border: none; border-radius: 0; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-weight: 800; padding: 15px; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 12px rgba(245,158,11,0.3);">
             🔎 Más información de este usuario
         </button>
@@ -3937,15 +3937,20 @@ Cerrar
     </div>
 </div>
 
-<!-- 🔎 MODAL FOTOS DEL USUARIO (solo fotos del muro, sin ventas) -->
+<!-- 🔎 MODAL MÁS INFORMACIÓN DEL USUARIO (biografía, redes y fotos del muro, sin ventas) -->
 <div id="modalFotosUsuario" class="modal-overlay" style="z-index: 29600; display: none;" onclick="if(event.target===this)cerrarFotosUsuario()">
     <div class="modal-content" style="width: 92%; max-width: 420px; max-height: 86vh; padding: 0; overflow: hidden; border-radius: 20px; display: flex; flex-direction: column;">
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #fff; border-bottom: 1px solid #e2e8f0; flex-shrink: 0;">
-            <span id="fotosUsuarioTitulo" style="font-weight: 800; color: #1e293b; font-size: 0.95rem;">Fotos de Usuario</span>
+            <span id="fotosUsuarioTitulo" style="font-weight: 800; color: #1e293b; font-size: 0.95rem;">Más información</span>
             <button onclick="cerrarFotosUsuario()" style="background: none; border: none; font-size: 1.4rem; color: #64748b; cursor: pointer; line-height: 1;">✕</button>
         </div>
-        <div id="fotosUsuarioGrid" style="padding: 10px; overflow-y: auto; flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; align-content: start;"></div>
-        <div id="fotosUsuarioVacio" style="display: none; padding: 30px 20px; text-align: center; color: #94a3b8; font-size: 0.85rem;">Este usuario no ha publicado fotos en el muro.</div>
+        <div style="flex: 1; min-height: 0; overflow-y: auto; background: #f8fafc;">
+            <div id="fotosUsuarioBio" style="display: none; padding: 14px 16px 6px;"></div>
+            <div id="fotosUsuarioRedes" style="display: none; padding: 0 16px 10px;"></div>
+            <div id="fotosUsuarioFotosTitulo" style="display: none; padding: 8px 16px 0; font-weight: 800; color: #1e293b; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.4px;">📸 Fotos en el muro</div>
+            <div id="fotosUsuarioGrid" style="padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start;"></div>
+            <div id="fotosUsuarioVacio" style="display: none; padding: 30px 20px; text-align: center; color: #94a3b8; font-size: 0.85rem;">Este usuario no ha publicado fotos en el muro.</div>
+        </div>
     </div>
 </div>
 
@@ -7142,21 +7147,66 @@ window.enviarMensajeDesdePerfil = () => {
     enviarSolicitudChat(uid, nombre);
 };
 
-// 🔎 Más información: fotos publicadas en el muro (oculta las que están en venta)
+// 🔎 Más información: biografía, redes sociales y fotos publicadas en el muro (oculta las que están en venta)
 let fotosUsuarioArray = [];
+
+function renderMasInfoUsuario(uid) {
+    const bioEl = document.getElementById('fotosUsuarioBio');
+    const redesEl = document.getElementById('fotosUsuarioRedes');
+    if (bioEl) { bioEl.style.display = 'none'; bioEl.innerHTML = ''; }
+    if (redesEl) { redesEl.style.display = 'none'; redesEl.innerHTML = ''; }
+
+    db.ref('users/' + uid + '/bio').once('value').then(snap => {
+        const bio = snap.val() || {};
+        const campos = [
+            ['🎂', 'Edad', bio.edad],
+            ['🚻', 'Sexo', bio.sexo],
+            ['💜', 'Gustos', bio.gustos],
+            ['♈', 'Zodiaco', bio.zodiaco],
+            ['🎨', 'Color favorito', bio.colorFav],
+            ['🎮', 'Juego favorito', bio.juegoFav]
+        ].filter(f => f[2] !== undefined && f[2] !== null && String(f[2]).trim() !== '');
+        if (!campos.length || !bioEl) return;
+        bioEl.innerHTML = '<div style="font-size:0.72rem; font-weight:800; color:#1e293b; margin-bottom:8px;">👤 Biografía</div>' +
+            '<div style="display:flex; flex-direction:column; gap:6px;">' +
+            campos.map(f => '<div style="display:flex; align-items:flex-start; gap:8px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:7px 10px;">' +
+                '<span style="font-size:0.85rem; line-height:1.2;">' + f[0] + '</span>' +
+                '<span style="font-size:0.68rem; color:#94a3b8; font-weight:800; min-width:72px; text-transform:uppercase; letter-spacing:0.3px; line-height:1.4;">' + f[1] + '</span>' +
+                '<span style="font-size:0.8rem; color:#1e293b; font-weight:600; word-break:break-word; line-height:1.4;">' + escapeHtml(String(f[2])) + '</span>' +
+            '</div>').join('') +
+            '</div>';
+        bioEl.style.display = 'block';
+    }).catch(() => {});
+
+    db.ref('users/' + uid + '/facebookUrl').once('value').then(snap => {
+        const url = snap.val();
+        if (!url || !redesEl) return;
+        redesEl.innerHTML = '<div style="font-size:0.72rem; font-weight:800; color:#1e293b; margin-bottom:8px;">🔗 Redes sociales</div>' +
+            '<button type="button" class="mas-info-fb" style="display:inline-flex; align-items:center; gap:8px; background:#1877f2; color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:800; font-size:0.8rem; cursor:pointer; box-shadow:0 3px 10px rgba(24,119,242,0.3);">' +
+                '<i class="fab fa-facebook-f"></i> Facebook' +
+            '</button>';
+        redesEl.style.display = 'block';
+        const btn = redesEl.querySelector('.mas-info-fb');
+        if (btn) btn.onclick = () => { try { abrirFacebookConAnuncio(uid); } catch (e) {} };
+    }).catch(() => {});
+}
 
 window.abrirFotosUsuario = () => {
     const uid = window.perfilUserUidActual;
     const modal = document.getElementById('modalFotosUsuario');
     const grid = document.getElementById('fotosUsuarioGrid');
     const vacio = document.getElementById('fotosUsuarioVacio');
+    const fotosTitulo = document.getElementById('fotosUsuarioFotosTitulo');
     if (!uid || !modal || !grid) return;
 
     const nombre = (document.getElementById('perfilUserName') && document.getElementById('perfilUserName').textContent) || 'Usuario';
     const titulo = document.getElementById('fotosUsuarioTitulo');
-    if (titulo) titulo.textContent = 'Fotos de ' + nombre;
+    if (titulo) titulo.textContent = 'Más información de ' + nombre;
+
+    renderMasInfoUsuario(uid);
 
     if (vacio) vacio.style.display = 'none';
+    if (fotosTitulo) fotosTitulo.style.display = 'none';
     grid.style.display = 'grid';
     modal.style.display = 'flex';
     grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px; color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><div style="margin-top:8px;">Cargando fotos...</div></div>';
@@ -7174,11 +7224,13 @@ window.abrirFotosUsuario = () => {
         if (!fotosUsuarioArray.length) {
             grid.innerHTML = '';
             grid.style.display = 'none';
+            if (fotosTitulo) fotosTitulo.style.display = 'none';
             if (vacio) vacio.style.display = 'block';
             return;
         }
 
         grid.style.display = 'grid';
+        if (fotosTitulo) fotosTitulo.style.display = 'block';
         if (vacio) vacio.style.display = 'none';
         grid.innerHTML = fotosUsuarioArray.map((f, i) => `
             <div class="foto-usuario-card" data-index="${i}" style="position:relative; cursor:pointer; border-radius:12px; overflow:hidden; background:#e2e8f0;">
@@ -7199,6 +7251,7 @@ window.abrirFotosUsuario = () => {
             };
         });
     }).catch(() => {
+        if (fotosTitulo) fotosTitulo.style.display = 'none';
         grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px; color:#ef4444;">No se pudieron cargar las fotos.</div>';
     });
 };
