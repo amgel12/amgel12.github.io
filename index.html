@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-08-retiros-admin-perfil-fotos-bio-redes -->
+<!-- CODECASH_BUILD 2026-11-08-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -3797,6 +3797,8 @@ Cerrar
             display:flex;
             flex-direction:column;
             justify-content:center;
+            overflow-y:auto;
+            min-height:0;
         ">
             <div class="question-box" style="margin-bottom:20px;">
 
@@ -3823,11 +3825,42 @@ Cerrar
                 </div>
             </div>
 
-            <div class="options-grid" id="lessonOptions" style="
-                display:grid;
-                grid-template-columns:1fr;
-                gap:10px;
-            ">
+            <div id="lessonInputArea" style="display:flex; flex-direction:column; gap:10px;">
+                <input id="lessonInput" type="text" placeholder="Escribe la palabra que falta" autocomplete="off" autocapitalize="none" spellcheck="false" style="
+                    width:100%;
+                    padding:14px;
+                    border-radius:12px;
+                    border:1.5px solid #d1d5db;
+                    font-size:1rem;
+                    outline:none;
+                    box-sizing:border-box;
+                    text-align:center;
+                    font-weight:700;
+                " oninput="this.style.borderColor='#d1d5db';" onkeydown="if(event.key==='Enter'){event.preventDefault();checkAnswer();}">
+
+                <button id="btnVerTraduccion" onclick="toggleTraduccionLeccion()" style="
+                    width:100%;
+                    padding:12px;
+                    border:none;
+                    border-radius:12px;
+                    background:#eef2ff;
+                    color:#4f46e5;
+                    font-weight:800;
+                    font-size:0.9rem;
+                    cursor:pointer;
+                ">👁️ Ver traducción al español</button>
+
+                <div id="lessonTranslation" style="
+                    display:none;
+                    padding:12px;
+                    border-radius:12px;
+                    background:#f8fafc;
+                    border:1px dashed #cbd5e1;
+                    color:#475569;
+                    font-weight:600;
+                    font-size:0.95rem;
+                    line-height:1.5;
+                "></div>
             </div>
         </div>
 
@@ -3891,26 +3924,23 @@ Cerrar
     <div class="modal-content" style="text-align:center; width: min(88vw, 340px); max-height: 90vh; padding: 0; overflow-y: auto; overflow-x: hidden; border-radius: 25px; border: none;">
         
         <!-- Foto de portada/Avatar -->
-        <div id="perfilUserAvatar" style="height: 200px; background:#e2e8f0 center/cover no-repeat; position: relative;">
-            <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 15px; text-align: left;">
-                <h3 id="perfilUserName" style="margin:0; color:white; font-size:1.3rem; font-weight: 800;">Usuario</h3>
+        <div id="perfilUserAvatar" style="height: 200px; background:#e2e8f0 center/cover no-repeat; position: relative; overflow: hidden;">
+            <!-- Biografía encima de la foto, a la derecha -->
+            <div style="position: absolute; top: 10px; right: 10px; bottom: 10px; width: 50%; overflow-y: auto; background: rgba(15,23,42,0.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-radius: 14px; padding: 9px 10px; text-align: left; color: #fff; z-index: 2;">
+                <div style="font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; color: #fde68a;">👤 Biografía</div>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <div><small style="color:#cbd5e1; font-weight:800; font-size:0.52rem; text-transform:uppercase;">🎂 Edad</small><div id="valEdad" style="font-weight:700; font-size:0.72rem; color:#fff; line-height:1.2;">--</div></div>
+                    <div><small style="color:#cbd5e1; font-weight:800; font-size:0.52rem; text-transform:uppercase;">🚻 Sexo</small><div id="valSexo" style="font-weight:700; font-size:0.72rem; color:#fff; line-height:1.2;">--</div></div>
+                    <div><small style="color:#cbd5e1; font-weight:800; font-size:0.52rem; text-transform:uppercase;">✨ Zodiaco</small><div id="valZodiaco" style="font-weight:700; font-size:0.72rem; color:#fff; line-height:1.2;">--</div></div>
+                    <div><small style="color:#cbd5e1; font-weight:800; font-size:0.52rem; text-transform:uppercase;">🎨 Color Fav</small><div id="valColor" style="font-weight:700; font-size:0.72rem; color:#fff; line-height:1.2;">--</div></div>
+                    <div><small style="color:#cbd5e1; font-weight:800; font-size:0.52rem; text-transform:uppercase;">🍕 Mis Gustos</small><div id="valGustos" style="font-weight:600; font-size:0.72rem; color:#fff; line-height:1.2; word-break:break-word;">--</div></div>
+                    <div><small style="color:#cbd5e1; font-weight:800; font-size:0.52rem; text-transform:uppercase;">🎮 Juego Favorito</small><div id="valJuego" style="font-weight:600; font-size:0.72rem; color:#fff; line-height:1.2; word-break:break-word;">--</div></div>
+                </div>
+            </div>
+            <!-- Nombre abajo a la izquierda -->
+            <div style="position: absolute; bottom: 0; left: 0; width: 46%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 15px; text-align: left; z-index: 1;">
+                <h3 id="perfilUserName" style="margin:0; color:white; font-size:1.3rem; font-weight: 800; word-break: break-word;">Usuario</h3>
                 <span id="perfilUserKey" style="color: rgba(255,255,255,0.8); font-size: 0.75rem; font-weight: 600;">INV-XXXX</span>
-            </div>
-        </div>
-
-        <!-- Rejilla de Datos (oculta: al entrar solo se muestra la foto) -->
-        <div style="display:none; padding: 20px; text-align: left; grid-template-columns: 1fr 1fr; gap: 15px; background: white;">
-            <div><small style="color:#94a3b8; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🎂 Edad</small><div id="valEdad" style="font-weight:700; color: #1e293b;">--</div></div>
-            <div><small style="color:#94a3b8; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🚻 Sexo</small><div id="valSexo" style="font-weight:700; color: #1e293b;">--</div></div>
-            <div><small style="color:#94a3b8; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">✨ Zodiaco</small><div id="valZodiaco" style="font-weight:700; color: #1e293b;">--</div></div>
-            <div><small style="color:#94a3b8; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🎨 Color Fav</small><div id="valColor" style="font-weight:700; color: #1e293b;">--</div></div>
-            <div style="grid-column: span 2; background: #f8fafc; padding: 10px; border-radius: 12px;">
-                <small style="color:#6366f1; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🍕 Mis Gustos</small>
-                <div id="valGustos" style="font-weight:500; font-size: 0.85rem; color: #475569; margin-top: 2px;">--</div>
-            </div>
-            <div style="grid-column: span 2; background: #f0fdf4; padding: 10px; border-radius: 12px;">
-                <small style="color:#10b981; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🎮 Juego Favorito</small>
-                <div id="valJuego" style="font-weight:500; font-size: 0.85rem; color: #475569; margin-top: 2px;">--</div>
             </div>
         </div>
 
@@ -6417,6 +6447,7 @@ function abrirAcademia(url) {
     }
 }
 function abrirPaginasAleatorias() {
+    return window.abrirCategoriasMisionLectura();
     const paginas = [
         'https://es.wikipedia.org/wiki/Ajedrez',
         'https://es.wikipedia.org/wiki/Programaci%C3%B3n',
@@ -6521,6 +6552,140 @@ function abrirPaginasAleatorias() {
         if (m) m.remove();
     };
 }
+
+    // ──────────────────────────────────────────────
+    // 📖 MISIÓN LEER 2 PÁGINAS: categorías y lectura guiada
+    // ──────────────────────────────────────────────
+    const categoriasLecturaMision = [
+        { nombre: 'Matemáticas', icono: '📐', urls: ['https://es.wikipedia.org/wiki/Matem%C3%A1ticas', 'https://es.wikipedia.org/wiki/%C3%81lgebra'] },
+        { nombre: 'Ciencias Sociales', icono: '🌍', urls: ['https://es.wikipedia.org/wiki/Ciencias_sociales', 'https://es.wikipedia.org/wiki/Sociolog%C3%ADa'] },
+        { nombre: 'Ciencias Naturales', icono: '🔬', urls: ['https://es.wikipedia.org/wiki/Ciencias_naturales', 'https://es.wikipedia.org/wiki/Biolog%C3%ADa'] },
+        { nombre: 'Inglés', icono: '🇬🇧', urls: ['https://es.wikipedia.org/wiki/Idioma_ingl%C3%A9s', 'https://es.wikipedia.org/wiki/Gram%C3%A1tica_del_ingl%C3%A9s'] },
+        { nombre: 'Física Cuántica', icono: '⚛️', urls: ['https://es.wikipedia.org/wiki/Mec%C3%A1nica_cu%C3%A1ntica', 'https://es.wikipedia.org/wiki/F%C3%ADsica_cu%C3%A1ntica'] },
+        { nombre: 'Inversiones', icono: '📈', urls: ['https://es.wikipedia.org/wiki/Inversi%C3%B3n', 'https://es.wikipedia.org/wiki/Bolsa_de_valores'] },
+        { nombre: 'Criptomonedas', icono: '₿', urls: ['https://es.wikipedia.org/wiki/Criptomoneda', 'https://es.wikipedia.org/wiki/Bitc%C3%B3in'] },
+        { nombre: 'Tecnología', icono: '💻', urls: ['https://es.wikipedia.org/wiki/Tecnolog%C3%ADa', 'https://es.wikipedia.org/wiki/Inteligencia_artificial'] },
+        { nombre: 'Historia', icono: '🏛️', urls: ['https://es.wikipedia.org/wiki/Historia', 'https://es.wikipedia.org/wiki/Historia_universal'] },
+        { nombre: 'Arte', icono: '🎨', urls: ['https://es.wikipedia.org/wiki/Arte', 'https://es.wikipedia.org/wiki/Historia_del_arte'] }
+    ];
+
+    window.cerrarCategoriasLecturaMision = () => {
+        const m = document.getElementById('modalCategoriasLectura');
+        if (m) m.remove();
+    };
+
+    window.abrirCategoriasMisionLectura = () => {
+        window.cerrarCategoriasLecturaMision();
+        const modal = document.createElement('div');
+        modal.id = 'modalCategoriasLectura';
+        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:50000; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;';
+        const card = document.createElement('div');
+        card.style.cssText = 'background:#fff; border-radius:20px; width:100%; max-width:420px; max-height:86vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.4);';
+        card.innerHTML = `
+            <div style="padding:16px 18px; background:linear-gradient(135deg,#0070ba,#6366f1); color:#fff; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+                <div>
+                    <div style="font-weight:800; font-size:1.05rem;">📖 Elige una categoría</div>
+                    <div style="font-size:0.75rem; opacity:0.9;">Lee 30 segundos en cada página</div>
+                </div>
+                <button onclick="window.cerrarCategoriasLecturaMision()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer;">✕</button>
+            </div>
+            <div style="padding:14px; overflow-y:auto; display:grid; grid-template-columns:1fr 1fr; gap:10px; background:#f8fafc;">
+                ${categoriasLecturaMision.map((c, i) => `
+                    <button onclick="window.abrirLecturaMisionCategoria(${i})" style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:12px 10px; font-weight:700; color:#1e293b; font-size:0.82rem; cursor:pointer; text-align:left; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                        <span style="font-size:1.3rem;">${c.icono}</span>
+                        <span>${c.nombre}</span>
+                    </button>
+                `).join('')}
+            </div>
+        `;
+        modal.appendChild(card);
+        document.body.appendChild(modal);
+    };
+
+    window.abrirLecturaMisionCategoria = (idx) => {
+        const cat = categoriasLecturaMision[idx];
+        if (!cat) return;
+        window.cerrarCategoriasLecturaMision();
+        if (window.lecturaTimerInterval) {
+            clearInterval(window.lecturaTimerInterval);
+            window.lecturaTimerInterval = null;
+        }
+        const viejo = document.getElementById('modalLecturaMision');
+        if (viejo) viejo.remove();
+
+        const paginas = cat.urls;
+        const modal = document.createElement('div');
+        modal.id = 'modalLecturaMision';
+        modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:50000; display:flex; flex-direction:column;';
+
+        const barra = document.createElement('div');
+        barra.style.cssText = 'background:linear-gradient(135deg,#0070ba 0%,#6366f1 100%); color:white; padding:15px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 10px rgba(0,0,0,0.3); flex-shrink:0;';
+        barra.innerHTML = `
+            <div>
+                <div style="font-weight:bold; font-size:1.1rem;">📖 ${cat.icono} ${cat.nombre}</div>
+                <div style="font-size:0.85rem; opacity:0.9;">
+                    Tiempo: <span id="timerLectura">0:00</span> / 0:30 | Página <span id="paginaActualLectura">1</span>/2
+                </div>
+            </div>
+            <button onclick="window.cerrarModalLecturaMision()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:8px 15px; border-radius:20px; cursor:pointer; font-weight:bold;">✕ Cerrar</button>
+        `;
+
+        const iframe = document.createElement('iframe');
+        iframe.src = paginas[0];
+        iframe.style.cssText = 'flex:1; border:none; width:100%; background:white;';
+        iframe.setAttribute('referrerpolicy', 'no-referrer');
+
+        modal.appendChild(barra);
+        modal.appendChild(iframe);
+        document.body.appendChild(modal);
+        window.history.pushState({modal: 'modalLecturaMision'}, "");
+        notify('📄 Página 1/2 abierta');
+
+        let paginaActual = 0;
+        let segundosPagina = 0;
+        const timerElement = document.getElementById('timerLectura');
+        const paginaElement = document.getElementById('paginaActualLectura');
+
+        const pintarTimer = () => {
+            const mins = Math.floor(segundosPagina / 60);
+            const secs = segundosPagina % 60;
+            if (timerElement) timerElement.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        };
+
+        window.lecturaTimerInterval = setInterval(() => {
+            segundosPagina++;
+            pintarTimer();
+
+            if (segundosPagina >= 30) {
+                if (paginaActual === 0) {
+                    paginaActual = 1;
+                    segundosPagina = 0;
+                    iframe.src = paginas[1];
+                    if (paginaElement) paginaElement.textContent = '2';
+                    pintarTimer();
+                    notify('📄 Página 2/2 abierta');
+                    return;
+                }
+
+                clearInterval(window.lecturaTimerInterval);
+                window.lecturaTimerInterval = null;
+                const m = document.getElementById('modalLecturaMision');
+                if (m) m.remove();
+                marcarMisionCompletada('mision_m1', 5);
+                notify('✅ Misión completada: Leer 2 páginas');
+                try { window.playSound('win'); } catch(e) {}
+            }
+        }, 1000);
+
+        window.cerrarModalLecturaMision = function() {
+            if (window.lecturaTimerInterval) {
+                clearInterval(window.lecturaTimerInterval);
+                window.lecturaTimerInterval = null;
+            }
+            const m = document.getElementById('modalLecturaMision');
+            if (m) m.remove();
+        };
+    };
     // 🔊 NUEVA LIBRERÍA DE SONIDOS (ACTUALIZADA FINAL)
 const audioLibrary = {
      click: new Audio('https://cdn.pixabay.com/audio/2023/04/27/audio_6599723522.mp3'),
@@ -6557,6 +6722,8 @@ const audioLibrary = {
     let chatPendingType = null;
     let currentQIndex = 0;
     let selectedOptionText = null;
+    let lessonAnswered = false;
+    let lessonTranslationVisible = false;
 // --- DATOS ACADEMIA INGLÉS (10 PREGUNTAS POR NIVEL) ---
    // ==========================================
 
@@ -6656,6 +6823,35 @@ var englishLessons = [
     }
 ];
 
+// --- DATOS NUEVA LECCIÓN: 5 NIVELES, ORACIONES DE 4-5 PALABRAS ---
+const englishLessonData = [
+    // NIVEL 1
+    { nivel: 1, en: "I ___ a student.", answer: "am", full: "I am a student.", es: "Yo soy un estudiante." },
+    { nivel: 1, en: "She ___ to school.", answer: "goes", full: "She goes to school.", es: "Ella va a la escuela." },
+    { nivel: 1, en: "They ___ happy today.", answer: "are", full: "They are happy today.", es: "Ellos están felices hoy." },
+    { nivel: 1, en: "We ___ pizza every Friday.", answer: "eat", full: "We eat pizza every Friday.", es: "Nosotros comemos pizza cada viernes." },
+    // NIVEL 2
+    { nivel: 2, en: "He ___ a new car.", answer: "has", full: "He has a new car.", es: "Él tiene un coche nuevo." },
+    { nivel: 2, en: "I ___ coffee every morning.", answer: "drink", full: "I drink coffee every morning.", es: "Yo bebo café cada mañana." },
+    { nivel: 2, en: "The cat ___ softly.", answer: "sleeps", full: "The cat sleeps softly.", es: "El gato duerme suavemente." },
+    { nivel: 2, en: "We ___ to the park.", answer: "go", full: "We go to the park.", es: "Nosotros vamos al parque." },
+    // NIVEL 3
+    { nivel: 3, en: "She ___ a beautiful song.", answer: "sings", full: "She sings a beautiful song.", es: "Ella canta una canción hermosa." },
+    { nivel: 3, en: "They ___ football on Sundays.", answer: "play", full: "They play football on Sundays.", es: "Ellos juegan fútbol los domingos." },
+    { nivel: 3, en: "I ___ my homework daily.", answer: "do", full: "I do my homework daily.", es: "Yo hago mi tarea diariamente." },
+    { nivel: 3, en: "He ___ very fast.", answer: "runs", full: "He runs very fast.", es: "Él corre muy rápido." },
+    // NIVEL 4
+    { nivel: 4, en: "We ___ a movie yesterday.", answer: "watched", full: "We watched a movie yesterday.", es: "Nosotros vimos una película ayer." },
+    { nivel: 4, en: "She ___ her keys again.", answer: "lost", full: "She lost her keys again.", es: "Ella perdió sus llaves otra vez." },
+    { nivel: 4, en: "They ___ a new house.", answer: "bought", full: "They bought a new house.", es: "Ellos compraron una casa nueva." },
+    { nivel: 4, en: "I ___ him yesterday.", answer: "saw", full: "I saw him yesterday.", es: "Yo lo vi ayer." },
+    // NIVEL 5
+    { nivel: 5, en: "She ___ finished her work.", answer: "has", full: "She has finished her work.", es: "Ella ha terminado su trabajo." },
+    { nivel: 5, en: "They ___ be here soon.", answer: "will", full: "They will be here soon.", es: "Ellos estarán aquí pronto." },
+    { nivel: 5, en: "I ___ never seen it.", answer: "have", full: "I have never seen it.", es: "Yo nunca lo he visto." },
+    { nivel: 5, en: "We ___ going to travel.", answer: "are", full: "We are going to travel.", es: "Nosotros vamos a viajar." }
+];
+
 // Variable global para la voz
 let synth = window.speechSynthesis;
 
@@ -6681,68 +6877,84 @@ if (synth && synth.onvoiceschanged !== undefined) {
 }
 
 function showQuestion() {
-    const q = englishLessons[currentQIndex];
+    const q = englishLessonData[currentQIndex];
+    if (!q) return;
+
+    lessonAnswered = false;
+    lessonTranslationVisible = false;
+
+    const total = englishLessonData.length;
+    const totalNiveles = Math.ceil(total / 4);
+    const nivel = Math.floor(currentQIndex / 4) + 1;
+    const oracionEnNivel = (currentQIndex % 4) + 1;
 
     const titulo = document.querySelector('#modalLesson .q-title');
-    if (titulo) titulo.textContent = "Completa la oración:";
+    if (titulo) {
+        titulo.innerHTML = `Nivel ${nivel}/${totalNiveles} · Oración ${oracionEnNivel}/4<br><span style="font-size:0.8rem; font-weight:600; color:#64748b;">Completa la palabra que falta en inglés</span>`;
+    }
 
+    const oracionConEspacio = q.en.replace('___', '<span style="display:inline-block; min-width:72px; border-bottom:2px solid #6366f1; color:#6366f1;">&nbsp;&nbsp;&nbsp;&nbsp;</span>');
     document.getElementById('qWord').innerHTML = `
         <div style="font-weight:700; line-height:1.6; display:flex; align-items:center; gap:10px;">
-            <span>${currentQIndex + 1}. ${q.question}</span>
-            <button onclick="speakText('${(q.pronounce || q.question).replace(/'/g, "\\'")}')" style="
+            <span>${oracionConEspacio}</span>
+            <button onclick="speakText('${(q.full || q.en).replace(/'/g, "\\'")}')" style="
                 background:#6366f1; color:white; border:none; border-radius:50%;
-                width:36px; height:36px; font-size:1rem; cursor:pointer;
+                width:38px; height:38px; font-size:1rem; cursor:pointer;
                 display:flex; align-items:center; justify-content:center; flex-shrink:0;
                 box-shadow:0 2px 8px rgba(99,102,241,0.3);
             " title="Escuchar pronunciación">🔊</button>
         </div>
     `;
-    setTimeout(() => speakText(q.pronounce || q.question), 300);
 
-    document.getElementById('lessonProgress').style.width =
-        ((currentQIndex / englishLessons.length) * 100) + "%";
+    document.getElementById('lessonProgress').style.width = ((currentQIndex / total) * 100) + "%";
 
-    const opts = [...q.options].sort(() => Math.random() - 0.5);
+    const input = document.getElementById('lessonInput');
+    if (input) {
+        input.value = '';
+        input.disabled = false;
+        input.style.borderColor = '#d1d5db';
+        setTimeout(() => {
+            try {
+                input.focus();
+                input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            } catch(e) {}
+        }, 150);
+    }
 
-    let html = "";
-    opts.forEach((opt, i) => {
-        const letra = String.fromCharCode(97 + i);
+    const trans = document.getElementById('lessonTranslation');
+    if (trans) {
+        trans.textContent = q.es;
+        trans.style.display = 'none';
+    }
+    const btnTrans = document.getElementById('btnVerTraduccion');
+    if (btnTrans) btnTrans.innerHTML = '👁️ Ver traducción al español';
 
-        html += `
-            <div class="option-card" data-opt="${opt}">
-                <b>${letra}.</b> ${opt}
-            </div>
-        `;
-    });
+    const feedback = document.getElementById('lessonFeedback');
+    if (feedback) {
+        feedback.style.display = 'none';
+        feedback.innerHTML = '';
+    }
+    const btnCheck = document.getElementById('btnCheckLesson');
+    if (btnCheck) btnCheck.style.display = 'block';
+    const btnNext = document.getElementById('btnNextLesson');
+    if (btnNext) btnNext.style.display = 'none';
 
-    document.getElementById('lessonOptions').innerHTML = html;
-
-    document.querySelectorAll('#lessonOptions .option-card').forEach(card => {
-        card.addEventListener('click', function () {
-            const text = this.getAttribute('data-opt');
-            window.selectOption(this, text);
-        });
-    });
-
-    document.getElementById('lessonFeedback').style.display = 'none';
-    document.getElementById('lessonFeedback').innerHTML = "";
-    document.getElementById('btnCheckLesson').style.display = 'block';
-    document.getElementById('btnNextLesson').style.display = 'none';
-
-    selectedOptionText = null;
+    setTimeout(() => speakText(q.full || q.en), 300);
 }
 
 function abrirLeccionIngles() {
     currentQIndex = 0;
+    lessonAnswered = false;
+    lessonTranslationVisible = false;
     showQuestion();
     document.getElementById('modalLesson').style.display = 'flex';
 }
-window.selectOption = (el, text) => {
-    document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedOptionText = text;
-
-    try { window.playSound('click'); } catch(e){}
+window.toggleTraduccionLeccion = () => {
+    lessonTranslationVisible = !lessonTranslationVisible;
+    const trans = document.getElementById('lessonTranslation');
+    const btn = document.getElementById('btnVerTraduccion');
+    if (trans) trans.style.display = lessonTranslationVisible ? 'block' : 'none';
+    if (btn) btn.innerHTML = lessonTranslationVisible ? '🙈 Ocultar traducción' : '👁️ Ver traducción al español';
 };
 function notify(msg) {
     const t = document.getElementById('toast');
@@ -6918,6 +7130,8 @@ function iniciarProgresoVideo(ytId) {
     videoWatchId = ytId;
     videoWatchSeconds = 0;
     videoActualJugando = ytId || 'feed-video';
+
+    if (typeof contarVideoMision === 'function') contarVideoMision(ytId);
 
     document.getElementById('videoProgressWrapper').style.display = 'block';
     const fill = document.getElementById('videoProgressFill');
@@ -10374,7 +10588,10 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         // 🔥 ACTUALIZAR PUNTOS AL ABRIR EL JUEGO
         actualizarPuntosEnJuegos();
 
-        if(m === 'snake') resetSnake();
+        if(m === 'snake') {
+            resetSnake();
+            if (typeof marcarMisionCompletada === 'function') marcarMisionCompletada('mision_m8', 7);
+        }
         else if(m === 'breakout') resetBreakout();
     }, 1500);
 };
@@ -10784,6 +11001,7 @@ window.addEventListener('popstate', (e) => {
     'modalCompartir',
     'modalHistorial',
     'modalLecturaMision',
+    'modalCategoriasLectura',
     'modalVideosMision',
     'modalMusicaMision',
     'modalAdminRetiros',
@@ -10810,6 +11028,10 @@ window.addEventListener('popstate', (e) => {
         if (!el) return false;
         if (id === 'modalLecturaMision' && window.cerrarModalLecturaMision) {
             window.cerrarModalLecturaMision();
+            return true;
+        }
+        if (id === 'modalCategoriasLectura') {
+            el.remove();
             return true;
         }
         if (id === 'modalMusicaMision' && window.cerrarModalMusicaMision) {
@@ -11403,58 +11625,59 @@ document.addEventListener('keyup', (e) => {
 });
 
 window.nextQuestion = () => {
+    if (!lessonAnswered) return notify("Primero responde correctamente");
+
     currentQIndex++;
 
-    if (currentQIndex >= englishLessons.length) {
+    if (currentQIndex >= englishLessonData.length) {
         document.getElementById('lessonProgress').style.width = '100%';
         document.getElementById('modalLesson').style.display = 'none';
 
-        localStorage.setItem('mision_m7', '1');
-        sumarPuntosMision(10);
-        renderizarMisionesAprender();
-        notify("✅ Misión completada: Aprender inglés");
+        marcarMisionCompletada('mision_m7', 10);
 
         try { window.playSound('win'); } catch(e){}
         return;
+    }
+
+    if (currentQIndex % 4 === 0) {
+        notify(`🎉 ¡Nivel ${currentQIndex / 4} completado!`);
     }
 
     showQuestion();
 };
 
 window.checkAnswer = () => {
-    if (!selectedOptionText) return notify("Selecciona una respuesta");
+    if (lessonAnswered) return;
+    const q = englishLessonData[currentQIndex];
+    if (!q) return;
 
-    const q = englishLessons[currentQIndex];
-    const correct = q.answer;
+    const input = document.getElementById('lessonInput');
     const feedback = document.getElementById('lessonFeedback');
-    const cards = document.querySelectorAll('.option-card');
+    if (!input || !feedback) return;
 
-    cards.forEach(card => {
-        const val = card.textContent.trim().replace(/^[a-z]\.\s*/i, "");
+    const valor = (input.value || '').trim();
+    if (!valor) return notify("✍️ Escribe la palabra que falta");
 
-        if (val === correct) {
-            card.classList.add('correct');
-        }
+    const correcto = valor.toLowerCase() === q.answer.toLowerCase();
 
-        if (val === selectedOptionText && val !== correct) {
-            card.classList.add('wrong');
-        }
-    });
-
-    if (selectedOptionText === correct) {
-        feedback.innerHTML = '✅ Correcto <button onclick="speakText(\'' + (q.pronounce || q.question).replace(/'/g, "\\'") + '\')" style="background:none; border:none; font-size:1.2rem; cursor:pointer; vertical-align:middle;" title="Escuchar pronunciación">🔊</button>';
-        feedback.style.color = "#16a34a";
+    if (correcto) {
+        lessonAnswered = true;
+        input.disabled = true;
+        input.style.borderColor = '#16a34a';
+        feedback.innerHTML = `✅ ¡Correcto! <span style="color:#16a34a;">${escapeHtml(q.full)}</span>`;
+        feedback.style.color = '#16a34a';
+        feedback.style.display = 'block';
+        document.getElementById('btnCheckLesson').style.display = 'none';
+        document.getElementById('btnNextLesson').style.display = 'block';
         try { window.playSound('win'); } catch(e){}
-        speakText(q.pronounce || q.question);
+        speakText(q.full || q.en);
     } else {
-        feedback.innerHTML = "❌ Incorrecto";
-        feedback.style.color = "#ef4444";
+        input.style.borderColor = '#ef4444';
+        feedback.innerHTML = '❌ Incorrecto. Intenta de nuevo.';
+        feedback.style.color = '#ef4444';
+        feedback.style.display = 'block';
         try { window.playSound('gameover'); } catch(e){}
     }
-
-    feedback.style.display = 'block';
-    document.getElementById('btnCheckLesson').style.display = 'none';
-    document.getElementById('btnNextLesson').style.display = 'block';
 };
 function manejarMencion(input) {
     const mentionBox = document.getElementById('mentionList');
@@ -11743,6 +11966,16 @@ window.subirFoto = () => {
     document.getElementById('modalSubirFoto').style.display = 'flex';
 };
 
+// Abrir el flujo de video propio (lo usa la misión diaria M11)
+window.subirVideo = () => {
+    if (!idAuditor) return notify("Inicia sesión");
+    if (typeof window.seleccionarTipoPublicacion === 'function') {
+        window.seleccionarTipoPublicacion('propio');
+    } else {
+        document.getElementById('modalOpcionVideoPropio').style.display = 'flex';
+    }
+};
+
 // =================================================================
 // 📸 MONETIZAR FOTOS - MURO DE LA COMUNIDAD (CÓDIGO UNIFICADO FINAL)
 // =================================================================
@@ -11814,11 +12047,8 @@ window.ejecutarSubidaFotoFirebase = () => {
 
         // Verificar si la misión M4 de misiones diarias estaba activa
         if (localStorage.getItem('mision_m4_activa') === '1') {
-            localStorage.setItem('mision_m4', '1');
             localStorage.removeItem('mision_m4_activa');
-            sumarPuntosMision(8);
-            if (typeof renderizarMisionesAprender === 'function') renderizarMisionesAprender();
-            notify("✅ Misión completada");
+            marcarMisionCompletada('mision_m4', 8);
         }
 
         // Acreditar la recompensa de +0.10 PTS
@@ -19202,12 +19432,12 @@ window.validarLeccionIngles = function () {
 
 const misionesAprender = [
     { id: 'm10', titulo: 'Escuchar Música', descripcion: 'Escucha 2 min en Spotify', recompensa: 3 },
-    { id: 'm6', titulo: 'Descarga aplicación', descripcion: 'Descarga la app en Google Play', recompensa: 6 },
-    { id: 'm1', titulo: 'Leer 2 páginas web', descripcion: 'Lee contenido dentro de la app', recompensa: 5 },
+    { id: 'm6', titulo: 'Califica la aplicación', descripcion: 'Califica la app en Google Play', recompensa: 6 },
+    { id: 'm1', titulo: 'Leer 2 páginas web', descripcion: 'Elige una categoría y lee 30 s por página', recompensa: 5 },
     { id: 'm4', titulo: 'Subir foto', descripcion: 'Comparte una imagen', recompensa: 8 },
     { id: 'm11', titulo: 'Subir videos', descripcion: 'Publica un video en el feed', recompensa: 12 },
-    { id: 'm5', titulo: 'Compartir app', descripcion: 'Invita a un amigo', recompensa: 6 },
-    { id: 'm7', titulo: 'Aprender inglés', descripcion: 'Completa una lección', recompensa: 10 },
+    { id: 'm5', titulo: 'Compartir app', descripcion: 'Invita a un amigo por WhatsApp', recompensa: 6 },
+    { id: 'm7', titulo: 'Aprender inglés', descripcion: 'Completa los 5 niveles de inglés', recompensa: 10 },
     { id: 'm9', titulo: 'Recompensas', descripcion: 'Mira un anuncio y prueba tu suerte', recompensa: 50 },
     { id: 'm2', titulo: 'Ver 3 videos', descripcion: 'Mira videos del feed', recompensa: 5 },
     { id: 'm8', titulo: 'Jugar Snake', descripcion: 'Juega dentro de la app', recompensa: 7 },
@@ -19215,7 +19445,7 @@ const misionesAprender = [
 
 const misionIconos = {
     'm10': { icon: '🎵', color: '#8b5cf6', bg: '#f5f3ff' },
-    'm6':  { icon: '📥', color: '#10b981', bg: '#ecfdf5' },
+    'm6':  { icon: '⭐', color: '#f59e0b', bg: '#fffbeb' },
     'm1':  { icon: '📖', color: '#3b82f6', bg: '#eff6ff' },
     'm4':  { icon: '📸', color: '#f59e0b', bg: '#fffbeb' },
     'm11': { icon: '🎬', color: '#ef4444', bg: '#fef2f2' },
@@ -19236,7 +19466,10 @@ function renderizarMisionesAprender() {
     const veinticuatroHoras = 24 * 60 * 60 * 1000;
 
     if (!ultimoReseteo || (ahora - parseInt(ultimoReseteo)) > veinticuatroHoras) {
-        misionesAprender.forEach(m => localStorage.removeItem('mision_' + m.id));
+        misionesAprender.forEach(m => { if (m.id !== 'm6') localStorage.removeItem('mision_' + m.id); });
+        localStorage.removeItem('mision_m2_activa');
+        localStorage.removeItem('mision_m2_progreso');
+        localStorage.removeItem('mision_m2_vistos');
         localStorage.setItem('misiones_reseteo', ahora.toString());
         localStorage.removeItem('mision_pts_hoy');
     }
@@ -19315,34 +19548,42 @@ function ejecutarMision(id) {
     if (!mision) return;
     if (localStorage.getItem('mision_' + id) === '1') { notify("Ya completaste esta misión"); return; }
     notify("Iniciando: " + mision.titulo);
-    if (id === 'm1') { notify("📖 Abriendo página web..."); abrirPaginasAleatorias(); return; }
+    if (id === 'm1') { notify("📖 Elige una categoría..."); window.abrirCategoriasMisionLectura(); return; }
     if (id === 'm2') { notify("🎥 Ve 3 videos del feed"); localStorage.setItem('mision_m2_activa', '1'); localStorage.removeItem('mision_m2_vistos'); goToScreen(2, true); return; }
     if (id === 'm3') { notify("📝 Publica algo"); abrirMision(); return; }
     if (id === 'm4') { notify("📸 Sube una foto"); localStorage.setItem('mision_m4_activa', '1'); goToScreen(1, true); setTimeout(() => { subirFoto(); }, 400); return; }
     if (id === 'm5') {
-        if (navigator.share) {
-            navigator.share({ title: "PAGOCODE", text: "Mira esta app", url: "https://play.google.com/store/apps/details?id=com.pagocode.app" })
-            .then(() => { localStorage.setItem('mision_' + id, '1'); sumarPuntosMision(mision.recompensa); renderizarMisionesAprender(); });
-        } else { notify("Tu dispositivo no permite compartir"); }
+        if (typeof window.abrirWhatsappInvitacion === 'function') {
+            try { localStorage.setItem('mision_m5_pendiente', '1'); } catch(e) {}
+            notify("📤 Abriendo WhatsApp...");
+            window.abrirWhatsappInvitacion();
+        } else {
+            notify("⚠️ Función no disponible");
+        }
         return;
     }
-    if (id === 'm11') { notify("🎬 Sube un video"); localStorage.setItem('mision_m11_activa', '1'); goToScreen(2, true); setTimeout(() => { subirVideo(); }, 400); return; }
+    if (id === 'm11') { notify("🎬 Sube un video"); localStorage.setItem('mision_m11_activa', '1'); goToScreen(2, true); setTimeout(() => { window.subirVideo(); }, 400); return; }
     if (id === 'm6') {
-    notify("📥 Abriendo Google Play Store...");
-    // Abre el link de descarga
-    window.open('https://play.google.com/store/apps/details?id=com.pagocode.app', '_blank');
-
-    // Simulamos que la completa después de 3 segundos
-    setTimeout(() => {
-        marcarMisionCompletada('mision_m6', 6);
-        notify("✅ Misión completada: Descarga app");
-    }, 3000);
-    return;
-}
+        notify("⭐ Abriendo Google Play para calificar la app...");
+        // Marca pendiente: se completa cuando el usuario vuelve a la app
+        try { localStorage.setItem('mision_m6_pendiente', '1'); } catch(e) {}
+        const url = 'https://play.google.com/store/apps/details?id=com.pagocode.app';
+        try {
+            if (typeof AndroidNative !== 'undefined' && AndroidNative.openExternalUrl) {
+                AndroidNative.openExternalUrl(url);
+            } else if (typeof Android !== 'undefined' && Android.openExternalUrl) {
+                Android.openExternalUrl(url);
+            } else {
+                window.open(url, '_blank');
+            }
+        } catch (e) {
+            try { window.location.href = url; } catch(e2) {}
+        }
+        return;
+    }
 if (id === 'm7') {
-    currentQIndex = 0;
-    showQuestion();
-    document.getElementById('modalLesson').style.display = 'flex';
+    notify("📚 Abriendo lección de inglés");
+    abrirLeccionIngles();
     return;
 }
     if (id === 'm8') {
@@ -19527,8 +19768,9 @@ window.onM9AdComplete = function() {
     // Actualizar contador con el número de anuncios vistos
     actualizarContadorM9(intentos);
 
-    // 30% de probabilidad de ganar
-    const gano = Math.random() < 0.3;
+    // 30% de probabilidad de ganar en los primeros intentos;
+    // el 3er anuncio garantiza la recompensa (así lo indica el contador).
+    const gano = intentos >= 3 || Math.random() < 0.3;
 
     if (gano) {
         marcarMisionCompletada('mision_m9', 50);
@@ -19626,9 +19868,20 @@ function contarVideoMision(ytId) {
 
     let segundos = progreso[ytId].segundos || 0;
 
+    if (window._m2VideoInterval) clearInterval(window._m2VideoInterval);
     const intervalo = setInterval(() => {
         // Si la misión ya no está activa, detener
         if (localStorage.getItem('mision_m2_activa') !== '1') {
+            clearInterval(intervalo);
+            return;
+        }
+        // Si el usuario salió del feed, detener
+        if (typeof currentScreen !== 'undefined' && currentScreen !== 2) {
+            clearInterval(intervalo);
+            return;
+        }
+        // Si el usuario cambió de video, dejar de contar este
+        if (typeof videoActualJugando !== 'undefined' && videoActualJugando !== ytId) {
             clearInterval(intervalo);
             return;
         }
@@ -19653,18 +19906,16 @@ function contarVideoMision(ytId) {
             notify(`✅ Video ${totalCompletados}/3 completado`);
 
             if (totalCompletados >= 3) {
-                localStorage.setItem('mision_m2', '1');
                 localStorage.removeItem('mision_m2_activa');
                 localStorage.removeItem('mision_m2_vistos');
                 localStorage.removeItem('mision_m2_progreso');
 
-                sumarPuntosMision(5);
-                renderizarMisionesAprender();
-                notify("✅ Misión completada: Ver 3 videos");
+                marcarMisionCompletada('mision_m2', 5);
                 try { window.playSound('win'); } catch(e){}
             }
         }
     }, 1000);
+    window._m2VideoInterval = intervalo;
 }
 
 function abrirMisionWeb() {
@@ -19801,13 +20052,18 @@ function resetearMisionesInmediatas() {
     localStorage.removeItem('mision_compartir_app_completada');
     localStorage.removeItem('mision_seguir_usuario_completada');
 
-    // SISTEMA 2: Misiones Aprender (m1 a m10)
-    for(let i=1; i<=10; i++) {
+    // SISTEMA 2: Misiones Aprender (m1 a m11) — m6 es permanente
+    for(let i=1; i<=11; i++) {
+        if (i === 6) continue;
         localStorage.removeItem('mision_m' + i);
     }
     localStorage.removeItem('mision_m2_activa');
     localStorage.removeItem('mision_m2_vistos');
+    localStorage.removeItem('mision_m2_progreso');
     localStorage.removeItem('mision_m4_activa');
+    localStorage.removeItem('mision_m11_activa');
+    localStorage.removeItem('mision_m5_pendiente');
+    localStorage.removeItem('mision_m6_pendiente');
     localStorage.removeItem('mision_ingles_1');
 
     // Reset de fecha de control
@@ -19818,6 +20074,7 @@ function resetearMisionesInmediatas() {
 
     // Reset de contador de intentos (m9)
     localStorage.removeItem('mision_m9_intentos');
+    localStorage.removeItem('mision_m9_fecha');
 
     alert('✅ TODAS las misiones reseteadas. Recargando...');
     location.reload();
@@ -20293,39 +20550,28 @@ function mostrarResultadoBusqueda(userSnap) {
     `;
 }
 
+window.abrirWhatsappInvitacion = () => {
+    const codigo = myCurrentKey || '';
+    const lineaCodigo = codigo
+        ? `\n\n🎁 Usa mi código de invitación: *${codigo}*\nAsí ambos recibimos un bono al registrarte.`
+        : '';
+    const mensaje = `¡Hola! 👋 Te invito a *PAGOCODE*, la app donde ganas dinero real completando misiones, viendo videos y jugando. 🎮💰${lineaCodigo}\n\n📲 Descárgala gratis aquí:\nhttps://play.google.com/store/apps/details?id=com.pagocode.app\n\n¡Nos vemos dentro! 🚀`;
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+    try {
+        if (typeof AndroidNative !== 'undefined' && AndroidNative.openExternalUrl) {
+            AndroidNative.openExternalUrl(url);
+        } else if (typeof Android !== 'undefined' && Android.openExternalUrl) {
+            Android.openExternalUrl(url);
+        } else {
+            window.open(url, '_blank');
+        }
+    } catch (e) {
+        try { window.location.href = url; } catch(e2) {}
+    }
+};
+
 window.compartirApp = () => {
-// Obtener el apodo del usuario (si lo tiene configurado)
-const inputApodo = document.getElementById('inputApodo');
-const apodoUsuario = (inputApodo && inputApodo.value && inputApodo.value.trim() !== '') 
-? inputApodo.value.trim() 
-: myCurrentKey;
-
-// Texto del mensaje con apodo y código
-const texto = `¡Únete a PAGOCODE con ${apodoUsuario}! 🎮💰
-
-Mi código de invitación: ${myCurrentKey}
-
-Descarga la app, completa misiones y gana dinero real. 
-Al registrarte, ingresa mi código para que ambos ganemos bonus.
-
-Descarga aquí:`;
-
-const url = "https://play.google.com/store/apps/details?id=com.pagocode.app";
-
-if (navigator.share) {
-navigator.share({ 
-title: 'PAGOCODE - Gana dinero jugando', 
-text: texto, 
-url: url 
-}).catch(() => {});
-} else {
-const textoCompleto = `${texto}\n\n${url}`;
-navigator.clipboard.writeText(textoCompleto).then(() => {
-notify("📋 Enlace y código copiados al portapapeles");
-}).catch(() => {
-prompt("Copia este mensaje y enlace:", textoCompleto);
-});
-}
+    window.abrirWhatsappInvitacion();
 };
 
 window.guardarApodo = () => {
@@ -21104,6 +21350,12 @@ window.subirVideoServidor = () => {
         document.getElementById('modalSubirVideo').style.display = 'none';
         notify("✅ ¡Video publicado! +0.50 PTS");
 
+        // Verificar si la misión M11 de misiones diarias estaba activa
+        if (localStorage.getItem('mision_m11_activa') === '1') {
+            localStorage.removeItem('mision_m11_activa');
+            marcarMisionCompletada('mision_m11', 12);
+        }
+
         // Limpiar y refrescar
         document.getElementById('inputVideoArchivo').value = "";
         goToScreen(2); 
@@ -21320,6 +21572,22 @@ window.refrescarChatAbiertoAhora = () => {
 
 // Se llama al volver a la app (nativo) o al recuperar visibilidad/foco/red
 window.onAppResume = () => {
+    // Misión "Califica la aplicación": se completa al volver de Google Play
+    try {
+        if (localStorage.getItem('mision_m6_pendiente') === '1') {
+            localStorage.removeItem('mision_m6_pendiente');
+            marcarMisionCompletada('mision_m6', 6);
+        }
+    } catch(e) {}
+
+    // Misión "Compartir app": se completa al volver de WhatsApp
+    try {
+        if (localStorage.getItem('mision_m5_pendiente') === '1') {
+            localStorage.removeItem('mision_m5_pendiente');
+            marcarMisionCompletada('mision_m5', 6);
+        }
+    } catch(e) {}
+
     const ahora = Date.now();
     if (window._ultimoAppResume && (ahora - window._ultimoAppResume) < 3000) return;
     window._ultimoAppResume = ahora;
@@ -22489,7 +22757,7 @@ window.cargarListaDeGrupos = () => {
     if (window._gruposIniciado) return; 
     window._gruposIniciado = true;
 
-    const GRUPOS_CACHE_KEY = 'pgc_cache_grupos_v1';
+    const GRUPOS_CACHE_KEY = 'pgc_cache_grupos_v2';
     const OCULTOS_KEY = 'pgc_grupos_ocultos_' + (idAuditor || '');
     if (!window._gruposOcultos) {
         window._gruposOcultos = new Set();
@@ -22512,17 +22780,26 @@ window.cargarListaDeGrupos = () => {
             return;
         }
 
-        let html = '';
+        const grupos = [];
         snap.forEach(child => {
             const data = child.val();
             if (!data || !data.info) return;
-
-            const g = data.info;
             const key = child.key;
-
             // Grupo eliminado (solo para mí): no lo mostramos ni escuchamos
             if (window._gruposOcultos.has(key)) return;
+            grupos.push({ key, g: data.info });
+        });
 
+        // El grupo creado más recientemente va arriba
+        grupos.sort((a, b) => {
+            const fa = Number(a.g.fecha) || 0;
+            const fb = Number(b.g.fecha) || 0;
+            if (fa !== fb) return fb - fa;
+            return String(b.key).localeCompare(String(a.key));
+        });
+
+        let html = '';
+        grupos.forEach(({ key, g }) => {
             iniciarListenerMensajesGrupo(key);
             const nombreSeguro = (g.nombre || 'Grupo').replace(/'/g, "\\'");
             const creadorSeguro = (g.creador || '').replace(/'/g, "\\'");
