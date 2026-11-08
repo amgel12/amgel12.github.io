@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-08-retiros-admin-perfil-alto -->
+<!-- CODECASH_BUILD 2026-11-08-retiros-admin-perfil-fotos -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -3898,8 +3898,8 @@ Cerrar
             </div>
         </div>
 
-        <!-- Rejilla de Datos -->
-        <div style="padding: 20px; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: white;">
+        <!-- Rejilla de Datos (oculta: al entrar solo se muestra la foto) -->
+        <div style="display:none; padding: 20px; text-align: left; grid-template-columns: 1fr 1fr; gap: 15px; background: white;">
             <div><small style="color:#94a3b8; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🎂 Edad</small><div id="valEdad" style="font-weight:700; color: #1e293b;">--</div></div>
             <div><small style="color:#94a3b8; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">🚻 Sexo</small><div id="valSexo" style="font-weight:700; color: #1e293b;">--</div></div>
             <div><small style="color:#94a3b8; font-weight:800; font-size: 0.6rem; text-transform: uppercase;">✨ Zodiaco</small><div id="valZodiaco" style="font-weight:700; color: #1e293b;">--</div></div>
@@ -3916,13 +3916,18 @@ Cerrar
 
         <!-- 🛡️ ZONA DE ACCIÓN: Solo aparece en solicitudes -->
         <div id="boxAccionesSolicitud" style="display: none; padding: 15px; background: #f1f5f9; gap: 10px; border-top: 1px solid #e2e8f0;">
-            <button id="btnAceptarDesdePerfil" class="btn-blue" style="background: #10b981; flex: 1; border-radius: 12px;">✅ ACEPTAR</button>
-            <button id="btnRechazarDesdePerfil" class="btn-blue" style="background: #ef4444; width: 55px; padding: 0; border-radius: 12px;">✕</button>
+            <button id="btnAceptarDesdePerfil" style="background: #10b981; flex: 1; border-radius: 12px; border: none; color: white; font-weight: 800; padding: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">✅ ACEPTAR</button>
+            <button id="btnRechazarDesdePerfil" style="background: #ef4444; width: 55px; padding: 12px 0; border-radius: 12px; border: none; color: white; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(239,68,68,0.3);">✕</button>
         </div>
 
-        <!-- 💬 Enviar mensaje privado -->
-        <button id="btnEnviarMensajePerfil" onclick="enviarMensajeDesdePerfil()" class="btn-blue" style="width: 100%; border-radius: 0; background: linear-gradient(135deg, #6366f1, #4f46e5); padding: 15px; font-size: 0.85rem;">
-            💬 Enviar Mensaje
+        <!-- 💬 Enviar mensaje / solicitud -->
+        <button id="btnEnviarMensajePerfil" onclick="enviarMensajeDesdePerfil()" style="width: 100%; border: none; border-radius: 0; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; font-weight: 800; padding: 15px; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 12px rgba(239,68,68,0.3);">
+            💬 Enviar mensaje / solicitud
+        </button>
+
+        <!-- 🔎 Más información: fotos publicadas en el muro -->
+        <button onclick="abrirFotosUsuario()" style="width: 100%; border: none; border-radius: 0; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-weight: 800; padding: 15px; font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 12px rgba(245,158,11,0.3);">
+            🔎 Más información de este usuario
         </button>
 
         <!-- Botón para cerrar normal -->
@@ -3930,6 +3935,24 @@ Cerrar
             Cerrar
         </button>
     </div>
+</div>
+
+<!-- 🔎 MODAL FOTOS DEL USUARIO (solo fotos del muro, sin ventas) -->
+<div id="modalFotosUsuario" class="modal-overlay" style="z-index: 29600; display: none;" onclick="if(event.target===this)cerrarFotosUsuario()">
+    <div class="modal-content" style="width: 92%; max-width: 420px; max-height: 86vh; padding: 0; overflow: hidden; border-radius: 20px; display: flex; flex-direction: column;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #fff; border-bottom: 1px solid #e2e8f0; flex-shrink: 0;">
+            <span id="fotosUsuarioTitulo" style="font-weight: 800; color: #1e293b; font-size: 0.95rem;">Fotos de Usuario</span>
+            <button onclick="cerrarFotosUsuario()" style="background: none; border: none; font-size: 1.4rem; color: #64748b; cursor: pointer; line-height: 1;">✕</button>
+        </div>
+        <div id="fotosUsuarioGrid" style="padding: 10px; overflow-y: auto; flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; align-content: start;"></div>
+        <div id="fotosUsuarioVacio" style="display: none; padding: 30px 20px; text-align: center; color: #94a3b8; font-size: 0.85rem;">Este usuario no ha publicado fotos en el muro.</div>
+    </div>
+</div>
+
+<!-- 🔍 VISOR SIMPLE DE FOTO DEL USUARIO -->
+<div id="modalFotoUsuarioViewer" class="modal-overlay" style="z-index: 29700; background: rgba(0,0,0,0.94); display: none; align-items: center; justify-content: center;" onclick="if(event.target===this)this.style.display='none'">
+    <button onclick="document.getElementById('modalFotoUsuarioViewer').style.display='none'" style="position: absolute; top: 16px; left: 16px; background: rgba(255,255,255,0.15); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; z-index: 2;">✕</button>
+    <img id="fotoUsuarioViewerImg" src="" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block;">
 </div>
 
 <div id="gameContainer">
@@ -4255,7 +4278,7 @@ Cerrar
         <input id="inputClaveUnica" placeholder="Clave única" style="width:100%; padding:10px 12px; border:1px solid #e2e8f0; border-radius:10px; outline:none; font-size:0.95rem; margin-bottom:14px; box-sizing:border-box;">
         <div style="display:flex; gap:10px;">
             <button onclick="omitirClaveUnica()" style="flex:1; padding:10px; border:none; border-radius:10px; background:#f1f5f9; color:#64748b; font-weight:700; cursor:pointer;">Omitir</button>
-            <button onclick="confirmarClaveUnica()" style="flex:1; padding:10px; border:none; border-radius:10px; background:#6366f1; color:#fff; font-weight:700; cursor:pointer;">Enviar solicitud</button>
+            <button onclick="confirmarClaveUnica()" style="flex:1; padding:10px; border:none; border-radius:10px; background:#ef4444; color:#fff; font-weight:700; cursor:pointer;">Enviar solicitud</button>
         </div>
     </div>
 </div>
@@ -7117,6 +7140,72 @@ window.enviarMensajeDesdePerfil = () => {
     document.getElementById('modalPerfilUsuario').style.display = 'none';
     // Desde el perfil ya se vio su información → enviar la solicitud (o abrir el chat si ya fue aceptada)
     enviarSolicitudChat(uid, nombre);
+};
+
+// 🔎 Más información: fotos publicadas en el muro (oculta las que están en venta)
+let fotosUsuarioArray = [];
+
+window.abrirFotosUsuario = () => {
+    const uid = window.perfilUserUidActual;
+    const modal = document.getElementById('modalFotosUsuario');
+    const grid = document.getElementById('fotosUsuarioGrid');
+    const vacio = document.getElementById('fotosUsuarioVacio');
+    if (!uid || !modal || !grid) return;
+
+    const nombre = (document.getElementById('perfilUserName') && document.getElementById('perfilUserName').textContent) || 'Usuario';
+    const titulo = document.getElementById('fotosUsuarioTitulo');
+    if (titulo) titulo.textContent = 'Fotos de ' + nombre;
+
+    if (vacio) vacio.style.display = 'none';
+    grid.style.display = 'grid';
+    modal.style.display = 'flex';
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px; color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><div style="margin-top:8px;">Cargando fotos...</div></div>';
+
+    db.ref('galeria_comunidad').orderByChild('uid').equalTo(uid).once('value', snap => {
+        fotosUsuarioArray = [];
+        snap.forEach(child => {
+            const f = child.val() || {};
+            const precio = Number(f.precio) || 0;
+            if (precio >= 1 && precio <= 500) return; // ocultar fotos publicadas en venta
+            fotosUsuarioArray.push({ k: child.key, ...f });
+        });
+        fotosUsuarioArray.sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
+
+        if (!fotosUsuarioArray.length) {
+            grid.innerHTML = '';
+            grid.style.display = 'none';
+            if (vacio) vacio.style.display = 'block';
+            return;
+        }
+
+        grid.style.display = 'grid';
+        if (vacio) vacio.style.display = 'none';
+        grid.innerHTML = fotosUsuarioArray.map((f, i) => `
+            <div class="foto-usuario-card" data-index="${i}" style="position:relative; cursor:pointer; border-radius:12px; overflow:hidden; background:#e2e8f0;">
+                <img src="${f.foto || ''}" loading="lazy" style="width:100%; height:140px; object-fit:cover; display:block;">
+                ${f.descripcion ? `<div style="position:absolute; bottom:0; left:0; right:0; background:linear-gradient(to top, rgba(0,0,0,0.75), transparent); color:#fff; font-size:0.62rem; padding:12px 6px 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(f.descripcion)}</div>` : ''}
+            </div>
+        `).join('');
+
+        grid.querySelectorAll('.foto-usuario-card').forEach(card => {
+            card.onclick = () => {
+                const idx = parseInt(card.getAttribute('data-index'), 10);
+                const foto = fotosUsuarioArray[idx];
+                if (!foto) return;
+                const img = document.getElementById('fotoUsuarioViewerImg');
+                if (img) img.src = foto.foto || '';
+                const viewer = document.getElementById('modalFotoUsuarioViewer');
+                if (viewer) viewer.style.display = 'flex';
+            };
+        });
+    }).catch(() => {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:30px; color:#ef4444;">No se pudieron cargar las fotos.</div>';
+    });
+};
+
+window.cerrarFotosUsuario = () => {
+    const modal = document.getElementById('modalFotosUsuario');
+    if (modal) modal.style.display = 'none';
 };
 
     // Ir al perfil de otro usuario desde notificación
@@ -10658,6 +10747,8 @@ window.addEventListener('popstate', (e) => {
     'modalPaypal',
     'modalVerFotoPrivada',
     'modalVerFotoGrupo',
+    'modalFotoUsuarioViewer',
+    'modalFotosUsuario',
     'modalPerfilUsuario'
 ];
 
