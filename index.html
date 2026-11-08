@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- CODECASH_BUILD 2026-11-08-retiros-admin -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -4133,12 +4134,26 @@ Cerrar
     </div>
 
     <div id="modalAlarmaChat" class="modal-overlay" style="z-index: 2000000; background: rgba(15,23,42,0.9);">
-        <div style="background:linear-gradient(160deg,#fff7ed,#ffedd5); border-radius:26px; padding:30px 24px; width:86%; max-width:330px; text-align:center; box-shadow:0 24px 70px rgba(0,0,0,0.5); animation: popIn 0.25s ease-out;">
+        <div style="position:relative; background:linear-gradient(160deg,#fff7ed,#ffedd5); border-radius:26px; padding:30px 24px; width:86%; max-width:330px; text-align:center; box-shadow:0 24px 70px rgba(0,0,0,0.5); animation: popIn 0.25s ease-out;">
+            <button onclick="cerrarAlarmaChatReceptor()" title="Silenciar alarma" style="position:absolute; top:10px; right:12px; width:34px; height:34px; border-radius:50%; border:none; background:rgba(154,52,18,0.12); color:#9a3412; font-size:1.35rem; font-weight:900; line-height:1; cursor:pointer;">×</button>
             <div style="font-size:4.2rem; line-height:1; animation: alarmaRing 0.9s ease-in-out infinite;">⏰</div>
             <div id="alarmaChatNombre" style="margin-top:16px; font-size:1.1rem; font-weight:900; color:#9a3412; line-height:1.35;">Alguien te está llamando</div>
             <div style="margin-top:6px; font-size:0.88rem; color:#7c2d12; font-weight:600;">te pide que respondas los mensajes</div>
             <div id="alarmaChatCuenta" style="margin-top:18px; font-size:1.7rem; font-weight:900; color:#ea580c;">30</div>
             <div style="font-size:0.7rem; color:#b45309; margin-top:2px;">La alarma sonará durante 30 segundos</div>
+            <div style="font-size:0.68rem; color:#b45309; margin-top:8px; opacity:0.8;">Toca × para silenciarla ahora</div>
+        </div>
+    </div>
+
+    <div id="modalAlarmaEnviada" class="modal-overlay" style="z-index: 2000001; background: rgba(15,23,42,0.82);">
+        <div style="position:relative; background:linear-gradient(160deg,#fff7ed,#ffedd5); border-radius:26px; padding:30px 24px; width:86%; max-width:330px; text-align:center; box-shadow:0 24px 70px rgba(0,0,0,0.5); animation: popIn 0.25s ease-out;">
+            <button onclick="cerrarModalAlarmaEnviada()" title="Cerrar" style="position:absolute; top:10px; right:12px; width:34px; height:34px; border-radius:50%; border:none; background:rgba(154,52,18,0.12); color:#9a3412; font-size:1.35rem; font-weight:900; line-height:1; cursor:pointer;">×</button>
+            <div style="font-size:3.6rem; line-height:1; animation: alarmaRing 0.9s ease-in-out infinite;">📞</div>
+            <div id="alarmaEnviadaNombre" style="margin-top:16px; font-size:1.12rem; font-weight:900; color:#9a3412; line-height:1.35;">Llamado a esta persona</div>
+            <div style="margin-top:6px; font-size:0.86rem; color:#7c2d12; font-weight:600;">La alarma está sonando en su teléfono</div>
+            <div id="alarmaEnviadaCuenta" style="margin-top:18px; font-size:1.7rem; font-weight:900; color:#ea580c;">30</div>
+            <div style="font-size:0.7rem; color:#b45309; margin-top:2px;">Sonará durante 30 segundos</div>
+            <button onclick="cancelarAlarmaChatEnviada()" style="margin-top:18px; width:100%; padding:12px; border:none; border-radius:14px; background:linear-gradient(135deg,#ef4444,#dc2626); color:white; font-weight:800; font-size:0.9rem; cursor:pointer; box-shadow:0 6px 18px rgba(239,68,68,0.3);">Cancelar alarma</button>
         </div>
     </div>
 
@@ -5664,6 +5679,16 @@ style="display:none;">
             <p id="profEmail" style="font-size:0.75rem; color:#94a3b8; margin:0;">---</p>
             <p id="profEmailFull" style="display:none;"></p>
             <p style="font-size:0.65rem; color:#cbd5e1; margin:4px 0 0;">🔒 Solo tú ves este correo</p>
+
+            <div id="adminUidCard" style="display:none; margin-top:12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:10px; text-align:left;">
+                <div style="font-size:0.65rem; font-weight:800; color:#1e40af; text-transform:uppercase; margin-bottom:5px;">🆔 Mi UID de Firebase (admin)</div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <input id="adminUidValue" type="text" readonly value="---" style="flex:1; min-width:0; font-family:monospace; font-size:0.72rem; padding:8px; border:1px solid #bfdbfe; border-radius:8px; background:white; color:#1e3a8a;">
+                    <button onclick="copiarMiUid()" style="padding:8px 12px; border:none; background:#1e40af; color:white; border-radius:8px; font-size:0.72rem; font-weight:800; cursor:pointer;">Copiar</button>
+                </div>
+                <div style="font-size:0.62rem; color:#64748b; margin-top:6px;">Úsalo en Firebase → admins/&lt;UID&gt;: true</div>
+                <div id="adminUidStatus" style="font-size:0.65rem; font-weight:700; margin-top:6px; color:#64748b;">⏳ Verificando permisos...</div>
+            </div>
         </div>
     </div>
 
@@ -5814,6 +5839,7 @@ style="display:none;">
             <h3 style="color: #0070ba; margin:0; font-size:0.95rem;">🏦 Retiros Pendientes</h3>
             <button onclick="document.getElementById('modalAdminRetiros').style.display='none'" style="background:none; border:none; font-size:1.1rem; color:#ef4444; font-weight:bold; cursor:pointer; padding:8px 12px;">✕</button>
         </div>
+        <input id="buscarRetiroEmail" type="email" placeholder="🔎 Buscar por correo del solicitante" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="filtrarRetirosPorCorreo()" style="width:100%; box-sizing:border-box; margin-bottom:8px; padding:10px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:0.8rem; background:#f8fafc; color:#334155;">
         <div id="listaSolicitudes" style="flex: 1; overflow-y: auto; background: #f8fafc; border-radius: 10px; padding:4px;">
             <div style="text-align: center; padding: 15px; color: #94a3b8;">Cargando solicitudes...</div>
         </div>
@@ -5992,7 +6018,21 @@ window.receiveOneSignalNotification = function(data) {
         const title = data.title || "CodeCash";
         const body = data.body || "";
         const type = data.type || "other";
-        if (type === 'alarma_chat') return;
+
+        if (type === 'alarma_chat') {
+            if (typeof window.recibirAlarmaChat === 'function') {
+                window.recibirAlarmaChat({
+                    from: data.sender_uid || data.from || '',
+                    fromName: data.sender_name || data.fromName || 'Alguien',
+                    text: data.text || body
+                });
+            }
+            return;
+        }
+        if (type === 'alarma_chat_cancel') {
+            if (typeof _detenerAlarmaChat === 'function') _detenerAlarmaChat(true);
+            return;
+        }
 
         console.log("🔔 OneSignal notificación:", type, title, body);
         
@@ -11003,17 +11043,35 @@ window.abrirRetiro = () => {
             earnings: firebase.database.ServerValue.increment(-retiroCostoPuntos)
         }).then(() => {
 
-            db.ref('solicitudes_retiro').push({
+            const solicitud = {
                 uid: idAuditor,
                 usuario: myCurrentKey,
+                email: (firebase.auth().currentUser && firebase.auth().currentUser.email) || null,
                 metodo_pago: metodo,
                 datos_pago: datos,
                 correo_paypal: metodo === 'paypal' ? datos : null,
+                monto: retiroMontoSeleccionado,
                 monto_usd: retiroMontoSeleccionado,
                 costo_pts: retiroCostoPuntos,
                 fecha: firebase.database.ServerValue.TIMESTAMP,
                 estado: "pendiente"
-            });
+            };
+
+            // 1) Intentamos guardar en la raíz (panel admin).
+            // 2) Si las reglas lo bloquean, guardamos una copia dentro del propio usuario.
+            return db.ref('solicitudes_retiro').push(solicitud)
+                .then(() => ({ ok: true }))
+                .catch(() => db.ref(`users/${idAuditor}/solicitudes_retiro`).push(solicitud)
+                    .then(() => ({ ok: true }))
+                    .catch(err => ({ ok: false, err })));
+        }).then(resultado => {
+            if (!resultado.ok) {
+                const err = resultado.err;
+                db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(retiroCostoPuntos) });
+                btn.disabled = false;
+                btn.textContent = `💸 Retirar $${retiroMontoSeleccionado} USD`;
+                return notify("❌ No se pudo guardar la solicitud: " + ((err && err.message) || "permiso denegado"));
+            }
 
             registrarHistorial(`Retiro ${metodosLabel[metodo]} $${retiroMontoSeleccionado}`, -retiroCostoPuntos);
 
@@ -11590,9 +11648,10 @@ window.ejecutarSubidaFotoFirebase = () => {
     const inputDesc = document.getElementById('inputDescripcionFoto');
     const descripcionTexto = inputDesc ? inputDesc.value.trim() : "";
 
+    const miNombre = apodosCache[idAuditor] || (typeof getMiNombre === 'function' ? getMiNombre() : '') || myCurrentKey || 'Usuario';
     const fotoData = {
         uid: idAuditor,
-        autor: myCurrentKey,
+        autor: miNombre,
         foto: fotoBase64Actual,
         fecha: firebase.database.ServerValue.TIMESTAMP
     };
@@ -12243,7 +12302,7 @@ function cargarGaleriaComunidad() {
                     <div class="muro-avatar" data-uid="${f.uid}" style="width:22px; height:22px; border-radius:50%; background-image:url('${getUserProfilePhoto(f.uid)}'); background-size:cover; border:1px solid #eee;"></div>
                     
                     <div style="flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                        <span style="font-weight:600; font-size:0.75rem; color:#334155;">${escapeHtml(nombre)}</span>
+                        <span class="muro-nombre" data-uid="${f.uid}" style="font-weight:600; font-size:0.75rem; color:#334155;">${escapeHtml(nombre)}</span>
                         ${f.uid === idAuditor ? '<span style="color:#ef4444; font-size:0.65rem; font-weight:600; margin-left:4px;">tu foto</span>' : ''}
                         ${yaComprada ? '<span style="color:#10b981; font-size:0.65rem; font-weight:600; margin-left:4px;">✔ comprada</span>' : ''}
                     </div>
@@ -12287,6 +12346,21 @@ function cargarGaleriaComunidad() {
                 cacheFotosPerfil[uid] = fotoReal;
                 document.querySelectorAll('.muro-avatar[data-uid="' + uid + '"]').forEach(el => {
                     el.style.backgroundImage = "url('" + fotoReal + "')";
+                });
+            }).catch(() => {});
+        });
+
+        window._muroNombresPedidos = window._muroNombresPedidos || {};
+        const uidsNombres = [...new Set(fotos.map(f => f.uid).filter(u => u && !apodosCache[u] && !window._muroNombresPedidos[u]))];
+        uidsNombres.forEach(uid => {
+            window._muroNombresPedidos[uid] = true;
+            db.ref(`users/${uid}`).once('value').then(s => {
+                const u = s.val() || {};
+                const nombreReal = String(u.apodo || u.myInviteKey || '').trim();
+                if (!nombreReal) return;
+                if (u.apodo) apodosCache[uid] = u.apodo;
+                document.querySelectorAll('.muro-nombre[data-uid="' + uid + '"]').forEach(el => {
+                    el.textContent = nombreReal;
                 });
             }).catch(() => {});
         });
@@ -16199,8 +16273,17 @@ window.cerrarChatPrivado = () => {
 
 window._alarmaChatAudio = null;
 window._alarmaChatTimers = [];
+window._alarmaChatEnviada = null;
 
-function _detenerAlarmaChat() {
+function _cancelarNotificacionAlarmaNativa() {
+    try {
+        if (window.AndroidNative && typeof window.AndroidNative.silenciarAlarmaChat === 'function') {
+            window.AndroidNative.silenciarAlarmaChat();
+        }
+    } catch(e) {}
+}
+
+function _detenerAlarmaChat(silenciarNativa) {
     try {
         window._alarmaChatTimers.forEach(t => { clearTimeout(t); clearInterval(t); });
     } catch(e) {}
@@ -16213,7 +16296,82 @@ function _detenerAlarmaChat() {
     }
     const modal = document.getElementById('modalAlarmaChat');
     if (modal) modal.style.display = 'none';
+    if (silenciarNativa) _cancelarNotificacionAlarmaNativa();
 }
+
+function _cerrarModalAlarmaEnviada(envio) {
+    if (envio && window._alarmaChatEnviada && window._alarmaChatEnviada !== envio) return;
+    if (window._alarmaChatEnviada && window._alarmaChatEnviada.timers) {
+        try {
+            window._alarmaChatEnviada.timers.forEach(t => { clearTimeout(t); clearInterval(t); });
+        } catch(e) {}
+    }
+    window._alarmaChatEnviada = null;
+    const modal = document.getElementById('modalAlarmaEnviada');
+    if (modal) modal.style.display = 'none';
+}
+
+window.cerrarModalAlarmaEnviada = function() {
+    _cerrarModalAlarmaEnviada();
+};
+
+function _mostrarAlarmaEnviada(targetUid, nombre, key) {
+    _cerrarModalAlarmaEnviada();
+    const modal = document.getElementById('modalAlarmaEnviada');
+    const envio = { targetUid, nombre, key, cancelada: false, timers: [] };
+    window._alarmaChatEnviada = envio;
+    if (!modal) return envio;
+
+    const titulo = document.getElementById('alarmaEnviadaNombre');
+    const cuenta = document.getElementById('alarmaEnviadaCuenta');
+    if (titulo) titulo.textContent = 'Llamado a ' + nombre;
+    if (cuenta) cuenta.textContent = '30';
+    modal.style.display = 'flex';
+
+    let restante = 30;
+    const int = setInterval(() => {
+        restante--;
+        if (cuenta) cuenta.textContent = String(Math.max(0, restante));
+        if (restante <= 0) clearInterval(int);
+    }, 1000);
+    const fin = setTimeout(() => { _cerrarModalAlarmaEnviada(envio); }, 30000);
+    envio.timers.push(int, fin);
+    return envio;
+}
+
+window.cancelarAlarmaChatEnviada = function() {
+    const envio = window._alarmaChatEnviada;
+    if (!envio) { _cerrarModalAlarmaEnviada(); return; }
+    envio.cancelada = true;
+    try {
+        if (envio.key) db.ref(`users/${envio.targetUid}/notifications/${envio.key}`).remove().catch(() => {});
+    } catch(e) {}
+    const miNombre = (typeof getMiNombre === 'function') ? getMiNombre() : (myCurrentKey || 'Usuario');
+    try {
+        db.ref(`users/${envio.targetUid}/notifications`).push({
+            from: idAuditor,
+            fromName: miNombre,
+            type: 'alarma_chat_cancel',
+            text: '⏰ Alarma cancelada',
+            extra: idAuditor,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            read: true
+        }).catch(() => {});
+    } catch(e) {}
+    try {
+        if (typeof enviarPushOneSignal === 'function') {
+            enviarPushOneSignal(envio.targetUid, 'alarma_chat_cancel', '⏰ Alarma cancelada', miNombre + ' canceló la alarma', {
+                additional_data: { sender_uid: idAuditor, sender_name: miNombre, text: 'Alarma cancelada' }
+            });
+        }
+    } catch(e) {}
+    _cerrarModalAlarmaEnviada(envio);
+    notify('🔕 Alarma cancelada');
+};
+
+window.cerrarAlarmaChatReceptor = function() {
+    _detenerAlarmaChat(true);
+};
 
 function _sonarAlarmaChat() {
     try {
@@ -16259,7 +16417,7 @@ window.recibirAlarmaChat = (notif) => {
         if (cuenta) cuenta.textContent = String(Math.max(0, restante));
         if (restante <= 0) clearInterval(int);
     }, 1000);
-    const fin = setTimeout(() => { _detenerAlarmaChat(); }, 30000);
+    const fin = setTimeout(() => { _detenerAlarmaChat(true); }, 30000);
     window._alarmaChatTimers.push(int, fin);
     try { if (navigator.vibrate) navigator.vibrate([600, 300, 600, 300, 600]); } catch(e) {}
 };
@@ -16268,7 +16426,10 @@ window.enviarAlarmaChat = () => {
     const targetUid = currentChatTargetUid;
     if (!idAuditor || !targetUid) { notify('⏳ Espera un momento...'); return; }
     const miNombre = (typeof getMiNombre === 'function') ? getMiNombre() : (myCurrentKey || 'Usuario');
-    db.ref(`users/${targetUid}/notifications`).push({
+    const targetName = currentChatTargetName || 'esta persona';
+    const ref = db.ref(`users/${targetUid}/notifications`).push();
+    const envio = _mostrarAlarmaEnviada(targetUid, targetName, ref.key);
+    ref.set({
         from: idAuditor,
         fromName: miNombre,
         type: 'alarma_chat',
@@ -16277,10 +16438,15 @@ window.enviarAlarmaChat = () => {
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         read: false
     }).then(() => {
+        if (envio.cancelada) {
+            ref.remove().catch(() => {});
+            return;
+        }
         notify('⏰ Alarma enviada. Sonará 30 segundos.');
         try { window.playSound('win'); } catch(e) {}
     }).catch(err => {
         console.error('Error al enviar alarma:', err);
+        _cerrarModalAlarmaEnviada(envio);
         notify('❌ No se pudo enviar la alarma');
     });
     try {
@@ -16458,6 +16624,12 @@ function iniciarMonitorDeBadges() {
             snap.forEach(s => {
                 const notif = s.val() || {};
                 const k = s.key;
+
+                if (notif.type === 'alarma_chat_cancel') {
+                    db.ref(`users/${idAuditor}/notifications/${k}`).remove().catch(() => {});
+                    if (typeof _detenerAlarmaChat === 'function') _detenerAlarmaChat(true);
+                    return;
+                }
 
                 if (notif.type === 'alarma_chat') {
                     if (!window._alarmasProcesadas) window._alarmasProcesadas = {};
@@ -17171,7 +17343,7 @@ function mostrarFotoGaleria() {
         indicadores.innerHTML = indHtml;
     }
 
-    const nombre = foto.autor || "Anónimo";
+    const nombre = getDisplayName(foto.uid, foto.autor || "Anónimo");
 
     if (btnSaludar) {
         if (foto.uid === idAuditor) {
@@ -17872,13 +18044,60 @@ function verificarSiEsAdmin(emailUsuario) {
         document.getElementById('btnAdminBots').style.display = 'flex';
         const dot = document.getElementById('adminDot');
         if (dot) dot.style.display = 'block';
+        mostrarMiUidAdmin();
         iniciarEscuchaAdmin();
     } else if (email === ADMIN2_EMAIL.toLowerCase()) {
         isAdmin = true;
         document.getElementById('btnAdminCorreos').style.display = 'flex';
         document.getElementById('btnAdminBots').style.display = 'flex';
+        mostrarMiUidAdmin();
     }
 }
+
+let _intentoRegistroAdmin = false;
+
+function mostrarMiUidAdmin() {
+    const uid = (firebase.auth().currentUser && firebase.auth().currentUser.uid) || idAuditor || '---';
+    const input = document.getElementById('adminUidValue');
+    if (input) input.value = uid;
+    const card = document.getElementById('adminUidCard');
+    if (card) card.style.display = 'block';
+
+    const estado = document.getElementById('adminUidStatus');
+    const setEstado = (txt, color) => { if (estado) { estado.textContent = txt; estado.style.color = color; } };
+    setEstado('⏳ Verificando permisos...', '#64748b');
+    if (!uid || uid === '---') return;
+
+    db.ref(`admins/${uid}`).once('value').then(snap => {
+        if (snap.exists() && snap.val()) {
+            setEstado('✅ Autorizado como admin (nodo admins en la raíz)', '#16a34a');
+            return;
+        }
+        if (_intentoRegistroAdmin) {
+            setEstado('⚠️ Falta crear admins/<UID> = true en la RAÍZ', '#dc2626');
+            return;
+        }
+        _intentoRegistroAdmin = true;
+        setEstado('⏳ Registrando tu UID como admin...', '#64748b');
+        db.ref(`admins/${uid}`).set(true).then(() => {
+            setEstado('✅ Autorizado como admin (registrado automáticamente)', '#16a34a');
+        }).catch(err => {
+            setEstado('⚠️ No se pudo registrar automáticamente: ' + ((err && err.message) || 'permiso denegado'), '#dc2626');
+        });
+    }).catch(err => {
+        setEstado('⚠️ No se pudo verificar el nodo admins: ' + ((err && err.message) || 'error'), '#dc2626');
+    });
+}
+
+window.copiarMiUid = () => {
+    const input = document.getElementById('adminUidValue');
+    const uid = input ? input.value : '';
+    if (!uid || uid === '---') return notify('UID no disponible');
+    const el = document.createElement('textarea');
+    el.value = uid; document.body.appendChild(el); el.select();
+    document.execCommand('copy'); document.body.removeChild(el);
+    notify("📋 UID copiado");
+};
 
 function iniciarEscuchaAdmin() {
     let retirosPendientes = 0;
@@ -17903,79 +18122,171 @@ window.abrirPanelAdmin = () => {
     abrirAdminRetiros();
 };
 
+let adminRetirosRoot = {};
+let adminRetirosUsuarios = {};
+
 window.abrirAdminRetiros = () => {
     document.getElementById('modalAdminRetiros').style.display = 'flex';
     const lista = document.getElementById('listaSolicitudes');
-    
+    if (!lista) return;
+
     if (!lista.dataset.listenerAttached) {
         lista.dataset.listenerAttached = '1';
         db.ref('solicitudes_retiro').on('value', snap => {
-            if (!snap.exists()) {
-                lista.innerHTML = '<div style="text-align: center; padding: 20px; color:#cbd5e1;">Nadie ha pedido dinero aún. 😴</div>';
-                return;
-            }
-            
-            let html = "";
-            snap.forEach(child => {
-                const key = child.key; 
-                const d = child.val();
-                const fecha = new Date(d.fecha).toLocaleDateString();
-                
-                // --- LÓGICA PARA DETECTAR EL MÉTODO Y EL ÍCONO ---
-                let iconoMetodo = "📧 PayPal";
-                let colorFondo = "#dbeafe"; // Azul para PayPal
-                let colorTexto = "#1e40af";
-                
-                if (d.metodo_pago === 'binance') {
-                    iconoMetodo = "🪙 Binance ID";
-                    colorFondo = "#fef3c7"; // Amarillo para Binance
-                    colorTexto = "#92400e";
-                } else if (d.metodo_pago === 'tropipay') {
-                    iconoMetodo = "🌴 TropiPay";
-                    colorFondo = "#dcfce7"; // Verde para TropiPay
-                    colorTexto = "#166534";
-                }
-
-                // Usamos d.correo_paypal porque es donde guardamos el ID en la funcion anterior
-                const datoCuenta = d.correo_paypal || "No proporcionado";
-
-                html += `
-                <div style="background: white; padding: 15px; border-radius: 18px; border: 1px solid #e2e8f0; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <span style="background:${colorFondo}; color:${colorTexto}; font-size:0.65rem; padding:4px 10px; border-radius:50px; font-weight:800; text-transform:uppercase;">
-                            ${d.usuario || 'Usuario'}
-                        </span>
-                        <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">${fecha}</span>
-                    </div>
-                    
-                    <div style="font-weight:900; color:#0f172a; font-size:1.4rem; margin-bottom:10px; text-align:center;">
-                        $${d.monto_usd} USD
-                    </div>
-                    
-                    <div style="background:#f8fafc; padding:10px; border-radius:12px; font-size:0.85rem; border:1px solid #f1f5f9; margin-bottom:12px; word-break: break-all;">
-                        <span style="color:#64748b; font-weight:bold; display:block; font-size:0.65rem; text-transform:uppercase; margin-bottom:2px;">${iconoMetodo}:</span>
-                        <strong style="color:#334155;">${datoCuenta}</strong>
-                    </div>
-                    
-                    <div style="display:flex; gap:8px;">
-                        <button onclick="copiarTexto('${datoCuenta}')" style="flex:1; padding:10px; border:1.5px solid #e2e8f0; background:white; border-radius:10px; font-size:0.8rem; font-weight:700; color:#64748b; cursor:pointer;">
-                            📋 Copiar
-                        </button>
-                        <button onclick="marcarRetiroPagado('${key}')" style="flex:1.2; padding:10px; border:none; background:#10b981; color:white; font-weight:800; border-radius:10px; font-size:0.8rem; cursor:pointer; box-shadow:0 4px 12px rgba(16,185,129,0.2);">
-                            ✅ Pagado
-                        </button>
-                    </div>
-                </div>`;
-            });
-            lista.innerHTML = html;
+            adminRetirosRoot = snap.exists() ? (snap.val() || {}) : {};
+            renderAdminRetirosLista();
+        }, err => {
+            console.warn('No se pudo leer solicitudes_retiro:', err && err.message);
         });
     }
+
+    // Respaldo: solicitudes guardadas dentro de cada usuario (por si las reglas bloquean la raíz)
+    db.ref('users').once('value').then(snap => {
+        adminRetirosUsuarios = {};
+        snap.forEach(u => {
+            const retiros = u.child('solicitudes_retiro');
+            if (retiros.exists()) {
+                retiros.forEach(r => { adminRetirosUsuarios[`${u.key}::${r.key}`] = r.val(); });
+            }
+        });
+        renderAdminRetirosLista();
+    }).catch(err => {
+        console.warn('No se pudo escanear usuarios para retiros:', err && err.message);
+    });
 };
-window.marcarRetiroPagado = (key) => {
-    if(!confirm("¿Ya enviaste el dinero por PayPal? Esto borrará la solicitud.")) return;
-    db.ref(`solicitudes_retiro/${key}`).remove().then(() => {
+
+function renderAdminRetirosLista() {
+    const lista = document.getElementById('listaSolicitudes');
+    if (!lista) return;
+
+    const vistos = new Set();
+    const items = [];
+    const agregar = (path, d) => {
+        if (!d) return;
+        const firma = `${d.uid || ''}|${d.fecha || ''}|${d.monto_usd || ''}|${d.datos_pago || d.correo_paypal || ''}`;
+        if (vistos.has(firma)) return;
+        vistos.add(firma);
+        items.push({ path, d });
+    };
+    Object.entries(adminRetirosRoot).forEach(([k, d]) => agregar(`solicitudes_retiro/${k}`, d));
+    Object.entries(adminRetirosUsuarios).forEach(([k, d]) => {
+        const partes = k.split('::');
+        agregar(`users/${partes[0]}/solicitudes_retiro/${partes[1]}`, d);
+    });
+
+    if (items.length === 0) {
+        lista.innerHTML = '<div style="text-align: center; padding: 20px; color:#cbd5e1;">Nadie ha pedido dinero aún. 😴</div>';
+        return;
+    }
+
+    items.sort((a, b) => (b.d.fecha || 0) - (a.d.fecha || 0));
+
+    let html = "";
+    const emailsPendientes = [];
+    items.forEach((item, idx) => {
+        const d = item.d;
+        const fecha = d.fecha ? new Date(d.fecha).toLocaleDateString() : '—';
+        const cardId = `cardRetiro_${idx}`;
+        const emailId = `emailRetiro_${idx}`;
+
+        // --- LÓGICA PARA DETECTAR EL MÉTODO Y EL ÍCONO ---
+        let iconoMetodo = "📧 PayPal";
+        let colorFondo = "#dbeafe"; // Azul para PayPal
+        let colorTexto = "#1e40af";
+
+        if (d.metodo_pago === 'binance') {
+            iconoMetodo = "🪙 Binance ID";
+            colorFondo = "#fef3c7"; // Amarillo para Binance
+            colorTexto = "#92400e";
+        } else if (d.metodo_pago === 'tropipay') {
+            iconoMetodo = "🌴 TropiPay";
+            colorFondo = "#dcfce7"; // Verde para TropiPay
+            colorTexto = "#166534";
+        }
+
+        // El dato real está en datos_pago (PayPal/Binance/TropiPay)
+        const datoCuenta = d.datos_pago || d.correo_paypal || "No proporcionado";
+        const montoMostrar = (d.monto_usd != null ? d.monto_usd : d.monto);
+        emailsPendientes.push({ uid: d.uid, emailGuardado: d.email, cardId: cardId, emailId: emailId });
+
+        html += `
+        <div id="${cardId}" class="card-retiro-admin" data-email="" style="background: white; padding: 15px; border-radius: 18px; border: 1px solid #e2e8f0; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="background:${colorFondo}; color:${colorTexto}; font-size:0.65rem; padding:4px 10px; border-radius:50px; font-weight:800; text-transform:uppercase;">
+                    ${d.usuario || 'Usuario'}
+                </span>
+                <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">${fecha}</span>
+            </div>
+            
+            <div style="font-weight:900; color:#0f172a; font-size:1.4rem; margin-bottom:10px; text-align:center;">
+                $${montoMostrar} USD
+            </div>
+
+            <div style="background:#eff6ff; padding:10px; border-radius:12px; font-size:0.85rem; border:1px solid #bfdbfe; margin-bottom:8px; word-break: break-all;">
+                <span style="color:#1e40af; font-weight:bold; display:block; font-size:0.65rem; text-transform:uppercase; margin-bottom:2px;">Correo de la cuenta:</span>
+                <strong id="${emailId}" style="color:#1e3a8a;">Cargando...</strong>
+            </div>
+            
+            <div style="background:#f8fafc; padding:10px; border-radius:12px; font-size:0.85rem; border:1px solid #f1f5f9; margin-bottom:12px; word-break: break-all;">
+                <span style="color:#64748b; font-weight:bold; display:block; font-size:0.65rem; text-transform:uppercase; margin-bottom:2px;">${iconoMetodo}:</span>
+                <strong style="color:#334155;">${datoCuenta}</strong>
+            </div>
+            
+            <div style="display:flex; gap:8px;">
+                <button onclick="copiarTexto('${datoCuenta}')" style="flex:1; padding:10px; border:1.5px solid #e2e8f0; background:white; border-radius:10px; font-size:0.8rem; font-weight:700; color:#64748b; cursor:pointer;">
+                    📋 Copiar
+                </button>
+                <button onclick="marcarRetiroPagado('${item.path}')" style="flex:1.2; padding:10px; border:none; background:#10b981; color:white; font-weight:800; border-radius:10px; font-size:0.8rem; cursor:pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.2);">
+                    ✅ Pagado
+                </button>
+            </div>
+        </div>`;
+    });
+    lista.innerHTML = html;
+
+    // --- RESOLVER EL CORREO DE LA CUENTA DE CADA SOLICITANTE ---
+    emailsPendientes.forEach(item => {
+        const aplicarEmail = (email) => {
+            const texto = email || 'No disponible';
+            const emailEl = document.getElementById(item.emailId);
+            if (emailEl) emailEl.textContent = texto;
+            const cardEl = document.getElementById(item.cardId);
+            if (cardEl) cardEl.dataset.email = String(texto).toLowerCase();
+            filtrarRetirosPorCorreo();
+        };
+        if (item.emailGuardado) { aplicarEmail(item.emailGuardado); return; }
+        if (!item.uid) { aplicarEmail(null); return; }
+        db.ref(`users/${item.uid}/email`).once('value')
+            .then(s => aplicarEmail(s.val()))
+            .catch(() => aplicarEmail(null));
+    });
+
+    filtrarRetirosPorCorreo();
+}
+
+window.filtrarRetirosPorCorreo = () => {
+    const input = document.getElementById('buscarRetiroEmail');
+    const q = (input ? input.value : '').trim().toLowerCase();
+    document.querySelectorAll('#listaSolicitudes .card-retiro-admin').forEach(card => {
+        const coincide = !q || (card.dataset.email || '').includes(q) || card.textContent.toLowerCase().includes(q);
+        card.style.display = coincide ? 'block' : 'none';
+    });
+};
+
+window.marcarRetiroPagado = (path) => {
+    if (!confirm("¿Ya enviaste el dinero? Esto borrará la solicitud.")) return;
+    db.ref(path).remove().then(() => {
         notify("✅ Solicitud marcada como pagada.");
         try { window.playSound('coin'); } catch(e){}
+        if (path.indexOf('solicitudes_retiro/') === 0) {
+            delete adminRetirosRoot[path.split('/')[1]];
+        } else {
+            const partes = path.split('/');
+            delete adminRetirosUsuarios[`${partes[1]}::${partes[3]}`];
+        }
+        renderAdminRetirosLista();
+    }).catch(err => {
+        notify("❌ No se pudo marcar: " + ((err && err.message) || "permiso denegado"));
     });
 };
 
@@ -19952,6 +20263,9 @@ db.ref('users').on('child_changed', snap => {
     const u = snap.val();
     if (u && u.apodo) {
         apodosCache[snap.key] = u.apodo;
+        document.querySelectorAll('.muro-nombre[data-uid="' + snap.key + '"]').forEach(el => {
+            el.textContent = u.apodo;
+        });
     }
 });
 
