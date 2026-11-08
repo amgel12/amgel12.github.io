@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-08-retiros-admin -->
+<!-- CODECASH_BUILD 2026-11-08-retiros-admin-perfil-alto -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -3888,7 +3888,7 @@ Cerrar
     <!-- MODAL PERFIL DE USUARIO PÚBLICO -->
 <!-- 👤 MODAL PERFIL DE USUARIO REDISEÑADO -->
 <div id="modalPerfilUsuario" class="modal-overlay" style="z-index: 29500;">
-    <div class="modal-content" style="text-align:center; max-width:340px; padding: 0; overflow: hidden; border-radius: 25px; border: none;">
+    <div class="modal-content" style="text-align:center; width: min(88vw, 340px); max-height: 90vh; padding: 0; overflow-y: auto; overflow-x: hidden; border-radius: 25px; border: none;">
         
         <!-- Foto de portada/Avatar -->
         <div id="perfilUserAvatar" style="height: 200px; background:#e2e8f0 center/cover no-repeat; position: relative;">
@@ -5676,18 +5676,17 @@ style="display:none;">
         <div style="margin-top: 52px; padding: 0 20px 16px; text-align:center;">
             <h2 id="profKey" style="color:#0f172a; font-size:1.3rem; font-weight:900; margin:0 0 4px;">Cargando...</h2>
             <div id="profRank" style="display:inline-block; background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; font-size:0.65rem; font-weight:800; padding:4px 14px; border-radius:50px; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px;">MIEMBRO OFICIAL</div>
-            <p id="profEmail" style="font-size:0.75rem; color:#94a3b8; margin:0;">---</p>
+            <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin:0;">
+                <p id="profEmail" style="font-size:0.75rem; color:#94a3b8; margin:0;">---</p>
+                <button onclick="toggleCorreoPerfil()" style="background:none; border:none; color:#94a3b8; cursor:pointer; padding:2px 4px; font-size:0.8rem;" title="Mostrar/ocultar correo"><i id="eyeCorreoPerfil" class="fas fa-eye"></i></button>
+            </div>
             <p id="profEmailFull" style="display:none;"></p>
             <p style="font-size:0.65rem; color:#cbd5e1; margin:4px 0 0;">🔒 Solo tú ves este correo</p>
 
-            <div id="adminUidCard" style="display:none; margin-top:12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:10px; text-align:left;">
-                <div style="font-size:0.65rem; font-weight:800; color:#1e40af; text-transform:uppercase; margin-bottom:5px;">🆔 Mi UID de Firebase (admin)</div>
-                <div style="display:flex; gap:6px; align-items:center;">
-                    <input id="adminUidValue" type="text" readonly value="---" style="flex:1; min-width:0; font-family:monospace; font-size:0.72rem; padding:8px; border:1px solid #bfdbfe; border-radius:8px; background:white; color:#1e3a8a;">
-                    <button onclick="copiarMiUid()" style="padding:8px 12px; border:none; background:#1e40af; color:white; border-radius:8px; font-size:0.72rem; font-weight:800; cursor:pointer;">Copiar</button>
-                </div>
-                <div style="font-size:0.62rem; color:#64748b; margin-top:6px;">Úsalo en Firebase → admins/&lt;UID&gt;: true</div>
-                <div id="adminUidStatus" style="font-size:0.65rem; font-weight:700; margin-top:6px; color:#64748b;">⏳ Verificando permisos...</div>
+            <div id="adminUidCard" style="display:none; margin-top:10px; align-items:center; justify-content:center; gap:8px;">
+                <span style="font-size:0.68rem; color:#64748b; font-weight:700;">UID:</span>
+                <span id="adminUidValue" style="font-family:monospace; font-size:0.7rem; color:#334155;">---</span>
+                <button onclick="toggleUidPerfil()" style="background:none; border:none; color:#94a3b8; cursor:pointer; padding:2px 4px; font-size:0.8rem;" title="Mostrar/ocultar UID"><i id="eyeUidPerfil" class="fas fa-eye"></i></button>
             </div>
         </div>
     </div>
@@ -8613,8 +8612,8 @@ if (d.bio) {
 if (typeof actualizarBioResumen === 'function') actualizarBioResumen(d.bio);
             // --- A) DATOS BÁSICOS ---
             const correoUsuario = user.email || (d ? d.email : null) || "Sin correo";
-            const labelEmail = document.getElementById('profEmail');
-            if (labelEmail) labelEmail.textContent = "Correo: " + correoUsuario;
+            _miCorreoPerfil = correoUsuario;
+            aplicarCorreoPerfil();
 
             const emailParaAdmin = d && d.email ? d.email : user.email;
             if (emailParaAdmin && typeof verificarSiEsAdmin === "function") verificarSiEsAdmin(emailParaAdmin);
@@ -18054,50 +18053,48 @@ function verificarSiEsAdmin(emailUsuario) {
     }
 }
 
-let _intentoRegistroAdmin = false;
+var _miUidPerfil = '';
+var _uidOculto = false;
+var _miCorreoPerfil = '';
+var _correoOculto = false;
 
-function mostrarMiUidAdmin() {
-    const uid = (firebase.auth().currentUser && firebase.auth().currentUser.uid) || idAuditor || '---';
-    const input = document.getElementById('adminUidValue');
-    if (input) input.value = uid;
-    const card = document.getElementById('adminUidCard');
-    if (card) card.style.display = 'block';
-
-    const estado = document.getElementById('adminUidStatus');
-    const setEstado = (txt, color) => { if (estado) { estado.textContent = txt; estado.style.color = color; } };
-    setEstado('⏳ Verificando permisos...', '#64748b');
-    if (!uid || uid === '---') return;
-
-    db.ref(`admins/${uid}`).once('value').then(snap => {
-        if (snap.exists() && snap.val()) {
-            setEstado('✅ Autorizado como admin (nodo admins en la raíz)', '#16a34a');
-            return;
-        }
-        if (_intentoRegistroAdmin) {
-            setEstado('⚠️ Falta crear admins/<UID> = true en la RAÍZ', '#dc2626');
-            return;
-        }
-        _intentoRegistroAdmin = true;
-        setEstado('⏳ Registrando tu UID como admin...', '#64748b');
-        db.ref(`admins/${uid}`).set(true).then(() => {
-            setEstado('✅ Autorizado como admin (registrado automáticamente)', '#16a34a');
-        }).catch(err => {
-            setEstado('⚠️ No se pudo registrar automáticamente: ' + ((err && err.message) || 'permiso denegado'), '#dc2626');
-        });
-    }).catch(err => {
-        setEstado('⚠️ No se pudo verificar el nodo admins: ' + ((err && err.message) || 'error'), '#dc2626');
-    });
+function aplicarCorreoPerfil() {
+    const label = document.getElementById('profEmail');
+    const eye = document.getElementById('eyeCorreoPerfil');
+    if (!label) return;
+    if (_correoOculto) {
+        label.textContent = 'Correo: ••••••••••';
+        if (eye) eye.className = 'fas fa-eye-slash';
+    } else {
+        label.textContent = 'Correo: ' + (_miCorreoPerfil || 'Sin correo');
+        if (eye) eye.className = 'fas fa-eye';
+    }
 }
 
-window.copiarMiUid = () => {
-    const input = document.getElementById('adminUidValue');
-    const uid = input ? input.value : '';
-    if (!uid || uid === '---') return notify('UID no disponible');
-    const el = document.createElement('textarea');
-    el.value = uid; document.body.appendChild(el); el.select();
-    document.execCommand('copy'); document.body.removeChild(el);
-    notify("📋 UID copiado");
+window.toggleCorreoPerfil = () => {
+    _correoOculto = !_correoOculto;
+    aplicarCorreoPerfil();
 };
+
+function aplicarUidPerfil() {
+    const val = document.getElementById('adminUidValue');
+    const eye = document.getElementById('eyeUidPerfil');
+    if (!val) return;
+    val.textContent = _uidOculto ? '••••••••••••' : (_miUidPerfil || '---');
+    if (eye) eye.className = _uidOculto ? 'fas fa-eye-slash' : 'fas fa-eye';
+}
+
+window.toggleUidPerfil = () => {
+    _uidOculto = !_uidOculto;
+    aplicarUidPerfil();
+};
+
+function mostrarMiUidAdmin() {
+    _miUidPerfil = (firebase.auth().currentUser && firebase.auth().currentUser.uid) || idAuditor || '---';
+    const card = document.getElementById('adminUidCard');
+    if (card) card.style.display = 'flex';
+    aplicarUidPerfil();
+}
 
 function iniciarEscuchaAdmin() {
     let retirosPendientes = 0;
