@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-08-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado -->
+<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -2730,6 +2730,7 @@ function crearCard(key, post, mediaId, type, esRandom) {
 // ══════════════════════════════════════════════════════════
 const FEED_CACHE_KEY = 'pgc_feed_v2';
 const FEED_MAX       = 20;
+const CATEGORIA_FEED_KEY = 'pgc_categoria_feed';
 
 function feedCacheGuardar(key, post, mediaLink, type) {
     try {
@@ -2766,6 +2767,17 @@ function feedCacheRenderizar(container) {
 
 function cargarMuro() {
     if (window._muroIniciado) return;
+
+    // Onboarding de categorías: solo usuarios nuevos eligen antes de ver videos.
+    if (!localStorage.getItem(CATEGORIA_FEED_KEY)) {
+        if (esUsuarioNuevoFeed()) {
+            mostrarSelectorCategoriasFeed();
+            return;
+        }
+        // Usuario existente: conservar el feed general de siempre.
+        try { localStorage.setItem(CATEGORIA_FEED_KEY, 'general'); } catch(e) {}
+    }
+
     window._muroIniciado = true;
 
     const container = document.getElementById('muroReportes');
@@ -2847,8 +2859,15 @@ function cargarMuro() {
         } catch(e) {}
     });
 
-    // 🎲 Añadir videos aleatorios de YouTube para que el feed nunca esté vacío
-    setTimeout(cargarVideosYTAlAzar, 600);
+    // 🎲 Añadir videos de YouTube: categoría elegida o música aleatoria.
+    const catFeed = localStorage.getItem(CATEGORIA_FEED_KEY);
+    const btnCat = document.getElementById('btnCategoriasFeed');
+    if (btnCat) btnCat.style.display = (catFeed && catFeed !== 'general') ? 'flex' : 'none';
+    if (catFeed && catFeed !== 'general') {
+        setTimeout(() => cargarVideosCategoria(catFeed), 600);
+    } else {
+        setTimeout(cargarVideosYTAlAzar, 600);
+    }
 }
 
 window.feedToggleLike = (postKey, ownerUid) => {
@@ -3054,6 +3073,8 @@ function agregarVideoYTAlFeed(item) {
 }
 
 function cargarLoteVideosYT() {
+    const catFeed = localStorage.getItem(CATEGORIA_FEED_KEY);
+    if (catFeed && catFeed !== 'general') return;
     if (ytRandomCargando) return;
     ytRandomCargando = true;
 
@@ -3091,10 +3112,345 @@ function cargarVideosYTAlAzar() {
     setTimeout(cargarLoteVideosYT, 900);
 }
 
+// ── CATEGORÍAS DEL FEED (onboarding para usuarios nuevos) ───────────────
+const CATEGORIAS_FEED = [
+    { id: 'futbol',      nombre: 'Fútbol',      emoji: '⚽', query: 'futbol highlights goles' },
+    { id: 'memes',       nombre: 'Memes',       emoji: '😂', query: 'memes graciosos' },
+    { id: 'risa',        nombre: 'Risa',        emoji: '🤣', query: 'videos graciosos para reir' },
+    { id: 'peliculas',   nombre: 'Películas',   emoji: '🎬', query: 'peliculas trailers español' },
+    { id: 'novelas',     nombre: 'Novelas',     emoji: '📺', query: 'novelas resumen español' },
+    { id: 'cocina',      nombre: 'Cocina',      emoji: '🍳', query: 'recetas de cocina faciles' },
+    { id: 'musica',      nombre: 'Música',      emoji: '🎵', query: 'musica exitos 2026' },
+    { id: 'deportes',    nombre: 'Deportes',    emoji: '🏆', query: 'deportes highlights' },
+    { id: 'noticias',    nombre: 'Noticias',    emoji: '📰', query: 'noticias de hoy' },
+    { id: 'tecnologia',  nombre: 'Tecnología',  emoji: '💻', query: 'tecnologia gadgets review' },
+    { id: 'ciencia',     nombre: 'Ciencia',     emoji: '🔬', query: 'ciencia documental' },
+    { id: 'animales',    nombre: 'Animales',    emoji: '🐾', query: 'animales graciosos' },
+    { id: 'viajes',      nombre: 'Viajes',      emoji: '✈️', query: 'viajes lugares turisticos' },
+    { id: 'videojuegos', nombre: 'Videojuegos', emoji: '🎮', query: 'gameplay videojuegos' },
+    { id: 'aprender',    nombre: 'Aprender',    emoji: '📚', query: 'aprender ingles español' }
+];
+
+function esUsuarioNuevoFeed() {
+    if (localStorage.getItem(CATEGORIA_FEED_KEY)) return false;
+    // Solo señales de actividad real del usuario. No usar claves que el
+    // arranque escribe automáticamente (misiones_reseteo, ultima_mision_ts).
+    const señales = [
+        FEED_CACHE_KEY,
+        'puntos',
+        'pgc_cache_global_v1',
+        'uid_jugador_activo',
+        'pgc_ocultos_v2',
+        'mision_m2_activa',
+        'mision_m4_activa',
+        'mision_m5_pendiente',
+        'mision_m11_activa',
+        'codecash_vender_instrucciones_omitidas'
+    ];
+    return !señales.some(k => { try { return !!localStorage.getItem(k); } catch(e) { return false; } });
+}
+
+function mostrarSelectorCategoriasFeed() {
+    let overlay = document.getElementById('selectorCategoriasFeed');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'selectorCategoriasFeed';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:100001;background:linear-gradient(160deg,#0f172a 0%,#1e293b 55%,#0f172a 100%);color:#fff;display:flex;flex-direction:column;padding:22px 16px 18px;overflow-y:auto;font-family:Poppins,sans-serif;';
+        overlay.innerHTML = `
+            <div style="text-align:center;margin:8px 0 18px;">
+                <div style="font-size:2.6rem;line-height:1;margin-bottom:8px;">🎬</div>
+                <h2 style="margin:0;font-size:1.45rem;font-weight:800;">Elige una categoría</h2>
+                <p style="margin:8px auto 0;max-width:320px;font-size:0.82rem;color:#94a3b8;line-height:1.5;">
+                    Selecciona lo que quieres ver. Prepararemos <b style="color:#38bdf8;">50 videos</b> de tu categoría favorita.
+                </p>
+            </div>
+            <div id="selectorCategoriasGrid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:520px;width:100%;margin:0 auto;"></div>
+            <p style="text-align:center;color:#64748b;font-size:0.68rem;margin:18px 0 4px;">Podrás cambiar de categoría más tarde desde el feed.</p>
+        `;
+        document.body.appendChild(overlay);
+        const grid = overlay.querySelector('#selectorCategoriasGrid');
+        CATEGORIAS_FEED.forEach(cat => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.style.cssText = 'display:flex;align-items:center;gap:10px;width:100%;padding:14px 12px;border:1px solid rgba(148,163,184,0.25);border-radius:14px;background:rgba(30,41,59,0.75);color:#e2e8f0;font-family:inherit;font-size:0.86rem;font-weight:700;cursor:pointer;text-align:left;transition:transform .15s ease,background .15s ease;';
+            btn.innerHTML = '<span style="font-size:1.35rem;line-height:1;">' + cat.emoji + '</span><span>' + cat.nombre + '</span>';
+            btn.onmouseenter = () => { btn.style.background = 'rgba(56,189,248,0.18)'; btn.style.transform = 'translateY(-1px)'; };
+            btn.onmouseleave = () => { btn.style.background = 'rgba(30,41,59,0.75)'; btn.style.transform = 'none'; };
+            btn.onclick = () => seleccionarCategoriaFeed(cat.id);
+            grid.appendChild(btn);
+        });
+    }
+    overlay.style.display = 'flex';
+}
+
+function seleccionarCategoriaFeed(catId) {
+    const cat = CATEGORIAS_FEED.find(c => c.id === catId);
+    if (!cat) return;
+    try { localStorage.setItem(CATEGORIA_FEED_KEY, catId); } catch(e) {}
+    const overlay = document.getElementById('selectorCategoriasFeed');
+    if (overlay) overlay.style.display = 'none';
+    const btnCat = document.getElementById('btnCategoriasFeed');
+    if (btnCat) btnCat.style.display = 'flex';
+
+    ytRandomUsados = new Set();
+    ytRandomCargados = false;
+    ytRandomCargando = false;
+
+    // Si el feed ya está montado, solo reemplazamos los videos aleatorios
+    // (no volvemos a enganchar los listeners de Firebase).
+    if (window._muroIniciado) {
+        const muro = document.getElementById('muroReportes');
+        if (muro) muro.scrollTo({ top: 0, behavior: 'smooth' });
+        try { notify('🎬 Cargando ' + cat.nombre + '...'); } catch(e) {}
+        cargarVideosCategoria(catId, true);
+        return;
+    }
+
+    // Primera vez (usuario nuevo): montar el feed con la categoría elegida.
+    const muro = document.getElementById('muroReportes');
+    if (muro) muro.innerHTML = '';
+
+    try { notify('🎬 Cargando ' + cat.nombre + '...'); } catch(e) {}
+    cargarMuro();
+}
+
+window.cambiarCategoriaFeed = () => {
+    const btnCat = document.getElementById('btnCategoriasFeed');
+    if (btnCat) btnCat.style.display = 'none';
+    if (typeof detenerVideoMuro === 'function') detenerVideoMuro();
+    mostrarSelectorCategoriasFeed();
+};
+
+// Helper de red con timeout (para no colgar el feed si una API no responde).
+function fetchConTimeout(url, ms) {
+    return new Promise((resolve, reject) => {
+        let ctrl = null;
+        try { if (typeof AbortController !== 'undefined') ctrl = new AbortController(); } catch(e) {}
+        const timer = setTimeout(() => {
+            try { if (ctrl) ctrl.abort(); } catch(e) {}
+            reject(new Error('timeout'));
+        }, ms);
+        fetch(url, ctrl ? { signal: ctrl.signal, mode: 'cors' } : { mode: 'cors' })
+            .then(r => { clearTimeout(timer); resolve(r); })
+            .catch(e => { clearTimeout(timer); reject(e); });
+    });
+}
+
+function escaparTextoFeed(t) {
+    return String(t == null ? '' : t)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function normalizarVideosYT(items) {
+    const vistos = new Set();
+    const salida = [];
+    (items || []).forEach(v => {
+        if (!v || !v.id || vistos.has(v.id)) return;
+        vistos.add(v.id);
+        salida.push({
+            id: v.id,
+            titulo: escaparTextoFeed(v.titulo || 'Video'),
+            canal: escaparTextoFeed(v.canal || 'YouTube')
+        });
+    });
+    return salida;
+}
+
+async function buscarVideosCategoria(cat, limite) {
+    const cacheKey = 'pgc_cat_cache_' + cat.id;
+    try {
+        const cache = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+        if (cache && Array.isArray(cache.videos) && cache.videos.length >= limite && (Date.now() - (cache.ts || 0) < 6 * 60 * 60 * 1000)) {
+            const salida = cache.videos.slice(0, limite);
+            salida._desdeApi = !!cache.desdeApi;
+            return salida;
+        }
+    } catch(e) {}
+
+    // Las tres fuentes se consultan en paralelo para no hacer esperar al usuario.
+    const buscarYouTube = async () => {
+        try {
+            const apiKey = (typeof firebaseConfig !== 'undefined' && firebaseConfig && firebaseConfig.apiKey) ? firebaseConfig.apiKey : '';
+            if (!apiKey) return [];
+            const url = 'https://www.googleapis.com/youtube/v3/search?' + new URLSearchParams({
+                part: 'snippet', type: 'video', maxResults: String(limite),
+                q: cat.query, key: apiKey, videoEmbeddable: 'true', safeSearch: 'moderate'
+            }).toString();
+            const r = await fetchConTimeout(url, 7000);
+            if (!r.ok) return [];
+            const data = await r.json();
+            return (data.items || []).map(it => ({
+                id: it.id && it.id.videoId,
+                titulo: it.snippet && it.snippet.title,
+                canal: it.snippet && it.snippet.channelTitle
+            }));
+        } catch(e) { return []; }
+    };
+
+    const buscarPiped = async () => {
+        const instancias = ['https://pipedapi.kavin.rocks', 'https://pipedapi.adminforge.de'];
+        const respuestas = await Promise.all(instancias.map(async base => {
+            try {
+                const r = await fetchConTimeout(base + '/search?' + new URLSearchParams({ q: cat.query, filter: 'videos' }).toString(), 7000);
+                if (!r.ok) return [];
+                const data = await r.json();
+                const items = Array.isArray(data) ? data : (data.items || []);
+                return items.filter(it => it && it.type === 'stream' && it.url).map(it => {
+                    const m = String(it.url).match(/[?&]v=([^&]+)/);
+                    return m ? { id: m[1], titulo: it.title, canal: it.uploaderName } : null;
+                }).filter(Boolean);
+            } catch(e) { return []; }
+        }));
+        return [].concat.apply([], respuestas);
+    };
+
+    const buscarInvidious = async () => {
+        const instancias = ['https://inv.nadeko.net', 'https://yewtu.be'];
+        const respuestas = await Promise.all(instancias.map(async base => {
+            try {
+                const r = await fetchConTimeout(base + '/api/v1/search?' + new URLSearchParams({ q: cat.query, type: 'video' }).toString(), 7000);
+                if (!r.ok) return [];
+                const data = await r.json();
+                return (Array.isArray(data) ? data : []).filter(it => it && it.videoId).map(it => ({
+                    id: it.videoId, titulo: it.title, canal: it.author
+                }));
+            } catch(e) { return []; }
+        }));
+        return [].concat.apply([], respuestas);
+    };
+
+    const buscarProxy = async () => {
+        const searchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(cat.query) + '&sp=EgIQAQ%3D%3D';
+        const proxies = [
+            'https://api.allorigins.win/raw?url=' + encodeURIComponent(searchUrl),
+            'https://corsproxy.io/?' + encodeURIComponent(searchUrl)
+        ];
+        const respuestas = await Promise.all(proxies.map(async proxyUrl => {
+            try {
+                const r = await fetchConTimeout(proxyUrl, 8000);
+                if (!r.ok) return [];
+                const html = await r.text();
+                let m = html.match(/var ytInitialData\s*=\s*(\{[\s\S]*?\});\s*<\/script>/);
+                if (!m) m = html.match(/window\["ytInitialData"\]\s*=\s*(\{[\s\S]*?\});\s*<\/script>/);
+                if (!m) return [];
+                let data;
+                try { data = JSON.parse(m[1]); } catch(e) { return []; }
+                const encontrados = [];
+                const visitar = (obj) => {
+                    if (!obj || typeof obj !== 'object' || encontrados.length >= limite) return;
+                    if (obj.videoRenderer && obj.videoRenderer.videoId) {
+                        const vr = obj.videoRenderer;
+                        encontrados.push({
+                            id: vr.videoId,
+                            titulo: (vr.title && vr.title.runs && vr.title.runs[0]) ? vr.title.runs[0].text : 'Video',
+                            canal: (vr.ownerText && vr.ownerText.runs && vr.ownerText.runs[0]) ? vr.ownerText.runs[0].text : 'YouTube'
+                        });
+                    }
+                    for (const k in obj) {
+                        if (Object.prototype.hasOwnProperty.call(obj, k)) visitar(obj[k]);
+                    }
+                };
+                visitar(data);
+                return encontrados;
+            } catch(e) { return []; }
+        }));
+        return [].concat.apply([], respuestas);
+    };
+
+    const resultados = await Promise.all([buscarYouTube(), buscarPiped(), buscarInvidious(), buscarProxy()]);
+    let videos = normalizarVideosYT([].concat.apply([], resultados));
+    const desdeApi = videos.length >= limite;
+
+    // 4) Relleno curado: primero la lista de la categoría (si existe), luego la música curada.
+    if (videos.length < limite) {
+        const base = (cat.fallback && cat.fallback.length) ? cat.fallback.concat(YT_RANDOM_YT) : YT_RANDOM_YT;
+        const mezcla = base.slice().sort(() => Math.random() - 0.5);
+        const vistos = new Set(videos.map(v => v.id));
+        for (let i = 0; i < mezcla.length && videos.length < limite; i++) {
+            if (vistos.has(mezcla[i].id)) continue;
+            vistos.add(mezcla[i].id);
+            videos.push({
+                id: mezcla[i].id,
+                titulo: escaparTextoFeed(mezcla[i].titulo || 'Video'),
+                canal: escaparTextoFeed(mezcla[i].canal || 'YouTube')
+            });
+        }
+    }
+
+    videos = videos.slice(0, limite);
+    videos._desdeApi = desdeApi;
+    try {
+        if (videos.length) localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), desdeApi: desdeApi, videos: videos }));
+    } catch(e) {}
+    return videos;
+}
+
+let _categoriaToken = 0;
+async function cargarVideosCategoria(catId, forzar) {
+    const cat = CATEGORIAS_FEED.find(c => c.id === catId);
+    if (!cat) {
+        // Categoría desconocida (dato viejo): volver al feed general.
+        try { localStorage.setItem(CATEGORIA_FEED_KEY, 'general'); } catch(e) {}
+        const btnCat = document.getElementById('btnCategoriasFeed');
+        if (btnCat) btnCat.style.display = 'none';
+        if (typeof cargarVideosYTAlAzar === 'function') cargarVideosYTAlAzar();
+        return;
+    }
+    const token = ++_categoriaToken;
+
+    const container = document.getElementById('muroReportes');
+    if (!container) return;
+
+    // Quitar videos aleatorios anteriores (se conservan los posts de usuarios).
+    container.querySelectorAll('.feed-card[data-random]').forEach(card => {
+        if (window._ytPlayers && window._ytPlayers[card.id]) delete window._ytPlayers[card.id];
+        card.remove();
+    });
+    const feedLoader = container.querySelector('.feed-loader');
+    if (feedLoader) feedLoader.remove();
+
+    if (forzar) {
+        try { localStorage.removeItem('pgc_cat_cache_' + cat.id); } catch(e) {}
+    }
+
+    let loader = document.getElementById('catFeedLoader');
+    if (!loader) {
+        loader = document.createElement('div');
+        loader.id = 'catFeedLoader';
+        loader.style.cssText = 'padding:28px 16px;text-align:center;color:#94a3b8;font-weight:700;';
+        container.appendChild(loader);
+    }
+    loader.innerHTML = '<i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Cargando ' + cat.nombre + '...';
+
+    const videos = await buscarVideosCategoria(cat, 50);
+    if (token !== _categoriaToken) return;
+    if (loader) loader.remove();
+
+    videos.forEach(v => agregarVideoYTAlFeed(v));
+
+    if (!videoActualId) {
+        const primera = container.querySelector('.feed-card[data-random]');
+        if (primera) setTimeout(() => reproducirVideo(primera), 350);
+    }
+
+    if (videos.length) {
+        try {
+            notify(videos._desdeApi ? ('✅ ' + videos.length + ' videos de ' + cat.nombre) : '⚠️ Mostrando videos populares');
+        } catch(e) {}
+    }
+}
+
 // Volver al inicio del feed y refrescarlo con videos nuevos al azar
 window.refrescarVideosFeed = () => {
     const muro = document.getElementById('muroReportes');
     if (!muro) return;
+
+    const catFeed = localStorage.getItem(CATEGORIA_FEED_KEY);
+    const enCategoria = catFeed && catFeed !== 'general';
 
     // Quitar los videos aleatorios actuales (los posts de usuarios se conservan)
     muro.querySelectorAll('.feed-card[data-random]').forEach(card => {
@@ -3112,6 +3468,17 @@ window.refrescarVideosFeed = () => {
 
     // Volver al inicio del feed
     muro.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (enCategoria) {
+        // Forzar una búsqueda nueva para la categoría elegida
+        try { localStorage.removeItem('pgc_cat_cache_' + catFeed); } catch(e) {}
+        setTimeout(() => cargarVideosCategoria(catFeed, true), 350);
+        try {
+            const cat = CATEGORIAS_FEED.find(c => c.id === catFeed);
+            notify('🔄 Feed actualizado con nuevos videos de ' + (cat ? cat.nombre : 'tu categoría'));
+        } catch(e) {}
+        return;
+    }
 
     // Cargar videos nuevos
     setTimeout(() => {
@@ -5629,6 +5996,9 @@ style="display:none;">
     <!-- Eliminado: botón redundante "¿Qué estás pensando?" que duplicaba la acción de publicar (ahora manejado por el FAB y su modal) -->
 
     <div id="muroReportes" style="width: 100%; height: 100vh; background: black;"></div>
+    <button id="btnCategoriasFeed" onclick="window.cambiarCategoriaFeed()" style="position:absolute;top:12px;right:12px;z-index:50;display:none;align-items:center;gap:6px;padding:8px 12px;border:none;border-radius:50px;background:rgba(15,23,42,0.75);color:#fff;font-family:Poppins,sans-serif;font-size:0.7rem;font-weight:700;backdrop-filter:blur(8px);cursor:pointer;">
+        <i class="fas fa-layer-group"></i> Categorías
+    </button>
 </div>
 <!-- PANTALLA 3: MENSAJES -->
 <div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #f8fafc; padding-bottom: 65px;">
@@ -6857,15 +7227,22 @@ let synth = window.speechSynthesis;
 
 function speakText(text) {
     if (typeof AndroidNative !== 'undefined' && AndroidNative.speakTextNative) {
-        console.log("Usando motor nativo");
-        AndroidNative.speakTextNative(text);
-    } else {
-        console.log("Usando motor del navegador");
+        try {
+            if (AndroidNative.speakTextNative(text)) {
+                console.log("Usando motor nativo");
+                return;
+            }
+        } catch(e) {
+            console.log("Error TTS nativo: " + e);
+        }
+    }
+    console.log("Usando motor del navegador");
+    try {
         window.speechSynthesis.cancel();
         const msg = new SpeechSynthesisUtterance(text);
         msg.lang = 'en-US';
         window.speechSynthesis.speak(msg);
-    }
+    } catch(e) {}
 }
 
 // 5. TRUCO EXTRA: Precargar las voces en Android
@@ -6935,7 +7312,11 @@ function showQuestion() {
         feedback.innerHTML = '';
     }
     const btnCheck = document.getElementById('btnCheckLesson');
-    if (btnCheck) btnCheck.style.display = 'block';
+    if (btnCheck) {
+        btnCheck.style.display = 'block';
+        btnCheck.textContent = 'COMPROBAR';
+        btnCheck.disabled = false;
+    }
     const btnNext = document.getElementById('btnNextLesson');
     if (btnNext) btnNext.style.display = 'none';
 
@@ -6946,6 +7327,7 @@ function abrirLeccionIngles() {
     currentQIndex = 0;
     lessonAnswered = false;
     lessonTranslationVisible = false;
+    window._englishAdPending = false;
     showQuestion();
     document.getElementById('modalLesson').style.display = 'flex';
 }
@@ -11643,7 +12025,27 @@ window.nextQuestion = () => {
         notify(`🎉 ¡Nivel ${currentQIndex / 4} completado!`);
     }
 
+    if (currentQIndex === 12 && typeof AndroidNative !== 'undefined') {
+        window._englishAdPending = true;
+        const btnCheck = document.getElementById('btnCheckLesson');
+        const btnNext = document.getElementById('btnNextLesson');
+        if (btnCheck) btnCheck.style.display = 'none';
+        if (btnNext) btnNext.style.display = 'none';
+        notify("📺 Mira el anuncio para continuar al nivel 4");
+        window.location.href = 'go:ad-english';
+        return;
+    }
+
     showQuestion();
+};
+
+window.onEnglishAdComplete = function() {
+    if (!window._englishAdPending) return;
+    window._englishAdPending = false;
+    const modal = document.getElementById('modalLesson');
+    if (modal && modal.style.display === 'flex' && currentQIndex === 12) {
+        showQuestion();
+    }
 };
 
 window.checkAnswer = () => {
@@ -11672,10 +12074,31 @@ window.checkAnswer = () => {
         try { window.playSound('win'); } catch(e){}
         speakText(q.full || q.en);
     } else {
+        lessonAnswered = false;
+        input.disabled = false;
         input.style.borderColor = '#ef4444';
         feedback.innerHTML = '❌ Incorrecto. Intenta de nuevo.';
         feedback.style.color = '#ef4444';
         feedback.style.display = 'block';
+
+        const btnCheck = document.getElementById('btnCheckLesson');
+        if (btnCheck) {
+            btnCheck.style.display = 'block';
+            btnCheck.textContent = 'REINTENTAR';
+            btnCheck.disabled = false;
+        }
+        const btnNext = document.getElementById('btnNextLesson');
+        if (btnNext) btnNext.style.display = 'none';
+
+        lessonTranslationVisible = false;
+        const trans = document.getElementById('lessonTranslation');
+        if (trans) trans.style.display = 'none';
+        const btnTrans = document.getElementById('btnVerTraduccion');
+        if (btnTrans) btnTrans.innerHTML = '👁️ Ver traducción al español';
+
+        setTimeout(() => {
+            try { input.focus(); input.select(); } catch(e) {}
+        }, 50);
         try { window.playSound('gameover'); } catch(e){}
     }
 };
