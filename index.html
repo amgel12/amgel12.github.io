@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache -->
+<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -2862,7 +2862,7 @@ function cargarMuro() {
     // 🎲 Añadir videos de YouTube: categoría elegida o música aleatoria.
     const catFeed = localStorage.getItem(CATEGORIA_FEED_KEY);
     const btnCat = document.getElementById('btnCategoriasFeed');
-    if (btnCat) btnCat.style.display = (catFeed && catFeed !== 'general') ? 'flex' : 'none';
+    if (btnCat) btnCat.style.display = 'flex';
     if (catFeed && catFeed !== 'general') {
         setTimeout(() => cargarVideosCategoria(catFeed), 600);
     } else {
@@ -3114,21 +3114,21 @@ function cargarVideosYTAlAzar() {
 
 // ── CATEGORÍAS DEL FEED (onboarding para usuarios nuevos) ───────────────
 const CATEGORIAS_FEED = [
-    { id: 'futbol',      nombre: 'Fútbol',      emoji: '⚽', query: 'futbol highlights goles' },
-    { id: 'memes',       nombre: 'Memes',       emoji: '😂', query: 'memes graciosos' },
-    { id: 'risa',        nombre: 'Risa',        emoji: '🤣', query: 'videos graciosos para reir' },
-    { id: 'peliculas',   nombre: 'Películas',   emoji: '🎬', query: 'peliculas trailers español' },
-    { id: 'novelas',     nombre: 'Novelas',     emoji: '📺', query: 'novelas resumen español' },
-    { id: 'cocina',      nombre: 'Cocina',      emoji: '🍳', query: 'recetas de cocina faciles' },
-    { id: 'musica',      nombre: 'Música',      emoji: '🎵', query: 'musica exitos 2026' },
-    { id: 'deportes',    nombre: 'Deportes',    emoji: '🏆', query: 'deportes highlights' },
-    { id: 'noticias',    nombre: 'Noticias',    emoji: '📰', query: 'noticias de hoy' },
-    { id: 'tecnologia',  nombre: 'Tecnología',  emoji: '💻', query: 'tecnologia gadgets review' },
-    { id: 'ciencia',     nombre: 'Ciencia',     emoji: '🔬', query: 'ciencia documental' },
-    { id: 'animales',    nombre: 'Animales',    emoji: '🐾', query: 'animales graciosos' },
-    { id: 'viajes',      nombre: 'Viajes',      emoji: '✈️', query: 'viajes lugares turisticos' },
-    { id: 'videojuegos', nombre: 'Videojuegos', emoji: '🎮', query: 'gameplay videojuegos' },
-    { id: 'aprender',    nombre: 'Aprender',    emoji: '📚', query: 'aprender ingles español' }
+    { id: 'futbol',      nombre: 'Fútbol',      emoji: '⚽', query: 'futbol highlights goles',        queries: ['futbol highlights goles', 'futbol resumen español', 'mejores goles futbol 2026'] },
+    { id: 'memes',       nombre: 'Memes',       emoji: '😂', query: 'memes graciosos',                queries: ['memes graciosos', 'funny memes compilation', 'memes 2026'] },
+    { id: 'risa',        nombre: 'Risa',        emoji: '🤣', query: 'videos graciosos para reir',     queries: ['videos graciosos para reir', 'try not to laugh', 'risa compilation'] },
+    { id: 'peliculas',   nombre: 'Películas',   emoji: '🎬', query: 'peliculas trailers español',     queries: ['peliculas trailers español', 'trailers de peliculas 2026', 'peliculas completas español'] },
+    { id: 'novelas',     nombre: 'Novelas',     emoji: '📺', query: 'novelas resumen español',        queries: ['novelas resumen español', 'novelas turcas resumen', 'telenovelas capitulos'] },
+    { id: 'cocina',      nombre: 'Cocina',      emoji: '🍳', query: 'recetas de cocina faciles',      queries: ['recetas de cocina faciles', 'recetas rapidas y economicas', 'postres faciles recetas'] },
+    { id: 'musica',      nombre: 'Música',      emoji: '🎵', query: 'musica exitos 2026',             queries: ['musica exitos 2026', 'musica latina exitos', 'canciones populares 2026'] },
+    { id: 'deportes',    nombre: 'Deportes',    emoji: '🏆', query: 'deportes highlights',            queries: ['deportes highlights', 'resumen deportes hoy', 'mejores jugadas deportes'] },
+    { id: 'noticias',    nombre: 'Noticias',    emoji: '📰', query: 'noticias de hoy',                queries: ['noticias de hoy', 'noticias ultima hora', 'noticias internacionales hoy'] },
+    { id: 'tecnologia',  nombre: 'Tecnología',  emoji: '💻', query: 'tecnologia gadgets review',      queries: ['tecnologia gadgets review', 'tecnologia 2026', 'review celulares tecnologia'] },
+    { id: 'ciencia',     nombre: 'Ciencia',     emoji: '🔬', query: 'ciencia documental',             queries: ['ciencia documental', 'documentales ciencia español', 'ciencia curiosidades'] },
+    { id: 'animales',    nombre: 'Animales',    emoji: '🐾', query: 'animales graciosos',             queries: ['animales graciosos', 'animales divertidos compilation', 'mascotas graciosas'] },
+    { id: 'viajes',      nombre: 'Viajes',      emoji: '✈️', query: 'viajes lugares turisticos',      queries: ['viajes lugares turisticos', 'viajes documental', 'mejores lugares para viajar'] },
+    { id: 'videojuegos', nombre: 'Videojuegos', emoji: '🎮', query: 'gameplay videojuegos',           queries: ['gameplay videojuegos', 'videojuegos 2026', 'gameplay español'] },
+    { id: 'aprender',    nombre: 'Aprender',    emoji: '📚', query: 'aprender ingles español',        queries: ['aprender ingles español', 'cursos gratis español', 'aprender rapido'] }
 ];
 
 function esUsuarioNuevoFeed() {
@@ -3150,7 +3150,7 @@ function esUsuarioNuevoFeed() {
     return !señales.some(k => { try { return !!localStorage.getItem(k); } catch(e) { return false; } });
 }
 
-function mostrarSelectorCategoriasFeed() {
+function mostrarSelectorCategoriasFeed(permitirCancelar) {
     let overlay = document.getElementById('selectorCategoriasFeed');
     if (!overlay) {
         overlay = document.createElement('div');
@@ -3161,11 +3161,12 @@ function mostrarSelectorCategoriasFeed() {
                 <div style="font-size:2.6rem;line-height:1;margin-bottom:8px;">🎬</div>
                 <h2 style="margin:0;font-size:1.45rem;font-weight:800;">Elige una categoría</h2>
                 <p style="margin:8px auto 0;max-width:320px;font-size:0.82rem;color:#94a3b8;line-height:1.5;">
-                    Selecciona lo que quieres ver. Prepararemos <b style="color:#38bdf8;">50 videos</b> de tu categoría favorita.
+                    Selecciona lo que quieres ver. Prepararemos <b style="color:#38bdf8;">hasta 50 videos</b> de tu categoría favorita.
                 </p>
             </div>
             <div id="selectorCategoriasGrid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:520px;width:100%;margin:0 auto;"></div>
-            <p style="text-align:center;color:#64748b;font-size:0.68rem;margin:18px 0 4px;">Podrás cambiar de categoría más tarde desde el feed.</p>
+            <button type="button" id="cancelarCategoriasFeed" style="display:none;margin:16px auto 0;padding:10px 18px;border:1px solid rgba(148,163,184,0.35);border-radius:50px;background:transparent;color:#94a3b8;font-family:inherit;font-size:0.8rem;font-weight:700;cursor:pointer;">Cancelar</button>
+            <p style="text-align:center;color:#64748b;font-size:0.68rem;margin:12px 0 4px;">Podrás cambiar de categoría más tarde desde el feed.</p>
         `;
         document.body.appendChild(overlay);
         const grid = overlay.querySelector('#selectorCategoriasGrid');
@@ -3179,7 +3180,15 @@ function mostrarSelectorCategoriasFeed() {
             btn.onclick = () => seleccionarCategoriaFeed(cat.id);
             grid.appendChild(btn);
         });
+        const cancelar = overlay.querySelector('#cancelarCategoriasFeed');
+        if (cancelar) cancelar.onclick = () => {
+            overlay.style.display = 'none';
+            const btnCat = document.getElementById('btnCategoriasFeed');
+            if (btnCat) btnCat.style.display = 'flex';
+        };
     }
+    const cancelar = overlay.querySelector('#cancelarCategoriasFeed');
+    if (cancelar) cancelar.style.display = permitirCancelar ? 'block' : 'none';
     overlay.style.display = 'flex';
 }
 
@@ -3202,7 +3211,7 @@ function seleccionarCategoriaFeed(catId) {
         const muro = document.getElementById('muroReportes');
         if (muro) muro.scrollTo({ top: 0, behavior: 'smooth' });
         try { notify('🎬 Cargando ' + cat.nombre + '...'); } catch(e) {}
-        cargarVideosCategoria(catId, true);
+        cargarVideosCategoria(catId);
         return;
     }
 
@@ -3218,7 +3227,7 @@ window.cambiarCategoriaFeed = () => {
     const btnCat = document.getElementById('btnCategoriasFeed');
     if (btnCat) btnCat.style.display = 'none';
     if (typeof detenerVideoMuro === 'function') detenerVideoMuro();
-    mostrarSelectorCategoriasFeed();
+    mostrarSelectorCategoriasFeed(true);
 };
 
 // Helper de red con timeout (para no colgar el feed si una API no responde).
@@ -3261,7 +3270,7 @@ function normalizarVideosYT(items) {
 }
 
 async function buscarVideosCategoria(cat, limite) {
-    const cacheKey = 'pgc_cat_cache_' + cat.id;
+    const cacheKey = 'pgc_cat_cache_v2_' + cat.id;
     try {
         const cache = JSON.parse(localStorage.getItem(cacheKey) || 'null');
         if (cache && Array.isArray(cache.videos) && cache.videos.length >= limite && (Date.now() - (cache.ts || 0) < 6 * 60 * 60 * 1000)) {
@@ -3271,116 +3280,35 @@ async function buscarVideosCategoria(cat, limite) {
         }
     } catch(e) {}
 
-    // Las tres fuentes se consultan en paralelo para no hacer esperar al usuario.
-    const buscarYouTube = async () => {
-        try {
-            const apiKey = (typeof firebaseConfig !== 'undefined' && firebaseConfig && firebaseConfig.apiKey) ? firebaseConfig.apiKey : '';
-            if (!apiKey) return [];
-            const url = 'https://www.googleapis.com/youtube/v3/search?' + new URLSearchParams({
-                part: 'snippet', type: 'video', maxResults: String(limite),
-                q: cat.query, key: apiKey, videoEmbeddable: 'true', safeSearch: 'moderate'
-            }).toString();
-            const r = await fetchConTimeout(url, 7000);
-            if (!r.ok) return [];
-            const data = await r.json();
-            return (data.items || []).map(it => ({
-                id: it.id && it.id.videoId,
-                titulo: it.snippet && it.snippet.title,
-                canal: it.snippet && it.snippet.channelTitle
-            }));
-        } catch(e) { return []; }
-    };
-
-    const buscarPiped = async () => {
-        const instancias = ['https://pipedapi.kavin.rocks', 'https://pipedapi.adminforge.de'];
-        const respuestas = await Promise.all(instancias.map(async base => {
+    // Fuente principal: Piped (2 instancias). Cada instancia consulta varias
+    // variantes de búsqueda en secuencia; las instancias corren en paralelo.
+    const consultas = (cat.queries && cat.queries.length) ? cat.queries : [cat.query];
+    const instancias = ['https://api.piped.private.coffee', 'https://pipedapi.ducks.party'];
+    const buscarEnInstancia = async (base) => {
+        const encontrados = [];
+        for (const q of consultas) {
             try {
-                const r = await fetchConTimeout(base + '/search?' + new URLSearchParams({ q: cat.query, filter: 'videos' }).toString(), 7000);
-                if (!r.ok) return [];
+                const r = await fetchConTimeout(base + '/search?' + new URLSearchParams({ q, filter: 'videos' }).toString(), 7000);
+                if (!r.ok) continue;
                 const data = await r.json();
                 const items = Array.isArray(data) ? data : (data.items || []);
-                return items.filter(it => it && it.type === 'stream' && it.url).map(it => {
+                items.filter(it => it && it.type === 'stream' && it.url).forEach(it => {
                     const m = String(it.url).match(/[?&]v=([^&]+)/);
-                    return m ? { id: m[1], titulo: it.title, canal: it.uploaderName } : null;
-                }).filter(Boolean);
-            } catch(e) { return []; }
-        }));
-        return [].concat.apply([], respuestas);
-    };
-
-    const buscarInvidious = async () => {
-        const instancias = ['https://inv.nadeko.net', 'https://yewtu.be'];
-        const respuestas = await Promise.all(instancias.map(async base => {
-            try {
-                const r = await fetchConTimeout(base + '/api/v1/search?' + new URLSearchParams({ q: cat.query, type: 'video' }).toString(), 7000);
-                if (!r.ok) return [];
-                const data = await r.json();
-                return (Array.isArray(data) ? data : []).filter(it => it && it.videoId).map(it => ({
-                    id: it.videoId, titulo: it.title, canal: it.author
-                }));
-            } catch(e) { return []; }
-        }));
-        return [].concat.apply([], respuestas);
-    };
-
-    const buscarProxy = async () => {
-        const searchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(cat.query) + '&sp=EgIQAQ%3D%3D';
-        const proxies = [
-            'https://api.allorigins.win/raw?url=' + encodeURIComponent(searchUrl),
-            'https://corsproxy.io/?' + encodeURIComponent(searchUrl)
-        ];
-        const respuestas = await Promise.all(proxies.map(async proxyUrl => {
-            try {
-                const r = await fetchConTimeout(proxyUrl, 8000);
-                if (!r.ok) return [];
-                const html = await r.text();
-                let m = html.match(/var ytInitialData\s*=\s*(\{[\s\S]*?\});\s*<\/script>/);
-                if (!m) m = html.match(/window\["ytInitialData"\]\s*=\s*(\{[\s\S]*?\});\s*<\/script>/);
-                if (!m) return [];
-                let data;
-                try { data = JSON.parse(m[1]); } catch(e) { return []; }
-                const encontrados = [];
-                const visitar = (obj) => {
-                    if (!obj || typeof obj !== 'object' || encontrados.length >= limite) return;
-                    if (obj.videoRenderer && obj.videoRenderer.videoId) {
-                        const vr = obj.videoRenderer;
-                        encontrados.push({
-                            id: vr.videoId,
-                            titulo: (vr.title && vr.title.runs && vr.title.runs[0]) ? vr.title.runs[0].text : 'Video',
-                            canal: (vr.ownerText && vr.ownerText.runs && vr.ownerText.runs[0]) ? vr.ownerText.runs[0].text : 'YouTube'
-                        });
-                    }
-                    for (const k in obj) {
-                        if (Object.prototype.hasOwnProperty.call(obj, k)) visitar(obj[k]);
-                    }
-                };
-                visitar(data);
-                return encontrados;
-            } catch(e) { return []; }
-        }));
-        return [].concat.apply([], respuestas);
-    };
-
-    const resultados = await Promise.all([buscarYouTube(), buscarPiped(), buscarInvidious(), buscarProxy()]);
-    let videos = normalizarVideosYT([].concat.apply([], resultados));
-    const desdeApi = videos.length >= limite;
-
-    // 4) Relleno curado: primero la lista de la categoría (si existe), luego la música curada.
-    if (videos.length < limite) {
-        const base = (cat.fallback && cat.fallback.length) ? cat.fallback.concat(YT_RANDOM_YT) : YT_RANDOM_YT;
-        const mezcla = base.slice().sort(() => Math.random() - 0.5);
-        const vistos = new Set(videos.map(v => v.id));
-        for (let i = 0; i < mezcla.length && videos.length < limite; i++) {
-            if (vistos.has(mezcla[i].id)) continue;
-            vistos.add(mezcla[i].id);
-            videos.push({
-                id: mezcla[i].id,
-                titulo: escaparTextoFeed(mezcla[i].titulo || 'Video'),
-                canal: escaparTextoFeed(mezcla[i].canal || 'YouTube')
-            });
+                    if (m) encontrados.push({ id: m[1], titulo: it.title, canal: it.uploaderName });
+                });
+            } catch(e) {
+                // Si la instancia falla, no seguir con las demás consultas.
+                break;
+            }
         }
-    }
+        return encontrados;
+    };
+    const respuestas = await Promise.all(instancias.map(buscarEnInstancia));
+    let videos = normalizarVideosYT([].concat.apply([], respuestas));
+    const desdeApi = videos.length > 0;
 
+    // Sin relleno: si la categoría no devuelve videos, se muestra un aviso
+    // y el usuario puede elegir otra categoría. Nunca se mezcla con música.
     videos = videos.slice(0, limite);
     videos._desdeApi = desdeApi;
     try {
@@ -3396,7 +3324,7 @@ async function cargarVideosCategoria(catId, forzar) {
         // Categoría desconocida (dato viejo): volver al feed general.
         try { localStorage.setItem(CATEGORIA_FEED_KEY, 'general'); } catch(e) {}
         const btnCat = document.getElementById('btnCategoriasFeed');
-        if (btnCat) btnCat.style.display = 'none';
+        if (btnCat) btnCat.style.display = 'flex';
         if (typeof cargarVideosYTAlAzar === 'function') cargarVideosYTAlAzar();
         return;
     }
@@ -3410,11 +3338,12 @@ async function cargarVideosCategoria(catId, forzar) {
         if (window._ytPlayers && window._ytPlayers[card.id]) delete window._ytPlayers[card.id];
         card.remove();
     });
+    container.querySelectorAll('.cat-feed-empty').forEach(el => el.remove());
     const feedLoader = container.querySelector('.feed-loader');
     if (feedLoader) feedLoader.remove();
 
     if (forzar) {
-        try { localStorage.removeItem('pgc_cat_cache_' + cat.id); } catch(e) {}
+        try { localStorage.removeItem('pgc_cat_cache_v2_' + cat.id); } catch(e) {}
     }
 
     let loader = document.getElementById('catFeedLoader');
@@ -3432,15 +3361,21 @@ async function cargarVideosCategoria(catId, forzar) {
 
     videos.forEach(v => agregarVideoYTAlFeed(v));
 
-    if (!videoActualId) {
-        const primera = container.querySelector('.feed-card[data-random]');
-        if (primera) setTimeout(() => reproducirVideo(primera), 350);
-    }
-
-    if (videos.length) {
-        try {
-            notify(videos._desdeApi ? ('✅ ' + videos.length + ' videos de ' + cat.nombre) : '⚠️ Mostrando videos populares');
-        } catch(e) {}
+    if (!videos.length) {
+        const vacio = document.createElement('div');
+        vacio.className = 'cat-feed-empty';
+        vacio.style.cssText = 'padding:40px 20px;text-align:center;color:#94a3b8;font-family:Poppins,sans-serif;';
+        vacio.innerHTML = '<div style="font-size:2rem;margin-bottom:10px;">🎬</div>' +
+            '<div style="font-weight:800;color:#e2e8f0;margin-bottom:6px;">No hay videos de ' + cat.nombre + '</div>' +
+            '<div style="font-size:0.8rem;margin-bottom:16px;">Prueba con otra categoría.</div>' +
+            '<button type="button" onclick="window.cambiarCategoriaFeed()" style="padding:10px 18px;border:none;border-radius:50px;background:#38bdf8;color:#0f172a;font-family:inherit;font-weight:800;cursor:pointer;">Cambiar categoría</button>';
+        container.appendChild(vacio);
+    } else {
+        if (!videoActualId) {
+            const primera = container.querySelector('.feed-card[data-random]');
+            if (primera) setTimeout(() => reproducirVideo(primera), 350);
+        }
+        try { notify('✅ ' + videos.length + ' videos de ' + cat.nombre); } catch(e) {}
     }
 }
 
@@ -3471,7 +3406,7 @@ window.refrescarVideosFeed = () => {
 
     if (enCategoria) {
         // Forzar una búsqueda nueva para la categoría elegida
-        try { localStorage.removeItem('pgc_cat_cache_' + catFeed); } catch(e) {}
+        try { localStorage.removeItem('pgc_cat_cache_v2_' + catFeed); } catch(e) {}
         setTimeout(() => cargarVideosCategoria(catFeed, true), 350);
         try {
             const cat = CATEGORIAS_FEED.find(c => c.id === catFeed);
@@ -4851,6 +4786,8 @@ Cerrar
             Producto de <b id="compraProdVendedor" style="color:#334155;">...</b>
         </p>
 
+        <div id="compraProdPreview" style="display:none; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-bottom:14px; padding:2px;"></div>
+
         <div style="background:#f0fdf4; border:2px solid #10b981; border-radius:14px; padding:14px; margin-bottom:14px;">
             <div style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">Precio</div>
             <div id="compraProdPrecio" style="font-size:1.5rem; font-weight:900; color:#059669;">0 PTS</div>
@@ -5996,8 +5933,8 @@ style="display:none;">
     <!-- Eliminado: botón redundante "¿Qué estás pensando?" que duplicaba la acción de publicar (ahora manejado por el FAB y su modal) -->
 
     <div id="muroReportes" style="width: 100%; height: 100vh; background: black;"></div>
-    <button id="btnCategoriasFeed" onclick="window.cambiarCategoriaFeed()" style="position:absolute;top:12px;right:12px;z-index:50;display:none;align-items:center;gap:6px;padding:8px 12px;border:none;border-radius:50px;background:rgba(15,23,42,0.75);color:#fff;font-family:Poppins,sans-serif;font-size:0.7rem;font-weight:700;backdrop-filter:blur(8px);cursor:pointer;">
-        <i class="fas fa-layer-group"></i> Categorías
+    <button id="btnCategoriasFeed" onclick="window.cambiarCategoriaFeed()" style="position:absolute;top:calc(70px + env(safe-area-inset-top, 0px) + 10px);right:12px;z-index:9999;display:none;align-items:center;gap:6px;padding:10px 14px;border:1px solid rgba(56,189,248,0.65);border-radius:50px;background:rgba(15,23,42,0.92);color:#fff;font-family:Poppins,sans-serif;font-size:0.75rem;font-weight:800;backdrop-filter:blur(8px);box-shadow:0 4px 14px rgba(0,0,0,0.5);cursor:pointer;pointer-events:auto;">
+        <i class="fas fa-layer-group" style="color:#38bdf8;"></i> Cambiar categoría
     </button>
 </div>
 <!-- PANTALLA 3: MENSAJES -->
@@ -7196,30 +7133,30 @@ var englishLessons = [
 // --- DATOS NUEVA LECCIÓN: 5 NIVELES, ORACIONES DE 4-5 PALABRAS ---
 const englishLessonData = [
     // NIVEL 1
-    { nivel: 1, en: "I ___ a student.", answer: "am", full: "I am a student.", es: "Yo soy un estudiante." },
-    { nivel: 1, en: "She ___ to school.", answer: "goes", full: "She goes to school.", es: "Ella va a la escuela." },
-    { nivel: 1, en: "They ___ happy today.", answer: "are", full: "They are happy today.", es: "Ellos están felices hoy." },
-    { nivel: 1, en: "We ___ pizza every Friday.", answer: "eat", full: "We eat pizza every Friday.", es: "Nosotros comemos pizza cada viernes." },
+    { nivel: 1, en: "I ___ a student.", answer: "am", palabraEs: "soy", full: "I am a student.", es: "Yo soy un estudiante." },
+    { nivel: 1, en: "She ___ to school.", answer: "goes", palabraEs: "va", full: "She goes to school.", es: "Ella va a la escuela." },
+    { nivel: 1, en: "They ___ happy today.", answer: "are", palabraEs: "están", full: "They are happy today.", es: "Ellos están felices hoy." },
+    { nivel: 1, en: "We ___ pizza every Friday.", answer: "eat", palabraEs: "comemos", full: "We eat pizza every Friday.", es: "Nosotros comemos pizza cada viernes." },
     // NIVEL 2
-    { nivel: 2, en: "He ___ a new car.", answer: "has", full: "He has a new car.", es: "Él tiene un coche nuevo." },
-    { nivel: 2, en: "I ___ coffee every morning.", answer: "drink", full: "I drink coffee every morning.", es: "Yo bebo café cada mañana." },
-    { nivel: 2, en: "The cat ___ softly.", answer: "sleeps", full: "The cat sleeps softly.", es: "El gato duerme suavemente." },
-    { nivel: 2, en: "We ___ to the park.", answer: "go", full: "We go to the park.", es: "Nosotros vamos al parque." },
+    { nivel: 2, en: "He ___ a new car.", answer: "has", palabraEs: "tiene", full: "He has a new car.", es: "Él tiene un coche nuevo." },
+    { nivel: 2, en: "I ___ coffee every morning.", answer: "drink", palabraEs: "bebo", full: "I drink coffee every morning.", es: "Yo bebo café cada mañana." },
+    { nivel: 2, en: "The cat ___ softly.", answer: "sleeps", palabraEs: "duerme", full: "The cat sleeps softly.", es: "El gato duerme suavemente." },
+    { nivel: 2, en: "We ___ to the park.", answer: "go", palabraEs: "vamos", full: "We go to the park.", es: "Nosotros vamos al parque." },
     // NIVEL 3
-    { nivel: 3, en: "She ___ a beautiful song.", answer: "sings", full: "She sings a beautiful song.", es: "Ella canta una canción hermosa." },
-    { nivel: 3, en: "They ___ football on Sundays.", answer: "play", full: "They play football on Sundays.", es: "Ellos juegan fútbol los domingos." },
-    { nivel: 3, en: "I ___ my homework daily.", answer: "do", full: "I do my homework daily.", es: "Yo hago mi tarea diariamente." },
-    { nivel: 3, en: "He ___ very fast.", answer: "runs", full: "He runs very fast.", es: "Él corre muy rápido." },
+    { nivel: 3, en: "She ___ a beautiful song.", answer: "sings", palabraEs: "canta", full: "She sings a beautiful song.", es: "Ella canta una canción hermosa." },
+    { nivel: 3, en: "They ___ football on Sundays.", answer: "play", palabraEs: "juegan", full: "They play football on Sundays.", es: "Ellos juegan fútbol los domingos." },
+    { nivel: 3, en: "I ___ my homework daily.", answer: "do", palabraEs: "hago", full: "I do my homework daily.", es: "Yo hago mi tarea diariamente." },
+    { nivel: 3, en: "He ___ very fast.", answer: "runs", palabraEs: "corre", full: "He runs very fast.", es: "Él corre muy rápido." },
     // NIVEL 4
-    { nivel: 4, en: "We ___ a movie yesterday.", answer: "watched", full: "We watched a movie yesterday.", es: "Nosotros vimos una película ayer." },
-    { nivel: 4, en: "She ___ her keys again.", answer: "lost", full: "She lost her keys again.", es: "Ella perdió sus llaves otra vez." },
-    { nivel: 4, en: "They ___ a new house.", answer: "bought", full: "They bought a new house.", es: "Ellos compraron una casa nueva." },
-    { nivel: 4, en: "I ___ him yesterday.", answer: "saw", full: "I saw him yesterday.", es: "Yo lo vi ayer." },
+    { nivel: 4, en: "We ___ a movie yesterday.", answer: "watched", palabraEs: "vimos", full: "We watched a movie yesterday.", es: "Nosotros vimos una película ayer." },
+    { nivel: 4, en: "She ___ her keys again.", answer: "lost", palabraEs: "perdió", full: "She lost her keys again.", es: "Ella perdió sus llaves otra vez." },
+    { nivel: 4, en: "They ___ a new house.", answer: "bought", palabraEs: "compraron", full: "They bought a new house.", es: "Ellos compraron una casa nueva." },
+    { nivel: 4, en: "I ___ him yesterday.", answer: "saw", palabraEs: "vi", full: "I saw him yesterday.", es: "Yo lo vi ayer." },
     // NIVEL 5
-    { nivel: 5, en: "She ___ finished her work.", answer: "has", full: "She has finished her work.", es: "Ella ha terminado su trabajo." },
-    { nivel: 5, en: "They ___ be here soon.", answer: "will", full: "They will be here soon.", es: "Ellos estarán aquí pronto." },
-    { nivel: 5, en: "I ___ never seen it.", answer: "have", full: "I have never seen it.", es: "Yo nunca lo he visto." },
-    { nivel: 5, en: "We ___ going to travel.", answer: "are", full: "We are going to travel.", es: "Nosotros vamos a viajar." }
+    { nivel: 5, en: "She ___ finished her work.", answer: "has", palabraEs: "ha", full: "She has finished her work.", es: "Ella ha terminado su trabajo." },
+    { nivel: 5, en: "They ___ be here soon.", answer: "will", palabraEs: "auxiliar de futuro (estarán)", full: "They will be here soon.", es: "Ellos estarán aquí pronto." },
+    { nivel: 5, en: "I ___ never seen it.", answer: "have", palabraEs: "he", full: "I have never seen it.", es: "Yo nunca lo he visto." },
+    { nivel: 5, en: "We ___ going to travel.", answer: "are", palabraEs: "vamos (parte de 'are going to')", full: "We are going to travel.", es: "Nosotros vamos a viajar." }
 ];
 
 // Variable global para la voz
@@ -12077,7 +12014,8 @@ window.checkAnswer = () => {
         lessonAnswered = false;
         input.disabled = false;
         input.style.borderColor = '#ef4444';
-        feedback.innerHTML = '❌ Incorrecto. Intenta de nuevo.';
+        const palabraEs = q.palabraEs ? ` y en español es <b>${escapeHtml(q.palabraEs)}</b>` : '';
+        feedback.innerHTML = `❌ Incorrecto.<br><span style="font-size:0.9rem;">La palabra correcta es <b>${escapeHtml(q.answer)}</b>${palabraEs}.</span><br><span style="font-size:0.8rem; color:#64748b; font-weight:600;">${escapeHtml(q.full)} — ${escapeHtml(q.es)}</span>`;
         feedback.style.color = '#ef4444';
         feedback.style.display = 'block';
 
@@ -12742,10 +12680,36 @@ window.abrirCompraProducto = (code) => {
     });
 };
 
+function renderizarPreviewProducto(info) {
+    const items = itemsDeEnlace(info);
+    return items.map((it, i) => {
+        const esCarpeta = it.tipo === 'c';
+        const thumb = esCarpeta ? '' : `https://drive.google.com/thumbnail?id=${encodeURIComponent(it.id)}&sz=w640`;
+        return `
+        <div style="position:relative; width:100%; border-radius:14px; overflow:hidden; background:#0f172a; border:1px solid #334155; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center;">
+            ${esCarpeta
+                ? `<div style="font-size:2.6rem;">📁</div>`
+                : `<img src="${thumb}" alt="Vista previa ${i + 1}" style="width:100%; height:100%; object-fit:cover; opacity:0.82;" onerror="this.style.display='none'; var f=this.parentElement.querySelector('.prod-preview-fallback'); if(f) f.style.display='flex';">
+                   <div class="prod-preview-fallback" style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; font-size:2.6rem;">🎬</div>`}
+            <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(15,23,42,0.10), rgba(15,23,42,0.72)); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+                <div style="font-size:2rem; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));">🔒</div>
+                <div style="background:rgba(15,23,42,0.88); color:#fbbf24; font-size:0.66rem; font-weight:800; padding:3px 10px; border-radius:50px; border:1px solid rgba(251,191,36,0.55);">
+                    ${esCarpeta ? 'Carpeta bloqueada' : 'Video bloqueado'}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
 function mostrarModalCompraProducto(info) {
     document.getElementById('compraProdVendedor').textContent = '...';
     document.getElementById('compraProdPrecio').textContent = info.precio + ' PTS';
     const items = itemsDeEnlace(info);
+    const previewEl = document.getElementById('compraProdPreview');
+    if (previewEl) {
+        previewEl.innerHTML = renderizarPreviewProducto(info);
+        previewEl.style.display = items.length ? 'grid' : 'none';
+    }
     const cantEl = document.getElementById('compraProdCantidad');
     if (cantEl) cantEl.textContent = items.length > 1 ? '📦 ' + items.length + ' productos en este enlace' : '';
     const aviso = document.getElementById('compraProdAviso');
@@ -19848,7 +19812,7 @@ window.validarLeccionIngles = function () {
         resultado.style.color = '#16a34a';
         marcarMisionCompletada('mision_ingles_1', 5);
     } else {
-        resultado.innerHTML = '❌ Respuesta incorrecta. Intenta otra vez';
+        resultado.innerHTML = '❌ Incorrecto. La palabra correcta es <b>am</b> y en español es <b>soy</b>.<br><span style="font-size:0.85rem; color:#64748b;">I am a student. — Yo soy un estudiante.</span>';
         resultado.style.color = '#dc2626';
     }
 };
@@ -19933,7 +19897,30 @@ function renderizarMisionesAprender() {
             </div>
             <div class="mision-reward">${done ? '✓ Listo' : '+' + m.recompensa + ' pts'}</div>
         </div>`;
-    }).join('');
+    }).join('') + `
+        <button onclick="window.abrirModalTareas()" style="
+            width: 100%;
+            margin-top: 18px;
+            padding: 16px;
+            border: 2px solid #fbbf24;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 45%, #f59e0b 100%);
+            color: #fff8e1;
+            font-family: Poppins, sans-serif;
+            font-size: 1rem;
+            font-weight: 900;
+            letter-spacing: 0.3px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.45);
+            box-shadow: 0 8px 24px rgba(239,68,68,0.4), 0 0 18px rgba(251,191,36,0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        ">
+            ⭐ Más mis misiones
+        </button>
+    `;
 }
 
 function marcarMisionCompletada(clave, recompensa = 5) {
