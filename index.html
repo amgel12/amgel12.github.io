@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado -->
+<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20 -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -4128,17 +4128,7 @@ Cerrar
             </div>
 
             <div id="lessonInputArea" style="display:flex; flex-direction:column; gap:10px;">
-                <input id="lessonInput" type="text" placeholder="Escribe la palabra que falta" autocomplete="off" autocapitalize="none" spellcheck="false" style="
-                    width:100%;
-                    padding:14px;
-                    border-radius:12px;
-                    border:1.5px solid #d1d5db;
-                    font-size:1rem;
-                    outline:none;
-                    box-sizing:border-box;
-                    text-align:center;
-                    font-weight:700;
-                " oninput="this.style.borderColor='#d1d5db';" onkeydown="if(event.key==='Enter'){event.preventDefault();checkAnswer();}">
+                <div id="lessonOptionsArea" class="options-grid"></div>
 
                 <button id="btnVerTraduccion" onclick="toggleTraduccionLeccion()" style="
                     width:100%;
@@ -4178,20 +4168,6 @@ Cerrar
                 font-weight:bold;
                 text-align:center;
             "></div>
-
-            <button id="btnCheckLesson" onclick="checkAnswer()" style="
-                width:100%;
-                padding:14px;
-                border:none;
-                border-radius:12px;
-                background:#22c55e;
-                color:white;
-                font-weight:800;
-                font-size:1rem;
-                margin-bottom:8px;
-            ">
-                COMPROBAR
-            </button>
 
             <button id="btnNextLesson" onclick="nextQuestion()" style="
                 width:100%;
@@ -5628,7 +5604,7 @@ style="display:none;">
     </div>
 </div>
 <div id="misionesContainer"></div>
-    <div id="modalTareas" class="modal-overlay" style="z-index: 20500;">
+    <div id="modalTareas" class="modal-overlay" style="z-index: 14000;">
     <div class="modal-content" style="text-align:left;">
         <h3 style="font-size: 1.2rem; margin-bottom: 15px; color: #334155; text-align:center;">🎯 Progreso Diario</h3>
 
@@ -6251,7 +6227,7 @@ style="display:none;">
            box-shadow:0 6px 18px rgba(99,102,241,0.5); z-index:10950;
            align-items:center; justify-content:center;">+</button>
 <!-- Ruleta fuera del appWrapper para que position:fixed funcione sobre cualquier pantalla -->
-<div id="modalRuletaGame" class="modal-overlay" onclick="if(event.target===this)window.cerrarRuleta()">
+<div id="modalRuletaGame" class="modal-overlay">
     <div class="modal-content" style="text-align:center;" onclick="event.stopPropagation()">
         <h3 style="color:#f59e0b; margin-bottom: 10px;">🎰 Ruleta Diaria</h3>
         <div class="ruleta-container">
@@ -7190,6 +7166,29 @@ if (synth && synth.onvoiceschanged !== undefined) {
     };
 }
 
+function generarOpcionesLeccion(q) {
+    const pool = [...new Set(englishLessonData.map(x => x.answer))]
+        .filter(w => w.toLowerCase() !== q.answer.toLowerCase());
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const distractores = pool.slice(0, 2);
+    const fallback = ['is', 'are', 'do', 'go', 'has', 'have', 'was', 'were'];
+    for (const w of fallback) {
+        if (distractores.length >= 2) break;
+        if (w.toLowerCase() !== q.answer.toLowerCase() && !distractores.includes(w)) {
+            distractores.push(w);
+        }
+    }
+    const opciones = [q.answer, ...distractores];
+    for (let i = opciones.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opciones[i], opciones[j]] = [opciones[j], opciones[i]];
+    }
+    return opciones;
+}
+
 function showQuestion() {
     const q = englishLessonData[currentQIndex];
     if (!q) return;
@@ -7204,7 +7203,7 @@ function showQuestion() {
 
     const titulo = document.querySelector('#modalLesson .q-title');
     if (titulo) {
-        titulo.innerHTML = `Nivel ${nivel}/${totalNiveles} · Oración ${oracionEnNivel}/4<br><span style="font-size:0.8rem; font-weight:600; color:#64748b;">Completa la palabra que falta en inglés</span>`;
+        titulo.innerHTML = `Nivel ${nivel}/${totalNiveles} · Oración ${oracionEnNivel}/4<br><span style="font-size:0.8rem; font-weight:600; color:#64748b;">Elige la palabra correcta</span>`;
     }
 
     const oracionConEspacio = q.en.replace('___', '<span style="display:inline-block; min-width:72px; border-bottom:2px solid #6366f1; color:#6366f1;">&nbsp;&nbsp;&nbsp;&nbsp;</span>');
@@ -7222,17 +7221,12 @@ function showQuestion() {
 
     document.getElementById('lessonProgress').style.width = ((currentQIndex / total) * 100) + "%";
 
-    const input = document.getElementById('lessonInput');
-    if (input) {
-        input.value = '';
-        input.disabled = false;
-        input.style.borderColor = '#d1d5db';
-        setTimeout(() => {
-            try {
-                input.focus();
-                input.scrollIntoView({ block: 'center', behavior: 'smooth' });
-            } catch(e) {}
-        }, 150);
+    const opciones = generarOpcionesLeccion(q);
+    const optionsArea = document.getElementById('lessonOptionsArea');
+    if (optionsArea) {
+        optionsArea.innerHTML = opciones.map(w => `
+            <button type="button" class="option-card" data-word="${escapeHtml(w)}" onclick="seleccionarOpcionLeccion(this)" style="text-align:center; font-weight:800; font-size:1.05rem;">${escapeHtml(w)}</button>
+        `).join('');
     }
 
     const trans = document.getElementById('lessonTranslation');
@@ -7247,12 +7241,6 @@ function showQuestion() {
     if (feedback) {
         feedback.style.display = 'none';
         feedback.innerHTML = '';
-    }
-    const btnCheck = document.getElementById('btnCheckLesson');
-    if (btnCheck) {
-        btnCheck.style.display = 'block';
-        btnCheck.textContent = 'COMPROBAR';
-        btnCheck.disabled = false;
     }
     const btnNext = document.getElementById('btnNextLesson');
     if (btnNext) btnNext.style.display = 'none';
@@ -8622,6 +8610,13 @@ let currentPostUid = null;   // dueño del post: hace falta para avisarle por pu
 // --- 1. ABRIR EL MODAL Y CARGAR DATOS ---
 window.abrirModalComentarios = (postKey) => {
     console.log("🟢 Abriendo comentarios del post:", postKey);
+    // Si el visor de fotos está abierto, cerrarlo para no dejar dos modales
+    // de comentarios uno detrás del otro.
+    const fotoModal = document.getElementById('modalFotoDetalle');
+    if (fotoModal && fotoModal.style.display === 'flex') {
+        if (window.cerrarComentariosFoto) window.cerrarComentariosFoto();
+        fotoModal.style.display = 'none';
+    }
     isCommenting = true;
     currentPostId = postKey;
     currentPostUid = null;
@@ -8772,6 +8767,8 @@ window.cerrarModalComentarios = () => {
     };
 
     window.abrirComentariosFoto = (fotoKey) => {
+        // Cerrar el modal genérico de comentarios si estaba abierto.
+        if (window.cerrarModalComentarios) window.cerrarModalComentarios();
         const abrirPanel = () => {
             const panel = document.getElementById('fotoComentariosPanel');
             if (!panel) return;
@@ -8895,6 +8892,7 @@ window.cerrarModalComentarios = () => {
                         type: 'comentario',
                         text: cuerpoTexto,
                         extra: key,
+                        esFoto: true,
                         timestamp: firebase.database.ServerValue.TIMESTAMP,
                         read: false
                     }).catch(() => {});
@@ -9451,6 +9449,7 @@ if (typeof actualizarBioResumen === 'function') actualizarBioResumen(d.bio);
                     const safeKey = String(k).replace(/'/g, "\\'");
                     const safeName = String(nombreEmisor).replace(/'/g, "\\'");
                     const safeFrom = String(n.from || '').replace(/'/g, "\\'");
+                    const safeEsFoto = n.esFoto === true ? 'true' : 'false';
                     const safeTexto = String(n.text || '');
                     const esNueva = !n.read;
                     let icon = '📢', iconBg = 'linear-gradient(135deg,#eef2ff,#e0e7ff)';
@@ -9462,7 +9461,7 @@ if (typeof actualizarBioResumen === 'function') actualizarBioResumen(d.bio);
                     const fecha = n.timestamp ? new Date(n.timestamp).toLocaleString('es-MX', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
                     const borde = esNueva ? '#e0e7ff' : '#eef1f6';
                     const shadow = esNueva ? '0 6px 18px rgba(99,102,241,0.12)' : '0 2px 6px rgba(15,23,42,0.04)';
-                    h += `<div id="noti-${k}" class="notif-item" onclick="irANotificacion('${safeType}', '${safeExtra}', '${safeKey}', '${safeFrom}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;margin:8px 2px;border-radius:16px;background:#fff;border:1px solid ${borde};box-shadow:${shadow};cursor:pointer;animation-delay:${Math.min(idx*35,350)}ms;">`
+                    h += `<div id="noti-${k}" class="notif-item" onclick="irANotificacion('${safeType}', '${safeExtra}', '${safeKey}', '${safeFrom}', '${safeEsFoto}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;margin:8px 2px;border-radius:16px;background:#fff;border:1px solid ${borde};box-shadow:${shadow};cursor:pointer;animation-delay:${Math.min(idx*35,350)}ms;">`
                        + `<div style="width:42px;height:42px;border-radius:14px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;">${icon}</div>`
                        + `<div style="flex:1;min-width:0;text-align:left;">`
                        + `<div class="noti-text" style="font-weight:700;color:#0f172a;font-size:0.85rem;line-height:1.3;"><strong>${safeName}</strong> ${safeTexto}</div>`
@@ -9643,6 +9642,11 @@ if (typeof actualizarBioResumen === 'function') actualizarBioResumen(d.bio);
         // Restaurar z-index la próxima vez que se abra
         m._cerrada = true;
     }
+    // Si el panel de progreso sigue abierto, refresca sus barras
+    var t = document.getElementById('modalTareas');
+    if (t && window.getComputedStyle(t).display !== 'none' && typeof window.abrirModalTareas === 'function') {
+        window.abrirModalTareas();
+    }
 };
 // Parchear el open de ruleta para restaurar z-index
 (function() {
@@ -9716,7 +9720,14 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
     let cineTimerInterval = null;
     window.abrirCine = () => { db.ref(`users/${idAuditor}`).once('value', s => { const u = s.val(); if(u.lastCineDate === new Date().toISOString().split('T')[0] && (u.cineCount||0)>=2) return notify("Vuelve mañana"); document.getElementById('modalCine').style.display='flex'; document.getElementById('videoPlayer').src = "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&controls=0"; let t = 15; const btn = document.getElementById('btnReclamarCine'); btn.disabled=true; btn.style.opacity=0.5; if(cineTimerInterval) clearInterval(cineTimerInterval); cineTimerInterval = setInterval(() => { t--; document.getElementById('cineTimer').textContent = `Espera ${t}s...`; if(t<=0) { clearInterval(cineTimerInterval); btn.disabled=false; btn.style.opacity=1; } }, 1000); }); };
     window.reclamarCine = () => { const hoy = new Date().toISOString().split('T')[0]; db.ref(`users/${idAuditor}`).once('value', s => { const u=s.val(); db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(0.50), lastCineDate: hoy, cineCount: ((u.lastCineDate===hoy)?(u.cineCount||0):0)+1 }); registrarHistorial("Cine", 0.50); window.cerrarCine(); window.playSound('win'); notify("+0.50 PTS"); }); };
-    window.cerrarCine = () => { document.getElementById('modalCine').style.display = 'none'; document.getElementById('videoPlayer').src = ""; };
+    window.cerrarCine = () => {
+        document.getElementById('modalCine').style.display = 'none';
+        document.getElementById('videoPlayer').src = "";
+        var t = document.getElementById('modalTareas');
+        if (t && window.getComputedStyle(t).display !== 'none' && typeof window.abrirModalTareas === 'function') {
+            window.abrirModalTareas();
+        }
+    };
 
     // 🎁 REGALO POR COMPLETAR LOS 5 ANUNCIOS DIARIOS
     window.mostrarRegaloAnuncios = () => {
@@ -9788,6 +9799,10 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
                 // Progreso de anuncios y regalo al llegar a 5
                 const anunciosVistos = contadorHoy + 1;
                 if (window.actualizarBarra) window.actualizarBarra('Anuncio', anunciosVistos, 5, 'Vistos');
+                var panelTareas = document.getElementById('modalTareas');
+                if (panelTareas && window.getComputedStyle(panelTareas).display !== 'none' && typeof window.abrirModalTareas === 'function') {
+                    window.abrirModalTareas();
+                }
                 if (anunciosVistos >= 5) {
                     setTimeout(() => { if (window.mostrarRegaloAnuncios) window.mostrarRegaloAnuncios(); }, 3200);
                 }
@@ -10560,7 +10575,7 @@ window.limpiarChatGlobal = () => {
 setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
     // --- FUNCIÓN IR A NOTIFICACIÓN (CORREGIDA) ---
-    window.irANotificacion = (type, extra, key, fromUid) => {
+    window.irANotificacion = (type, extra, key, fromUid, esFoto) => {
         let nombreEmisor = "Alguien";
 
         // 1. Obtener el nombre de quien te escribió desde la propia notificación
@@ -10591,15 +10606,18 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             if (!isChatOpen) toggleChat();
         } 
         else if (type === 'comentario' || type === 'like') {
-            // Detectar si el comentario es sobre una foto (el texto de la notif incluye 'foto')
+            // Detectar si el comentario es sobre una foto. Las notificaciones nuevas
+            // traen esFoto; las viejas se detectan por texto y, si hace falta,
+            // comprobando si la clave existe en galeria_comunidad.
             var textoNotiComentario = (notiElement && notiElement.textContent) ? notiElement.textContent : '';
-            // 'foto' viene del texto guardado en Firebase: '💬 Comentó tu foto'
-            var esFotoComentario = textoNotiComentario.toLowerCase().includes('foto');
+            var esFotoComentario = (esFoto === true || esFoto === 'true') ||
+                textoNotiComentario.toLowerCase().includes('foto') ||
+                textoNotiComentario.toLowerCase().includes('galería');
 
-            if (type === 'comentario' && esFotoComentario) {
-                // 1. Ir al muro de fotos (pantalla 1)
+            var abrirComentariosDeFoto = () => {
+                // Cerrar el modal genérico si quedó abierto para no tener dos comentarios.
+                if (window.cerrarModalComentarios) window.cerrarModalComentarios();
                 goToScreen(1);
-                // 2. Localizar la foto, hacer scroll y abrir sus comentarios
                 setTimeout(() => {
                     const photoEl = document.getElementById('photo-' + extra);
                     if (photoEl) {
@@ -10616,23 +10634,39 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
                         abrirComentariosFoto(extra);
                     }
                 }, 800);
-            } else {
-                // 1. Vamos a la pantalla del Feed de videos
-                goToScreen(2);
+            };
 
-                // 2. Esperamos a que el iframe cargue y le enviamos el ID del video
+            var abrirComentariosDeVideo = () => {
+                // Si la foto está abierta, cerrarla para que el modal de comentarios
+                // no quede escondido detrás y parezca un doble modal.
+                const fotoModal = document.getElementById('modalFotoDetalle');
+                if (fotoModal && fotoModal.style.display === 'flex') {
+                    if (window.cerrarComentariosFoto) window.cerrarComentariosFoto();
+                    fotoModal.style.display = 'none';
+                }
+                goToScreen(2);
                 setTimeout(() => {
-                    // Scroll directo al card del feed nativo
                     const targetCard = document.getElementById(extra);
                     if (targetCard) targetCard.scrollIntoView({ behavior: 'smooth' });
                 }, 400);
-
-                // 3. Si es comentario, abrimos la cajita de comentarios
                 if (type === 'comentario') {
                     setTimeout(() => {
                         if (window.abrirModalComentarios) window.abrirModalComentarios(extra);
                     }, 1600);
                 }
+            };
+
+            if (type === 'comentario' && !esFotoComentario && extra) {
+                // Notificaciones antiguas de respuesta a comentarios de foto:
+                // comprobar si la clave pertenece a galeria_comunidad.
+                db.ref('galeria_comunidad/' + extra).once('value').then(snap => {
+                    if (snap.exists()) abrirComentariosDeFoto();
+                    else abrirComentariosDeVideo();
+                }).catch(() => abrirComentariosDeVideo());
+            } else if (type === 'comentario' && esFotoComentario) {
+                abrirComentariosDeFoto();
+            } else {
+                abrirComentariosDeVideo();
             }
         }
         else if (type === 'like') {
@@ -11376,7 +11410,10 @@ window.addEventListener('popstate', (e) => {
         if (cerrarModalSeguro(id)) {
             if (id === 'modalComments' && window.cerrarModalComentarios) window.cerrarModalComentarios();
             if (id === 'modalMision' && window.backToStep1) window.backToStep1();
-            if (id === 'modalFotoDetalle') document.getElementById('detalleFotoImg').src = "";
+            if (id === 'modalFotoDetalle') {
+                if (window.cerrarComentariosFoto) window.cerrarComentariosFoto();
+                document.getElementById('detalleFotoImg').src = "";
+            }
             if (id === 'modalReferidos' && window.cerrarModalReferidos) window.cerrarModalReferidos();
             seCerroAlgo = true;
         }
@@ -11964,9 +12001,7 @@ window.nextQuestion = () => {
 
     if (currentQIndex === 12 && typeof AndroidNative !== 'undefined') {
         window._englishAdPending = true;
-        const btnCheck = document.getElementById('btnCheckLesson');
         const btnNext = document.getElementById('btnNextLesson');
-        if (btnCheck) btnCheck.style.display = 'none';
         if (btnNext) btnNext.style.display = 'none';
         notify("📺 Mira el anuncio para continuar al nivel 4");
         window.location.href = 'go:ad-english';
@@ -11985,58 +12020,41 @@ window.onEnglishAdComplete = function() {
     }
 };
 
-window.checkAnswer = () => {
+window.seleccionarOpcionLeccion = (btn) => {
     if (lessonAnswered) return;
     const q = englishLessonData[currentQIndex];
-    if (!q) return;
+    if (!q || !btn) return;
 
-    const input = document.getElementById('lessonInput');
     const feedback = document.getElementById('lessonFeedback');
-    if (!input || !feedback) return;
+    if (!feedback) return;
 
-    const valor = (input.value || '').trim();
-    if (!valor) return notify("✍️ Escribe la palabra que falta");
+    const word = (btn.dataset.word || btn.textContent || '').trim();
+    if (!word) return;
 
-    const correcto = valor.toLowerCase() === q.answer.toLowerCase();
+    const correcto = word.toLowerCase() === q.answer.toLowerCase();
 
     if (correcto) {
         lessonAnswered = true;
-        input.disabled = true;
-        input.style.borderColor = '#16a34a';
-        feedback.innerHTML = `✅ ¡Correcto! <span style="color:#16a34a;">${escapeHtml(q.full)}</span>`;
+        document.querySelectorAll('#lessonOptionsArea .option-card').forEach(b => {
+            b.disabled = true;
+            b.style.cursor = 'default';
+            if (b === btn) b.classList.add('correct');
+        });
+        feedback.innerHTML = `✅ ¡Correcto! <span style="color:#16a34a;">${escapeHtml(q.full)}</span><br><span style="font-size:0.85rem; color:#64748b;">${escapeHtml(q.es)}</span>`;
         feedback.style.color = '#16a34a';
         feedback.style.display = 'block';
-        document.getElementById('btnCheckLesson').style.display = 'none';
-        document.getElementById('btnNextLesson').style.display = 'block';
+        const btnNext = document.getElementById('btnNextLesson');
+        if (btnNext) btnNext.style.display = 'block';
         try { window.playSound('win'); } catch(e){}
         speakText(q.full || q.en);
     } else {
-        lessonAnswered = false;
-        input.disabled = false;
-        input.style.borderColor = '#ef4444';
+        btn.classList.add('wrong');
+        btn.disabled = true;
+        btn.style.cursor = 'default';
         const palabraEs = q.palabraEs ? ` y en español es <b>${escapeHtml(q.palabraEs)}</b>` : '';
         feedback.innerHTML = `❌ Incorrecto.<br><span style="font-size:0.9rem;">La palabra correcta es <b>${escapeHtml(q.answer)}</b>${palabraEs}.</span><br><span style="font-size:0.8rem; color:#64748b; font-weight:600;">${escapeHtml(q.full)} — ${escapeHtml(q.es)}</span>`;
         feedback.style.color = '#ef4444';
         feedback.style.display = 'block';
-
-        const btnCheck = document.getElementById('btnCheckLesson');
-        if (btnCheck) {
-            btnCheck.style.display = 'block';
-            btnCheck.textContent = 'REINTENTAR';
-            btnCheck.disabled = false;
-        }
-        const btnNext = document.getElementById('btnNextLesson');
-        if (btnNext) btnNext.style.display = 'none';
-
-        lessonTranslationVisible = false;
-        const trans = document.getElementById('lessonTranslation');
-        if (trans) trans.style.display = 'none';
-        const btnTrans = document.getElementById('btnVerTraduccion');
-        if (btnTrans) btnTrans.innerHTML = '👁️ Ver traducción al español';
-
-        setTimeout(() => {
-            try { input.focus(); input.select(); } catch(e) {}
-        }, 50);
         try { window.playSound('gameover'); } catch(e){}
     }
 };
@@ -17972,6 +17990,9 @@ function restaurarBotonComprarFoto() {
 window.abrirGaleriaFotos = (index) => {
     if (!galeriaFotosArray || !galeriaFotosArray[index]) return;
 
+    // Cerrar el modal genérico de comentarios si estaba abierto.
+    if (window.cerrarModalComentarios) window.cerrarModalComentarios();
+
     // Reiniciar paneles internos de la foto
     const panelCom = document.getElementById('fotoComentariosPanel');
     if (panelCom) panelCom.style.display = 'none';
@@ -18777,7 +18798,6 @@ function actualizarBarra(idBase, actual, max, label) {
 }
 
 window.irMision = (tipo) => {
-    document.getElementById('modalTareas').style.display = 'none';
     if (tipo === 'ruleta') {
         var m = document.getElementById('modalRuletaGame');
         if (m) { m.style.pointerEvents = ''; m.style.zIndex = ''; m.style.display = 'flex'; }
@@ -20178,12 +20198,14 @@ window.onM9AdComplete = function() {
     // Actualizar contador con el número de anuncios vistos
     actualizarContadorM9(intentos);
 
-    // 30% de probabilidad de ganar en los primeros intentos;
-    // el 3er anuncio garantiza la recompensa (así lo indica el contador).
-    const gano = intentos >= 3 || Math.random() < 0.3;
+    // El 1er y 2do anuncio nunca ganan: solo invitan a intentarlo por tercera vez.
+    // El 3er anuncio es el que entrega los 20 PTS.
+    const gano = intentos >= 3;
 
     if (gano) {
-        marcarMisionCompletada('mision_m9', 50);
+        // El 3er anuncio (garantizado) acredita 20 puntos.
+        // La tarjeta de la misión conserva el texto +50.
+        marcarMisionCompletada('mision_m9', 20);
         const modal = document.createElement('div');
         modal.style.cssText = `
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -20194,7 +20216,7 @@ window.onM9AdComplete = function() {
         modal.innerHTML = `
             <div style="font-size: 50px; margin-bottom: 10px;">🎉</div>
             <h3 style="margin: 0 0 10px 0; color: #6ee7b7;">¡Ganaste!</h3>
-            <p style="margin: 0 0 20px 0; color: #d1fae5;">Has ganado 50 PTS</p>
+            <p style="margin: 0 0 20px 0; color: #d1fae5;">Por hoy ganaste 20 PTS</p>
             <button onclick="this.closest('div[style*=fixed]').remove()"
                     style="background: #10b981; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer;">
                 Reclamar
@@ -20203,18 +20225,18 @@ window.onM9AdComplete = function() {
         document.body.appendChild(modal);
         try { window.playSound('win'); } catch(e){}
     } else {
-        notify("😢 Mala suerte... Intenta nuevamente para ver si ganas puntos");
+        notify("🔁 Inténtalo por tercera vez");
         const modal = document.createElement('div');
         modal.style.cssText = `
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             color: white; padding: 25px; border-radius: 16px; text-align: center;
-            z-index: 10001; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 2px solid #ef4444;
+            z-index: 10001; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 2px solid #3b82f6;
         `;
         modal.innerHTML = `
-            <div style="font-size: 50px; margin-bottom: 10px;">😢</div>
-            <h3 style="margin: 0 0 10px 0; color: #ef4444;">¡Mala Suerte!</h3>
-            <p style="margin: 0 0 15px 0; color: #94a3b8;">Esta vez no hubo suerte.<br>¡Sigue intentando!</p>
+            <div style="font-size: 50px; margin-bottom: 10px;">🎯</div>
+            <h3 style="margin: 0 0 10px 0; color: #60a5fa;">Inténtalo por tercera vez</h3>
+            <p style="margin: 0 0 15px 0; color: #94a3b8;">Sigue participando. Al 3er anuncio ganas 20 PTS.</p>
             <p style="margin: 0 0 20px 0; font-size: 0.9rem; color: #3b82f6; font-weight: bold;">
                 Intentos restantes hoy: ${5 - intentos}
             </p>
@@ -21124,11 +21146,11 @@ window.abrirNotificaciones = () => {
                 + (esNueva ? '<div style="width:9px;height:9px;border-radius:50%;background:#6366f1;box-shadow:0 0 0 4px rgba(99,102,241,0.15);flex-shrink:0;"></div>' : '');
 
             // Usar addEventListener — sin riesgo de escapado
-            (function(type, extra, key, from) {
+            (function(type, extra, key, from, esFoto) {
                 div.addEventListener('click', function() {
-                    irANotificacion(type, extra, key, from);
+                    irANotificacion(type, extra, key, from, esFoto);
                 });
-            })(String(n.type || ''), String(n.extra || ''), String(n.key || ''), String(n.from || ''));
+            })(String(n.type || ''), String(n.extra || ''), String(n.key || ''), String(n.from || ''), n.esFoto === true);
 
             lista.appendChild(div);
         });
