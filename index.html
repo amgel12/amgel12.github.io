@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20 -->
+<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -1209,6 +1209,16 @@
       font-weight: 800; font-size: 0.85rem;
       box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
       cursor: pointer;
+  }
+
+  .btn-pausa-game {
+      position: absolute; top: 70px; left: 20px;
+      background: #f59e0b; color: white; border: none;
+      padding: 10px 20px; border-radius: 50px;
+      font-weight: 800; font-size: 0.85rem;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+      cursor: pointer;
+      z-index: 101;
   }
 
   .chat-float-btn {
@@ -4281,6 +4291,7 @@ Cerrar
 
     <button onclick="cerrarJuego()" class="btn-salir-game">✕ SALIR</button>
     <div class="game-score" id="gameInfoText">PUNTOS: 0</div>
+    <button id="btnPausaJuego" onclick="togglePausaSnake()" class="btn-pausa-game" style="display:none;">⏸ PAUSAR</button>
     <canvas id="gameCanvas" width="300" height="300"></canvas>
     <div class="d-pad">
         <div></div>
@@ -5749,6 +5760,7 @@ style="display:none;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom: 1px solid #ddd; padding-bottom:5px;"><span style="color:#64748b;">Ganado (Neto):</span><span id="scoreWonDisplay" style="color:#10b981; font-weight:800;">+0.00</span></div>
                 <div style="display:flex; justify-content:space-between; margin-top:10px;"><span style="color:#333; font-weight:800;">NUEVO SALDO:</span><span id="scoreNewBalance" style="color:#0070ba; font-weight:800; font-size:1.3rem;">0.00</span></div>
             </div>
+            <button id="btnContinuarSnake" onclick="continuarSnakeConAnuncios()" class="btn-blue" style="background:linear-gradient(135deg,#f59e0b,#d97706); display:none; margin-bottom:10px;">▶️ Continuar donde se quedó</button>
             <button onclick="cerrarModalGameOver()" class="btn-blue" style="background:#1e293b;">🔄 Jugar de nuevo</button>
             <button onclick="document.getElementById('modalGameOver').style.display='none'; cerrarJuego();" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Salir al menú</button>
         </div>
@@ -7007,6 +7019,7 @@ const audioLibrary = {
     let selectedOptionText = null;
     let lessonAnswered = false;
     let lessonTranslationVisible = false;
+    let lessonFeedbackTimeout = null;
 // --- DATOS ACADEMIA INGLÉS (10 PREGUNTAS POR NIVEL) ---
    // ==========================================
 
@@ -7135,6 +7148,35 @@ const englishLessonData = [
     { nivel: 5, en: "We ___ going to travel.", answer: "are", palabraEs: "vamos (parte de 'are going to')", full: "We are going to travel.", es: "Nosotros vamos a viajar." }
 ];
 
+const ENGLISH_LEVEL_SIZE = 4;
+const ENGLISH_M7_RESET_MS = 2 * 60 * 60 * 1000;
+
+function obtenerProgresoIngles() {
+    const total = englishLessonData.length;
+    const raw = parseInt(localStorage.getItem('mision_m7_siguiente') || '0', 10);
+    if (!Number.isFinite(raw) || raw < 0 || raw >= total) return 0;
+    return raw;
+}
+
+function guardarProgresoIngles(index) {
+    const total = englishLessonData.length;
+    const safe = Math.max(0, Math.min(Number(index) || 0, total - 1));
+    localStorage.setItem('mision_m7_siguiente', String(safe));
+}
+
+function verificarResetMisionIngles() {
+    if (localStorage.getItem('mision_m7') !== '1') return;
+    const ts = parseInt(localStorage.getItem('mision_m7_ts') || '0', 10);
+    if (!ts) {
+        localStorage.setItem('mision_m7_ts', Date.now().toString());
+        return;
+    }
+    if (Date.now() - ts >= ENGLISH_M7_RESET_MS) {
+        localStorage.removeItem('mision_m7');
+        localStorage.removeItem('mision_m7_ts');
+    }
+}
+
 // Variable global para la voz
 let synth = window.speechSynthesis;
 
@@ -7195,11 +7237,12 @@ function showQuestion() {
 
     lessonAnswered = false;
     lessonTranslationVisible = false;
+    guardarProgresoIngles(currentQIndex);
 
     const total = englishLessonData.length;
-    const totalNiveles = Math.ceil(total / 4);
-    const nivel = Math.floor(currentQIndex / 4) + 1;
-    const oracionEnNivel = (currentQIndex % 4) + 1;
+    const totalNiveles = Math.ceil(total / ENGLISH_LEVEL_SIZE);
+    const nivel = Math.floor(currentQIndex / ENGLISH_LEVEL_SIZE) + 1;
+    const oracionEnNivel = (currentQIndex % ENGLISH_LEVEL_SIZE) + 1;
 
     const titulo = document.querySelector('#modalLesson .q-title');
     if (titulo) {
@@ -7238,6 +7281,10 @@ function showQuestion() {
     if (btnTrans) btnTrans.innerHTML = '👁️ Ver traducción al español';
 
     const feedback = document.getElementById('lessonFeedback');
+    if (lessonFeedbackTimeout) {
+        clearTimeout(lessonFeedbackTimeout);
+        lessonFeedbackTimeout = null;
+    }
     if (feedback) {
         feedback.style.display = 'none';
         feedback.innerHTML = '';
@@ -7249,12 +7296,23 @@ function showQuestion() {
 }
 
 function abrirLeccionIngles() {
-    currentQIndex = 0;
+    verificarResetMisionIngles();
+    currentQIndex = obtenerProgresoIngles();
     lessonAnswered = false;
     lessonTranslationVisible = false;
     window._englishAdPending = false;
+
+    const modal = document.getElementById('modalLesson');
+
+    if (currentQIndex === 12 && typeof AndroidNative !== 'undefined') {
+        window._englishAdPending = true;
+        notify("📺 Mira el anuncio para continuar al nivel 4");
+        window.location.href = 'go:ad-english';
+        return;
+    }
+
     showQuestion();
-    document.getElementById('modalLesson').style.display = 'flex';
+    if (modal) modal.style.display = 'flex';
 }
 window.toggleTraduccionLeccion = () => {
     lessonTranslationVisible = !lessonTranslationVisible;
@@ -10851,6 +10909,9 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
     // VARIABLES SNAKE
     let snake = []; let food = {}; let velocity = {}; 
+    let snakePausado = false;
+    let snakeGananciaAcumulada = 0;
+    let snakeMinutosAwarded = false;
 
     // VARIABLES CARRERA
     let playerCar = { x: 1 }; // 0=Izq, 1=Centro, 2=Der
@@ -10941,6 +11002,17 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         // 🔥 ACTUALIZAR PUNTOS AL ABRIR EL JUEGO
         actualizarPuntosEnJuegos();
 
+        const btnPausa = document.getElementById('btnPausaJuego');
+        if (btnPausa) {
+            btnPausa.style.display = m === 'snake' ? 'block' : 'none';
+            btnPausa.textContent = '⏸ PAUSAR';
+        }
+        const btnContinuar = document.getElementById('btnContinuarSnake');
+        if (btnContinuar) btnContinuar.style.display = 'none';
+        window._snakeContinuarPendiente = false;
+        window._snakeContinuarAdsRestantes = 0;
+        clearTimeout(window._snakeContinuarTimeout);
+
         if(m === 'snake') {
             resetSnake();
             if (typeof marcarMisionCompletada === 'function') marcarMisionCompletada('mision_m8', 7);
@@ -10951,6 +11023,10 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
     window.cerrarJuego = () => {
         clearInterval(gameInterval);
+        clearTimeout(window._snakeContinuarTimeout);
+        window._snakeContinuarPendiente = false;
+        window._snakeContinuarAdsRestantes = 0;
+        snakePausado = false;
         stopBreakoutMove(); // detener movimiento continuo
         document.getElementById('gameContainer').style.display='none'; 
         activeGameMode = null;
@@ -10983,9 +11059,13 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
     function gameOver() {
         clearInterval(gameInterval);
-        const gain = (snakeScore/10)*0.05;
+        gameInterval = null;
 
-        if(gain > 0) {
+        const gananciaTotal = (snakeScore / 10) * 0.05;
+        const gain = Math.max(0, gananciaTotal - snakeGananciaAcumulada);
+        snakeGananciaAcumulada = gananciaTotal;
+
+        if(gain > 0 && idAuditor) {
             db.ref(`users/${idAuditor}`).update({
                 earnings: firebase.database.ServerValue.increment(gain),
                 snakeTotal: firebase.database.ServerValue.increment(gain)
@@ -10995,22 +11075,39 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             // 🔥 AGREGA ESTA LÍNEA AQUÍ PARA QUE CUENTE COMO MISIÓN
             if(window.checarProgresoDiario) window.checarProgresoDiario();
         }
-        const hoy = new Date().toISOString().split('T')[0];
-        db.ref(`users/${idAuditor}`).update({
-            gameMinutesToday: firebase.database.ServerValue.increment(5), // +5 min simulados por partida
-            lastGameDate: hoy
-        });
+
+        if (!snakeMinutosAwarded && idAuditor) {
+            const hoy = new Date().toISOString().split('T')[0];
+            db.ref(`users/${idAuditor}`).update({
+                gameMinutesToday: firebase.database.ServerValue.increment(5), // +5 min simulados por partida
+                lastGameDate: hoy
+            });
+            snakeMinutosAwarded = true;
+        }
+
+        window._snakeEstadoReanudar = {
+            snake: snake.map(seg => ({ x: seg.x, y: seg.y })),
+            velocity: { x: velocity.x, y: velocity.y },
+            food: { x: food.x, y: food.y },
+            score: snakeScore,
+            gananciaAcumulada: snakeGananciaAcumulada,
+            minutosAwarded: snakeMinutosAwarded
+        };
+        window._ultimaGananciaJuego = null;
+
         document.getElementById('scoreWonDisplay').textContent = "+"+gain.toFixed(2);
         document.getElementById('scoreOldBalance').textContent = (currentEarnings).toFixed(2);
         document.getElementById('scoreNewBalance').textContent = (currentEarnings + gain).toFixed(2);
+
+        const btnContinuar = document.getElementById('btnContinuarSnake');
+        if (btnContinuar) {
+            btnContinuar.style.display = 'block';
+            btnContinuar.disabled = false;
+            btnContinuar.textContent = '▶️ Continuar donde se quedó';
+        }
+
         document.getElementById('modalGameOver').style.display='flex';
         window.playSound('gameover');
-
-        // Mostrar anuncio recompensado para bonus
-        window._ultimaGananciaJuego = gain;
-        setTimeout(() => {
-            window.location.href = 'go:ad-game';
-        }, 500);
     }
 
     // ==========================================
@@ -11020,6 +11117,15 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
     function resetSnake() {
         clearInterval(gameInterval);
+        gameInterval = null;
+        snakePausado = false;
+        snakeGananciaAcumulada = 0;
+        snakeMinutosAwarded = false;
+        window._snakeEstadoReanudar = null;
+        window._snakeContinuarPendiente = false;
+        window._snakeContinuarAdsRestantes = 0;
+        clearTimeout(window._snakeContinuarTimeout);
+        window._ultimaGananciaJuego = null;
 
         snakeScore = 0;
         snake = [
@@ -11034,8 +11140,169 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         const info = document.getElementById('gameInfoText');
         if (info) info.textContent = "PUNTOS: 0";
 
+        const btnPausa = document.getElementById('btnPausaJuego');
+        if (btnPausa) {
+            btnPausa.textContent = '⏸ PAUSAR';
+            btnPausa.disabled = false;
+        }
+        const btnContinuar = document.getElementById('btnContinuarSnake');
+        if (btnContinuar) {
+            btnContinuar.style.display = 'none';
+            btnContinuar.disabled = false;
+            btnContinuar.textContent = '▶️ Continuar donde se quedó';
+        }
+
         dibujarSnake();
         gameInterval = setInterval(actualizarSnake, 300);
+    }
+
+    window.togglePausaSnake = () => {
+        if (activeGameMode !== 'snake') return;
+        const btn = document.getElementById('btnPausaJuego');
+        if (snakePausado) {
+            snakePausado = false;
+            if (btn) btn.textContent = '⏸ PAUSAR';
+            dibujarSnake();
+            gameInterval = setInterval(actualizarSnake, 300);
+        } else {
+            snakePausado = true;
+            clearInterval(gameInterval);
+            gameInterval = null;
+            if (btn) btn.textContent = '▶️ CONTINUAR';
+            dibujarPausaSnake();
+        }
+    };
+
+    function dibujarPausaSnake() {
+        if (!ctx || !canvas) return;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 28px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('⏸ PAUSA', canvas.width / 2, canvas.height / 2);
+    }
+
+    function obtenerDireccionSeguraSnake(estadoSnake) {
+        if (!estadoSnake || !estadoSnake.length) return null;
+        const head = estadoSnake[0];
+        const direcciones = [
+            { x: 1, y: 0 },
+            { x: -1, y: 0 },
+            { x: 0, y: 1 },
+            { x: 0, y: -1 }
+        ];
+        for (const dir of direcciones) {
+            const nx = head.x + dir.x;
+            const ny = head.y + dir.y;
+            if (nx < 0 || nx >= 15 || ny < 0 || ny >= 15) continue;
+            if (estadoSnake.some(seg => seg.x === nx && seg.y === ny)) continue;
+            return dir;
+        }
+        return null;
+    }
+
+    function programarTimeoutContinuarSnake() {
+        clearTimeout(window._snakeContinuarTimeout);
+        window._snakeContinuarTimeout = setTimeout(() => {
+            if (!window._snakeContinuarPendiente) return;
+            window._snakeContinuarPendiente = false;
+            window._snakeContinuarAdsRestantes = 0;
+            const btn = document.getElementById('btnContinuarSnake');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '▶️ Continuar donde se quedó';
+            }
+            notify("⚠️ No se pudieron cargar los anuncios. Intenta de nuevo.");
+        }, 60000);
+    }
+
+    window.continuarSnakeConAnuncios = () => {
+        if (activeGameMode !== 'snake') return;
+        if (window._snakeContinuarPendiente) return;
+
+        const estado = window._snakeEstadoReanudar;
+        if (!estado) {
+            notify("No hay partida para continuar");
+            return;
+        }
+        if (!obtenerDireccionSeguraSnake(estado.snake)) {
+            notify("⚠️ No hay espacio para continuar. Inicia una nueva partida.");
+            return;
+        }
+
+        const btn = document.getElementById('btnContinuarSnake');
+
+        if (typeof AndroidNative !== 'undefined') {
+            window._juegoPendiente = null;
+            window._ultimaGananciaJuego = null;
+            window._snakeContinuarPendiente = true;
+            window._snakeContinuarAdsRestantes = 2;
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '📺 Viendo anuncios (1/2)...';
+            }
+            programarTimeoutContinuarSnake();
+            notify("📺 Mira 2 anuncios para continuar donde te quedaste...");
+            window.location.href = 'go:ad-game';
+            return;
+        }
+
+        continuarSnakeDesdePausa();
+    };
+
+    function continuarSnakeDesdePausa() {
+        clearTimeout(window._snakeContinuarTimeout);
+        window._snakeContinuarPendiente = false;
+        window._snakeContinuarAdsRestantes = 0;
+
+        const estado = window._snakeEstadoReanudar;
+        if (!estado) {
+            notify("No hay partida para continuar");
+            return;
+        }
+
+        const dir = obtenerDireccionSeguraSnake(estado.snake);
+        if (!dir) {
+            notify("⚠️ No hay espacio para continuar. Inicia una nueva partida.");
+            return;
+        }
+
+        clearInterval(gameInterval);
+        gameInterval = null;
+
+        snake = estado.snake.map(seg => ({ x: seg.x, y: seg.y }));
+        food = { x: estado.food.x, y: estado.food.y };
+        velocity = { x: dir.x, y: dir.y };
+        snakeScore = estado.score;
+        snakeGananciaAcumulada = estado.gananciaAcumulada;
+        snakeMinutosAwarded = estado.minutosAwarded;
+        snakePausado = false;
+        window._snakeEstadoReanudar = null;
+
+        const info = document.getElementById('gameInfoText');
+        if (info) info.textContent = "PUNTOS: " + snakeScore;
+
+        const btnPausa = document.getElementById('btnPausaJuego');
+        if (btnPausa) {
+            btnPausa.style.display = 'block';
+            btnPausa.textContent = '⏸ PAUSAR';
+            btnPausa.disabled = false;
+        }
+
+        const btnContinuar = document.getElementById('btnContinuarSnake');
+        if (btnContinuar) {
+            btnContinuar.style.display = 'none';
+            btnContinuar.disabled = false;
+            btnContinuar.textContent = '▶️ Continuar donde se quedó';
+        }
+
+        document.getElementById('modalGameOver').style.display = 'none';
+        document.getElementById('gameContainer').style.display = 'flex';
+
+        dibujarSnake();
+        gameInterval = setInterval(actualizarSnake, 300);
+        notify("🐍 ¡Continúa donde te quedaste!");
     }
 
 function generarComidaSnake() {
@@ -11253,6 +11520,8 @@ function dibujarSnake() {
         document.getElementById('scoreWonDisplay').textContent = "+" + gain.toFixed(2);
         document.getElementById('scoreOldBalance').textContent = (currentEarnings).toFixed(2);
         document.getElementById('scoreNewBalance').textContent = (currentEarnings + gain).toFixed(2);
+        const btnContinuar = document.getElementById('btnContinuarSnake');
+        if (btnContinuar) btnContinuar.style.display = 'none';
         document.getElementById('modalGameOver').style.display = 'flex';
         window.playSound('gameover');
 
@@ -11986,25 +12255,30 @@ window.nextQuestion = () => {
     currentQIndex++;
 
     if (currentQIndex >= englishLessonData.length) {
+        guardarProgresoIngles(0);
         document.getElementById('lessonProgress').style.width = '100%';
         document.getElementById('modalLesson').style.display = 'none';
 
-        marcarMisionCompletada('mision_m7', 10);
+        marcarMisionCompletada('mision_m7', 5);
 
         try { window.playSound('win'); } catch(e){}
+        notify('🎉 ¡Completaste todos los niveles!');
         return;
     }
 
-    if (currentQIndex % 4 === 0) {
-        notify(`🎉 ¡Nivel ${currentQIndex / 4} completado!`);
-    }
+    if (currentQIndex % ENGLISH_LEVEL_SIZE === 0) {
+        const nivelCompletado = currentQIndex / ENGLISH_LEVEL_SIZE;
+        guardarProgresoIngles(currentQIndex);
+        document.getElementById('modalLesson').style.display = 'none';
 
-    if (currentQIndex === 12 && typeof AndroidNative !== 'undefined') {
-        window._englishAdPending = true;
-        const btnNext = document.getElementById('btnNextLesson');
-        if (btnNext) btnNext.style.display = 'none';
-        notify("📺 Mira el anuncio para continuar al nivel 4");
-        window.location.href = 'go:ad-english';
+        const gano = marcarMisionCompletada('mision_m7', 5);
+
+        try { window.playSound('win'); } catch(e){}
+        if (gano) {
+            notify(`🎉 ¡Nivel ${nivelCompletado} completado! Ganaste 5 puntos. Vuelve en 2 h para continuar.`);
+        } else {
+            notify(`🎉 ¡Nivel ${nivelCompletado} completado!`);
+        }
         return;
     }
 
@@ -12014,9 +12288,10 @@ window.nextQuestion = () => {
 window.onEnglishAdComplete = function() {
     if (!window._englishAdPending) return;
     window._englishAdPending = false;
-    const modal = document.getElementById('modalLesson');
-    if (modal && modal.style.display === 'flex' && currentQIndex === 12) {
+    if (currentQIndex === 12) {
         showQuestion();
+        const modal = document.getElementById('modalLesson');
+        if (modal) modal.style.display = 'flex';
     }
 };
 
@@ -12035,6 +12310,10 @@ window.seleccionarOpcionLeccion = (btn) => {
 
     if (correcto) {
         lessonAnswered = true;
+        if (lessonFeedbackTimeout) {
+            clearTimeout(lessonFeedbackTimeout);
+            lessonFeedbackTimeout = null;
+        }
         document.querySelectorAll('#lessonOptionsArea .option-card').forEach(b => {
             b.disabled = true;
             b.style.cursor = 'default';
@@ -12055,6 +12334,11 @@ window.seleccionarOpcionLeccion = (btn) => {
         feedback.innerHTML = `❌ Incorrecto.<br><span style="font-size:0.9rem;">La palabra correcta es <b>${escapeHtml(q.answer)}</b>${palabraEs}.</span><br><span style="font-size:0.8rem; color:#64748b; font-weight:600;">${escapeHtml(q.full)} — ${escapeHtml(q.es)}</span>`;
         feedback.style.color = '#ef4444';
         feedback.style.display = 'block';
+        if (lessonFeedbackTimeout) clearTimeout(lessonFeedbackTimeout);
+        lessonFeedbackTimeout = setTimeout(() => {
+            feedback.style.display = 'none';
+            lessonFeedbackTimeout = null;
+        }, 5000);
         try { window.playSound('gameover'); } catch(e){}
     }
 };
@@ -19844,7 +20128,7 @@ const misionesAprender = [
     { id: 'm4', titulo: 'Subir foto', descripcion: 'Comparte una imagen', recompensa: 8 },
     { id: 'm11', titulo: 'Subir videos', descripcion: 'Publica un video en el feed', recompensa: 12 },
     { id: 'm5', titulo: 'Compartir app', descripcion: 'Invita a un amigo por WhatsApp', recompensa: 6 },
-    { id: 'm7', titulo: 'Aprender inglés', descripcion: 'Completa los 5 niveles de inglés', recompensa: 10 },
+    { id: 'm7', titulo: 'Aprender inglés', descripcion: 'Completa 1 nivel de inglés (se renueva cada 2 h)', recompensa: 5 },
     { id: 'm9', titulo: 'Recompensas', descripcion: 'Mira un anuncio y prueba tu suerte', recompensa: 50 },
     { id: 'm2', titulo: 'Ver 3 videos', descripcion: 'Mira videos del feed', recompensa: 5 },
     { id: 'm8', titulo: 'Jugar Snake', descripcion: 'Juega dentro de la app', recompensa: 7 },
@@ -19867,13 +20151,15 @@ function renderizarMisionesAprender() {
     const container = document.getElementById('listaMisiones');
     if (!container) return;
 
+    verificarResetMisionIngles();
+
     // Verificar si pasaron 24 horas desde el último reseteo
     const ultimoReseteo = localStorage.getItem('misiones_reseteo');
     const ahora = Date.now();
     const veinticuatroHoras = 24 * 60 * 60 * 1000;
 
     if (!ultimoReseteo || (ahora - parseInt(ultimoReseteo)) > veinticuatroHoras) {
-        misionesAprender.forEach(m => { if (m.id !== 'm6') localStorage.removeItem('mision_' + m.id); });
+        misionesAprender.forEach(m => { if (m.id !== 'm6' && m.id !== 'm7') localStorage.removeItem('mision_' + m.id); });
         localStorage.removeItem('mision_m2_activa');
         localStorage.removeItem('mision_m2_progreso');
         localStorage.removeItem('mision_m2_vistos');
@@ -19944,10 +20230,12 @@ function renderizarMisionesAprender() {
 }
 
 function marcarMisionCompletada(clave, recompensa = 5) {
+    if (clave === 'mision_m7') verificarResetMisionIngles();
     if (localStorage.getItem(clave) === '1') return false;
     localStorage.setItem(clave, '1');
     // Guardar timestamp de última misión completada (para el check de 12h)
     localStorage.setItem('ultima_mision_ts', Date.now().toString());
+    if (clave === 'mision_m7') localStorage.setItem('mision_m7_ts', Date.now().toString());
     sumarPuntosMision(recompensa);
     if (typeof registrarHistorial === 'function') registrarHistorial('Misión completada', recompensa);
     renderizarMisionesAprender();
@@ -19976,6 +20264,7 @@ function sumarPuntosMision(cantidad) {
 function ejecutarMision(id) {
     const mision = misionesAprender.find(m => m.id === id);
     if (!mision) return;
+    if (id === 'm7') verificarResetMisionIngles();
     if (localStorage.getItem('mision_' + id) === '1') { notify("Ya completaste esta misión"); return; }
     notify("Iniciando: " + mision.titulo);
     if (id === 'm1') { notify("📖 Elige una categoría..."); window.abrirCategoriasMisionLectura(); return; }
@@ -20253,6 +20542,25 @@ window.onM9AdComplete = function() {
 
 // Callback desde Kotlin tras ver anuncio recompensado al terminar un juego
 window.onGameAdComplete = function() {
+    // Continuar partida de Snake: 2 anuncios y reanudar donde se perdió
+    if (window._snakeContinuarPendiente) {
+        window._snakeContinuarAdsRestantes--;
+        const btnContinuar = document.getElementById('btnContinuarSnake');
+
+        if (window._snakeContinuarAdsRestantes > 0) {
+            if (btnContinuar) btnContinuar.textContent = '📺 Viendo anuncios (2/2)...';
+            programarTimeoutContinuarSnake();
+            notify("📺 Mira el segundo anuncio para continuar...");
+            setTimeout(() => {
+                if (window._snakeContinuarPendiente) window.location.href = 'go:ad-game';
+            }, 800);
+            return;
+        }
+
+        continuarSnakeDesdePausa();
+        return;
+    }
+
     // Si veníamos de "entrar a un juego" (anuncio previo), iniciamos el juego
     if (window._juegoPendiente) {
         const modo = window._juegoPendiente;
@@ -21625,7 +21933,11 @@ window._renderPensamientosFeed = () => {
 };
 window.grabarVideoCamara = () => {
     document.getElementById('modalOpcionVideoPropio').style.display = 'none';
-    if (typeof AndroidNative !== 'undefined' && AndroidNative.openVideoCamera) {
+    const inputCamara = document.getElementById('inputVideoCamara');
+    if (inputCamara) {
+        inputCamara.value = '';
+        inputCamara.click();
+    } else if (typeof AndroidNative !== 'undefined' && AndroidNative.openVideoCamera) {
         AndroidNative.openVideoCamera();
     } else {
         notify("⚠️ Función no disponible en esta plataforma");
@@ -21634,7 +21946,21 @@ window.grabarVideoCamara = () => {
 
 window.seleccionarVideoGaleria = () => {
     document.getElementById('modalOpcionVideoPropio').style.display = 'none';
-    document.getElementById('inputVideoArchivo').click();
+    const inputGaleria = document.getElementById('inputVideoArchivo');
+    inputGaleria.value = '';
+    inputGaleria.click();
+};
+
+window.obtenerVideoSeleccionado = () => {
+    const inputCamara = document.getElementById('inputVideoCamara');
+    if (inputCamara && inputCamara.files && inputCamara.files[0]) {
+        return inputCamara.files[0];
+    }
+    const inputGaleria = document.getElementById('inputVideoArchivo');
+    if (inputGaleria && inputGaleria.files && inputGaleria.files[0]) {
+        return inputGaleria.files[0];
+    }
+    return window._videoSeleccionadoFile || null;
 };
 
 window.onVideoCaptured = (uri) => {
@@ -21648,9 +21974,20 @@ window.onVideoCaptured = (uri) => {
 };
 
 // 2. Procesar el video elegido
-window.procesarVideoSeleccionado = () => {
-    const file = document.getElementById('inputVideoArchivo').files[0];
+window.procesarVideoSeleccionado = (inputOrigen) => {
+    const file = (inputOrigen && inputOrigen.files && inputOrigen.files[0])
+        ? inputOrigen.files[0]
+        : window.obtenerVideoSeleccionado();
     if (!file) return;
+
+    window._videoSeleccionadoFile = file;
+    const inputGaleria = document.getElementById('inputVideoArchivo');
+    const inputCamara = document.getElementById('inputVideoCamara');
+    if (inputOrigen && inputOrigen.id === 'inputVideoCamara') {
+        if (inputGaleria) inputGaleria.value = '';
+    } else if (inputCamara) {
+        inputCamara.value = '';
+    }
 
     // Crear un elemento de video invisible para medir el tiempo
     const videoCargador = document.createElement('video');
@@ -21667,7 +22004,9 @@ window.procesarVideoSeleccionado = () => {
         if (duracion > 10.5) {
             notify("❌ El video es muy largo (" + Math.round(duracion) + "s)");
             alert("⚠️ Solo se permiten videos de máximo 10 segundos.");
-            document.getElementById('inputVideoArchivo').value = ""; // Resetear
+            window._videoSeleccionadoFile = null;
+            if (inputGaleria) inputGaleria.value = '';
+            if (inputCamara) inputCamara.value = '';
             return;
         }
 
@@ -21688,7 +22027,7 @@ window.procesarVideoSeleccionado = () => {
 };
 // 3. Publicar con anuncio bonificado
 window.publicarVideoConAnuncio = () => {
-    const file = document.getElementById('inputVideoArchivo').files[0];
+    const file = window.obtenerVideoSeleccionado();
     const desc = document.getElementById('videoDescripcion').value.trim();
     if (!file) return;
     if (!desc) return notify("📝 Escribe una descripción");
@@ -21725,6 +22064,18 @@ window.otorgarMensajesPorVideo = () => {
 };
 
 window.onAdSkipped = () => {
+    if (window._snakeContinuarPendiente) {
+        window._snakeContinuarPendiente = false;
+        window._snakeContinuarAdsRestantes = 0;
+        clearTimeout(window._snakeContinuarTimeout);
+        const btnContinuar = document.getElementById('btnContinuarSnake');
+        if (btnContinuar) {
+            btnContinuar.disabled = false;
+            btnContinuar.textContent = '▶️ Continuar donde se quedó';
+        }
+        notify("📺 Debes ver los 2 anuncios completos para continuar");
+        return;
+    }
     if (window._juegoPendiente) {
         window._juegoPendiente = null;
         return notify("🎮 Debes ver el anuncio completo para jugar");
@@ -21744,7 +22095,7 @@ window.onAdSkipped = () => {
 
 // 4. Subir a Firebase (Simulación de Storage usando Base64 o Link temporal)
 window.subirVideoServidor = () => {
-    const file = document.getElementById('inputVideoArchivo').files[0];
+    const file = window.obtenerVideoSeleccionado();
     const desc = document.getElementById('videoDescripcion').value.trim();
     const btn = document.getElementById('btnPublicarVideo');
 
@@ -21789,7 +22140,10 @@ window.subirVideoServidor = () => {
         }
 
         // Limpiar y refrescar
+        window._videoSeleccionadoFile = null;
         document.getElementById('inputVideoArchivo').value = "";
+        const inputCamaraLimpieza = document.getElementById('inputVideoCamara');
+        if (inputCamaraLimpieza) inputCamaraLimpieza.value = "";
         goToScreen(2); 
     }).catch(error => {
         console.error(error);
@@ -24452,7 +24806,12 @@ window.guardarBioCompleta = () => {
 <input type="file" id="inputVideoArchivo" 
        accept="video/mp4,video/x-m4v,video/*" 
        style="display:none" 
-       onchange="procesarVideoSeleccionado()">
+       onchange="procesarVideoSeleccionado(this)">
+<input type="file" id="inputVideoCamara" 
+       accept="video/*" 
+       capture="camcorder" 
+       style="display:none" 
+       onchange="procesarVideoSeleccionado(this)">
 <!-- 📹 MODAL PARA PUBLICAR VIDEO PROPIO -->
 <div id="modalSubirVideo" class="modal-overlay" style="z-index: 45000;">
     <div class="modal-content" style="max-width: 350px;">
