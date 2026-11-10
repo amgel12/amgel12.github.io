@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa-snake-lento-fluido-cloudinary-video -->
+<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa-snake-lento-fluido-cloudinary-video-freeze-fix -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -21984,9 +21984,42 @@ window._renderPensamientosFeed = () => {
 };
 const CLOUDINARY_CLOUD_NAME = 'dfqoqcddl';
 const CLOUDINARY_UPLOAD_PRESET = 'codecash_videos';
-const CLOUDINARY_VIDEO_MAX_MB = 100;
+const CLOUDINARY_VIDEO_MAX_MB = 50;
+
+window.detenerVideoPreview = () => {
+    const videoTag = document.getElementById('videoPreview');
+    if (videoTag) {
+        try { videoTag.pause(); } catch(e) {}
+        try { videoTag.removeAttribute('src'); } catch(e) {}
+        try { videoTag.load(); } catch(e) {}
+        videoTag.style.display = 'none';
+    }
+    if (window._videoPreviewUrl) {
+        try { URL.revokeObjectURL(window._videoPreviewUrl); } catch(e) {}
+        window._videoPreviewUrl = null;
+    }
+    const placeholder = document.getElementById('videoPlaceholder');
+    if (placeholder) placeholder.style.display = 'block';
+};
+
+window.limpiarVideoPreview = (limpiarInputs = true) => {
+    window.detenerVideoPreview();
+    window._videoSeleccionadoFile = null;
+    if (limpiarInputs) {
+        const inputGaleria = document.getElementById('inputVideoArchivo');
+        const inputCamara = document.getElementById('inputVideoCamara');
+        if (inputGaleria) inputGaleria.value = '';
+        if (inputCamara) inputCamara.value = '';
+    }
+};
+
+window.cerrarModalSubirVideo = () => {
+    window.limpiarVideoPreview(true);
+    document.getElementById('modalSubirVideo').style.display = 'none';
+};
 
 window.grabarVideoCamara = () => {
+    window.limpiarVideoPreview(true);
     document.getElementById('modalOpcionVideoPropio').style.display = 'none';
     const inputCamara = document.getElementById('inputVideoCamara');
     if (inputCamara) {
@@ -22000,6 +22033,7 @@ window.grabarVideoCamara = () => {
 };
 
 window.seleccionarVideoGaleria = () => {
+    window.limpiarVideoPreview(true);
     document.getElementById('modalOpcionVideoPropio').style.display = 'none';
     const inputGaleria = document.getElementById('inputVideoArchivo');
     inputGaleria.value = '';
@@ -22019,6 +22053,7 @@ window.obtenerVideoSeleccionado = () => {
 };
 
 window.onVideoCaptured = (uri) => {
+    window.limpiarVideoPreview(false);
     document.getElementById('modalSubirVideo').style.display = 'flex';
     const videoTag = document.getElementById('videoPreview');
     const placeholder = document.getElementById('videoPlaceholder');
@@ -22035,6 +22070,7 @@ window.procesarVideoSeleccionado = (inputOrigen) => {
         : window.obtenerVideoSeleccionado();
     if (!file) return;
 
+    window.limpiarVideoPreview(false);
     window._videoSeleccionadoFile = file;
     const inputGaleria = document.getElementById('inputVideoArchivo');
     const inputCamara = document.getElementById('inputVideoCamara');
@@ -22047,9 +22083,7 @@ window.procesarVideoSeleccionado = (inputOrigen) => {
     if (file.size > CLOUDINARY_VIDEO_MAX_MB * 1024 * 1024) {
         notify("❌ El video supera " + CLOUDINARY_VIDEO_MAX_MB + " MB");
         alert("⚠️ El video es demasiado pesado. Máximo " + CLOUDINARY_VIDEO_MAX_MB + " MB.");
-        window._videoSeleccionadoFile = null;
-        if (inputGaleria) inputGaleria.value = '';
-        if (inputCamara) inputCamara.value = '';
+        window.limpiarVideoPreview(true);
         return;
     }
 
@@ -22068,9 +22102,7 @@ window.procesarVideoSeleccionado = (inputOrigen) => {
         if (duracion > 10.5) {
             notify("❌ El video es muy largo (" + Math.round(duracion) + "s)");
             alert("⚠️ Solo se permiten videos de máximo 10 segundos.");
-            window._videoSeleccionadoFile = null;
-            if (inputGaleria) inputGaleria.value = '';
-            if (inputCamara) inputCamara.value = '';
+            window.limpiarVideoPreview(true);
             return;
         }
 
@@ -22080,6 +22112,7 @@ window.procesarVideoSeleccionado = (inputOrigen) => {
         const placeholder = document.getElementById('videoPlaceholder');
 
         const url = URL.createObjectURL(file);
+        window._videoPreviewUrl = url;
         videoTag.src = url;
         videoTag.style.display = 'block';
         placeholder.style.display = 'none';
@@ -22087,19 +22120,29 @@ window.procesarVideoSeleccionado = (inputOrigen) => {
         document.getElementById('btnPublicarVideo').disabled = false;
     };
 
+    videoCargador.onerror = function() {
+        try { window.URL.revokeObjectURL(videoCargador.src); } catch(e) {}
+        window.limpiarVideoPreview(true);
+        notify("❌ No se pudo leer el video seleccionado");
+    };
+
     videoCargador.src = URL.createObjectURL(file);
 };
 // 3. Publicar con anuncio bonificado
 window.publicarVideoConAnuncio = () => {
+    if (window._subiendoVideo) return notify("⏳ Ya se está subiendo tu video...");
+    if (window._videoAdPendiente) return notify("📺 Espera el anuncio para publicar...");
     const file = window.obtenerVideoSeleccionado();
     const desc = document.getElementById('videoDescripcion').value.trim();
     if (!file) return;
     if (!desc) return notify("📝 Escribe una descripción");
 
     if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirVideoRecompensado) {
+        window._videoAdPendiente = true;
         notify("📺 Ve el anuncio para publicar tu video...");
         AndroidNative.abrirVideoRecompensado();
     } else {
+        window._videoAdPendiente = false;
         subirVideoServidor();
     }
 };
@@ -22120,6 +22163,7 @@ window.otorgarMensajesPorVideo = () => {
         procesarPublicacionPendiente();
         return;
     }
+    window._videoAdPendiente = false;
     notify("🎁 Anuncio visto. Publicando video...");
     const btn = document.getElementById('btnPublicarVideo');
     btn.disabled = true;
@@ -22128,6 +22172,7 @@ window.otorgarMensajesPorVideo = () => {
 };
 
 window.onAdSkipped = () => {
+    window._videoAdPendiente = false;
     if (window._snakeContinuarPendiente) {
         window._snakeContinuarPendiente = false;
         window._snakeContinuarAdsRestantes = 0;
@@ -22168,9 +22213,14 @@ window.subirVideoServidor = () => {
     if (file.size > CLOUDINARY_VIDEO_MAX_MB * 1024 * 1024) {
         return notify("❌ El video supera " + CLOUDINARY_VIDEO_MAX_MB + " MB");
     }
+    if (window._subiendoVideo) return notify("⏳ Ya se está subiendo tu video...");
 
+    window._subiendoVideo = true;
     btn.disabled = true;
     btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Subiendo...";
+
+    const preview = document.getElementById('videoPreview');
+    if (preview) { try { preview.pause(); } catch(e) {} }
 
     const formData = new FormData();
     formData.append('file', file);
@@ -22187,6 +22237,7 @@ window.subirVideoServidor = () => {
         if (!data.secure_url) throw new Error('Cloudinary no devolvió la URL del video');
         return data;
     }).then(data => {
+        window.detenerVideoPreview();
         const nuevoPostRef = db.ref('reportes').push();
         return nuevoPostRef.set({
             uid: idAuditor,
@@ -22197,10 +22248,14 @@ window.subirVideoServidor = () => {
             vCount: 0
         }).then(() => data);
     }).then(() => {
+        window._subiendoVideo = false;
         db.ref(`users/${idAuditor}/earnings`).transaction(current => (current || 0) + 0.50);
         registrarHistorial("Video Propio", 0.50);
 
+        window.limpiarVideoPreview(true);
         document.getElementById('modalSubirVideo').style.display = 'none';
+        const descInput = document.getElementById('videoDescripcion');
+        if (descInput) descInput.value = '';
         notify("✅ ¡Video publicado! +0.50 PTS");
 
         if (localStorage.getItem('mision_m11_activa') === '1') {
@@ -22208,12 +22263,10 @@ window.subirVideoServidor = () => {
             marcarMisionCompletada('mision_m11', 12);
         }
 
-        window._videoSeleccionadoFile = null;
-        document.getElementById('inputVideoArchivo').value = "";
-        const inputCamaraLimpieza = document.getElementById('inputVideoCamara');
-        if (inputCamaraLimpieza) inputCamaraLimpieza.value = "";
         goToScreen(2);
     }).catch(error => {
+        window._subiendoVideo = false;
+        window._videoAdPendiente = false;
         console.error("Error subiendo video a Cloudinary:", error);
         alert("Error al subir: " + error.message);
         btn.disabled = false;
@@ -24899,7 +24952,7 @@ window.guardarBioCompleta = () => {
         <button id="btnPublicarVideo" onclick="publicarVideoConAnuncio()" class="btn-blue" style="background:#10b981;" disabled>
             📺 Publicar (anuncio bonificado)
         </button>
-        <button onclick="document.getElementById('modalSubirVideo').style.display='none'" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">Cancelar</button>
+        <button onclick="window.cerrarModalSubirVideo()" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">Cancelar</button>
     </div>
 </div>
 
