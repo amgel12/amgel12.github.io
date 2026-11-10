@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa-snake-lento-fluido-cloudinary-video-freeze-fix -->
+<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa-snake-lento-fluido-cloudinary-video-freeze-fix-xhr -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -22222,56 +22222,83 @@ window.subirVideoServidor = () => {
     const preview = document.getElementById('videoPreview');
     if (preview) { try { preview.pause(); } catch(e) {} }
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    const finalizarError = (error) => {
+        window._subiendoVideo = false;
+        window._videoAdPendiente = false;
+        const tam = (file.size / (1024 * 1024)).toFixed(1);
+        const detalle = error && error.message ? error.message : 'Error desconocido';
+        console.error("Error subiendo video a Cloudinary:", error);
+        alert("Error al subir (" + tam + " MB): " + detalle);
+        btn.disabled = false;
+        btn.innerHTML = "📺 Publicar (anuncio bonificado)";
+    };
 
-    fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`, {
-        method: 'POST',
-        body: formData
-    }).then(async response => {
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-            throw new Error((data.error && data.error.message) || 'No se pudo subir el video');
-        }
-        if (!data.secure_url) throw new Error('Cloudinary no devolvió la URL del video');
-        return data;
-    }).then(data => {
+    const publicarVideo = (data) => {
         window.detenerVideoPreview();
         const nuevoPostRef = db.ref('reportes').push();
-        return nuevoPostRef.set({
+        nuevoPostRef.set({
             uid: idAuditor,
             autorClave: myCurrentKey,
             texto: desc,
             musica: data.secure_url,
             fecha: firebase.database.ServerValue.TIMESTAMP,
             vCount: 0
-        }).then(() => data);
-    }).then(() => {
-        window._subiendoVideo = false;
-        db.ref(`users/${idAuditor}/earnings`).transaction(current => (current || 0) + 0.50);
-        registrarHistorial("Video Propio", 0.50);
+        }).then(() => {
+            window._subiendoVideo = false;
+            db.ref(`users/${idAuditor}/earnings`).transaction(current => (current || 0) + 0.50);
+            registrarHistorial("Video Propio", 0.50);
 
-        window.limpiarVideoPreview(true);
-        document.getElementById('modalSubirVideo').style.display = 'none';
-        const descInput = document.getElementById('videoDescripcion');
-        if (descInput) descInput.value = '';
-        notify("✅ ¡Video publicado! +0.50 PTS");
+            window.limpiarVideoPreview(true);
+            document.getElementById('modalSubirVideo').style.display = 'none';
+            const descInput = document.getElementById('videoDescripcion');
+            if (descInput) descInput.value = '';
+            notify("✅ ¡Video publicado! +0.50 PTS");
 
-        if (localStorage.getItem('mision_m11_activa') === '1') {
-            localStorage.removeItem('mision_m11_activa');
-            marcarMisionCompletada('mision_m11', 12);
+            if (localStorage.getItem('mision_m11_activa') === '1') {
+                localStorage.removeItem('mision_m11_activa');
+                marcarMisionCompletada('mision_m11', 12);
+            }
+
+            goToScreen(2);
+        }).catch(finalizarError);
+    };
+
+    const formData = new FormData();
+    const nombreArchivo = (file.name && file.name.trim()) ? file.name : ('video_' + Date.now() + '.mp4');
+    formData.append('file', file, nombreArchivo);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`, true);
+    xhr.timeout = 180000;
+
+    xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+            const pct = Math.round((event.loaded / event.total) * 100);
+            btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Subiendo " + pct + "%";
         }
+    };
 
-        goToScreen(2);
-    }).catch(error => {
-        window._subiendoVideo = false;
-        window._videoAdPendiente = false;
-        console.error("Error subiendo video a Cloudinary:", error);
-        alert("Error al subir: " + error.message);
-        btn.disabled = false;
-        btn.innerHTML = "📺 Publicar (anuncio bonificado)";
-    });
+    xhr.onload = () => {
+        let data = {};
+        try { data = JSON.parse(xhr.responseText || '{}'); } catch(e) {}
+        if (xhr.status < 200 || xhr.status >= 300) {
+            const msg = (data.error && data.error.message) || ('HTTP ' + xhr.status);
+            finalizarError(new Error(msg));
+            return;
+        }
+        if (!data.secure_url) {
+            finalizarError(new Error('Cloudinary no devolvió la URL del video'));
+            return;
+        }
+        publicarVideo(data);
+    };
+
+    xhr.onerror = () => finalizarError(new Error('No se pudo conectar con Cloudinary. Revisa tu conexión a internet.'));
+    xhr.ontimeout = () => finalizarError(new Error('La subida tardó demasiado. Intenta con un video más corto.'));
+    xhr.onabort = () => finalizarError(new Error('Subida cancelada'));
+
+    xhr.send(formData);
 };
 window.iniciarCompraGooglePlay = () => {
     try { window.playSound('click'); } catch(e){}
