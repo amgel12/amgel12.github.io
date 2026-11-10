@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa -->
+<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa-snake-lento-fluido-cloudinary-video -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -2825,6 +2825,7 @@ function cargarMuro() {
 
             if (post.musica.includes('catbox.moe'))        { mediaLink = post.musica; type = "catbox"; }
             else if (post.musica.includes('imgur.com'))    { mediaLink = post.musica; type = "imgur"; }
+            else if (post.musica.includes('res.cloudinary.com')) { mediaLink = post.musica; type = "direct"; }
             else if (post.musica.includes('workers.dev'))  { mediaLink = post.musica; type = "direct"; }
             else if (post.musica.includes('streamable.com'))                                    { mediaLink = getStreamableID(post.musica);  type = "streamable"; }
             else if (post.musica.includes('dai.ly') || post.musica.includes('dailymotion.com')) { mediaLink = getDailymotionID(post.musica); type = "dailymotion"; }
@@ -10912,6 +10913,11 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
     let snakePausado = false;
     let snakeGananciaAcumulada = 0;
     let snakeMinutosAwarded = false;
+    const SNAKE_STEP_MS = 420;
+    let snakeAnimationFrame = null;
+    let snakeLastFrame = 0;
+    let snakeAccumulator = 0;
+    let snakePrev = [];
 
     // VARIABLES CARRERA
     let playerCar = { x: 1 }; // 0=Izq, 1=Centro, 2=Der
@@ -11023,6 +11029,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
     window.cerrarJuego = () => {
         clearInterval(gameInterval);
+        detenerLoopSnake();
         clearTimeout(window._snakeContinuarTimeout);
         window._snakeContinuarPendiente = false;
         window._snakeContinuarAdsRestantes = 0;
@@ -11060,6 +11067,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
     function gameOver() {
         clearInterval(gameInterval);
         gameInterval = null;
+        detenerLoopSnake();
 
         const gananciaTotal = (snakeScore / 10) * 0.05;
         const gain = Math.max(0, gananciaTotal - snakeGananciaAcumulada);
@@ -11115,9 +11123,80 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
     // ==========================================
     let snakeScore = 0; // Puntos de Snake separados de Breakout
 
+    function detenerLoopSnake() {
+        if (snakeAnimationFrame !== null) {
+            cancelAnimationFrame(snakeAnimationFrame);
+            snakeAnimationFrame = null;
+        }
+        snakeLastFrame = 0;
+        snakeAccumulator = 0;
+    }
+
+    function iniciarLoopSnake() {
+        detenerLoopSnake();
+        snakePrev = snake.map(seg => ({ x: seg.x, y: seg.y }));
+        const frame = (timestamp) => {
+            if (activeGameMode !== 'snake' || snakePausado) {
+                snakeAnimationFrame = null;
+                return;
+            }
+            if (!snakeLastFrame) snakeLastFrame = timestamp;
+            let delta = timestamp - snakeLastFrame;
+            snakeLastFrame = timestamp;
+            if (delta < 0 || delta > 250) delta = 250;
+            snakeAccumulator += delta;
+
+            while (snakeAccumulator >= SNAKE_STEP_MS) {
+                snakeAccumulator -= SNAKE_STEP_MS;
+                if (!pasoSnake()) {
+                    snakeAnimationFrame = null;
+                    return;
+                }
+            }
+
+            const progreso = Math.min(1, snakeAccumulator / SNAKE_STEP_MS);
+            dibujarSnake(progreso);
+            snakeAnimationFrame = requestAnimationFrame(frame);
+        };
+        snakeAnimationFrame = requestAnimationFrame(frame);
+    }
+
+    function pasoSnake() {
+        const cabeza = {
+            x: snake[0].x + velocity.x,
+            y: snake[0].y + velocity.y
+        };
+
+        if (cabeza.x < 0 || cabeza.x >= 15 || cabeza.y < 0 || cabeza.y >= 15) {
+            gameOver();
+            return false;
+        }
+
+        if (snake.some(seg => seg.x === cabeza.x && seg.y === cabeza.y)) {
+            gameOver();
+            return false;
+        }
+
+        snakePrev = snake.map(seg => ({ x: seg.x, y: seg.y }));
+        snake.unshift(cabeza);
+
+        if (cabeza.x === food.x && cabeza.y === food.y) {
+            snakeScore += 10;
+            const info = document.getElementById('gameInfoText');
+            if (info) info.textContent = "PUNTOS: " + snakeScore;
+            try { window.playSound('snake'); } catch(e){}
+            food = generarComidaSnake();
+        } else {
+            snake.pop();
+        }
+
+        return true;
+    }
+
     function resetSnake() {
         clearInterval(gameInterval);
         gameInterval = null;
+        detenerLoopSnake();
         snakePausado = false;
         snakeGananciaAcumulada = 0;
         snakeMinutosAwarded = false;
@@ -11153,7 +11232,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         }
 
         dibujarSnake();
-        gameInterval = setInterval(actualizarSnake, 300);
+        iniciarLoopSnake();
     }
 
     window.togglePausaSnake = () => {
@@ -11163,11 +11242,10 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             snakePausado = false;
             if (btn) btn.textContent = '⏸ PAUSAR';
             dibujarSnake();
-            gameInterval = setInterval(actualizarSnake, 300);
+            iniciarLoopSnake();
         } else {
             snakePausado = true;
-            clearInterval(gameInterval);
-            gameInterval = null;
+            detenerLoopSnake();
             if (btn) btn.textContent = '▶️ CONTINUAR';
             dibujarPausaSnake();
         }
@@ -11270,6 +11348,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
         clearInterval(gameInterval);
         gameInterval = null;
+        detenerLoopSnake();
 
         snake = estado.snake.map(seg => ({ x: seg.x, y: seg.y }));
         food = { x: estado.food.x, y: estado.food.y };
@@ -11301,7 +11380,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         document.getElementById('gameContainer').style.display = 'flex';
 
         dibujarSnake();
-        gameInterval = setInterval(actualizarSnake, 300);
+        iniciarLoopSnake();
         notify("🐍 ¡Continúa donde te quedaste!");
     }
 
@@ -11321,39 +11400,7 @@ function generarComidaSnake() {
     return nuevaComida;
 }
 
-    function actualizarSnake() {
-        const cabeza = {
-            x: snake[0].x + velocity.x,
-            y: snake[0].y + velocity.y
-        };
-
-        // choque con paredes
-        if (cabeza.x < 0 || cabeza.x >= 15 || cabeza.y < 0 || cabeza.y >= 15) {
-            return gameOver();
-        }
-
-        // choque con sí misma
-        if (snake.some(seg => seg.x === cabeza.x && seg.y === cabeza.y)) {
-            return gameOver();
-        }
-
-        snake.unshift(cabeza);
-
-        // comer comida
-        if (cabeza.x === food.x && cabeza.y === food.y) {
-            snakeScore += 10;
-            const info = document.getElementById('gameInfoText');
-            if (info) info.textContent = "PUNTOS: " + snakeScore;
-            try { window.playSound('snake'); } catch(e){}
-            food = generarComidaSnake();
-        } else {
-            snake.pop();
-        }
-
-        dibujarSnake();
-    }
-
-function dibujarSnake() {
+function dibujarSnake(progreso = 1) {
     if (!ctx || !canvas) return;
 
     const grid = 20; // 300 / 15 = 20
@@ -11385,8 +11432,11 @@ function dibujarSnake() {
 
     // serpiente
     snake.forEach((seg, index) => {
+        const anterior = snakePrev[index] || seg;
+        const x = anterior.x + (seg.x - anterior.x) * progreso;
+        const y = anterior.y + (seg.y - anterior.y) * progreso;
         ctx.fillStyle = index === 0 ? "#22c55e" : "#86efac";
-        ctx.fillRect(seg.x * grid + 1, seg.y * grid + 1, grid - 2, grid - 2);
+        ctx.fillRect(Math.round(x * grid) + 1, Math.round(y * grid) + 1, grid - 2, grid - 2);
     });
 }
 
@@ -11394,6 +11444,7 @@ function dibujarSnake() {
     // 🎮 LÓGICA BREAKOUT
     // ==========================================
     function resetBreakout() {
+        detenerLoopSnake();
         breakoutPaddle = { x: 125 };
         breakoutBall = { x: 150, y: 250, dx: 3, dy: -3 };
         breakoutScore = 0;
@@ -21931,6 +21982,10 @@ window._renderPensamientosFeed = () => {
 
     feedContainer.innerHTML = html;
 };
+const CLOUDINARY_CLOUD_NAME = 'dfqoqcddl';
+const CLOUDINARY_UPLOAD_PRESET = 'codecash_videos';
+const CLOUDINARY_VIDEO_MAX_MB = 100;
+
 window.grabarVideoCamara = () => {
     document.getElementById('modalOpcionVideoPropio').style.display = 'none';
     const inputCamara = document.getElementById('inputVideoCamara');
@@ -21987,6 +22042,15 @@ window.procesarVideoSeleccionado = (inputOrigen) => {
         if (inputGaleria) inputGaleria.value = '';
     } else if (inputCamara) {
         inputCamara.value = '';
+    }
+
+    if (file.size > CLOUDINARY_VIDEO_MAX_MB * 1024 * 1024) {
+        notify("❌ El video supera " + CLOUDINARY_VIDEO_MAX_MB + " MB");
+        alert("⚠️ El video es demasiado pesado. Máximo " + CLOUDINARY_VIDEO_MAX_MB + " MB.");
+        window._videoSeleccionadoFile = null;
+        if (inputGaleria) inputGaleria.value = '';
+        if (inputCamara) inputCamara.value = '';
+        return;
     }
 
     // Crear un elemento de video invisible para medir el tiempo
@@ -22093,60 +22157,64 @@ window.onAdSkipped = () => {
     notify("💬 Ve el anuncio completo para recibir tu recompensa");
 };
 
-// 4. Subir a Firebase (Simulación de Storage usando Base64 o Link temporal)
+// 4. Subir a Cloudinary (unsigned upload preset) y guardar la URL en Firebase RTDB
 window.subirVideoServidor = () => {
     const file = window.obtenerVideoSeleccionado();
     const desc = document.getElementById('videoDescripcion').value.trim();
     const btn = document.getElementById('btnPublicarVideo');
 
-    if (!file) return;
+    if (!file) return notify("📹 Elige o graba un video primero");
     if (!desc) return notify("📝 Escribe una descripción");
+    if (file.size > CLOUDINARY_VIDEO_MAX_MB * 1024 * 1024) {
+        return notify("❌ El video supera " + CLOUDINARY_VIDEO_MAX_MB + " MB");
+    }
 
     btn.disabled = true;
     btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Subiendo...";
 
-    // 1. Generar nombre único del archivo
-    const nombreArchivo = "video_" + Date.now() + ".mp4";
-    const storageRef = firebase.storage().ref().child('videos/' + nombreArchivo);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-    // 2. Subir a Firebase Storage
-    storageRef.put(file).then(snapshot => {
-        // 3. Crear el link de tu Cloudflare Worker
-        // Nota: usamos videos%2F porque el archivo vive en la carpeta "videos"
-        const urlCloudflare = "https://codecash.imermejiaramirez.workers.dev/videos%2F" + nombreArchivo;
-
-        // 4. GUARDAR EN LA BASE DE DATOS
+    fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`, {
+        method: 'POST',
+        body: formData
+    }).then(async response => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error((data.error && data.error.message) || 'No se pudo subir el video');
+        }
+        if (!data.secure_url) throw new Error('Cloudinary no devolvió la URL del video');
+        return data;
+    }).then(data => {
         const nuevoPostRef = db.ref('reportes').push();
         return nuevoPostRef.set({
             uid: idAuditor,
             autorClave: myCurrentKey,
             texto: desc,
-            musica: urlCloudflare, // 🔥 AQUÍ VA EL LINK REAL, NO LA PALABRA "PROPIO"
+            musica: data.secure_url,
             fecha: firebase.database.ServerValue.TIMESTAMP,
             vCount: 0
-        });
+        }).then(() => data);
     }).then(() => {
-        // 5. PREMIAR AL USUARIO
         db.ref(`users/${idAuditor}/earnings`).transaction(current => (current || 0) + 0.50);
         registrarHistorial("Video Propio", 0.50);
 
         document.getElementById('modalSubirVideo').style.display = 'none';
         notify("✅ ¡Video publicado! +0.50 PTS");
 
-        // Verificar si la misión M11 de misiones diarias estaba activa
         if (localStorage.getItem('mision_m11_activa') === '1') {
             localStorage.removeItem('mision_m11_activa');
             marcarMisionCompletada('mision_m11', 12);
         }
 
-        // Limpiar y refrescar
         window._videoSeleccionadoFile = null;
         document.getElementById('inputVideoArchivo').value = "";
         const inputCamaraLimpieza = document.getElementById('inputVideoCamara');
         if (inputCamaraLimpieza) inputCamaraLimpieza.value = "";
-        goToScreen(2); 
+        goToScreen(2);
     }).catch(error => {
-        console.error(error);
+        console.error("Error subiendo video a Cloudinary:", error);
         alert("Error al subir: " + error.message);
         btn.disabled = false;
         btn.innerHTML = "📺 Publicar (anuncio bonificado)";
