@@ -5945,11 +5945,17 @@ style="display:none;">
         <span>Feed</span>
     </button>
 
+    <!-- CHAT NATIVO: abre MensajesActivity directamente; no cambia a una pantalla HTML. -->
+    <button class="nav-item" id="nav3" onclick="if (window.AndroidNative && typeof AndroidNative.abrirPantallaMensajes === 'function') { AndroidNative.abrirPantallaMensajes('michat'); } else { notify('No se pudo abrir el chat nativo.'); }">
+        <span class="nav-icon"><i class="fas fa-comments"></i></span>
+        <span>Chats</span>
+    </button>
+
     <button class="nav-item" id="navVender" onclick="abrirModalVenderProducto()" style="color:#8b5cf6;">
         <span class="nav-icon"><i class="fas fa-store"></i></span>
         <span>Vender</span>
     </button>
-    <!-- Mensajes/Solicitudes/Grupos son controles nativos Android. -->
+    <!-- El botón Chats abre la pantalla nativa Mensajes/Solicitudes/Grupos. -->
 <button class="nav-item" id="nav4" onclick="goToScreen(4, true)">
         <span class="nav-icon"><i class="fas fa-user-circle"></i></span>
         <span>Perfil</span>
