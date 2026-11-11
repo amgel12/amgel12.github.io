@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-09-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa-snake-lento-fluido-cloudinary-video-freeze-fix-xhr-snake-ads-fix-resume-after-ad-close -->
+<!-- CODECASH_BUILD 2026-11-11-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa-snake-lento-fluido-cloudinary-video-freeze-fix-xhr-snake-ads-fix-resume-after-ad-close-nav3-abre-lista-chats -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -6970,8 +6970,10 @@ window.goToScreen = (index, userAction = false) => {
     }
 
     if (userAction && index === 3 && currentScreen === 3) {
-        // Tocar de nuevo "Mensajes" → recargar mensajes nuevos
-        if (typeof window.recargarMensajes === 'function') window.recargarMensajes();
+        // Tocar de nuevo "Mensajes" → volver a mostrar la lista de chats (Mi Chat)
+        if (idAuditor && typeof window.abrirMensajesNativo === 'function') {
+            window.abrirMensajesNativo('michat');
+        }
         return;
     }
 
@@ -7023,6 +7025,12 @@ window.goToScreen = (index, userAction = false) => {
     }
 
     if (index === 3) {
+        // Al entrar a Mensajes se muestra directo la LISTA DE CHATS (Mi Chat,
+        // que vive en la pantalla nativa). Los grupos quedan como pestaña
+        // secundaria (botón "Grupos" de la barra superior).
+        if (userAction && idAuditor && typeof abrirMensajesNativo === 'function') {
+            abrirMensajesNativo('michat');
+        }
         setTimeout(() => {
             // Simular clic en la pestaña para que cargue la lista completa correctamente
             if (typeof cambiarPestanaChat === 'function') cambiarPestanaChat('grupos');
