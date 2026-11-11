@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-11-tabs-mensajes-solicitudes-grupos-bajo-pensamientos-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa-snake-lento-fluido-cloudinary-video-freeze-fix-xhr-snake-ads-fix-resume-after-ad-close-nav3-abre-lista-chats-sesion-firebase-real-nativa -->
+<!-- CODECASH_BUILD 2026-11-11-fix-boton-chats-abre-mensajes-nativo-sin-modal-html-tabs-mensajes-solicitudes-grupos-bajo-pensamientos-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa-snake-lento-fluido-cloudinary-video-freeze-fix-xhr-snake-ads-fix-resume-after-ad-close-nav3-abre-lista-chats-sesion-firebase-real-nativa -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -5618,7 +5618,7 @@ style="display:none;">
             <span style="font-size:1.5rem;">🎮</span>
             <span style="font-size:0.55rem; font-weight:700; margin-top:2px;">Juegos</span>
         </button>
-        <button onclick="abrirListaChats()" style="min-width:62px; height:62px; border-radius:16px; background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3); flex-shrink:0;">
+        <button onclick="abrirMensajesNativo('michat')" style="min-width:62px; height:62px; border-radius:16px; background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3); flex-shrink:0;">
             <span style="font-size:1.5rem;">💬</span>
             <span style="font-size:0.55rem; font-weight:700; margin-top:2px;">Chats</span>
         </button>
@@ -17710,147 +17710,9 @@ window.abrirJuego = () => {
 };
 
 window.abrirListaChats = () => {
-    let modal = document.getElementById('modalListaChats');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'modalListaChats';
-        modal.className = 'modal-overlay';
-        modal.style.zIndex = '26000';
-        modal.style.display = 'flex';
-        modal.innerHTML = `
-        <div class="modal-content" style="max-height: 80vh; overflow-y: auto; position: relative;">
-             <!-- BOTÓN X PARA CERRAR -->
-             <button onclick="document.getElementById('modalListaChats').style.display='none'" 
-                    style="position: absolute; top: 15px; right: 15px; background: none; border: none; 
-                           font-size: 1.5rem; color: #94a3b8; cursor: pointer; padding: 5px; z-index: 10;">✕</button>
-            <h3 style="text-align: center; margin-bottom: 15px; margin-top: 10px;">💬 Chats Pendientes</h3>
-            <div id="listaChatsContainer" style="text-align: center; padding: 20px; color: #94a3b8;">
-                <i class="fas fa-spinner fa-spin"></i> Cargando...
-            </div>
-            <button onclick="document.getElementById('modalListaChats').style.display='none'" class="btn-blue" style="background: #94a3b8;">Cerrar</button>
-        </div>
-        `;
-        document.body.appendChild(modal);
-    }
-    document.getElementById('modalListaChats').style.display = 'flex';
-
-    const container = document.getElementById('listaChatsContainer');
-    container.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando chats...';
-
-    if (!idAuditor) return;
-
-    // 1. Obtenemos TODOS los chats privados
-    db.ref('chats_privados').once('value', snap => {
-        if (!snap.exists()) {
-            container.innerHTML = '<div style="text-align:center; padding:40px; color:#cbd5e1;">No hay conversaciones.</div>';
-            return;
-        }
-
-        let chatsPendientes = [];
-
-        snap.forEach(chatSnap => {
-            const chatId = chatSnap.key;
-            const partes = chatId.split('_');
-
-            // Verificamos si este chat es mío
-            if (partes.includes(idAuditor)) {
-                // Obtenemos el otro usuario
-                const otroUid = partes[0] === idAuditor ? partes[1] : partes[0];
-
-                // Obtenemos todos los mensajes de este chat para ver quién escribió último
-                const mensajes = [];
-                chatSnap.forEach(msgSnap => {
-                    mensajes.push(msgSnap.val());
-                });
-
-                if (mensajes.length > 0) {
-                    // Ordenamos por fecha para encontrar el último
-                    mensajes.sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
-                    const ultimoMsg = mensajes[0];
-
-                    // 🔥 FILTRO: Solo mostramos si el ÚLTIMO mensaje NO es mío (espero respuesta)
-                    if (ultimoMsg.uid !== idAuditor) {
-                        chatsPendientes.push({
-                            otroUid: otroUid,
-                            ultimoMsg: ultimoMsg,
-                            fecha: ultimoMsg.fecha
-                        });
-                    }
-                }
-            }
-        });
-
-        if (chatsPendientes.length === 0) {
-            container.innerHTML = '<div style="padding:20px; text-align:center; color:#64748b;">✅ ¡Todo al día!<br>No tienes mensajes pendientes de respuesta.</div>';
-            return;
-        }
-
-        // Ordenar chats pendientes por fecha (más reciente primero)
-        chatsPendientes.sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
-
-        // Renderizamos la lista con placeholders para nombres
-        let html = '';
-        chatsPendientes.forEach(chat => {
-            const msg = chat.ultimoMsg;
-            const uid = chat.otroUid;
-
-            // Calculamos tiempo
-            const ahora = Date.now();
-            const diffMin = Math.floor((ahora - (msg.fecha || Date.now())) / 60000);
-            let tiempoTexto = diffMin < 1 ? 'Ahora' : `${diffMin} min`;
-
-            // Texto del mensaje
-            let textoResumen = msg.texto || (msg.esSticker ? '🩷 Sticker' : (msg.esFoto ? '📷 Foto' : '...'));
-            if (textoResumen.length > 30) textoResumen = textoResumen.substring(0, 30) + '...';
-
-            html += `<div id="chat-item-${uid}" onclick="abrirChatPrivado('${uid}', 'Cargando...')" 
-                     style="padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 12px; background: white;">
-                <div style="width: 45px; height: 45px; border-radius: 50%; background: #e2e8f0; background-size: cover; background-image: url('${getUserProfilePhoto(uid)}'); flex-shrink: 0;"></div>
-                <div style="flex: 1; min-width: 0;">
-                    <div id="chat-name-${uid}" style="font-weight: 700; font-size: 0.95rem; color: #1e293b;">
-                        <i class="fas fa-spinner fa-spin" style="font-size:0.8rem"></i>
-                    </div>
-                    <div style="font-size: 0.8rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        ${escapeHtml(textoResumen)}
-                    </div>
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-                    <span style="font-size: 0.7rem; color: #ef4444; font-weight:bold;">Pendiente</span>
-                    <span style="font-size: 0.6rem; color: #94a3b8;">${tiempoTexto}</span>
-                </div>
-            </div>`;
-        });
-
-        container.innerHTML = html;
-
-        // 🔥 AQUÍ OBTENEMOS LOS NOMBRES REALES (Apodo o INV)
-        const uidsPendientes = chatsPendientes.map(c => c.otroUid);
-        const usersRef = db.ref('users');
-
-        // Promesa para esperar los datos de todos los usuarios
-        const promises = uidsPendientes.map(uid => {
-            return usersRef.child(uid).once('value').then(snap => {
-                const u = snap.val();
-                // LÓGICA: Primero busca Apodo, si no existe usa INV
-                const nombreReal = (u && u.apodo) ? u.apodo : (u && u.myInviteKey ? u.myInviteKey : 'Usuario');
-
-                const elName = document.getElementById(`chat-name-${uid}`);
-                const elItem = document.getElementById(`chat-item-${uid}`);
-
-                if (elName) {
-                    elName.textContent = escapeHtml(nombreReal);
-                }
-                if (elItem) {
-                    // Actualizar onclick con el nombre correcto
-                    elItem.setAttribute('onclick', `abrirChatPrivado('${uid}', '${nombreReal.replace(/'/g, "\\'")}')`);
-                }
-            });
-        });
-
-        Promise.all(promises).then(() => {
-            console.log("Nombres de chats actualizados con apodos reales");
-        });
-    });
+    // Compatibilidad con botones antiguos: nunca abrir el modal HTML de chats.
+    // Toda la lista de conversaciones vive en MensajesActivity (Kotlin).
+    window.abrirMensajesNativo('michat');
 };
 window.abrirBusquedaUsuarios = () => {
     let modal = document.getElementById('modalBuscarUsuario');
