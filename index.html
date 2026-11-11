@@ -3438,6 +3438,11 @@ window.refrescarVideosFeed = () => {
 // ── FIN FEED NATIVO ───────────────────────────────────────────────────────
 
     </script>
+
+<style id="codecash-disable-legacy-web-groups">
+/* Las salas y modales de grupos se gestionan desde Kotlin. */
+#modalChatGrupo, #modalCrearGrupo, #modalEditarGrupo, #modalAnadirMiembroGrupo { display:none !important; }
+</style>
 </head>
 
 <body>
@@ -5668,49 +5673,9 @@ style="display:none;">
     </button>
 </div>
 <!-- PANTALLA 3: MENSAJES -->
-<div class="screen" style="height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #f8fafc; padding-bottom: 65px;">
-    <!-- 💭 PENSAMIENTOS PÚBLICOS + BOTÓN PENSAR -->
-  <!-- Cambia background:#f8fafc por background:white -->
-<div style="display:flex; align-items:center; gap:8px; background:white; border-bottom:1px solid #f1f5f9; padding:10px 15px; flex-shrink:0;">
-     
-<div id="pensamientosPublicosFeed" style="display:flex; flex-wrap:nowrap; overflow-x:auto; gap:12px; scrollbar-width:none; min-height:100px; flex:1; padding: 30px 0 10px;">
-            <div style="color:#94a3b8; font-size:0.7rem; white-space:nowrap; display:flex; align-items:center;">💭 Cargando...</div>
-        </div>
-    </div>
-
-    <!-- TOP BAR: pestañas fuera del chat (Mensajes / Solicitudes / Grupos) -->
-    <div style="flex-shrink:0; background:white; border-bottom:1px solid #e2e8f0; display:flex; align-items:stretch;">
-        <button onclick="abrirMensajesNativo('michat')"
-                style="flex:1; border:none; border-right:1px solid #f1f5f9; background:white; padding:5px 4px;
-                       cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
-                       gap:2px; min-height:42px; font-size:0.6rem; font-weight:800; color:#64748b; transition:.2s;">
-            <span style="font-size:1.1rem;">💬</span>
-            <span style="white-space:nowrap;">Mensajes</span>
-        </button>
-
-        <button onclick="abrirMensajesNativo('solicitudes')"
-                style="flex:1; border:none; border-right:1px solid #f1f5f9; background:white; padding:5px 4px;
-                       cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
-                       gap:2px; min-height:42px; font-size:0.6rem; font-weight:800; color:#64748b; transition:.2s;">
-            <span style="font-size:1.1rem;">📩</span>
-            <span style="white-space:nowrap;">Solicitudes</span>
-        </button>
-
-        <button onclick="abrirMensajesNativo('grupos')"
-                style="flex:1; border:none; background:white; padding:5px 4px;
-                       cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
-                       gap:2px; min-height:42px; font-size:0.6rem; font-weight:800; color:#64748b; transition:.2s;">
-            <span style="font-size:1.1rem;">👥</span>
-            <span style="white-space:nowrap;">Grupos</span>
-        </button>
-
-    </div>
-
-        <!-- 💭 MODAL PARA COMPARTIR PENSAMIENTO PÚBLICO (movido a overlay global fuera del appWrapper) -->
-
-
-</div>
-
+<!-- Esta pantalla web se conserva vacía para no alterar los índices de navegación.
+     Mensajes, Solicitudes, Grupos y Pensamientos se muestran en la interfaz nativa. -->
+<div class="screen" aria-hidden="true" style="height:100vh;overflow:hidden;display:flex;flex-direction:column;background:#f8fafc;padding-bottom:65px;"></div>
 
    <div class="screen" style="background:#f1f5f9;">
     <div style="height: 70px;"></div>
@@ -5984,14 +5949,8 @@ style="display:none;">
         <span class="nav-icon"><i class="fas fa-store"></i></span>
         <span>Vender</span>
     </button>
-
-    <button class="nav-item" id="nav3" onclick="goToScreen(3, true)" style="position: relative;">
-        <span class="nav-icon"><i class="fas fa-comment-dots"></i></span>
-        <span>Mensajes</span>
-        <div id="msgBadge" style="display:none; ...">0</div>
-    </button>
-
-    <button class="nav-item" id="nav4" onclick="goToScreen(4, true)">
+    <!-- Mensajes/Solicitudes/Grupos son controles nativos Android. -->
+<button class="nav-item" id="nav4" onclick="goToScreen(4, true)">
         <span class="nav-icon"><i class="fas fa-user-circle"></i></span>
         <span>Perfil</span>
     </button>
