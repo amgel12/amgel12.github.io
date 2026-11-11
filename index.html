@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CODECASH_BUILD 2026-11-11-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa-snake-lento-fluido-cloudinary-video-freeze-fix-xhr-snake-ads-fix-resume-after-ad-close-nav3-abre-lista-chats-sesion-firebase-real-nativa -->
+<!-- CODECASH_BUILD 2026-11-11-tabs-mensajes-solicitudes-grupos-bajo-pensamientos-retiros-admin-perfil-fotos-bio-foto-derecha-grupos-recientes-m6-califica-m1-categorias-30s-m4-m11-tachado-m5-whatsapp-m7-ingles-5niveles-m2-m8-m9-tachado-m7-reintentar-adnivel3-tts-feed-categorias-15-50videos-fix-token-cache-solo-categoria-boton-cambiar-cancelar-boton-siempre-ingles-error-palabra-es-misiones-boton-final-compra-preview-bloqueado-ingles-opciones-3-panel-tareas-fijo-comentarios-foto-unico-m9-3er-anuncio-20-modal20-ingles-error-auto-5s-ingles-nivel-5pts-2h-snake-pausa-continuar-2ads-video-camara-nativa-snake-lento-fluido-cloudinary-video-freeze-fix-xhr-snake-ads-fix-resume-after-ad-close-nav3-abre-lista-chats-sesion-firebase-real-nativa -->
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -3759,7 +3759,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div onclick="abrirModoMedia('video','grupo'); toggleMenuChatGrupo();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer; border-bottom:1px solid #f8fafc;">
                             <i class="fas fa-video" style="color:#6366f1;"></i>
-                            <span style="font-weight:700; color:#475569; font-size:0.85rem;">Enviar Video (en vivo)</span>
+                            <span style="font-weight:700; color:#475569; font-size:0.85rem;">Enviar Video P2P (sin Storage)</span>
                         </div>
                         <div onclick="abrirSelectorSticker('grupo'); toggleMenuChatGrupo();" style="padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer;">
                             <span style="font-size:1.1rem;">🩷</span>
@@ -3767,6 +3767,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                 </div>
+                <button type="button" id="btnVideoP2PGrupo" onclick="abrirModoMedia('video','grupo')" aria-label="Enviar video P2P" title="Enviar video P2P" style="width:40px; height:40px; border-radius:50%; background:#eef2ff; border:1px solid #c7d2fe; color:#4f46e5; font-size:1.15rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">🎥</button>
                 <div id="indicadorEscribiendoGrupo" style="padding:6px 16px; font-size:0.8rem; color:#6b7280; font-style:italic; display:none; flex-shrink:0;"></div>
                 <input type="text" id="inputGrupoMsg" placeholder="Escribe al grupo..." oninput="toggleBtnEnviarGrupo()" onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMensajeGrupo();}" style="flex:1; background:#f0f2f5; border:none; padding:10px 15px; border-radius:20px; outline:none;">
                 <button type="button" id="btnEmojiGrupo" onclick="abrirSelectorEmoji(event, 'inputGrupoMsg')" aria-label="Emojis" style="width:40px; height:40px; border-radius:50%; background:#f0f2f5; border:none; font-size:1.2rem; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">😊</button>
@@ -5695,6 +5696,13 @@ style="display:none;">
             <span style="white-space:nowrap;">Solicitudes</span>
         </button>
 
+        <button onclick="abrirMensajesNativo('grupos')"
+                style="flex:1; border:none; background:white; padding:5px 4px;
+                       cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                       gap:2px; min-height:42px; font-size:0.6rem; font-weight:800; color:#64748b; transition:.2s;">
+            <span style="font-size:1.1rem;">👥</span>
+            <span style="white-space:nowrap;">Grupos</span>
+        </button>
 
     </div>
 
@@ -7810,6 +7818,19 @@ window._mediaPendiente = null;
 window._mediaUnaVezActual = null;
 
 window.abrirModoMedia = (tipo, contexto) => {
+    // En grupos, el video se envía directamente por WebRTC P2P. No hace falta
+    // abrir el modal de modo de visualización antes de mostrar el selector.
+    if (tipo === 'video' && contexto === 'grupo') {
+        window._modoMedia = 'permanente';
+        if (typeof window.abrirSelectorVideoGrupo === 'function') {
+            window.abrirSelectorVideoGrupo();
+        } else {
+            const input = document.getElementById('inputVideoGrupo');
+            if (input) input.click();
+            else if (typeof notify === 'function') notify('No se encontró el selector de video');
+        }
+        return;
+    }
     window._mediaPendiente = { tipo: tipo, contexto: contexto };
     const titulo = document.getElementById('modoMediaTitulo');
     const sub = document.getElementById('modoMediaSubtitulo');
@@ -18963,7 +18984,7 @@ window.onCompraMensajesExitosa = (cantidadMensajes) => {
 // 💬 Pantalla de Mensajes migrada a NATIVO (MensajesActivity)
 window.abrirMensajesNativo = (pestana) => {
     try { window.playSound('click'); } catch(e){}
-    const tab = (pestana === 'solicitudes') ? 'solicitudes' : 'michat';
+    const tab = (pestana === 'solicitudes' || pestana === 'grupos') ? pestana : 'michat';
     if (typeof AndroidNative !== 'undefined' && AndroidNative.abrirPantallaMensajes) {
         const badgeMsg = document.getElementById('msgBadge');
         if (badgeMsg) badgeMsg.style.display = 'none';
