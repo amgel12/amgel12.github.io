@@ -2233,6 +2233,15 @@
 }
 .feed-action-btn:active { transform: scale(0.8); }
 .feed-action-btn span { font-size: 0.75rem; font-weight: 800; }
+.center-pause-btn {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    z-index: 35; width: 64px; height: 64px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.9); background: rgba(0,0,0,0.45);
+    color: #fff; font-size: 1.5rem; display: none; align-items: center;
+    justify-content: center; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+}
+.center-pause-btn:active { transform: translate(-50%, -50%) scale(0.9); }
 .unmute-box {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
     z-index: 100; background: rgba(0,0,0,0.6); padding: 20px; border-radius: 50%;
@@ -2495,8 +2504,10 @@ function getThumbnailUrl(mediaId, type, fotoPortada) {
 function mostrarThumb(key) {
     const thumb = document.getElementById(`thumb-${key}`);
     const spin  = document.getElementById(`spin-${key}`);
+    const center = document.getElementById(`centerpause-${key}`);
     if (thumb) { thumb.style.opacity = '1'; thumb.classList.remove('playing'); }
     if (spin)  spin.classList.remove('oculto');
+    if (center) center.style.display = 'none';
 }
 
 function ocultarThumb(key) {
@@ -2585,6 +2596,9 @@ function crearCard(key, post, mediaId, type, esRandom) {
                 <p>${post.texto || ''}</p>
             </div>
         </div>
+        <button class="center-pause-btn" id="centerpause-${key}" onclick="event.stopPropagation(); togglePausaVideo('${key}')" title="Pausar / Reanudar">
+            <i class="fas fa-pause" id="centerpauseicon-${key}"></i>
+        </button>
         <div class="feed-card-actions">
             ${esRandom ? `
             <div class="feed-card-avatar" style="background-image:url('${avatarUrl}')"></div>
@@ -2610,13 +2624,13 @@ function crearCard(key, post, mediaId, type, esRandom) {
             </button>
             `}
 
-            <button class="feed-action-btn" id="playpause-${key}" onclick="event.stopPropagation(); togglePausaVideo('${key}')" title="Pausar / Reanudar">
+            <button class="feed-action-btn" id="playpause-${key}" onclick="event.stopPropagation(); togglePausaVideo('${key}')" title="Pausar / Reanudar" style="display:none;">
                 <i class="fas fa-pause" id="playpauseicon-${key}"></i>
                 <span id="playpausetxt-${key}">Pausa</span>
             </button>
 
             <!-- 🔥 BOTÓN ELIMINAR (todos los videos) -->
-            <button class="feed-action-btn" onclick="${esRandom ? `eliminarParaMi('${key}')` : `abrirOpcionesPost('${key}')`}" style="color:#ef4444; margin-top:5px;" title="Eliminar video">
+            <button class="feed-action-btn" onclick="event.stopPropagation(); solicitarEliminarVideoParaMi('${key}')" style="color:#ef4444; margin-top:5px;" title="Eliminar video">
                 <i class="fas fa-trash-alt"></i>
             </button>
         </div>
@@ -2626,6 +2640,24 @@ function crearCard(key, post, mediaId, type, esRandom) {
             <small style="margin-top:8px; font-weight:800; letter-spacing:1px;">TOCA PARA SONIDO</small>
         </div>` : ''}
     `;
+
+    // Mantener presionado abre las opciones completas (Eliminar para todos).
+    let _pressTimer = null;
+    const _cancelPress = () => {
+        if (_pressTimer) { clearTimeout(_pressTimer); _pressTimer = null; }
+    };
+    card.addEventListener('touchstart', (e) => {
+        if (e.target.closest('button')) return;
+        _cancelPress();
+        _pressTimer = setTimeout(() => {
+            _pressTimer = null;
+            if (esRandom) window.solicitarEliminarVideoParaMi(key);
+            else window.abrirOpcionesPost(key);
+        }, 650);
+    }, { passive: true });
+    card.addEventListener('touchend', _cancelPress);
+    card.addEventListener('touchmove', _cancelPress);
+    card.addEventListener('touchcancel', _cancelPress);
 
     // --- Listeners de Perfil ---
     if (!esRandom && post.uid && !cacheFotosPerfil[post.uid]) {
@@ -4004,12 +4036,33 @@ Cerrar
             <div style="background:#fff7ed; padding:15px; border-radius:12px; margin:15px 0; border:2px dashed #f59e0b;">
                 <p style="font-size:0.8rem; color:#9a3412; margin-bottom:5px;">📅 Fecha del Sorteo:</p>
                 <h4 id="rifaDate" style="font-size:1.1rem; color:#ea580c; font-weight:800;">Calculando...</h4>
-                <div style="margin-top:10px; font-size:0.9rem; font-weight:bold; color:#333;">Precio Ticket: <span style="color:#d97706;">100 PTS</span></div>
+                <div style="margin-top:10px; font-size:0.9rem; font-weight:bold; color:#333;">Precio Ticket: <span style="color:#d97706;">10 PTS</span></div>
             </div>
-            <button onclick="comprarTicketRifa()" class="btn-blue" style="background: linear-gradient(135deg, #f59e0b, #d97706);">🎟️ COMPRAR TICKET</button>
+            <button onclick="comprarTicketRifa()" class="btn-blue" style="background: linear-gradient(135deg, #f59e0b, #d97706);">🎟️ PARTICIPAR (10 PTS)</button>
             <button onclick="document.getElementById('modalRifa').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Cerrar</button>
         </div>
     </div>
+    <!-- 🎟️ FORMULARIO PARA PARTICIPAR EN LA RIFA -->
+    <div id="modalRifaParticipar" class="modal-overlay" style="z-index: 35500; display:none;">
+        <div class="modal-content" style="max-width: 360px; border: 3px solid #f59e0b; background:#fffbeb;">
+            <div style="font-size:2.4rem;">🎟️</div>
+            <h3 style="color:#b45309; margin:4px 0 6px;">Participa en la rifa</h3>
+            <p style="font-size:0.8rem; color:#92400e; margin-bottom:14px;">Costo: <b>10 PTS</b>. Completa tus datos para participar.</p>
+            <input id="rifaNombre" type="text" placeholder="Tu nombre" autocomplete="name"
+                style="width:100%; box-sizing:border-box; padding:13px; margin-bottom:10px; border:1.5px solid #fcd34d; border-radius:12px; background:white; color:#334155; font-size:0.9rem;">
+            <input id="rifaCorreo" type="email" placeholder="Tu correo electrónico" autocomplete="email" autocapitalize="none" spellcheck="false"
+                style="width:100%; box-sizing:border-box; padding:13px; margin-bottom:14px; border:1.5px solid #fcd34d; border-radius:12px; background:white; color:#334155; font-size:0.9rem;">
+            <button onclick="confirmarParticipacionRifa()" class="btn-blue"
+                style="width:100%; background:linear-gradient(135deg,#f59e0b,#d97706); color:white; font-weight:800; padding:14px; border:none; border-radius:14px;">
+                ✅ Participar ahora
+            </button>
+            <button onclick="cerrarFormularioRifa()"
+                style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:12px; cursor:pointer;">
+                Cancelar
+            </button>
+        </div>
+    </div>
+
     <!-- =========================================
          💎 MODAL: COMPRAR / DESBLOQUEAR MENSAJES PRIVADOS
          ========================================= -->
@@ -4522,7 +4575,7 @@ Cerrar
         <div style="font-size:1.3rem;">🎟️</div>
         <div style="flex:1;">
             <div style="font-weight:800; color:white; font-size:0.8rem;">GRAN RIFA $50 USD</div>
-            <div style="font-size:0.58rem; color:rgba(255,255,255,0.8);">Solo 100 PTS por ticket</div>
+            <div style="font-size:0.58rem; color:rgba(255,255,255,0.8);">Solo 10 PTS por ticket</div>
         </div>
         <div style="background:white; color:#d97706; padding:5px 12px; border-radius:20px; font-size:0.68rem; font-weight:800;">
             JUGAR →
@@ -5095,7 +5148,7 @@ style="display:none;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom: 1px solid #ddd; padding-bottom:5px;"><span style="color:#64748b;">Ganado (Neto):</span><span id="scoreWonDisplay" style="color:#10b981; font-weight:800;">+0.00</span></div>
                 <div style="display:flex; justify-content:space-between; margin-top:10px;"><span style="color:#333; font-weight:800;">NUEVO SALDO:</span><span id="scoreNewBalance" style="color:#0070ba; font-weight:800; font-size:1.3rem;">0.00</span></div>
             </div>
-            <button id="btnContinuarSnake" onclick="continuarSnakeConAnuncios()" class="btn-blue" style="background:linear-gradient(135deg,#f59e0b,#d97706); display:none; margin-bottom:10px;">▶️ Continuar donde se quedó</button>
+            <button id="btnContinuarSnake" onclick="continuarSnakeConAnuncios()" class="btn-blue" style="background:linear-gradient(135deg,#f59e0b,#d97706); display:none; margin-bottom:10px;">▶️ Continuar (mantiene puntos)</button>
             <button onclick="cerrarModalGameOver()" class="btn-blue" style="background:#1e293b;">🔄 Jugar de nuevo</button>
             <button onclick="document.getElementById('modalGameOver').style.display='none'; cerrarJuego();" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:15px; cursor:pointer;">Salir al menú</button>
         </div>
@@ -5417,6 +5470,10 @@ style="display:none;">
         <i class="fas fa-money-bill-wave menu-icon" style="color:#0070ba;"></i>
         <span style="font-weight:800; color:#0070ba; font-size:0.9rem;">Admin: Pagar Retiros</span>
     </div>
+    <div id="btnAdminRifa" class="menu-card-btn" onclick="abrirAdminRifa()" style="display:none; margin:0 16px 8px; border-radius:14px; border:2px dashed #f59e0b; background:#fffbeb;">
+        <i class="fas fa-ticket-alt menu-icon" style="color:#d97706;"></i>
+        <span style="font-weight:800; color:#d97706; font-size:0.9rem;">Admin: Participantes Rifa</span>
+    </div>
     <div id="btnAdminBots" class="menu-card-btn" onclick="toggleModoBots()" style="display:none; margin:0 16px 8px; border-radius:14px; border:2px dashed #ef4444; background:#fef2f2;">
         <i class="fas fa-robot menu-icon" style="color:#ef4444;"></i>
         <span style="font-weight:800; color:#ef4444; font-size:0.9rem;">Admin: Activar Bots</span>
@@ -5455,6 +5512,35 @@ style="display:none;">
     </div>
 </div>
 
+<div id="modalAdminRifa" class="modal-overlay" style="z-index: 35000; display:none;">
+    <div class="modal-content" style="width: 92%; max-width: 380px; max-height: 70vh; display:flex; flex-direction:column; padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #fde68a; padding-bottom:8px; margin-bottom:8px;">
+            <h3 style="color:#b45309; margin:0; font-size:0.95rem;">🎟️ Participantes Rifa</h3>
+            <button onclick="document.getElementById('modalAdminRifa').style.display='none'" style="background:none; border:none; font-size:1.1rem; color:#ef4444; font-weight:bold; cursor:pointer; padding:8px 12px;">✕</button>
+        </div>
+        <div id="listaParticipantesRifa" style="flex:1; overflow-y:auto; background:#fffbeb; border-radius:10px; padding:6px;">
+            <div style="text-align:center; padding:15px; color:#94a3b8;">Cargando participantes...</div>
+        </div>
+    </div>
+</div>
+
+<div id="modalConfirmEliminarVideo" class="modal-overlay" style="z-index: 45000; display:none;">
+    <div class="modal-content" style="max-width:340px; text-align:center; border-radius:22px; padding:24px 20px;">
+        <div style="width:74px;height:74px;margin:0 auto 14px;border-radius:50%;background:linear-gradient(135deg,#fee2e2,#fecaca);display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 8px 20px rgba(239,68,68,0.22);">🗑️</div>
+        <h3 style="color:#b91c1c;font-size:1.2rem;margin:0 0 8px;">Eliminar video</h3>
+        <p style="color:#64748b;font-size:0.9rem;margin:0 0 18px;line-height:1.5;">
+            ¿Seguro que quieres eliminar este video para ti?<br>
+            <span style="font-size:0.75rem;color:#94a3b8;">Solo desaparecerá de tu feed; los demás lo seguirán viendo.</span>
+        </p>
+        <button onclick="confirmarEliminarVideoParaMi()" style="width:100%;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#ef4444,#dc2626);color:white;font-weight:800;font-size:0.95rem;cursor:pointer;box-shadow:0 6px 18px rgba(239,68,68,0.3);">
+            🗑️ Eliminar para mí
+        </button>
+        <button onclick="cerrarConfirmEliminarVideo()" style="width:100%;margin-top:10px;padding:13px;border:none;border-radius:14px;background:#f1f5f9;color:#475569;font-weight:700;font-size:0.9rem;cursor:pointer;">
+            Cancelar
+        </button>
+    </div>
+</div>
+
 <div id="modalPostOptions" class="modal-overlay" style="z-index:34000; align-items:flex-end;">
     <div class="modal-content" style="width:100%; max-width:100%; border-radius:20px 20px 0 0; padding:0; margin:0; background:#f8fafc; animation: slideUp 0.2s;">
 
@@ -5466,7 +5552,7 @@ style="display:none;">
             🗑️ Eliminar para todos
         </button>
 
-        <button onclick="eliminarParaMi(postSeleccionadoKey)" class="btn-blue" style="margin:5px 15px 5px; background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; align-items:center; justify-content:center; gap:10px;">
+        <button onclick="solicitarEliminarVideoParaMi(postSeleccionadoKey)" class="btn-blue" style="margin:5px 15px 5px; background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; align-items:center; justify-content:center; gap:10px;">
             🙈 Eliminar para mí
         </button>
 
@@ -8589,7 +8675,115 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
         document.getElementById('rifaDate').textContent = `${dia}/${mes}/${anio}`;
         document.getElementById('rifaDate').style.color = "#ea580c";
     };
-    window.comprarTicketRifa = () => { if(currentEarnings<100) return notify("Faltan PTS"); db.ref(`users/${idAuditor}`).update({ earnings: firebase.database.ServerValue.increment(-100) }); registrarHistorial("Ticket Rifa", -100); notify("Ticket comprado"); };
+    window._rifaAdPendiente = false;
+    window.comprarTicketRifa = () => {
+        if (!idAuditor) return notify("Inicia sesión para participar");
+        if (currentEarnings < 10) return notify("❌ Necesitas 10 PTS para participar");
+        window._rifaAdPendiente = true;
+        if (typeof AndroidNative !== 'undefined' && AndroidNative.mostrarAnuncioRifa) {
+            notify("📺 Mira el anuncio completo para participar");
+            try {
+                AndroidNative.mostrarAnuncioRifa();
+            } catch (e) {
+                window._rifaAdPendiente = false;
+                window.abrirFormularioRifa();
+            }
+        } else {
+            // En navegador no hay AdMob; se abre el formulario directamente.
+            window.abrirFormularioRifa();
+        }
+    };
+
+    window.onRifaAdComplete = () => {
+        if (!window._rifaAdPendiente) return;
+        window._rifaAdPendiente = false;
+        window.abrirFormularioRifa();
+    };
+
+    window.abrirFormularioRifa = () => {
+        document.getElementById('modalRifa').style.display = 'none';
+        const nombre = document.getElementById('rifaNombre');
+        const correo = document.getElementById('rifaCorreo');
+        if (nombre) nombre.value = '';
+        if (correo) correo.value = '';
+        document.getElementById('modalRifaParticipar').style.display = 'flex';
+    };
+
+    window.cerrarFormularioRifa = () => {
+        document.getElementById('modalRifaParticipar').style.display = 'none';
+        window._rifaAdPendiente = false;
+    };
+
+    window.confirmarParticipacionRifa = () => {
+        if (!idAuditor) return notify("Inicia sesión para participar");
+        const nombreInput = document.getElementById('rifaNombre');
+        const correoInput = document.getElementById('rifaCorreo');
+        const nombre = String(nombreInput ? nombreInput.value : '').trim();
+        const correo = String(correoInput ? correoInput.value : '').trim().toLowerCase();
+        if (nombre.length < 2) { notify("❌ Escribe tu nombre"); if (nombreInput) nombreInput.focus(); return; }
+        if (!correoAuthValido(correo)) { notify("❌ Escribe un correo válido"); if (correoInput) correoInput.focus(); return; }
+        if (currentEarnings < 10) return notify("❌ Necesitas 10 PTS para participar");
+
+        db.ref(`users/${idAuditor}/earnings`).transaction(current => {
+            const saldo = Number(current) || 0;
+            if (saldo < 10) return;
+            return saldo - 10;
+        }).then(result => {
+            if (!result.committed) { notify("❌ Saldo insuficiente"); return; }
+            const fechaSorteo = document.getElementById('rifaDate')?.textContent || '';
+            db.ref('rifa_participantes').push().setValue({
+                uid: idAuditor,
+                nombre: nombre,
+                correo: correo,
+                fecha: firebase.database.ServerValue.TIMESTAMP,
+                puntos: 10,
+                sorteo: fechaSorteo,
+                estado: 'participando'
+            }).then(() => {
+                currentEarnings = Math.max(0, currentEarnings - 10);
+                if (typeof actualizarSaldoUI === 'function') actualizarSaldoUI(currentEarnings);
+                registrarHistorial("Ticket Rifa", -10);
+                notify("🎟️ ¡Participación registrada! Mucha suerte.");
+                document.getElementById('modalRifaParticipar').style.display = 'none';
+                window._rifaAdPendiente = false;
+                try { window.playSound('win'); } catch(e){}
+            }).catch(err => {
+                db.ref(`users/${idAuditor}/earnings`).transaction(c => (Number(c) || 0) + 10);
+                currentEarnings += 10;
+                if (typeof actualizarSaldoUI === 'function') actualizarSaldoUI(currentEarnings);
+                notify("❌ No se pudo registrar: " + ((err && err.message) || 'intenta de nuevo'));
+            });
+        }).catch(err => notify("❌ Error: " + ((err && err.message) || 'intenta de nuevo')));
+    };
+
+    let _rifaAdminListener = null;
+    window.abrirAdminRifa = () => {
+        if (!window._esAdminRifa) return notify("❌ Solo el administrador puede ver esto");
+        document.getElementById('modalAdminRifa').style.display = 'flex';
+        const lista = document.getElementById('listaParticipantesRifa');
+        if (!_rifaAdminListener) {
+            _rifaAdminListener = db.ref('rifa_participantes').on('value', snap => {
+                const items = [];
+                snap.forEach(child => items.push({ key: child.key, ...(child.val() || {}) }));
+                items.sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
+                if (!items.length) {
+                    lista.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;">Aún no hay participantes.</div>';
+                    return;
+                }
+                const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+                lista.innerHTML = items.map(p => {
+                    const fecha = p.fecha ? new Date(p.fecha).toLocaleString() : '—';
+                    return `<div style="background:white;border:1px solid #fde68a;border-radius:12px;padding:12px;margin-bottom:8px;">
+                        <div style="font-weight:800;color:#0f172a;font-size:0.9rem;">${esc(p.nombre)}</div>
+                        <div style="color:#b45309;font-size:0.8rem;word-break:break-all;">${esc(p.correo)}</div>
+                        <div style="color:#94a3b8;font-size:0.7rem;margin-top:4px;">${fecha} · ${esc(p.puntos || 10)} PTS · ${esc(p.sorteo || '')}</div>
+                    </div>`;
+                }).join('');
+            }, err => {
+                lista.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">No se pudieron cargar los participantes.</div>';
+            });
+        }
+    };
 
     // --- TRANSFERENCIA ULTRA-SEGURA (1 MINUTO) ---
     window.openTransfer = (tid, tname) => {
@@ -9827,7 +10021,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         if (btnContinuar) {
             btnContinuar.style.display = 'block';
             btnContinuar.disabled = false;
-            btnContinuar.textContent = '▶️ Continuar donde se quedó';
+            btnContinuar.textContent = '▶️ Continuar (mantiene puntos)';
         }
 
         document.getElementById('modalGameOver').style.display='flex';
@@ -9944,7 +10138,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         if (btnContinuar) {
             btnContinuar.style.display = 'none';
             btnContinuar.disabled = false;
-            btnContinuar.textContent = '▶️ Continuar donde se quedó';
+            btnContinuar.textContent = '▶️ Continuar (mantiene puntos)';
         }
 
         dibujarSnake();
@@ -10005,7 +10199,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             const btn = document.getElementById('btnContinuarSnake');
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = '▶️ Continuar donde se quedó';
+                btn.textContent = '▶️ Continuar (mantiene puntos)';
             }
             notify("⚠️ No se pudieron cargar los anuncios. Intenta de nuevo.");
         }, 60000);
@@ -10018,10 +10212,6 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         const estado = window._snakeEstadoReanudar;
         if (!estado) {
             notify("No hay partida para continuar");
-            return;
-        }
-        if (!obtenerDireccionSeguraSnake(estado.snake)) {
-            notify("⚠️ No hay espacio para continuar. Inicia una nueva partida.");
             return;
         }
 
@@ -10037,8 +10227,12 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
                 btn.textContent = '📺 Viendo anuncios (1/2)...';
             }
             programarTimeoutContinuarSnake();
-            notify("📺 Mira 2 anuncios para continuar donde te quedaste...");
-            window.location.href = 'go:ad-snake';
+            notify("📺 Mira 2 anuncios para seguir jugando con tus puntos...");
+            if (typeof AndroidNative.mostrarAnuncioSnake === 'function') {
+                AndroidNative.mostrarAnuncioSnake();
+            } else {
+                window.location.href = 'go:ad-snake';
+            }
             return;
         }
 
@@ -10056,19 +10250,18 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             return;
         }
 
-        const dir = obtenerDireccionSeguraSnake(estado.snake);
-        if (!dir) {
-            notify("⚠️ No hay espacio para continuar. Inicia una nueva partida.");
-            return;
-        }
-
         clearInterval(gameInterval);
         gameInterval = null;
         detenerLoopSnake();
 
-        snake = estado.snake.map(seg => ({ x: seg.x, y: seg.y }));
-        food = { x: estado.food.x, y: estado.food.y };
-        velocity = { x: dir.x, y: dir.y };
+        // La culebra vuelve a empezar, pero conserva los puntos acumulados.
+        snake = [
+            { x: 5, y: 5 },
+            { x: 4, y: 5 },
+            { x: 3, y: 5 }
+        ];
+        food = generarComidaSnake();
+        velocity = { x: 1, y: 0 };
         snakeScore = estado.score;
         snakeGananciaAcumulada = estado.gananciaAcumulada;
         snakeMinutosAwarded = estado.minutosAwarded;
@@ -10089,7 +10282,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         if (btnContinuar) {
             btnContinuar.style.display = 'none';
             btnContinuar.disabled = false;
-            btnContinuar.textContent = '▶️ Continuar donde se quedó';
+            btnContinuar.textContent = '▶️ Continuar (mantiene puntos)';
         }
 
         document.getElementById('modalGameOver').style.display = 'none';
@@ -10097,7 +10290,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
         dibujarSnake();
         iniciarLoopSnake();
-        notify("🐍 ¡Continúa donde te quedaste!");
+        notify("🐍 ¡Sigue jugando y conserva tus puntos!");
     }
 
 function generarComidaSnake() {
@@ -10394,6 +10587,9 @@ window.addEventListener('popstate', (e) => {
     'modalVideosMision',
     'modalMusicaMision',
     'modalAdminRetiros',
+    'modalAdminRifa',
+    'modalConfirmEliminarVideo',
+    'modalRifaParticipar',
     'modalMenuPublicar',
     'modalOpcionVideoPropio',
     'modalSubirVideo',
@@ -11353,6 +11549,7 @@ window.subirVideo = () => {
     if (typeof window.seleccionarTipoPublicacion === 'function') {
         window.seleccionarTipoPublicacion('propio');
     } else {
+        if (window.pausarFeedParaModal) window.pausarFeedParaModal();
         document.getElementById('modalOpcionVideoPropio').style.display = 'flex';
     }
 };
@@ -14048,6 +14245,7 @@ window.detenerVideoMuro = () => {
         videoActualId = null;
     }
     feedPausado = false;
+    document.querySelectorAll('.center-pause-btn').forEach(b => { b.style.display = 'none'; });
     if (videoActualJugando) {
         const container = document.getElementById(videoActualJugando);
         if (container) {
@@ -14117,22 +14315,30 @@ window.irMision = (tipo) => {
 
 const ADMIN_EMAIL = "imermejiaramirez@gmail.com";
 const ADMIN2_EMAIL = "codec3865@gmail.com";
+window._esAdminRifa = false;
 
 function verificarSiEsAdmin(emailUsuario) {
     if (!emailUsuario) return;
     const email = emailUsuario.toLowerCase();
+    window._esAdminRifa = false;
+    const btnRifaInicial = document.getElementById('btnAdminRifa');
+    if (btnRifaInicial) btnRifaInicial.style.display = 'none';
 
     if (email === ADMIN_EMAIL.toLowerCase()) {
         isAdmin = true;
+        window._esAdminRifa = true;
         document.getElementById('btnAdminCorreos').style.display = 'flex';
         document.getElementById('btnAdminRetiros').style.display = 'flex';
         document.getElementById('btnAdminBots').style.display = 'flex';
+        const btnRifa = document.getElementById('btnAdminRifa');
+        if (btnRifa) btnRifa.style.display = 'flex';
         const dot = document.getElementById('adminDot');
         if (dot) dot.style.display = 'block';
         mostrarMiUidAdmin();
         iniciarEscuchaAdmin();
     } else if (email === ADMIN2_EMAIL.toLowerCase()) {
         isAdmin = true;
+        window._esAdminRifa = false;
         document.getElementById('btnAdminCorreos').style.display = 'flex';
         document.getElementById('btnAdminBots').style.display = 'flex';
         mostrarMiUidAdmin();
@@ -14577,7 +14783,7 @@ window.abrirOpcionesPost = (postKey) => {
 
     // Videos aleatorios del feed: no viven en Firebase, solo se pueden ocultar
     if (String(postKey).startsWith('ytrandom-') || String(postKey).startsWith('ytmusic-') || String(postKey).startsWith('mp4random-')) {
-        eliminarParaMi(postKey);
+        window.solicitarEliminarVideoParaMi(postKey);
         return;
     }
 
@@ -14642,6 +14848,24 @@ window.eliminarPost = (postKey) => {
             .then(() => notify("✅ Video eliminado para todos"))
             .catch(err => notify("⚠️ Error: " + err.message));
     };
+};
+
+// Confirmación bonita antes de eliminar un video solo para mí.
+window._videoParaEliminar = null;
+window.solicitarEliminarVideoParaMi = (key) => {
+    if (!key) return;
+    window._videoParaEliminar = key;
+    document.getElementById('modalConfirmEliminarVideo').style.display = 'flex';
+};
+window.cerrarConfirmEliminarVideo = () => {
+    window._videoParaEliminar = null;
+    document.getElementById('modalConfirmEliminarVideo').style.display = 'none';
+};
+window.confirmarEliminarVideoParaMi = () => {
+    const key = window._videoParaEliminar;
+    window._videoParaEliminar = null;
+    document.getElementById('modalConfirmEliminarVideo').style.display = 'none';
+    if (key) window.eliminarParaMi(key);
 };
 
 // --- 2b. ELIMINAR PARA MÍ (Ocultar solo para este usuario) ---
@@ -15402,7 +15626,13 @@ window.onGameAdComplete = function() {
             programarTimeoutContinuarSnake();
             notify("📺 Mira el segundo anuncio para continuar...");
             setTimeout(() => {
-                if (window._snakeContinuarPendiente) window.location.href = 'go:ad-snake';
+                if (window._snakeContinuarPendiente) {
+                    if (typeof AndroidNative !== 'undefined' && typeof AndroidNative.mostrarAnuncioSnake === 'function') {
+                        AndroidNative.mostrarAnuncioSnake();
+                    } else {
+                        window.location.href = 'go:ad-snake';
+                    }
+                }
             }, 800);
             return;
         }
@@ -16394,14 +16624,68 @@ window.ejecutarCerrarSesion = () => {
         setTimeout(() => location.reload(), 1000);
     }).catch(e => notify("❌ Error: " + e.message));
 };
+// Pausa el video del feed mientras se abre el flujo de publicar.
+window._feedPausadoPorModal = false;
+window.pausarFeedParaModal = () => {
+    try {
+        if (typeof videoActualId !== 'undefined' && videoActualId && !feedPausado) {
+            feedPausado = true;
+            window._feedPausadoPorModal = true;
+            pausarVideo(videoActualId);
+            const icon = document.getElementById('playpauseicon-' + videoActualId);
+            const txt = document.getElementById('playpausetxt-' + videoActualId);
+            if (icon) icon.className = 'fas fa-play';
+            if (txt) txt.textContent = 'Reanudar';
+        }
+        document.querySelectorAll('video').forEach(v => {
+            try { if (!v.paused) v.pause(); } catch(e) {}
+        });
+        if (window._ytPlayers) {
+            Object.keys(window._ytPlayers).forEach(k => {
+                try {
+                    const p = window._ytPlayers[k];
+                    if (p && typeof p.pauseVideo === 'function') p.pauseVideo();
+                } catch(e) {}
+            });
+        }
+    } catch(e) {}
+};
+
+window.reanudarFeedTrasModal = () => {
+    if (!window._feedPausadoPorModal) return;
+    window._feedPausadoPorModal = false;
+    try {
+        if (typeof videoActualId !== 'undefined' && videoActualId) {
+            feedPausado = false;
+            reanudarVideo(videoActualId);
+            const icon = document.getElementById('playpauseicon-' + videoActualId);
+            const txt = document.getElementById('playpausetxt-' + videoActualId);
+            if (icon) icon.className = 'fas fa-pause';
+            if (txt) txt.textContent = 'Pausa';
+        }
+    } catch(e) {}
+};
+
 // Función para abrir el menú de selección
 window.abrirMenuPublicar = () => {
+    if (window.pausarFeedParaModal) window.pausarFeedParaModal();
     document.getElementById('modalMenuPublicar').style.display = 'flex';
     try { window.playSound('click'); } catch(e){}
 };
 
+window.cerrarMenuPublicar = () => {
+    document.getElementById('modalMenuPublicar').style.display = 'none';
+    if (window.reanudarFeedTrasModal) window.reanudarFeedTrasModal();
+};
+
+window.cerrarOpcionVideoPropio = () => {
+    document.getElementById('modalOpcionVideoPropio').style.display = 'none';
+    if (window.reanudarFeedTrasModal) window.reanudarFeedTrasModal();
+};
+
 // Función para manejar la elección
 window.seleccionarTipoPublicacion = (tipo) => {
+    if (window.pausarFeedParaModal) window.pausarFeedParaModal();
     document.getElementById('modalMenuPublicar').style.display = 'none';
 
     if (tipo === 'youtube') {
@@ -16410,8 +16694,9 @@ window.seleccionarTipoPublicacion = (tipo) => {
         if (!idAuditor) return notify("Inicia sesión");
         db.ref(`users/${idAuditor}/referidos`).once('value', snap => {
             const total = snap.numChildren() || 0;
-            if (total < 100) {
-                return notify(`🔒 Necesitas ${100 - total} referidos más para desbloquear Video Propio (${total}/100)`);
+            if (total < 50) {
+                if (window.reanudarFeedTrasModal) window.reanudarFeedTrasModal();
+                return notify(`🔒 Necesitas ${50 - total} referidos más para desbloquear Video Propio (${total}/50)`);
             }
             document.getElementById('modalOpcionVideoPropio').style.display = 'flex';
         });
@@ -16687,6 +16972,7 @@ window.limpiarVideoPreview = (limpiarInputs = true) => {
 window.cerrarModalSubirVideo = () => {
     window.limpiarVideoPreview(true);
     document.getElementById('modalSubirVideo').style.display = 'none';
+    if (window.reanudarFeedTrasModal) window.reanudarFeedTrasModal();
 };
 
 window.grabarVideoCamara = () => {
@@ -16725,6 +17011,7 @@ window.obtenerVideoSeleccionado = () => {
 
 window.onVideoCaptured = (uri) => {
     window.limpiarVideoPreview(false);
+    if (window.pausarFeedParaModal) window.pausarFeedParaModal();
     document.getElementById('modalSubirVideo').style.display = 'flex';
     const videoTag = document.getElementById('videoPreview');
     const placeholder = document.getElementById('videoPlaceholder');
@@ -16778,6 +17065,7 @@ window.procesarVideoSeleccionado = (inputOrigen) => {
         }
 
         // Si pasa la prueba, mostrar el modal de subir
+        if (window.pausarFeedParaModal) window.pausarFeedParaModal();
         document.getElementById('modalSubirVideo').style.display = 'flex';
         const videoTag = document.getElementById('videoPreview');
         const placeholder = document.getElementById('videoPlaceholder');
@@ -16842,7 +17130,7 @@ window.onAdSkipped = () => {
         const btnContinuar = document.getElementById('btnContinuarSnake');
         if (btnContinuar) {
             btnContinuar.disabled = false;
-            btnContinuar.textContent = '▶️ Continuar donde se quedó';
+            btnContinuar.textContent = '▶️ Continuar (mantiene puntos)';
         }
         notify("📺 Debes ver los 2 anuncios completos para continuar");
         return;
@@ -16912,6 +17200,7 @@ window.subirVideoServidor = () => {
 
             window.limpiarVideoPreview(true);
             document.getElementById('modalSubirVideo').style.display = 'none';
+            if (window.reanudarFeedTrasModal) window.reanudarFeedTrasModal();
             const descInput = document.getElementById('videoDescripcion');
             if (descInput) descInput.value = '';
             notify("✅ ¡Video publicado! +0.50 PTS");
@@ -17190,6 +17479,8 @@ function reproducirVideo(card) {
         if (ant) {
             ant.querySelector('.vid-frame').innerHTML = "";
             mostrarThumb(videoActualId);
+            const oldCenter = document.getElementById('centerpause-' + videoActualId);
+            if (oldCenter) oldCenter.style.display = 'none';
         }
         if (window._ytPlayers && window._ytPlayers[videoActualId]) {
             delete window._ytPlayers[videoActualId];
@@ -17202,9 +17493,13 @@ function reproducirVideo(card) {
         const tx = document.getElementById('playpausetxt-' + c.id);
         if (ic) ic.className = 'fas fa-pause';
         if (tx) tx.textContent = 'Pausa';
+        const center = document.getElementById('centerpause-' + c.id);
+        if (center) center.style.display = 'none';
     });
 
     videoActualId = card.id;
+    const centerActual = document.getElementById('centerpause-' + card.id);
+    if (centerActual) centerActual.style.display = 'flex';
     const mediaId = card.getAttribute('data-media');
     const type    = card.getAttribute('data-type');
     const frame   = card.querySelector('.vid-frame');
@@ -17353,17 +17648,20 @@ window.togglePausaVideo = (key) => {
     if (videoActualId !== key) return;
     const icon = document.getElementById('playpauseicon-' + key);
     const txt  = document.getElementById('playpausetxt-' + key);
+    const centerIcon = document.getElementById('centerpauseicon-' + key);
 
     if (feedPausado) {
         feedPausado = false;
         reanudarVideo(key);
         if (icon) icon.className = 'fas fa-pause';
         if (txt) txt.textContent = 'Pausa';
+        if (centerIcon) centerIcon.className = 'fas fa-pause';
     } else {
         feedPausado = true;
         pausarVideo(key);
         if (icon) icon.className = 'fas fa-play';
         if (txt) txt.textContent = 'Reanudar';
+        if (centerIcon) centerIcon.className = 'fas fa-play';
     }
 };
 
@@ -17387,6 +17685,8 @@ function pausarVideo(key) {
         const ifr = frame.querySelector('iframe');
         if (ifr) { try { ifr.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); } catch(e){} }
     }
+    const centerIcon = document.getElementById('centerpauseicon-' + key);
+    if (centerIcon) centerIcon.className = 'fas fa-play';
     // Congelar el conteo de recompensa mientras está en pausa
     if (videoProgressInterval) {
         clearInterval(videoProgressInterval);
@@ -17402,6 +17702,8 @@ function reanudarVideo(key) {
     if (!frame) return;
     const mediaId = card.getAttribute('data-media');
 
+    const centerIcon = document.getElementById('centerpauseicon-' + key);
+    if (centerIcon) centerIcon.className = 'fas fa-pause';
     if (type === 'direct' || type === 'catbox' || type === 'imgur') {
         const v = frame.querySelector('video');
         if (v) { try { v.play(); } catch(e){} }
@@ -17754,7 +18056,7 @@ window.guardarBioCompleta = () => {
             </button>
 
 
-            <button onclick="document.getElementById('modalMenuPublicar').style.display='none'" 
+            <button onclick="cerrarMenuPublicar()" 
                 style="margin-top: 10px; padding: 15px; border: none; background: none; color: #94a3b8; font-weight: 700; cursor: pointer;">
                 Cancelar
             </button>
@@ -17787,7 +18089,7 @@ window.guardarBioCompleta = () => {
                 </div>
             </button>
 
-            <button onclick="document.getElementById('modalOpcionVideoPropio').style.display='none'" 
+            <button onclick="cerrarOpcionVideoPropio()" 
                 style="margin-top: 10px; padding: 15px; border: none; background: none; color: #94a3b8; font-weight: 700; cursor: pointer;">
                 Cancelar
             </button>
