@@ -3016,7 +3016,10 @@ function agregarVideoYTAlFeed(item) {
     if (!container || !item || !item.id) return;
     const key = 'ytmusic-' + item.id;
     if (document.getElementById(key)) return;
-    if (postOcultoParaMi(key)) { ytRandomUsados.add(item.id); return; }
+    if (postOcultoParaMi(key) || estaVistoFeed(item.id)) {
+        ytRandomUsados.add(item.id);
+        return;
+    }
     ytRandomUsados.add(item.id);
 
     const post = {
@@ -3045,16 +3048,23 @@ function cargarLoteVideosYT() {
     if (ytRandomCargando) return;
     ytRandomCargando = true;
 
-    // Fuente única: videos de música de YouTube (lista curada, sin API key)
-    let pool = YT_RANDOM_YT.filter(m => !ytRandomUsados.has(m.id));
+    // Fuente única: videos de música de YouTube (lista curada, sin API key).
+    // Se excluyen los ya vistos y se reinicia el pool usado si hace falta.
+    let pool = YT_RANDOM_YT.filter(m => !ytRandomUsados.has(m.id) && !estaVistoFeed(m.id));
     if (!pool.length) {
-        ytRandomUsados = new Set(); // pool agotado → reiniciar
-        pool = YT_RANDOM_YT.slice();
+        ytRandomUsados = new Set();
+        pool = YT_RANDOM_YT.filter(m => !estaVistoFeed(m.id));
     }
-    // Mostrar primero la curaduría nueva; luego seguir con el resto al azar
-    const prioritarios = pool.filter(m => m.nuevo);
-    const fuente = prioritarios.length ? prioritarios : pool;
-    const seleccion = fuente.slice().sort(() => Math.random() - 0.5).slice(0, YT_MAX_RANDOM);
+    if (!pool.length) {
+        ytRandomCargando = false;
+        return;
+    }
+    // Los videos nuevos van arriba (mezclados entre ellos); el resto se
+    // mezcla después. No se mezclan categorías: si hay categoría elegida,
+    // esta función no corre.
+    const nuevos = mezclarAleatorio(pool.filter(m => m.nuevo));
+    const resto = mezclarAleatorio(pool.filter(m => !m.nuevo));
+    const seleccion = nuevos.concat(resto).slice(0, YT_MAX_RANDOM);
     seleccion.forEach(m => agregarVideoYTAlFeed(m));
     ytRandomCargando = false;
 }
@@ -3236,14 +3246,74 @@ function normalizarVideosYT(items) {
     return salida;
 }
 
+// Mezcla una copia de la lista sin tocar el arreglo original. Se usa para
+// que el feed cambie de orden en cada recarga sin mezclar categorías.
+function mezclarAleatorio(lista) {
+    const arr = (lista || []).slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+// Videos ya vistos por el usuario. Se guardan por ID y se excluyen al
+// recargar/entrar para que no vuelvan a aparecer. Caducan a los 7 días para
+// que el feed no se quede vacío cuando se agote una lista.
+const FEED_VISTOS_KEY = 'pgc_feed_vistos_v1';
+const FEED_VISTOS_TTL = 7 * 24 * 60 * 60 * 1000;
+const FEED_VISTOS_MAX = 800;
+function leerVistosFeed() {
+    let obj = {};
+    try {
+        obj = JSON.parse(localStorage.getItem(FEED_VISTOS_KEY) || '{}') || {};
+    } catch (e) {
+        obj = {};
+    }
+    const ahora = Date.now();
+    let cambios = false;
+    Object.keys(obj).forEach(id => {
+        if (!obj[id] || (ahora - Number(obj[id])) > FEED_VISTOS_TTL) {
+            delete obj[id];
+            cambios = true;
+        }
+    });
+    const ids = Object.keys(obj);
+    if (ids.length > FEED_VISTOS_MAX) {
+        ids.sort((a, b) => Number(obj[b]) - Number(obj[a]))
+            .slice(FEED_VISTOS_MAX)
+            .forEach(id => { delete obj[id]; });
+        cambios = true;
+    }
+    if (cambios) {
+        try { localStorage.setItem(FEED_VISTOS_KEY, JSON.stringify(obj)); } catch (e) {}
+    }
+    return obj;
+}
+function estaVistoFeed(id) {
+    if (!id) return false;
+    return !!leerVistosFeed()[id];
+}
+function marcarVideoVistoFeed(id) {
+    if (!id) return;
+    try {
+        const obj = leerVistosFeed();
+        obj[id] = Date.now();
+        localStorage.setItem(FEED_VISTOS_KEY, JSON.stringify(obj));
+    } catch (e) {}
+}
+
 async function buscarVideosCategoria(cat, limite) {
     const cacheKey = 'pgc_cat_cache_v2_' + cat.id;
     try {
         const cache = JSON.parse(localStorage.getItem(cacheKey) || 'null');
         if (cache && Array.isArray(cache.videos) && cache.videos.length >= limite && (Date.now() - (cache.ts || 0) < 6 * 60 * 60 * 1000)) {
-            const salida = cache.videos.slice(0, limite);
-            salida._desdeApi = !!cache.desdeApi;
-            return salida;
+            const disponibles = cache.videos.filter(v => !estaVistoFeed(v.id));
+            if (disponibles.length >= limite) {
+                const salida = mezclarAleatorio(disponibles.slice(0, limite));
+                salida._desdeApi = !!cache.desdeApi;
+                return salida;
+            }
         }
     } catch(e) {}
 
@@ -3276,7 +3346,8 @@ async function buscarVideosCategoria(cat, limite) {
 
     // Sin relleno: si la categoría no devuelve videos, se muestra un aviso
     // y el usuario puede elegir otra categoría. Nunca se mezcla con música.
-    videos = videos.slice(0, limite);
+    videos = videos.filter(v => !estaVistoFeed(v.id));
+    videos = mezclarAleatorio(videos.slice(0, limite));
     videos._desdeApi = desdeApi;
     try {
         if (videos.length) localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), desdeApi: desdeApi, videos: videos }));
@@ -4688,6 +4759,18 @@ Cerrar
 
 </div>
     </div>
+    <!-- BINANCE: ELEGIR MONEDA / RED -->
+    <div id="modalBinanceEnvio" class="modal-overlay" style="z-index: 36000; display: none;" onclick="if(event.target===this)cerrarBinanceEnvio()">
+        <div class="modal-content" style="background:#fff; color:#1e293b; padding:0; border-radius:22px; width:92%; max-width:420px; max-height:86vh; overflow:hidden; display:flex; flex-direction:column; text-align:left;">
+            <div style="display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid #e2e8f0; flex-shrink:0;">
+                <button id="btnBinanceAtras" onclick="volverBinanceEnvio()" style="display:none; width:38px; height:38px; border:none; border-radius:12px; background:#f1f5f9; color:#1e293b; font-size:1.1rem; cursor:pointer;">←</button>
+                <div id="binanceEnvioTitulo" style="flex:1; text-align:center; font-weight:900; color:#1e293b; font-size:0.9rem; letter-spacing:1px;">ENVIAR</div>
+                <button onclick="cerrarBinanceEnvio()" style="width:38px; height:38px; border:none; border-radius:12px; background:#f1f5f9; color:#64748b; font-size:1.1rem; cursor:pointer;">✕</button>
+            </div>
+            <div id="binanceEnvioLista" style="padding:14px 16px 18px; overflow-y:auto;"></div>
+        </div>
+    </div>
+
     <div id="modalUnlockVIP" class="modal-overlay">
         <div class="modal-content" style="border: 2px solid #a855f7;">
             <h3 style="color:#7e22ce; font-size:1.5rem;">🚀 Siguiente Nivel</h3>
@@ -5419,73 +5502,91 @@ style="display:none;">
 </div>
     <!-- REDES SOCIALES -->
     <div class="profile-field-card">
-        <div class="profile-field-label" style="color:#1877f2;">
-            <i class="fab fa-facebook" style="margin-right:5px;"></i>Facebook
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px;">
+            <div>
+                <div class="profile-field-label" style="margin-bottom:3px; color:#1e293b;">🔗 Redes sociales</div>
+                <div style="font-size:0.7rem; color:#94a3b8;">Agrega tus enlaces públicos</div>
+            </div>
+            <div style="font-size:0.65rem; font-weight:800; color:#2563EB; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:20px; padding:4px 9px; white-space:nowrap;">5 redes</div>
         </div>
-        <div class="profile-field-row">
-            <input type="url" id="inputFacebook" class="profile-field-input" placeholder="https://facebook.com/tu.perfil" maxlength="150" style="border-color:#dbeafe;">
-            <button onclick="guardarFacebook()" class="profile-save-btn" style="background:linear-gradient(135deg,#1877f2,#0d5bbf); box-shadow:0 3px 10px rgba(24,119,242,0.3);">Guardar</button>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+                <div style="">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
+                        <div style="width:28px; height:28px; border-radius:9px; background:#e7f0fe; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fab fa-facebook-f" style="color:#1877f2; font-size:0.85rem;"></i>
+                        </div>
+                        <span style="font-size:0.72rem; font-weight:800; color:#1877f2;">Facebook</span>
+                    </div>
+                    <div class="profile-field-row">
+                        <input type="url" id="inputFacebook" class="profile-field-input" placeholder="https://facebook.com/tu.perfil" maxlength="150" style="border-color:#dbeafe;">
+                        <button onclick="guardarFacebook()" class="profile-save-btn" style="background:linear-gradient(135deg,#1877f2,#0d5bbf); box-shadow:0 3px 10px rgba(24,119,242,0.3);">Guardar</button>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; margin-top:5px;">
+                        <button onclick="quitarRedSocial('facebookUrl','inputFacebook','Facebook')" style="background:#fff5f5; color:#dc2626; border:1px solid #fecaca; border-radius:8px; padding:4px 8px; font-size:0.62rem; font-weight:800; cursor:pointer; white-space:nowrap;">🗑️ Quitar link</button>
+                    </div>
+                </div>
+                <div style="border-top:1px solid #f1f5f9; padding-top:12px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
+                        <div style="width:28px; height:28px; border-radius:9px; background:#fce7f3; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fab fa-instagram" style="color:#E4405F; font-size:0.85rem;"></i>
+                        </div>
+                        <span style="font-size:0.72rem; font-weight:800; color:#E4405F;">Instagram</span>
+                    </div>
+                    <div class="profile-field-row">
+                        <input type="url" id="inputInstagram" class="profile-field-input" placeholder="https://instagram.com/tu.perfil" maxlength="150" style="border-color:#fbcfe8;">
+                        <button onclick="guardarRedSocial('instagramUrl','inputInstagram','Instagram','instagram.com')" class="profile-save-btn" style="background:linear-gradient(135deg,#E4405F,#C13584); box-shadow:0 3px 10px rgba(228,64,95,0.3);">Guardar</button>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; margin-top:5px;">
+                        <button onclick="quitarRedSocial('instagramUrl','inputInstagram','Instagram')" style="background:#fff5f5; color:#dc2626; border:1px solid #fecaca; border-radius:8px; padding:4px 8px; font-size:0.62rem; font-weight:800; cursor:pointer; white-space:nowrap;">🗑️ Quitar link</button>
+                    </div>
+                </div>
+                <div style="border-top:1px solid #f1f5f9; padding-top:12px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
+                        <div style="width:28px; height:28px; border-radius:9px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fab fa-tiktok" style="color:#111827; font-size:0.85rem;"></i>
+                        </div>
+                        <span style="font-size:0.72rem; font-weight:800; color:#111827;">TikTok</span>
+                    </div>
+                    <div class="profile-field-row">
+                        <input type="url" id="inputTiktok" class="profile-field-input" placeholder="https://tiktok.com/@tu.usuario" maxlength="150" style="border-color:#e5e7eb;">
+                        <button onclick="guardarRedSocial('tiktokUrl','inputTiktok','TikTok','tiktok.com')" class="profile-save-btn" style="background:linear-gradient(135deg,#111827,#000000); box-shadow:0 3px 10px rgba(0,0,0,0.25);">Guardar</button>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; margin-top:5px;">
+                        <button onclick="quitarRedSocial('tiktokUrl','inputTiktok','TikTok')" style="background:#fff5f5; color:#dc2626; border:1px solid #fecaca; border-radius:8px; padding:4px 8px; font-size:0.62rem; font-weight:800; cursor:pointer; white-space:nowrap;">🗑️ Quitar link</button>
+                    </div>
+                </div>
+                <div style="border-top:1px solid #f1f5f9; padding-top:12px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
+                        <div style="width:28px; height:28px; border-radius:9px; background:#dcfce7; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fab fa-whatsapp" style="color:#25D366; font-size:0.85rem;"></i>
+                        </div>
+                        <span style="font-size:0.72rem; font-weight:800; color:#25D366;">WhatsApp</span>
+                    </div>
+                    <div class="profile-field-row">
+                        <input type="url" id="inputWhatsapp" class="profile-field-input" placeholder="https://wa.me/50212345678" maxlength="150" style="border-color:#bbf7d0;">
+                        <button onclick="guardarRedSocial('whatsappUrl','inputWhatsapp','WhatsApp','wa.me|whatsapp.com')" class="profile-save-btn" style="background:linear-gradient(135deg,#25D366,#128C7E); box-shadow:0 3px 10px rgba(37,211,102,0.3);">Guardar</button>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; margin-top:5px;">
+                        <button onclick="quitarRedSocial('whatsappUrl','inputWhatsapp','WhatsApp')" style="background:#fff5f5; color:#dc2626; border:1px solid #fecaca; border-radius:8px; padding:4px 8px; font-size:0.62rem; font-weight:800; cursor:pointer; white-space:nowrap;">🗑️ Quitar link</button>
+                    </div>
+                </div>
+                <div style="border-top:1px solid #f1f5f9; padding-top:12px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:7px;">
+                        <div style="width:28px; height:28px; border-radius:9px; background:#fee2e2; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fab fa-youtube" style="color:#FF0000; font-size:0.85rem;"></i>
+                        </div>
+                        <span style="font-size:0.72rem; font-weight:800; color:#FF0000;">YouTube</span>
+                    </div>
+                    <div class="profile-field-row">
+                        <input type="url" id="inputYoutube" class="profile-field-input" placeholder="https://youtube.com/@tu.canal" maxlength="150" style="border-color:#fecaca;">
+                        <button onclick="guardarRedSocial('youtubeUrl','inputYoutube','YouTube','youtube.com|youtu.be')" class="profile-save-btn" style="background:linear-gradient(135deg,#FF0000,#CC0000); box-shadow:0 3px 10px rgba(255,0,0,0.3);">Guardar</button>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; margin-top:5px;">
+                        <button onclick="quitarRedSocial('youtubeUrl','inputYoutube','YouTube')" style="background:#fff5f5; color:#dc2626; border:1px solid #fecaca; border-radius:8px; padding:4px 8px; font-size:0.62rem; font-weight:800; cursor:pointer; white-space:nowrap;">🗑️ Quitar link</button>
+                    </div>
+                </div>
         </div>
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px;">
-            <div style="font-size:0.65rem; color:#cbd5e1;">Los demás verán un anuncio antes de abrirlo</div>
-            <button onclick="quitarRedSocial('facebookUrl','inputFacebook','Facebook')" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:10px; padding:6px 9px; font-size:0.65rem; font-weight:800; cursor:pointer; white-space:nowrap;">🗑️ Quitar link</button>
-        </div>
-    </div>
-
-    <div class="profile-field-card">
-        <div class="profile-field-label" style="color:#E4405F;">
-            <i class="fab fa-instagram" style="margin-right:5px;"></i>Instagram
-        </div>
-        <div class="profile-field-row">
-            <input type="url" id="inputInstagram" class="profile-field-input" placeholder="https://instagram.com/tu.perfil" maxlength="150" style="border-color:#fbcfe8;">
-            <button onclick="guardarRedSocial('instagramUrl','inputInstagram','Instagram','instagram.com')" class="profile-save-btn" style="background:linear-gradient(135deg,#E4405F,#C13584); box-shadow:0 3px 10px rgba(228,64,95,0.3);">Guardar</button>
-        </div>
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px;">
-            <div style="font-size:0.65rem; color:#cbd5e1;">Los demás verán un anuncio antes de abrirlo</div>
-            <button onclick="quitarRedSocial('instagramUrl','inputInstagram','Instagram')" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:10px; padding:6px 9px; font-size:0.65rem; font-weight:800; cursor:pointer; white-space:nowrap;">🗑️ Quitar link</button>
-        </div>
-    </div>
-
-    <div class="profile-field-card">
-        <div class="profile-field-label" style="color:#111827;">
-            <i class="fab fa-tiktok" style="margin-right:5px;"></i>TikTok
-        </div>
-        <div class="profile-field-row">
-            <input type="url" id="inputTiktok" class="profile-field-input" placeholder="https://tiktok.com/@tu.usuario" maxlength="150" style="border-color:#e5e7eb;">
-            <button onclick="guardarRedSocial('tiktokUrl','inputTiktok','TikTok','tiktok.com')" class="profile-save-btn" style="background:linear-gradient(135deg,#111827,#000000); box-shadow:0 3px 10px rgba(0,0,0,0.25);">Guardar</button>
-        </div>
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px;">
-            <div style="font-size:0.65rem; color:#cbd5e1;">Los demás verán un anuncio antes de abrirlo</div>
-            <button onclick="quitarRedSocial('tiktokUrl','inputTiktok','TikTok')" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:10px; padding:6px 9px; font-size:0.65rem; font-weight:800; cursor:pointer; white-space:nowrap;">🗑️ Quitar link</button>
-        </div>
-    </div>
-
-    <div class="profile-field-card">
-        <div class="profile-field-label" style="color:#25D366;">
-            <i class="fab fa-whatsapp" style="margin-right:5px;"></i>WhatsApp
-        </div>
-        <div class="profile-field-row">
-            <input type="url" id="inputWhatsapp" class="profile-field-input" placeholder="https://wa.me/50212345678" maxlength="150" style="border-color:#bbf7d0;">
-            <button onclick="guardarRedSocial('whatsappUrl','inputWhatsapp','WhatsApp','wa.me|whatsapp.com')" class="profile-save-btn" style="background:linear-gradient(135deg,#25D366,#128C7E); box-shadow:0 3px 10px rgba(37,211,102,0.3);">Guardar</button>
-        </div>
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px;">
-            <div style="font-size:0.65rem; color:#cbd5e1;">Los demás verán un anuncio antes de abrirlo</div>
-            <button onclick="quitarRedSocial('whatsappUrl','inputWhatsapp','WhatsApp')" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:10px; padding:6px 9px; font-size:0.65rem; font-weight:800; cursor:pointer; white-space:nowrap;">🗑️ Quitar link</button>
-        </div>
-    </div>
-
-    <div class="profile-field-card">
-        <div class="profile-field-label" style="color:#FF0000;">
-            <i class="fab fa-youtube" style="margin-right:5px;"></i>YouTube
-        </div>
-        <div class="profile-field-row">
-            <input type="url" id="inputYoutube" class="profile-field-input" placeholder="https://youtube.com/@tu.canal" maxlength="150" style="border-color:#fecaca;">
-            <button onclick="guardarRedSocial('youtubeUrl','inputYoutube','YouTube','youtube.com|youtu.be')" class="profile-save-btn" style="background:linear-gradient(135deg,#FF0000,#CC0000); box-shadow:0 3px 10px rgba(255,0,0,0.3);">Guardar</button>
-        </div>
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px;">
-            <div style="font-size:0.65rem; color:#cbd5e1;">Los demás verán un anuncio antes de abrirlo</div>
-            <button onclick="quitarRedSocial('youtubeUrl','inputYoutube','YouTube')" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:10px; padding:6px 9px; font-size:0.65rem; font-weight:800; cursor:pointer; white-space:nowrap;">🗑️ Quitar link</button>
-        </div>
+        <div style="font-size:0.65rem; color:#94a3b8; margin-top:10px; line-height:1.4;">Los demás verán un anuncio antes de abrir tus enlaces.</div>
     </div>
 
     <!-- MENÚ -->
@@ -10665,6 +10766,7 @@ window.addEventListener('popstate', (e) => {
     'modalInvitar', 'modalSubirFoto', 'modalFotoOptions', 
     'modalVenderProducto', 'modalInstruccionesVender', 'modalComprarProducto', 'modalMisVentas', 'modalProductosComprados', 'modalVideoTutorial', 
     'modalConfirmDelete', 'modalChatPrivado',     'modalComprarMensajes', 'modalComprarFoto',
+    'modalBinanceEnvio',
     'modalRetiro',
     'modalFotoDetalle',
     'modalCompartir',
@@ -11005,12 +11107,145 @@ window.abrirRetiro = () => {
     // VARIABLES DE MÉTODO PAGO
     let metodoPagoSeleccionado = 'paypal'; // 'paypal' | 'binance' | 'tropipay'
 
+    // ===== BINANCE: ELEGIR MONEDA Y RED =====
+    let binanceAssetSeleccionado = '';
+    let binanceNetworkSeleccionado = '';
+    let binancePaso = 'asset';
+
+    const BINANCE_ASSETS = [
+        { id: 'BTC',  nombre: 'Bitcoin (BTC)', sub: 'On-Chain · Lightning', icon: '₿', color: '#f7931a', bg: '#fff7ed' },
+        { id: 'USDC', nombre: 'USDC',          sub: 'Ethereum · Polygon · Solana · +4', icon: '$', color: '#2775ca', bg: '#eff6ff' },
+        { id: 'USDT', nombre: 'USDT',          sub: 'Ethereum · Polygon · Solana · +1', icon: '₮', color: '#26a17b', bg: '#ecfdf5' }
+    ];
+    const BINANCE_NETWORKS = {
+        USDC: ['Arbitrum', 'Base', 'Celo', 'Ethereum', 'Polygon', 'Solana', 'Tempo'],
+        USDT: ['Ethereum', 'Polygon', 'Solana', 'Tempo']
+    };
+    const BINANCE_NETWORK_META = {
+        Arbitrum: { icon: 'A', bg: '#e0e7ff', color: '#3730a3' },
+        Base:     { icon: 'B', bg: '#dbeafe', color: '#1d4ed8' },
+        Celo:     { icon: 'C', bg: '#fef9c3', color: '#a16207' },
+        Ethereum: { icon: 'Ξ', bg: '#ede9fe', color: '#6d28d9' },
+        Polygon:  { icon: '⬡', bg: '#f3e8ff', color: '#7e22ce' },
+        Solana:   { icon: 'S', bg: '#e2e8f0', color: '#0f172a' },
+        Tempo:    { icon: 'T', bg: '#e5e7eb', color: '#111827' }
+    };
+
+    function filaBinance(icon, bg, color, titulo, subtitulo, onclick) {
+        return '<div onclick="' + onclick + '" style="display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #e2e8f0; border-radius:16px; margin-bottom:9px; cursor:pointer; background:#fff;">' +
+            '<div style="width:42px; height:42px; border-radius:14px; background:' + bg + '; display:flex; align-items:center; justify-content:center; color:' + color + '; font-weight:900; font-size:1.15rem; flex-shrink:0;">' + icon + '</div>' +
+            '<div style="flex:1; min-width:0;">' +
+                '<div style="font-weight:800; color:#1e293b; font-size:0.86rem;">' + titulo + '</div>' +
+                '<div style="font-size:0.65rem; color:#94a3b8; margin-top:2px; line-height:1.35;">' + subtitulo + '</div>' +
+            '</div>' +
+            '<div style="color:#94a3b8; font-size:1.2rem;">›</div>' +
+        '</div>';
+    }
+
+    window.abrirBinanceEnvio = (paso) => {
+        if (paso === 'network' && binanceAssetSeleccionado && binanceAssetSeleccionado !== 'BTC') {
+            binancePaso = 'network';
+        } else if (paso === 'asset') {
+            binancePaso = 'asset';
+        }
+        document.getElementById('modalBinanceEnvio').style.display = 'flex';
+        renderBinanceEnvio();
+    };
+
+    window.cerrarBinanceEnvio = () => {
+        document.getElementById('modalBinanceEnvio').style.display = 'none';
+    };
+
+    window.volverBinanceEnvio = () => {
+        if (binancePaso === 'network') {
+            binancePaso = 'asset';
+            renderBinanceEnvio();
+        } else {
+            cerrarBinanceEnvio();
+        }
+    };
+
+    function renderBinanceEnvio() {
+        const titulo = document.getElementById('binanceEnvioTitulo');
+        const lista = document.getElementById('binanceEnvioLista');
+        const atras = document.getElementById('btnBinanceAtras');
+        if (!titulo || !lista) return;
+        const esRed = binancePaso === 'network';
+        titulo.textContent = esRed ? ('ENVIAR ' + binanceAssetSeleccionado) : 'ENVIAR';
+        if (atras) atras.style.display = esRed ? 'block' : 'none';
+
+        if (!esRed) {
+            lista.innerHTML = BINANCE_ASSETS.map(a =>
+                filaBinance(
+                    a.icon, a.bg, a.color, a.nombre, a.sub,
+                    "elegirBinanceAsset('" + a.id + "')"
+                )
+            ).join('');
+            return;
+        }
+
+        const redes = BINANCE_NETWORKS[binanceAssetSeleccionado] || [];
+        lista.innerHTML = '<div style="font-size:0.64rem; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin:2px 0 10px;">¿A TRAVÉS DE CUÁL RED?</div>' +
+            redes.map(nombre => {
+                const meta = BINANCE_NETWORK_META[nombre] || { icon: '?', bg: '#f1f5f9', color: '#64748b' };
+                return filaBinance(
+                    meta.icon, meta.bg, meta.color, nombre, '',
+                    "elegirBinanceNetwork('" + nombre + "')"
+                );
+            }).join('');
+    }
+
+    window.elegirBinanceAsset = (asset) => {
+        binanceAssetSeleccionado = asset || '';
+        binanceNetworkSeleccionado = '';
+        if (binanceAssetSeleccionado === 'BTC') {
+            cerrarBinanceEnvio();
+            aplicarBinanceEnvio();
+            return;
+        }
+        binancePaso = 'network';
+        renderBinanceEnvio();
+    };
+
+    window.elegirBinanceNetwork = (network) => {
+        if (!binanceAssetSeleccionado || binanceAssetSeleccionado === 'BTC') return;
+        binanceNetworkSeleccionado = network || '';
+        cerrarBinanceEnvio();
+        aplicarBinanceEnvio();
+    };
+
+    function aplicarBinanceEnvio() {
+        const input = document.getElementById('inputDatosPago');
+        const icono = document.getElementById('iconoInputPago');
+        const nota = document.getElementById('notaMetodoPago');
+        if (!input) return;
+        input.type = 'text';
+        input.value = '';
+        if (binanceAssetSeleccionado === 'BTC') {
+            input.placeholder = 'Dirección Bitcoin (BTC)';
+            icono.textContent = '₿';
+            nota.innerHTML = '💡 Dirección BTC on-chain · verifica antes de enviar';
+        } else if (binanceAssetSeleccionado === 'USDC') {
+            input.placeholder = 'Dirección USDC (' + binanceNetworkSeleccionado + ')';
+            icono.textContent = '$';
+            nota.innerHTML = '💡 Envía solo USDC por la red ' + binanceNetworkSeleccionado;
+        } else if (binanceAssetSeleccionado === 'USDT') {
+            input.placeholder = 'Dirección USDT (' + binanceNetworkSeleccionado + ')';
+            icono.textContent = '₮';
+            nota.innerHTML = '💡 Envía solo USDT por la red ' + binanceNetworkSeleccionado;
+        }
+        input.focus();
+    }
+
     // SELECTOR DE MÉTODO
     window.seleccionarMetodoPago = (metodo) => {
         metodoPagoSeleccionado = metodo;
         const input = document.getElementById('inputDatosPago');
         const icono = document.getElementById('iconoInputPago');
         const nota  = document.getElementById('notaMetodoPago');
+        binanceAssetSeleccionado = '';
+        binanceNetworkSeleccionado = '';
+        binancePaso = 'asset';
 
         // Estilos activos/inactivos
         const ids = {paypal:'metodoPP', binance:'metodoBNB', tropipay:'metodoTP'};
@@ -11042,9 +11277,12 @@ window.abrirRetiro = () => {
             nota.innerHTML = '💡 Tu correo asociado a PayPal';
         } else if (metodo === 'binance') {
             input.type = 'text';
-            input.placeholder = 'Pay ID o email de Binance';
+            input.value = '';
+            input.placeholder = 'Elige BTC, USDC o USDT';
             icono.textContent = '🟡';
-            nota.innerHTML = '💡 Tu Binance Pay ID (9 dígitos) o correo de Binance';
+            nota.innerHTML = '💡 Primero elige la moneda y la red';
+            abrirBinanceEnvio('asset');
+            return;
         } else if (metodo === 'tropipay') {
             input.type = 'text';
             input.placeholder = 'Correo o teléfono TropiPay';
@@ -11059,8 +11297,23 @@ window.abrirRetiro = () => {
         const datos = document.getElementById('inputDatosPago').value.trim();
         const metodo = metodoPagoSeleccionado;
 
+        if (metodo === 'binance') {
+            if (!binanceAssetSeleccionado) {
+                abrirBinanceEnvio('asset');
+                return notify("⚠️ Elige Bitcoin (BTC), USDC o USDT");
+            }
+            if (binanceAssetSeleccionado !== 'BTC' && !binanceNetworkSeleccionado) {
+                abrirBinanceEnvio('network');
+                return notify("⚠️ Elige la red para " + binanceAssetSeleccionado);
+            }
+        }
+
         if (!datos) {
-            const labels = {paypal:'correo PayPal', binance:'Binance Pay ID / correo', tropipay:'correo o teléfono TropiPay'};
+            const labels = {
+                paypal: 'correo PayPal',
+                binance: binanceAssetSeleccionado ? ('dirección ' + binanceAssetSeleccionado) : 'dirección de Binance',
+                tropipay: 'correo o teléfono TropiPay'
+            };
             return notify(`⚠️ Ingresa tu ${labels[metodo]}`);
         }
         if ((metodo === 'paypal' || metodo === 'tropipay') && datos.includes(' ') && !datos.includes('@')) {
@@ -11085,6 +11338,8 @@ window.abrirRetiro = () => {
                 metodo_pago: metodo,
                 datos_pago: datos,
                 correo_paypal: metodo === 'paypal' ? datos : null,
+                binance_asset: metodo === 'binance' ? binanceAssetSeleccionado : null,
+                binance_network: metodo === 'binance' ? binanceNetworkSeleccionado : null,
                 monto: retiroMontoSeleccionado,
                 monto_usd: retiroMontoSeleccionado,
                 costo_pts: retiroCostoPuntos,
@@ -14595,7 +14850,8 @@ function renderAdminRetirosLista() {
         let colorTexto = "#1e40af";
 
         if (d.metodo_pago === 'binance') {
-            iconoMetodo = "🪙 Binance ID";
+            const detalleBinance = [d.binance_asset, d.binance_network].filter(Boolean).join(' · ');
+            iconoMetodo = detalleBinance ? ("🪙 Binance · " + detalleBinance) : "🪙 Binance";
             colorFondo = "#fef3c7"; // Amarillo para Binance
             colorTexto = "#92400e";
         } else if (d.metodo_pago === 'tropipay') {
@@ -17706,6 +17962,7 @@ function reproducirVideo(card) {
     const frame   = card.querySelector('.vid-frame');
     const key     = card.id;
 
+    marcarVideoVistoFeed(mediaId);
     try { console.log('[FEED] reproducir ' + type + ' key=' + key + ' media=' + mediaId); } catch(e) {}
 
     mostrarThumb(key);
