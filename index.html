@@ -14348,6 +14348,30 @@ window.detenerVideoMuro = () => {
     detenerProgresoVideo();
 };
 
+// Pausa cualquier video/iframe del feed cuando la app abre una pantalla
+// nativa (Mensajes, Grupos, chat, etc.). Evita que el audio siga sonando
+// detrás de la pantalla de grupos.
+window.pausarFeedAlSalir = () => {
+    try { if (typeof detenerVideoMuro === 'function') detenerVideoMuro(); } catch(e) {}
+    document.querySelectorAll('video').forEach(v => {
+        try { v.pause(); } catch(e) {}
+    });
+    document.querySelectorAll('iframe').forEach(f => {
+        try {
+            f.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+            f.contentWindow.postMessage('pause', '*');
+        } catch(e) {}
+    });
+    if (window._ytPlayers) {
+        Object.keys(window._ytPlayers).forEach(k => {
+            try {
+                const p = window._ytPlayers[k];
+                if (p && typeof p.pauseVideo === 'function') p.pauseVideo();
+            } catch(e) {}
+        });
+    }
+};
+
 window.abrirModalTareas = () => {
     document.getElementById('modalTareas').style.display = 'flex';
     if(!idAuditor) return;
