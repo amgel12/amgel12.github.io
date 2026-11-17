@@ -2249,6 +2249,25 @@
     flex-direction: column; align-items: center; cursor: pointer; pointer-events: auto;
     backdrop-filter: blur(4px);
 }
+
+/* Botón de volumen por video (junto al botón borrar) */
+.btn-volumen-video {
+    position: relative;
+    width: 44px; height: 44px; border-radius: 50%;
+    border: none; background: rgba(255,255,255,0.15);
+    color: #fff; font-size: 1.3rem; display: flex;
+    align-items: center; justify-content: center; cursor: pointer;
+    backdrop-filter: blur(6px);
+}
+.btn-volumen-video:active { transform: scale(0.92); background: rgba(255,255,255,0.25); }
+.btn-volumen-video.muted { background: rgba(239,68,68,0.85); }
+.btn-volumen-video .vol-icon { font-size: 1.25rem; }
+.btn-volumen-video .vol-label {
+    position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%);
+    font-size: 0.62rem; font-weight: 700; color: #fff;
+    white-space: nowrap; pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+}
 .feed-loader {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
     color: white; font-weight: bold; z-index: 200; text-align: center;
@@ -2633,6 +2652,12 @@ function crearCard(key, post, mediaId, type, esRandom) {
             <button class="feed-action-btn" onclick="event.stopPropagation(); solicitarEliminarVideoParaMi('${key}')" style="color:#ef4444; margin-top:5px;" title="Eliminar video">
                 <i class="fas fa-trash-alt"></i>
             </button>
+
+            <!-- 🔊 BOTÓN VOLUMEN / ACTIVAR SONIDO -->
+            <button class="feed-action-btn btn-volumen-video" id="btn-vol-${key}" onclick="event.stopPropagation(); toggleVolumenVideo('${key}')" title="Activar sonido">
+                <i class="fas fa-volume-up vol-icon" id="vol-icon-${key}"></i>
+                <span class="vol-label" id="vol-label-${key}">Sonido</span>
+            </button>
         </div>
         ${!audioActivado ? `
         <div class="unmute-box" onclick="activarAudioGlobal()">
@@ -2867,7 +2892,82 @@ window.activarAudioGlobal = () => {
     document.querySelectorAll('.unmute-box').forEach(el => el.remove());
     const actual = document.getElementById(videoActualId);
     if (actual) { videoActualId = null; reproducirVideo(actual); }
+    // Actualizar todos los botones de volumen a estado "activado"
+    document.querySelectorAll('.btn-volumen-video').forEach(btn => {
+        const key = btn.id.replace('btn-vol-', '');
+        const icono = document.getElementById(`vol-icon-${key}`);
+        const etiqueta = document.getElementById(`vol-label-${key}`);
+        btn.classList.remove('muted');
+        if (icono) icono.className = 'fas fa-volume-up vol-icon';
+        if (etiqueta) etiqueta.textContent = 'Sonido';
+    });
 };
+
+/**
+ * Activa/desactiva el sonido de un video específico del feed.
+ * Si está muteado, lo activa globalmente y desmutea ese video.
+ */
+window.toggleVolumenVideo = (key) => {
+    const card = document.getElementById(key);
+    if (!card) return;
+    const frame = card.querySelector('.vid-frame');
+    if (!frame) return;
+
+    const video = frame.querySelector('video');
+    const iframe = frame.querySelector('iframe');
+
+    // Determinar estado actual del video
+    const estaMudo = video
+        ? video.muted
+        : iframe && (iframe.src.includes('mute=1') || iframe.src.includes('muted=1'));
+
+    if (estaMudo) {
+        // ── Activar sonido
+        audioActivado = true;
+        if (video) {
+            video.muted = false;
+            video.play().catch(() => {});
+        } else if (iframe) {
+            let nuevoSrc = iframe.src;
+            nuevoSrc = nuevoSrc.replace(/mute=1/g, 'mute=0');
+            nuevoSrc = nuevoSrc.replace(/muted=1/g, 'muted=0');
+            iframe.src = nuevoSrc;
+        }
+        actualizarBtnVolumen(key, true);
+    } else {
+        // ── Silenciar
+        audioActivado = false;
+        if (video) {
+            video.muted = true;
+        } else if (iframe) {
+            let nuevoSrc = iframe.src;
+            nuevoSrc = nuevoSrc.replace(/mute=0/g, 'mute=1');
+            nuevoSrc = nuevoSrc.replace(/muted=0/g, 'muted=1');
+            iframe.src = nuevoSrc;
+        }
+        actualizarBtnVolumen(key, false);
+    }
+};
+
+/**
+ * Actualiza el icono y color del botón de volumen de una tarjeta.
+ */
+function actualizarBtnVolumen(key, estaActivado) {
+    const btn = document.getElementById(`btn-vol-${key}`);
+    const icono = document.getElementById(`vol-icon-${key}`);
+    const etiqueta = document.getElementById(`vol-label-${key}`);
+    if (!btn) return;
+
+    if (estaActivado) {
+        btn.classList.remove('muted');
+        if (icono) icono.className = 'fas fa-volume-up vol-icon';
+        if (etiqueta) etiqueta.textContent = 'Sonido';
+    } else {
+        btn.classList.add('muted');
+        if (icono) icono.className = 'fas fa-volume-mute vol-icon';
+        if (etiqueta) etiqueta.textContent = 'Sin sonido';
+    }
+}
 
 // Muestra el botón "TOCA PARA SONIDO" en UNA tarjeta cuando el sistema
 // bloqueó el autoplay con sonido y hubo que reproducir en silencio.
