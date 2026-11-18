@@ -14963,13 +14963,18 @@ function renderAdminRetirosLista() {
         // El dato real está en datos_pago (PayPal/Binance/TropiPay)
         const datoCuenta = d.datos_pago || d.correo_paypal || "No proporcionado";
         const montoMostrar = (d.monto_usd != null ? d.monto_usd : d.monto);
+        const invMostrar = d.usuario || 'Usuario';
+        const correoAdminActual = ((firebase.auth().currentUser && firebase.auth().currentUser.email) || '').toLowerCase();
+        const badgeINV = correoAdminActual === ADMIN_EMAIL.toLowerCase()
+            ? `onclick="abrirChatDesdeRetiro(this)" title="✉️ Enviar mensaje privado" style="background:${colorFondo}; color:${colorTexto}; font-size:0.65rem; padding:4px 10px; border-radius:50px; font-weight:800; text-transform:uppercase; cursor:pointer;"`
+            : `style="background:${colorFondo}; color:${colorTexto}; font-size:0.65rem; padding:4px 10px; border-radius:50px; font-weight:800; text-transform:uppercase;"`;
         emailsPendientes.push({ uid: d.uid, emailGuardado: d.email, cardId: cardId, emailId: emailId });
 
         html += `
-        <div id="${cardId}" class="card-retiro-admin" data-email="" style="background: white; padding: 15px; border-radius: 18px; border: 1px solid #e2e8f0; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+        <div id="${cardId}" class="card-retiro-admin" data-email="" data-uid="${d.uid || ''}" data-inv="${invMostrar}" style="background: white; padding: 15px; border-radius: 18px; border: 1px solid #e2e8f0; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="background:${colorFondo}; color:${colorTexto}; font-size:0.65rem; padding:4px 10px; border-radius:50px; font-weight:800; text-transform:uppercase;">
-                    ${d.usuario || 'Usuario'}
+                <span ${badgeINV}>
+                    ${invMostrar}
                 </span>
                 <span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">${fecha}</span>
             </div>
@@ -15027,6 +15032,25 @@ window.filtrarRetirosPorCorreo = () => {
         const coincide = !q || (card.dataset.email || '').includes(q) || card.textContent.toLowerCase().includes(q);
         card.style.display = coincide ? 'block' : 'none';
     });
+};
+
+window.abrirChatDesdeRetiro = (elem) => {
+    const correoActual = ((firebase.auth().currentUser && firebase.auth().currentUser.email) || '').toLowerCase();
+    if (correoActual !== String(ADMIN_EMAIL).toLowerCase()) return notify('❌ Solo el administrador puede hacer esto');
+    const card = elem && elem.closest ? elem.closest('.card-retiro-admin') : null;
+    if (!card) return;
+    const uid = card.dataset.uid || '';
+    const inv = card.dataset.inv || 'Usuario';
+    if (!uid) return notify('❌ No se pudo identificar al solicitante');
+    const modal = document.getElementById('modalAdminRetiros');
+    if (modal) modal.style.display = 'none';
+    if (window.AndroidNative && typeof window.AndroidNative.abrirChatPrivado === 'function') {
+        window.AndroidNative.abrirChatPrivado(uid, inv);
+    } else if (typeof window.abrirChatDelReferido === 'function') {
+        window.abrirChatDelReferido(inv, inv);
+    } else {
+        notify('❌ No se pudo abrir el chat privado');
+    }
 };
 
 window.marcarRetiroPagado = (path) => {
