@@ -1212,15 +1212,24 @@
       cursor: pointer;
   }
 
+  .d-center {
+      width: 65px; height: 65px;
+      display: flex; align-items: center; justify-content: center;
+  }
+
   .btn-pausa-game {
-      position: absolute; top: 70px; left: 20px;
-      background: #f59e0b; color: white; border: none;
-      padding: 10px 20px; border-radius: 50px;
-      font-weight: 800; font-size: 0.85rem;
+      width: 65px; height: 65px;
+      background: #f59e0b; color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 18px;
+      font-weight: 800; font-size: 1.6rem;
+      display: flex; justify-content: center; align-items: center;
       box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
       cursor: pointer;
-      z-index: 101;
+      backdrop-filter: blur(5px);
   }
+
+  .btn-pausa-game:active { background: #d97706; transform: scale(0.92); }
 
   .chat-float-btn {
       position: fixed; bottom: 85px; right: 20px;
@@ -4093,6 +4102,14 @@ Cerrar
                     <span style="font-weight: 900; color: #1E3A8A; font-size: 1rem;">Información del usuario</span>
                 </div>
                 <div id="perfilInfoRows"></div>
+                <div id="perfilReferidosAdminBox" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid #DBEAFE;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="font-size:1.05rem;">👥</span>
+                        <span style="flex:1; font-weight:900; color:#1E3A8A; font-size:0.9rem;">Referidos que invitó</span>
+                        <span id="perfilReferidosAdminCount" style="min-width:26px; height:24px; padding:0 7px; border-radius:12px; background:#DBEAFE; color:#1D4ED8; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:0.75rem;">0</span>
+                    </div>
+                    <div id="perfilReferidosAdmin" style="display:flex; flex-direction:column; gap:6px;"></div>
+                </div>
             </div>
 
             <!-- FOTOS DEL MURO (SIN LAS QUE ESTÁN EN VENTA) -->
@@ -4164,7 +4181,6 @@ Cerrar
 
     <button onclick="cerrarJuego()" class="btn-salir-game">✕ SALIR</button>
     <div class="game-score" id="gameInfoText">PUNTOS: 0</div>
-    <button id="btnPausaJuego" onclick="togglePausaSnake()" class="btn-pausa-game" style="display:none;">⏸ PAUSAR</button>
     <canvas id="gameCanvas" width="300" height="300"></canvas>
     <div class="d-pad">
         <div></div>
@@ -4174,7 +4190,9 @@ Cerrar
         <div class="d-btn" onclick="inputGame(-1, 0)"
             onmousedown="startBreakoutMove(-1)" onmouseup="stopBreakoutMove()" onmouseleave="stopBreakoutMove()"
             ontouchstart="startBreakoutMove(-1)" ontouchend="stopBreakoutMove()">⬅️</div>
-        <div></div>
+        <div class="d-center">
+            <button id="btnPausaJuego" onclick="togglePausaSnake()" class="btn-pausa-game" title="Pausar/Continuar" style="display:none;">⏸</button>
+        </div>
         <div class="d-btn" onclick="inputGame(1, 0)"
             onmousedown="startBreakoutMove(1)" onmouseup="stopBreakoutMove()" onmouseleave="stopBreakoutMove()"
             ontouchstart="startBreakoutMove(1)" ontouchend="stopBreakoutMove()">➡️</div>
@@ -7130,6 +7148,8 @@ window.activarSonido = (divId, ytId) => {
         fotoUrl = el.src || getUserProfilePhoto(uid);
     }
     window.perfilUserUidActual = uid;
+    const refsBoxInicial = document.getElementById('perfilReferidosAdminBox');
+    if (refsBoxInicial) refsBoxInicial.style.display = 'none';
 
     const setText = (id, txt) => {
         const n = document.getElementById(id);
@@ -7168,8 +7188,10 @@ window.activarSonido = (divId, ytId) => {
         }
         if (puntoEl) puntoEl.style.background = online ? '#22C55E' : '#94A3B8';
         renderInfoPerfil(u.bio || {});
+        cargarReferidosPerfilAdmin(uid);
     }).catch(() => {
         renderInfoPerfil({});
+        cargarReferidosPerfilAdmin(uid);
     });
 
     const btnMsgPerfil = document.getElementById('btnEnviarMensajePerfil');
@@ -7221,6 +7243,95 @@ function renderInfoPerfil(bio) {
         </div>
     `).join('');
 }
+
+function cargarReferidosPerfilAdmin(uid) {
+    const box = document.getElementById('perfilReferidosAdminBox');
+    const lista = document.getElementById('perfilReferidosAdmin');
+    const count = document.getElementById('perfilReferidosAdminCount');
+    if (!box || !lista) return;
+    box.style.display = 'none';
+    lista.innerHTML = '';
+    if (count) count.textContent = '0';
+
+    const correoActual = String(
+        (firebase.auth().currentUser && firebase.auth().currentUser.email) ||
+        window._miCorreoPerfil || ''
+    ).toLowerCase();
+    if (correoActual !== String(ADMIN_EMAIL).toLowerCase() || !uid || uid === idAuditor) return;
+
+    box.style.display = 'block';
+    lista.innerHTML = '<div style="padding:8px 4px;color:#94A3B8;font-size:0.8rem;text-align:center;">Cargando referidos...</div>';
+
+    db.ref(`users/${uid}/referidos`).once('value').then(snap => {
+        const vistos = new Set();
+        const refs = [];
+        snap.forEach(child => {
+            const d = child.val() || {};
+            const refUid = typeof d.uid === 'string' ? d.uid : '';
+            if (!refUid || vistos.has(refUid)) return;
+            vistos.add(refUid);
+            refs.push({
+                uid: refUid,
+                clave: typeof d.clave === 'string' && d.clave.trim() ? d.clave : 'Usuario'
+            });
+        });
+
+        if (count) count.textContent = String(refs.length);
+        if (!refs.length) {
+            lista.innerHTML = '<div style="padding:8px 4px;color:#94A3B8;font-size:0.8rem;text-align:center;">Este usuario no tiene referidos.</div>';
+            return;
+        }
+
+        lista.innerHTML = '';
+        refs.forEach(r => {
+            const fila = document.createElement('div');
+            fila.style.cssText = 'display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid #DBEAFE;border-radius:12px;background:#fff;cursor:pointer;transition:background 0.15s,transform 0.15s;';
+            fila.title = 'Enviar mensaje a ' + r.clave;
+            fila.onmouseenter = () => { fila.style.background = '#EFF6FF'; };
+            fila.onmouseleave = () => { fila.style.background = '#fff'; };
+            fila.onclick = () => window.abrirChatConReferidoAdmin(r.uid, r.clave);
+
+            const nombre = document.createElement('span');
+            nombre.style.cssText = 'flex:1;color:#1E3A8A;font-weight:800;font-size:0.85rem;word-break:break-word;';
+            nombre.textContent = r.clave;
+
+            const icono = document.createElement('span');
+            icono.style.cssText = 'color:#2563EB;font-size:0.9rem;';
+            icono.textContent = '💬';
+
+            fila.appendChild(nombre);
+            fila.appendChild(icono);
+            lista.appendChild(fila);
+        });
+    }).catch(() => {
+        if (count) count.textContent = '0';
+        lista.innerHTML = '<div style="padding:8px 4px;color:#EF4444;font-size:0.8rem;text-align:center;">No se pudieron cargar los referidos.</div>';
+    });
+}
+
+window.abrirChatConReferidoAdmin = (refUid, nombre) => {
+    const correoActual = String(
+        (firebase.auth().currentUser && firebase.auth().currentUser.email) ||
+        window._miCorreoPerfil || ''
+    ).toLowerCase();
+    if (correoActual !== String(ADMIN_EMAIL).toLowerCase()) {
+        notify('❌ Solo el administrador puede hacer esto');
+        return;
+    }
+    if (!refUid) {
+        notify('❌ No se pudo identificar el referido');
+        return;
+    }
+    const modal = document.getElementById('modalPerfilUsuario');
+    if (modal) modal.style.display = 'none';
+    if (window.AndroidNative && typeof window.AndroidNative.abrirChatPrivado === 'function') {
+        window.AndroidNative.abrirChatPrivado(refUid, nombre || 'Usuario');
+    } else if (typeof window.abrirChatPrivado === 'function') {
+        window.abrirChatPrivado(refUid, nombre || 'Usuario');
+    } else {
+        notify('❌ No se pudo abrir el chat privado');
+    }
+};
 
 function cargarFotosPerfilMuro(uid) {
     const grid = document.getElementById('perfilFotosGrid');
@@ -10247,8 +10358,8 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
         const btnPausa = document.getElementById('btnPausaJuego');
         if (btnPausa) {
-            btnPausa.style.display = m === 'snake' ? 'block' : 'none';
-            btnPausa.textContent = '⏸ PAUSAR';
+            btnPausa.style.display = m === 'snake' ? 'flex' : 'none';
+            btnPausa.textContent = '⏸';
         }
         const btnContinuar = document.getElementById('btnContinuarSnake');
         if (btnContinuar) btnContinuar.style.display = 'none';
@@ -10458,7 +10569,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
         const btnPausa = document.getElementById('btnPausaJuego');
         if (btnPausa) {
-            btnPausa.textContent = '⏸ PAUSAR';
+            btnPausa.textContent = '⏸';
             btnPausa.disabled = false;
         }
         const btnContinuar = document.getElementById('btnContinuarSnake');
@@ -10477,13 +10588,13 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         const btn = document.getElementById('btnPausaJuego');
         if (snakePausado) {
             snakePausado = false;
-            if (btn) btn.textContent = '⏸ PAUSAR';
+            if (btn) btn.textContent = '⏸';
             dibujarSnake();
             iniciarLoopSnake();
         } else {
             snakePausado = true;
             detenerLoopSnake();
-            if (btn) btn.textContent = '▶️ CONTINUAR';
+            if (btn) btn.textContent = '▶️';
             dibujarPausaSnake();
         }
     };
@@ -10507,11 +10618,11 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             window.ccSnakeListoParaDuelo = true;
             snakePausado = true;
             detenerLoopSnake();
-            if (btn) btn.textContent = '▶️ CONTINUAR';
+            if (btn) btn.textContent = '▶️';
             dibujarPausaSnake();
         } else {
             snakePausado = false;
-            if (btn) btn.textContent = '⏸ PAUSAR';
+            if (btn) btn.textContent = '⏸';
             dibujarSnake();
             iniciarLoopSnake();
         }
@@ -10649,8 +10760,8 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
         const btnPausa = document.getElementById('btnPausaJuego');
         if (btnPausa) {
-            btnPausa.style.display = 'block';
-            btnPausa.textContent = '⏸ PAUSAR';
+            btnPausa.style.display = 'flex';
+            btnPausa.textContent = '⏸';
             btnPausa.disabled = false;
         }
 
