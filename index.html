@@ -1179,6 +1179,15 @@
       max-width: 90vw; max-height: 90vw;
   }
 
+  body.cc-espectador #gameContainer > *:not(#gameCanvas) { display: none !important; }
+  body.cc-espectador #gameContainer { gap: 0 !important; padding: 0 !important; }
+  body.cc-espectador #gameCanvas {
+      width: 100% !important; height: 100% !important;
+      max-width: none !important; max-height: none !important;
+      border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+      opacity: 0.75;
+  }
+
   .d-pad { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 25px; }
   .d-btn {
       width: 65px; height: 65px;
@@ -10648,7 +10657,7 @@ function dibujarSnake(progreso = 1) {
 
     // fondo
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#0f172a";
+    ctx.fillStyle = window._ccEspectador ? "#4c1d95" : "#0f172a";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // cuadrícula suave
@@ -18847,6 +18856,7 @@ window.guardarBioCompleta = () => {
     var espectador = params.get('espectador') === '1';
     var pausar = espectador || params.get('pausa') === '1';
     window._ccEspectador = espectador;
+    if (espectador) document.body.classList.add('cc-espectador');
     ['overlayInactividad', 'modalPermisoNotis'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
