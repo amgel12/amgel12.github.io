@@ -9950,7 +9950,6 @@ window.limpiarChatGlobal = () => {
             .catch(e => console.error('Error limpiando chat global:', e));
     });
 };
-setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
     // --- FUNCIÓN IR A NOTIFICACIÓN (CORREGIDA) ---
     window.irANotificacion = (type, extra, key, fromUid, esFoto) => {
@@ -18915,35 +18914,6 @@ window.toggleModoBots = () => {
     hacerHablarBot();
 };
 
-// 🤖 BOT DE BIENVENIDA Y RESPUESTAS PRIVADAS
-db.ref('chat_global').limitToLast(1).on('child_added', s => {
-    const m = s.val();
-    if (!m || !isAdmin || m.uid === idAuditor || String(m.uid).startsWith("bot_")) return;
-
-    const claveBot = `bot_saludo_${m.uid}`;
-    if (!localStorage.getItem(claveBot)) {
-        localStorage.setItem(claveBot, 'true');
-        setTimeout(() => {
-            const botSofi = perfilesBots.find(b => b.id === "bot_2"); // Elegimos a Sofi
-            const chatIdBot = [m.uid, botSofi.id].sort().join('_');
-            
-            // Sofi se pone "en línea" justo antes de hablar
-            db.ref(`users/${botSofi.id}/lastSeen`).set(firebase.database.ServerValue.TIMESTAMP);
-
-            db.ref(`chats_privados/${chatIdBot}`).push({
-                uid: botSofi.id, autor: botSofi.nombre,
-                texto: "Holii, vi que estás en el global 👋 eres nuevo?",
-                fecha: firebase.database.ServerValue.TIMESTAMP
-            });
-
-            db.ref(`users/${m.uid}/notifications`).push({
-                from: botSofi.id, fromName: botSofi.nombre, type: 'chat_privado',
-                text: "Holii, vi que estás en el global 👋 eres nuevo?",
-                extra: botSofi.id, timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
-            });
-        }, 12000); 
-    }
-});
 // Auto-Respuesta si le hablan al bot en privado
 
 // ESCUCHA MENSAJES PRIVADOS PARA AUTO-RESPUESTA DEL BOT
