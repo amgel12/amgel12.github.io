@@ -18794,6 +18794,22 @@ window.guardarBioCompleta = () => {
             alert("❌ Error al guardar: " + err.message);
         });
 };
+
+(function () {
+    var reto = new URLSearchParams(window.location.search).get('reto');
+    if (reto !== 'snake') return;
+    ['overlayInactividad', 'modalPermisoNotis'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    window.addEventListener('load', function () {
+        setTimeout(function () {
+            if (typeof window.prepararJuego === 'function') {
+                window.prepararJuego('snake', true);
+            }
+        }, 1200);
+    });
+})();
 </script>
 <!-- 📱 MENÚ DE OPCIONES AL TOCAR + -->
 <div id="modalMenuPublicar" class="modal-overlay" style="z-index: 40000; align-items: flex-end; display: none;">
