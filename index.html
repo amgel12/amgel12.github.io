@@ -8825,6 +8825,7 @@ if (typeof actualizarBioResumen === 'function') actualizarBioResumen(d.bio);
 
         // --- 5. RULETA (8 segundos) ---
         setTimeout(() => {
+            if (window._ccModoJuego) return;
             if (!idAuditor) return;
             const hoy = new Date().toISOString().split('T')[0];
             db.ref(`users/${idAuditor}`).once('value').then(snap => {
@@ -19001,11 +19002,12 @@ window.guardarBioCompleta = () => {
     var params = new URLSearchParams(window.location.search);
     var reto = params.get('reto');
     if (reto !== 'snake') return;
+    window._ccModoJuego = true;
     var espectador = params.get('espectador') === '1';
     var pausar = espectador || params.get('pausa') === '1';
     window._ccEspectador = espectador;
     if (espectador) document.body.classList.add('cc-espectador');
-    ['overlayInactividad', 'modalPermisoNotis'].forEach(function (id) {
+    ['overlayInactividad', 'modalPermisoNotis', 'modalRuletaGame'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
