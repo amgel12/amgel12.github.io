@@ -5240,6 +5240,21 @@ style="display:none;">
             <div class="task-status">ᐳ</div>
         </div>
 
+        <div id="taskEncuesta" class="task-row" onclick="irMision('encuesta')">
+            <div class="task-icon">📝</div>
+            <div class="task-info">
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="task-title">Realizar Encuesta</span>
+                    <span class="task-reward">+1 PTS c/u</span>
+                </div>
+                <div class="task-progress-box">
+                    <div class="task-progress-bg"><div id="barEncuesta" class="task-progress-fill"></div></div>
+                    <div id="txtEncuesta" class="task-counter-text">0/10 Respuestas</div>
+                </div>
+            </div>
+            <div class="task-status">ᐳ</div>
+        </div>
+
         <div style="border-top: 1px solid #f1f5f9; margin: 15px 0;"></div>
         <p style="font-size:0.7rem; color:#94a3b8; margin-bottom:5px;">🎮 ZONA GAMER (Meta: 15 min)</p>
 
@@ -5304,27 +5319,6 @@ style="display:none;">
         </div>
 
         <button onclick="document.getElementById('modalTareas').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; margin-top:20px; cursor:pointer; width:100%;">Cerrar Panel</button>
-    </div>
-</div>
-
-<!-- 🎁 REGALO POR VER LOS 5 ANUNCIOS -->
-<div id="modalRegaloAnuncios" class="modal-overlay" style="z-index: 20600; display:none;">
-    <div class="modal-content" style="max-width: 380px; text-align:center; border-radius:18px; border:3px solid #10b981;">
-        <div style="font-size:3rem; margin-bottom:4px;">🎁</div>
-        <h3 style="color:#059669; margin:0 0 6px 0;">¡Regalo desbloqueado!</h3>
-        <p style="font-size:0.85rem; color:#64748b; margin-bottom:14px;">
-            Viste los <b>5 anuncios</b> de hoy. Aquí tienes tu enlace exclusivo:
-        </p>
-        <div onclick="abrirLinkRegaloAnuncios()" style="background:#ecfdf5; border:1px dashed #10b981; border-radius:12px; padding:12px; margin-bottom:14px; word-break:break-all; cursor:pointer;">
-            <div style="font-size:0.68rem; color:#047857; font-weight:700; margin-bottom:4px;">⬇️ Toca el enlace para abrirlo</div>
-            <span style="font-size:0.72rem; color:#059669; text-decoration:underline;">https://www.mediafire.com/file/m22itswo5p7r9y1/ajedrezvoz+(1).apk/file</span>
-        </div>
-        <button onclick="abrirLinkRegaloAnuncios()" class="btn-blue" style="background:linear-gradient(135deg,#10b981,#059669); width:100%; padding:14px; font-size:0.95rem; border-radius:14px;">
-            ⬇️ Descargar AjedrezVoz
-        </button>
-        <button onclick="cerrarRegaloAnuncios()" style="background:none; border:none; color:#94a3b8; margin-top:14px; font-size:0.85rem; cursor:pointer;">
-            Cerrar
-        </button>
     </div>
 </div>
 
@@ -6332,7 +6326,7 @@ function abrirPaginasAleatorias() {
             <div style="padding:16px 18px; background:linear-gradient(135deg,#0070ba,#6366f1); color:#fff; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
                 <div>
                     <div style="font-weight:800; font-size:1.05rem;">📖 Elige una categoría</div>
-                    <div style="font-size:0.75rem; opacity:0.9;">Lee 30 segundos en cada página</div>
+                    <div style="font-size:0.75rem; opacity:0.9;">Lee 15 segundos en cada página</div>
                 </div>
                 <button onclick="window.cerrarCategoriasLecturaMision()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer;">✕</button>
             </div>
@@ -6371,7 +6365,7 @@ function abrirPaginasAleatorias() {
             <div>
                 <div style="font-weight:bold; font-size:1.1rem;">📖 ${cat.icono} ${cat.nombre}</div>
                 <div style="font-size:0.85rem; opacity:0.9;">
-                    Tiempo: <span id="timerLectura">0:00</span> / 0:30 | Página <span id="paginaActualLectura">1</span>/2
+                    Tiempo: <span id="timerLectura">0:00</span> / 0:15 | Página <span id="paginaActualLectura">1</span>/2
                 </div>
             </div>
             <button onclick="window.cerrarModalLecturaMision()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:8px 15px; border-radius:20px; cursor:pointer; font-weight:bold;">✕ Cerrar</button>
@@ -6403,7 +6397,7 @@ function abrirPaginasAleatorias() {
             segundosPagina++;
             pintarTimer();
 
-            if (segundosPagina >= 30) {
+            if (segundosPagina >= 15) {
                 if (paginaActual === 0) {
                     paginaActual = 1;
                     segundosPagina = 0;
@@ -9097,36 +9091,6 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
         }
     };
 
-    // 🎁 REGALO POR COMPLETAR LOS 5 ANUNCIOS DIARIOS
-    window.mostrarRegaloAnuncios = () => {
-        const m = document.getElementById('modalRegaloAnuncios');
-        if (m) m.style.display = 'flex';
-        if (window.actualizarBarra) window.actualizarBarra('Anuncio', 5, 5, 'Vistos');
-        try { window.playSound('win'); } catch(e){}
-    };
-
-    window.cerrarRegaloAnuncios = () => {
-        const m = document.getElementById('modalRegaloAnuncios');
-        if (m) m.style.display = 'none';
-    };
-
-    window.abrirLinkRegaloAnuncios = () => {
-        const url = "https://www.mediafire.com/file/m22itswo5p7r9y1/ajedrezvoz+(1).apk/file";
-        try {
-            if (typeof AndroidNative !== 'undefined' && AndroidNative.openExternalUrl) {
-                AndroidNative.openExternalUrl(url);
-            } else if (typeof Android !== 'undefined' && Android.openExternalUrl) {
-                Android.openExternalUrl(url);
-            } else if (window.cordova && window.cordova.InAppBrowser) {
-                window.cordova.InAppBrowser.open(url, '_system');
-            } else {
-                window.location.href = url;
-            }
-        } catch (e) {
-            window.location.href = url;
-        }
-    };
-
    // VIDEO ADMOB (Ahora regala: +0.25 PTS y +1 GIRO)
     const btnAd = document.getElementById('btnVerAnuncio');
     if (btnAd) {
@@ -9141,8 +9105,7 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
 
                 if (contadorHoy >= 5) { 
                     notify("⚠️ Límite diario alcanzado (5/5)"); 
-                    if (window.mostrarRegaloAnuncios) window.mostrarRegaloAnuncios();
-                    btnAd.disabled = false; 
+                    btnAd.disabled = false;
                     btnAd.style.opacity = "1"; 
                     return; 
                 }
@@ -9171,10 +9134,6 @@ window.abrirSoporte = () => document.getElementById('modalSoporte').style.displa
                 if (panelTareas && window.getComputedStyle(panelTareas).display !== 'none' && typeof window.abrirModalTareas === 'function') {
                     window.abrirModalTareas();
                 }
-                if (anunciosVistos >= 5) {
-                    setTimeout(() => { if (window.mostrarRegaloAnuncios) window.mostrarRegaloAnuncios(); }, 3200);
-                }
-
                 // MENSAJE DE ÉXITO (Solo sale este, no el negro molesto)
                 notify("💰 +0.25 PTS & 🎰 ¡GIRO GRATIS!");
 
@@ -9866,6 +9825,67 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
         // --- AQUÍ ESTÁ LA MAGIA DE REDIRECCIÓN ---
 
+        if (type === 'like') {
+            if (!extra) {
+                notify("⚠️ Publicación no disponible");
+                return;
+            }
+
+            const abrirPostLike = () => {
+                goToScreen(2);
+                const buscarYResaltar = () => {
+                    const card = document.getElementById('post-' + extra) || document.getElementById(extra);
+                    if (!card) return false;
+                    const container = document.getElementById('muroReportes');
+                    if (container) container.style.scrollSnapType = "none";
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    card.style.transition = "0.3s";
+                    card.style.border = "4px solid #e11d48";
+                    card.style.transform = "scale(1.02)";
+                    setTimeout(() => {
+                        if (container) container.style.scrollSnapType = "y mandatory";
+                        card.style.border = "";
+                        card.style.transform = "";
+                    }, 1500);
+                    return true;
+                };
+                setTimeout(() => {
+                    if (!buscarYResaltar()) {
+                        setTimeout(() => {
+                            if (!buscarYResaltar()) notify("⚠️ Publicación no cargada o muy antigua");
+                        }, 900);
+                    }
+                }, 600);
+            };
+
+            const abrirFotoLike = (foto) => {
+                if (window.cerrarModalComentarios) window.cerrarModalComentarios();
+                goToScreen(1);
+                setTimeout(() => {
+                    const photoEl = document.getElementById('photo-' + extra);
+                    if (photoEl) {
+                        photoEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        photoEl.style.transition = "0.3s";
+                        photoEl.style.border = "4px solid #e11d48";
+                        photoEl.style.transform = "scale(1.05)";
+                        setTimeout(() => {
+                            photoEl.style.border = "";
+                            photoEl.style.transform = "";
+                        }, 1500);
+                    }
+                    if (window.abrirFotoDetalle) {
+                        window.abrirFotoDetalle(extra, foto.uid || '', foto.autor || 'Anónimo', foto.foto || '');
+                    }
+                }, 600);
+            };
+
+            db.ref(`galeria_comunidad/${extra}`).once('value').then(snap => {
+                if (snap.exists()) abrirFotoLike(snap.val() || {});
+                else abrirPostLike();
+            }).catch(() => abrirPostLike());
+            return;
+        }
+
         if (type === 'chat_privado') {
             // Abre el chat privado con esa persona
             abrirChatPrivado(extra, nombreEmisor);
@@ -9874,7 +9894,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
             // Chat Global
             if (!isChatOpen) toggleChat();
         } 
-        else if (type === 'comentario' || type === 'like') {
+        else if (type === 'comentario') {
             // Detectar si el comentario es sobre una foto. Las notificaciones nuevas
             // traen esFoto; las viejas se detectan por texto y, si hace falta,
             // comprobando si la clave existe en galeria_comunidad.
@@ -9938,33 +9958,12 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
                 abrirComentariosDeVideo();
             }
         }
-        else if (type === 'like') {
-            // Ir a la pantalla 2 (VIDEOS) y resaltar el post
-            goToScreen(2);
-            setTimeout(() => {
-                const vid = document.getElementById('post-' + extra);
-                const container = document.getElementById('muroReportes');
-                if (vid && container) {
-                    container.style.scrollSnapType = "none";
-                    vid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    vid.style.transition = "0.3s";
-                    vid.style.border = "4px solid #e11d48";
-                    vid.style.transform = "scale(1.02)";
-                    setTimeout(() => { 
-                        container.style.scrollSnapType = "y mandatory";
-                        vid.style.border = "none"; 
-                        vid.style.transform = "scale(1)";
-                    }, 1500);
-                } else {
-                    notify("⚠️ Video no cargado o muy antiguo");
-                }
-            }, 800);
-        }
         else if (type === 'simple') {
             // Notificaciones genéricas: foto like, agradecimiento, etc.
             const textoNoti = notiElement?.querySelector('.noti-text')?.textContent || '';
 
-            if (textoNoti.includes('foto') || textoNoti.includes('galería') || textoNoti.includes('foto en la galería')) {
+            var esFotoNoti = (esFoto === true || esFoto === 'true');
+            if (esFotoNoti || textoNoti.includes('foto') || textoNoti.includes('galería') || textoNoti.includes('foto en la galería')) {
                 // Ir a la galería/fotos (pantalla 1) y abrir la foto
                 goToScreen(1);
                 setTimeout(() => {
@@ -10873,6 +10872,7 @@ window.addEventListener('popstate', (e) => {
     'modalHistorial',
     'modalLecturaMision',
     'modalCategoriasLectura',
+    'modalEncuestaDiaria',
     'modalVideosMision',
     'modalMusicaMision',
     'modalAdminRetiros',
@@ -10901,6 +10901,10 @@ window.addEventListener('popstate', (e) => {
         }
         if (id === 'modalCategoriasLectura') {
             el.remove();
+            return true;
+        }
+        if (id === 'modalEncuestaDiaria' && window.cerrarEncuestaDiaria) {
+            window.cerrarEncuestaDiaria();
             return true;
         }
         if (id === 'modalMusicaMision' && window.cerrarModalMusicaMision) {
@@ -14408,6 +14412,7 @@ window.likePhoto = (key, ownerUid, btn) => {
                     from: myCurrentKey, fromName: getMiNombre(), type: 'simple',
                     text: "❤️ Le gustó tu foto en la galería",
                     extra: key,
+                    esFoto: true,
                     timestamp: firebase.database.ServerValue.TIMESTAMP, read: false
                 });
                 avisarSocial(ownerUid, "le gustó tu foto en la galería", "like");
@@ -14740,6 +14745,8 @@ window.abrirModalTareas = () => {
         actualizarBarra('Anuncio', adCount, 5, 'Vistos');
         let cineCount = (u.lastCineDate === hoy) ? (u.cineCount || 0) : 0;
         actualizarBarra('Cine', cineCount, 2, 'Videos');
+        const encuestaHoy = window.obtenerEncuestaDiaria ? window.obtenerEncuestaDiaria() : { respondidas: 0 };
+        actualizarBarra('Encuesta', encuestaHoy.respondidas, 10, 'Respuestas');
         let gameMin = (u.lastGameDate === hoy) ? (u.gameMinutesToday || 0) : 0;
         actualizarBarra('GameSnake', gameMin, 15, 'Min');
         actualizarBarra('GameRace', gameMin, 15, 'Min');
@@ -14766,6 +14773,162 @@ function actualizarBarra(idBase, actual, max, label) {
     }
 }
 
+const preguntasEncuestaDiaria = [
+    { p: "¿Cuál es la capital de México?", o: ["Ciudad de México", "Guadalajara", "Monterrey"] },
+    { p: "¿Cuántos días tiene una semana?", o: ["7", "5", "10"] },
+    { p: "¿Qué planeta es conocido como el planeta rojo?", o: ["Marte", "Venus", "Júpiter"] },
+    { p: "¿Cuál es el idioma oficial de Brasil?", o: ["Portugués", "Español", "Inglés"] },
+    { p: "¿Qué gas necesitamos para respirar?", o: ["Oxígeno", "Helio", "Neón"] },
+    { p: "¿Cuántos continentes hay en el mundo?", o: ["7", "5", "6"] },
+    { p: "¿Quién pintó La Mona Lisa?", o: ["Leonardo da Vinci", "Pablo Picasso", "Vincent van Gogh"] },
+    { p: "¿Cuál es el océano más grande del planeta?", o: ["Pacífico", "Atlántico", "Índico"] },
+    { p: "¿Cuál es el animal más grande del mundo?", o: ["Ballena azul", "Elefante", "Jirafa"] },
+    { p: "¿Cuál es la unidad de fuerza del Sistema Internacional?", o: ["Newton", "Julio", "Watt"] },
+    { p: "¿Cuál de estos números es primo?", o: ["17", "18", "20"] },
+    { p: "¿Cuál es la capital de Perú?", o: ["Lima", "Cusco", "Arequipa"] },
+    { p: "¿Qué elemento químico tiene como símbolo Au?", o: ["Oro", "Plata", "Hierro"] },
+    { p: "¿Cuántos lados tiene un triángulo?", o: ["3", "4", "5"] },
+    { p: "¿Qué estación del año sigue al invierno?", o: ["Primavera", "Verano", "Otoño"] },
+    { p: "¿Qué río atraviesa Egipto?", o: ["Nilo", "Amazonas", "Danubio"] },
+    { p: "¿Qué instrumento sirve para medir la temperatura?", o: ["Termómetro", "Barómetro", "Higrómetro"] },
+    { p: "¿Cuál es la capital de Argentina?", o: ["Buenos Aires", "Córdoba", "Rosario"] },
+    { p: "¿Qué planeta del sistema solar tiene anillos?", o: ["Saturno", "Marte", "Mercurio"] },
+    { p: "¿Cuál es la fórmula química del agua?", o: ["H2O", "CO2", "O2"] },
+    { p: "¿Qué deporte usa raqueta y red?", o: ["Tenis", "Fútbol", "Boxeo"] },
+    { p: "¿Cuántos minutos tiene una hora?", o: ["60", "30", "100"] },
+    { p: "¿Qué color se obtiene al mezclar rojo y amarillo?", o: ["Naranja", "Verde", "Morado"] },
+    { p: "¿Quién escribió Don Quijote de la Mancha?", o: ["Miguel de Cervantes", "Lope de Vega", "Benito Pérez Galdós"] },
+    { p: "¿Cuál es la capital de Colombia?", o: ["Bogotá", "Medellín", "Cali"] },
+    { p: "¿Cuál es el hueso más largo del cuerpo humano?", o: ["Fémur", "Tibia", "Húmero"] },
+    { p: "¿De qué fuente proviene la energía solar?", o: ["Del sol", "Del viento", "Del subsuelo"] },
+    { p: "¿Cuál es el valor aproximado de pi?", o: ["3.14", "2.71", "1.61"] },
+    { p: "¿Qué país es famoso por los tacos?", o: ["México", "Italia", "Japón"] },
+    { p: "¿Cuál es la capital de Chile?", o: ["Santiago", "Valparaíso", "Concepción"] }
+];
+
+window.obtenerEncuestaDiaria = () => {
+    const hoy = new Date().toISOString().split('T')[0];
+    let fecha = localStorage.getItem('encuestaDiariaFecha');
+    let set = parseInt(localStorage.getItem('encuestaDiariaSet') || '-1', 10);
+    let respondidas = parseInt(localStorage.getItem('encuestaDiariaRespondidas') || '0', 10);
+    if (Number.isNaN(set)) set = -1;
+    if (Number.isNaN(respondidas)) respondidas = 0;
+    if (fecha !== hoy) {
+        set = (set + 1) % 3;
+        respondidas = 0;
+        localStorage.setItem('encuestaDiariaFecha', hoy);
+        localStorage.setItem('encuestaDiariaSet', String(set));
+        localStorage.setItem('encuestaDiariaRespondidas', '0');
+    }
+    if (respondidas > 10) respondidas = 10;
+    return {
+        respondidas,
+        preguntas: preguntasEncuestaDiaria.slice(set * 10, set * 10 + 10)
+    };
+};
+
+window.abrirEncuestaDiaria = () => {
+    const estado = window.obtenerEncuestaDiaria();
+    actualizarBarra('Encuesta', estado.respondidas, 10, 'Respuestas');
+    if (estado.respondidas >= 10) {
+        notify('✅ Ya completaste la encuesta de hoy. Vuelve mañana');
+        return;
+    }
+    const viejo = document.getElementById('modalEncuestaDiaria');
+    if (viejo) viejo.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'modalEncuestaDiaria';
+    modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:50000; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;';
+    modal.innerHTML = `
+        <div style="background:#fff; border-radius:20px; width:100%; max-width:420px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.4);">
+            <div style="padding:15px 18px; background:linear-gradient(135deg,#8b5cf6,#6366f1); color:#fff; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                    <div style="font-weight:800; font-size:1.05rem;">📝 Encuesta Diaria</div>
+                    <div id="encuestaContador" style="font-size:0.75rem; opacity:0.9;">Pregunta 1/10</div>
+                </div>
+                <button onclick="window.cerrarEncuestaDiaria()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer;">✕</button>
+            </div>
+            <div style="padding:12px 18px 0;">
+                <div class="task-progress-bg"><div id="barEncuestaModal" class="task-progress-fill"></div></div>
+                <div id="txtEncuestaModal" style="font-size:0.72rem; color:#64748b; text-align:right; margin-top:4px;">0/10</div>
+            </div>
+            <div style="padding:16px 18px 20px;">
+                <div id="encuestaPregunta" style="font-weight:800; color:#1e293b; font-size:1rem; line-height:1.4; margin-bottom:14px;"></div>
+                <div id="encuestaOpciones" style="display:flex; flex-direction:column; gap:9px;"></div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    window.history.pushState({modal: 'modalEncuestaDiaria'}, "");
+    window._encuestaPreguntas = estado.preguntas;
+    window._encuestaIndice = estado.respondidas;
+    window._encuestaBloqueada = false;
+    window.mostrarPreguntaEncuesta();
+};
+
+window.mostrarPreguntaEncuesta = () => {
+    const idx = window._encuestaIndice || 0;
+    const pregunta = window._encuestaPreguntas && window._encuestaPreguntas[idx];
+    const contador = document.getElementById('encuestaContador');
+    const preguntaEl = document.getElementById('encuestaPregunta');
+    const opcionesEl = document.getElementById('encuestaOpciones');
+    if (!pregunta || !preguntaEl || !opcionesEl) return;
+    window._encuestaBloqueada = false;
+    if (contador) contador.textContent = `Pregunta ${idx + 1}/10`;
+    preguntaEl.textContent = pregunta.p;
+    opcionesEl.innerHTML = '';
+    pregunta.o.forEach((opcion, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = `${String.fromCharCode(65 + i)}) ${opcion}`;
+        btn.style.cssText = 'background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px 14px; font-weight:700; color:#1e293b; font-size:0.9rem; cursor:pointer; text-align:left;';
+        btn.onmouseenter = () => { btn.style.background = '#eef2ff'; btn.style.borderColor = '#6366f1'; };
+        btn.onmouseleave = () => { btn.style.background = '#f8fafc'; btn.style.borderColor = '#e2e8f0'; };
+        btn.onclick = () => window.responderEncuesta(i);
+        opcionesEl.appendChild(btn);
+    });
+    const barra = document.getElementById('barEncuestaModal');
+    if (barra) barra.style.width = `${(idx / 10) * 100}%`;
+    const txt = document.getElementById('txtEncuestaModal');
+    if (txt) txt.textContent = `${idx}/10`;
+};
+
+window.responderEncuesta = () => {
+    if (window._encuestaBloqueada) return;
+    window._encuestaBloqueada = true;
+    window._encuestaIndice = (window._encuestaIndice || 0) + 1;
+    localStorage.setItem('encuestaDiariaRespondidas', String(window._encuestaIndice));
+    actualizarBarra('Encuesta', window._encuestaIndice, 10, 'Respuestas');
+    sumarPuntosMision(1);
+    if (typeof registrarHistorial === 'function') registrarHistorial(`Encuesta diaria (${window._encuestaIndice}/10)`, 1);
+    if (window._encuestaIndice >= 10) {
+        setTimeout(() => {
+            window.cerrarEncuestaDiaria();
+            window.completarEncuestaDiaria();
+        }, 250);
+        return;
+    }
+    window.mostrarPreguntaEncuesta();
+};
+
+window.cerrarEncuestaDiaria = () => {
+    const m = document.getElementById('modalEncuestaDiaria');
+    if (m) m.remove();
+    window._encuestaPreguntas = null;
+    window._encuestaIndice = 0;
+    window._encuestaBloqueada = false;
+};
+
+window.completarEncuestaDiaria = () => {
+    const estado = window.obtenerEncuestaDiaria();
+    if (estado.respondidas < 10) return;
+    actualizarBarra('Encuesta', 10, 10, 'Respuestas');
+    notify('✅ Encuesta diaria completada. Ganaste 10 PTS (1 por respuesta)');
+    try { window.playSound('win'); } catch(e) {}
+    if (window.checarProgresoDiario) window.checarProgresoDiario();
+    window.mostrarAnuncioMision();
+};
+
 window.irMision = (tipo) => {
     if (tipo === 'ruleta') {
         var m = document.getElementById('modalRuletaGame');
@@ -14773,6 +14936,7 @@ window.irMision = (tipo) => {
     }
     if (tipo === 'anuncio') document.getElementById('btnVerAnuncio').click();
     if (tipo === 'cine') abrirCine();
+    if (tipo === 'encuesta') window.abrirEncuestaDiaria();
     if (tipo === 'snake') prepararJuego('snake');
     if (tipo === 'breakout') prepararJuego('breakout');
     if (tipo === 'chess') window.location.href = 'https://lichess.org/';
@@ -15732,7 +15896,7 @@ window.validarLeccionIngles = function () {
 const misionesAprender = [
     { id: 'm10', titulo: 'Escuchar Música', descripcion: 'Escucha 2 min en Spotify', recompensa: 3 },
     { id: 'm6', titulo: 'Califica la aplicación', descripcion: 'Califica la app en Google Play', recompensa: 6 },
-    { id: 'm1', titulo: 'Leer 2 páginas web', descripcion: 'Elige una categoría y lee 30 s por página', recompensa: 5 },
+    { id: 'm1', titulo: 'Leer 2 páginas web', descripcion: 'Elige una categoría y lee 15 s por página', recompensa: 5 },
     { id: 'm4', titulo: 'Subir foto', descripcion: 'Comparte una imagen', recompensa: 8 },
     { id: 'm11', titulo: 'Subir videos', descripcion: 'Publica un video en el feed', recompensa: 12 },
     { id: 'm5', titulo: 'Compartir app', descripcion: 'Invita a un amigo por WhatsApp', recompensa: 6 },
@@ -15971,7 +16135,7 @@ if (id === 'm7') {
     return;
 }
    if (id === 'm10') {
-    notify("🎵 Abriendo reproductor de música...");
+    notify("🎵 Abriendo música latina...");
 
     if (window.musicaTimerInterval) {
         clearInterval(window.musicaTimerInterval);
@@ -15995,10 +16159,10 @@ if (id === 'm7') {
     `;
     barra.innerHTML = `
         <div>
-            <div style="font-weight: bold; font-size: 1.1rem;">🎵 Escuchando Música</div>
+            <div id="tituloMisionMusica" style="font-weight: bold; font-size: 1.1rem;">🎵 Escuchando Música Latina</div>
             <div style="font-size: 0.8rem; opacity: 0.9;">Tiempo: <span id="timerMusica">0:00</span> / 0:30</div>
         </div>
-        <button onclick="window.cerrarModalMusicaMision()" 
+        <button id="btnCerrarMisionMusica" onclick="window.cerrarModalMusicaMision()" 
                 style="background: rgba(255,255,255,0.2); border: none; color: white; 
                        padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold;">
             ✕ Cerrar
@@ -16006,7 +16170,7 @@ if (id === 'm7') {
     `;
 
     const iframe = document.createElement('iframe');
-    iframe.src = 'https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator';
+    iframe.src = 'https://open.spotify.com/embed/playlist/37i9dQZF1DX10zKzsJ2jva?utm_source=generator';
     iframe.style.cssText = 'flex: 1; border: none; width: 100%;';
     iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
     iframe.setAttribute('allowfullscreen', '');
@@ -16018,7 +16182,10 @@ if (id === 'm7') {
     window.history.pushState({modal: 'modalMusicaMision'}, "");
 
     let segundosTranscurridos = 0;
+    let listoParaReclamar = false;
     const timerElement = document.getElementById('timerMusica');
+    const tituloElemento = document.getElementById('tituloMisionMusica');
+    const btnCerrar = document.getElementById('btnCerrarMisionMusica');
 
     window.musicaTimerInterval = setInterval(() => {
         segundosTranscurridos++;
@@ -16026,24 +16193,21 @@ if (id === 'm7') {
         const secs = segundosTranscurridos;
         if (timerElement) timerElement.textContent = `0:${secs.toString().padStart(2, '0')}`;
 
-        if (segundosTranscurridos >= 30) {
-            clearInterval(window.musicaTimerInterval);
-            window.musicaTimerInterval = null;
-            completarMisionMusica();
+        if (!listoParaReclamar && segundosTranscurridos >= 30) {
+            listoParaReclamar = true;
+            if (tituloElemento) tituloElemento.textContent = '✅ Tiempo completado, puedes seguir escuchando';
+            if (btnCerrar) btnCerrar.textContent = '✓ Cerrar y reclamar';
+            notify('✅ Tiempo completado. Cierra cuando quieras para reclamar');
         }
     }, 1000);
 
     function completarMisionMusica() {
-        const m = document.getElementById('modalMusicaMision');
-        if (m) m.remove();
-        if (window.musicaTimerInterval) {
-            clearInterval(window.musicaTimerInterval);
-            window.musicaTimerInterval = null;
-        }
         const completada = marcarMisionCompletada('mision_m10', 3);
-        notify("✅ ¡30 segundos completados! Ganaste 3 PTS");
-        try { window.playSound('win'); } catch(e){}
-        if (completada) window.mostrarAnuncioMision();
+        if (completada) {
+            notify("✅ ¡30 segundos completados! Ganaste 3 PTS");
+            try { window.playSound('win'); } catch(e){}
+            window.mostrarAnuncioMision();
+        }
     }
 
     window.cerrarModalMusicaMision = function() {
@@ -16053,6 +16217,8 @@ if (id === 'm7') {
         }
         const m = document.getElementById('modalMusicaMision');
         if (m) m.remove();
+        if (listoParaReclamar) completarMisionMusica();
+        else notify(`⏳ Escuchaste ${segundosTranscurridos}s de 30s. Vuelve a intentarlo`);
     };
 
     return;
@@ -16450,6 +16616,10 @@ function resetearMisionesInmediatas() {
     // Reset de contador de intentos (m9)
     localStorage.removeItem('mision_m9_intentos');
     localStorage.removeItem('mision_m9_fecha');
+
+    localStorage.removeItem('encuestaDiariaFecha');
+    localStorage.removeItem('encuestaDiariaSet');
+    localStorage.removeItem('encuestaDiariaRespondidas');
 
     alert('✅ TODAS las misiones reseteadas. Recargando...');
     location.reload();
