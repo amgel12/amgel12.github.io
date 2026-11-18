@@ -10147,6 +10147,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
     let breakoutMoveSpeed = 8;
 
     window.inputGame = (x, y) => { 
+        if (window._ccEspectador) return;
         // 1. CONTROLES SNAKE
         if(activeGameMode === 'snake') { 
             if((x===1 && velocity.x===-1) || (x===-1 && velocity.x===1) || (y===1 && velocity.y===-1) || (y===-1 && velocity.y===1)) return; 
@@ -10218,7 +10219,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
 
         if(m === 'snake') {
             resetSnake();
-            if (typeof marcarMisionCompletada === 'function') marcarMisionCompletada('mision_m8', 7);
+            if (!window._ccEspectador && typeof marcarMisionCompletada === 'function') marcarMisionCompletada('mision_m8', 7);
         }
         else if(m === 'breakout') resetBreakout();
     }, 1500);
@@ -10433,7 +10434,7 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
     }
 
     window.togglePausaSnake = () => {
-        if (activeGameMode !== 'snake') return;
+        if (activeGameMode !== 'snake' || window._ccEspectador) return;
         const btn = document.getElementById('btnPausaJuego');
         if (snakePausado) {
             snakePausado = false;
@@ -10457,6 +10458,50 @@ setInterval(() => { if (idAuditor) limpiarChatGlobal(); }, 600000);
         ctx.textAlign = 'center';
         ctx.fillText('⏸ PAUSA', canvas.width / 2, canvas.height / 2);
     }
+
+    window.ccSnakeSetPausado = (pausa) => {
+        if (activeGameMode !== 'snake') return;
+        const btn = document.getElementById('btnPausaJuego');
+        if (pausa) {
+            snakePausado = true;
+            detenerLoopSnake();
+            if (btn) btn.textContent = '▶️ CONTINUAR';
+            dibujarPausaSnake();
+        } else {
+            snakePausado = false;
+            if (btn) btn.textContent = '⏸ PAUSAR';
+            dibujarSnake();
+            iniciarLoopSnake();
+        }
+    };
+
+    window.ccSnakeEstado = () => ({
+        snake: snake.map(s => ({ x: s.x, y: s.y })),
+        food: { x: food.x, y: food.y },
+        velocity: { x: velocity.x, y: velocity.y },
+        score: snakeScore
+    });
+
+    window.ccSnakeAplicarEstado = (estado) => {
+        if (activeGameMode !== 'snake' || !estado) return;
+        if (Array.isArray(estado.snake) && estado.snake.length) {
+            snake = estado.snake.map(s => ({ x: s.x, y: s.y }));
+        }
+        if (estado.food && typeof estado.food.x === 'number' && typeof estado.food.y === 'number') {
+            food = { x: estado.food.x, y: estado.food.y };
+        }
+        if (estado.velocity && typeof estado.velocity.x === 'number' && typeof estado.velocity.y === 'number') {
+            velocity = { x: estado.velocity.x, y: estado.velocity.y };
+        }
+        if (typeof estado.score === 'number') {
+            snakeScore = estado.score;
+            const info = document.getElementById('gameInfoText');
+            if (info) info.textContent = 'PUNTOS: ' + snakeScore;
+        }
+        snakePrev = snake.map(s => ({ x: s.x, y: s.y }));
+        detenerLoopSnake();
+        dibujarSnake();
+    };
 
     function obtenerDireccionSeguraSnake(estadoSnake) {
         if (!estadoSnake || !estadoSnake.length) return null;
@@ -18796,8 +18841,12 @@ window.guardarBioCompleta = () => {
 };
 
 (function () {
-    var reto = new URLSearchParams(window.location.search).get('reto');
+    var params = new URLSearchParams(window.location.search);
+    var reto = params.get('reto');
     if (reto !== 'snake') return;
+    var espectador = params.get('espectador') === '1';
+    var pausar = espectador || params.get('pausa') === '1';
+    window._ccEspectador = espectador;
     ['overlayInactividad', 'modalPermisoNotis'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -18807,7 +18856,14 @@ window.guardarBioCompleta = () => {
             if (typeof window.prepararJuego === 'function') {
                 window.prepararJuego('snake', true);
             }
-        }, 1200);
+            if (pausar) {
+                setTimeout(function () {
+                    if (typeof window.ccSnakeSetPausado === 'function') {
+                        window.ccSnakeSetPausado(true);
+                    }
+                }, 1800);
+            }
+        }, 1000);
     });
 })();
 </script>
