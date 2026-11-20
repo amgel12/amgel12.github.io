@@ -3755,7 +3755,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <header class="header-fixed">
         <div style="display:flex; align-items:center; gap:8px;">
             <div class="app-title" id="pageTitle" style="font-weight: 800; font-size: 1.1rem; letter-spacing: 1px; color: #3b82f6;">
-                CodeCAsh
+                SuperKlip
             </div>
             <div id="adminDot" title="Notificaciones de administrador" style="display:none; width:12px; height:12px; border-radius:50%; background:#ef4444; box-shadow:0 0 6px #ef4444; cursor:pointer;" onclick="abrirPanelAdmin()"></div>
         </div>
@@ -6004,7 +6004,7 @@ window.receiveOneSignalMessage = function(data) {
 // 🔥 RECIBIR OTRAS NOTIFICACIONES DE ONESIGNAL (likes, regalos, etc)
 window.receiveOneSignalNotification = function(data) {
     try {
-        const title = data.title || "CodeCash";
+        const title = data.title || "SuperKlip";
         const body = data.body || "";
         const type = data.type || "other";
 
@@ -14791,8 +14791,8 @@ function resolverUrlDrive(code) {
                 };
                 setTimeout(abrir, 1200);
             } else {
-                document.title = 'Producto CodeCash';
-                setTimeout(() => notify('🛍️ Este producto se compra dentro de la app CodeCash. Descárgala gratis y abre el enlace desde ahí.'), 1500);
+                document.title = 'Producto SuperKlip';
+                setTimeout(() => notify('🛍️ Este producto se compra dentro de la app SuperKlip. Descárgala gratis y abre el enlace desde ahí.'), 1500);
             }
             return;
         }
@@ -15449,11 +15449,11 @@ window.marcarRetiroPagado = (path) => {
             const metodoLabel = metodo === 'binance' ? 'Binance' : (metodo === 'tropipay' ? 'TropiPay' : 'PayPal');
             const montoTexto = (monto != null && monto !== '') ? ` ($${monto} USD)` : '';
             const titulo = '💸 ¡Tu pago ya está en camino!';
-            const cuerpo = `CodeCash te envió tu dinero solicitado a ${metodoLabel}${montoTexto}. ¡Sigue ganando con nosotros! 🚀`;
+            const cuerpo = `SuperKlip te envió tu dinero solicitado a ${metodoLabel}${montoTexto}. ¡Sigue ganando con nosotros! 🚀`;
 
             db.ref(`users/${uidSolicitante}/notifications`).push({
-                from: 'CodeCash',
-                fromName: 'CodeCash',
+                from: 'SuperKlip',
+                fromName: 'SuperKlip',
                 type: 'retiro_pagado',
                 text: cuerpo,
                 extra: String(monto != null ? monto : ''),
