@@ -2825,6 +2825,7 @@ function cargarMuro() {
             if (post.musica.includes('catbox.moe'))        { mediaLink = post.musica; type = "catbox"; }
             else if (post.musica.includes('imgur.com'))    { mediaLink = post.musica; type = "imgur"; }
             else if (post.musica.includes('res.cloudinary.com')) { mediaLink = post.musica; type = "direct"; }
+            else if (post.musica.includes('supabase.co'))        { mediaLink = post.musica; type = "direct"; }
             else if (post.musica.includes('workers.dev'))  { mediaLink = post.musica; type = "direct"; }
             else if (post.musica.includes('streamable.com'))                                    { mediaLink = getStreamableID(post.musica);  type = "streamable"; }
             else if (post.musica.includes('dai.ly') || post.musica.includes('dailymotion.com')) { mediaLink = getDailymotionID(post.musica); type = "dailymotion"; }
@@ -18235,9 +18236,10 @@ window._renderPensamientosFeed = () => {
 
     feedContainer.innerHTML = html;
 };
-const CLOUDINARY_CLOUD_NAME = 'dfqoqcddl';
-const CLOUDINARY_UPLOAD_PRESET = 'codecash_videos';
-const CLOUDINARY_VIDEO_MAX_MB = 50;
+const SUPABASE_URL = 'https://xkrpqqkoezyfpavpkzmk.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_UWt9dLAxcN7mxQJgPyAcJw_jp3PvybD';
+const SUPABASE_BUCKET = 'chat-videos';
+const VIDEO_MAX_MB = 50;
 
 window.detenerVideoPreview = () => {
     const videoTag = document.getElementById('videoPreview');
@@ -18335,9 +18337,9 @@ window.procesarVideoSeleccionado = (inputOrigen) => {
         inputCamara.value = '';
     }
 
-    if (file.size > CLOUDINARY_VIDEO_MAX_MB * 1024 * 1024) {
-        notify("❌ El video supera " + CLOUDINARY_VIDEO_MAX_MB + " MB");
-        alert("⚠️ El video es demasiado pesado. Máximo " + CLOUDINARY_VIDEO_MAX_MB + " MB.");
+    if (file.size > VIDEO_MAX_MB * 1024 * 1024) {
+        notify("❌ El video supera " + VIDEO_MAX_MB + " MB");
+        alert("⚠️ El video es demasiado pesado. Máximo " + VIDEO_MAX_MB + " MB.");
         window.limpiarVideoPreview(true);
         return;
     }
@@ -18353,10 +18355,10 @@ window.procesarVideoSeleccionado = (inputOrigen) => {
         const duracion = videoCargador.duration;
         console.log("Duración detectada: " + duracion);
 
-        // 🔥 VALIDACIÓN DE 10 SEGUNDOS (Damos margen a 10.5 por milésimas)
-        if (duracion > 10.5) {
+        // 🔥 VALIDACIÓN DE 15 SEGUNDOS (Damos margen a 15.5 por milésimas)
+        if (duracion > 15.5) {
             notify("❌ El video es muy largo (" + Math.round(duracion) + "s)");
-            alert("⚠️ Solo se permiten videos de máximo 10 segundos.");
+            alert("⚠️ Solo se permiten videos de máximo 15 segundos.");
             window.limpiarVideoPreview(true);
             return;
         }
@@ -18449,7 +18451,7 @@ window.onAdSkipped = () => {
     notify("💬 Ve el anuncio completo para recibir tu recompensa");
 };
 
-// 4. Subir a Cloudinary (unsigned upload preset) y guardar la URL en Firebase RTDB
+// 4. Subir a Supabase Storage y guardar la URL en Firebase RTDB
 window.subirVideoServidor = () => {
     const file = window.obtenerVideoSeleccionado();
     const desc = document.getElementById('videoDescripcion').value.trim();
@@ -18457,8 +18459,8 @@ window.subirVideoServidor = () => {
 
     if (!file) return notify("📹 Elige o graba un video primero");
     if (!desc) return notify("📝 Escribe una descripción");
-    if (file.size > CLOUDINARY_VIDEO_MAX_MB * 1024 * 1024) {
-        return notify("❌ El video supera " + CLOUDINARY_VIDEO_MAX_MB + " MB");
+    if (file.size > VIDEO_MAX_MB * 1024 * 1024) {
+        return notify("❌ El video supera " + VIDEO_MAX_MB + " MB");
     }
     if (window._subiendoVideo) return notify("⏳ Ya se está subiendo tu video...");
 
@@ -18474,20 +18476,20 @@ window.subirVideoServidor = () => {
         window._videoAdPendiente = false;
         const tam = (file.size / (1024 * 1024)).toFixed(1);
         const detalle = error && error.message ? error.message : 'Error desconocido';
-        console.error("Error subiendo video a Cloudinary:", error);
+        console.error("Error subiendo video a Supabase:", error);
         alert("Error al subir (" + tam + " MB): " + detalle);
         btn.disabled = false;
         btn.innerHTML = "📺 Publicar (anuncio bonificado)";
     };
 
-    const publicarVideo = (data) => {
+    const publicarVideo = (urlPublica) => {
         window.detenerVideoPreview();
         const nuevoPostRef = db.ref('reportes').push();
         nuevoPostRef.set({
             uid: idAuditor,
             autorClave: myCurrentKey,
             texto: desc,
-            musica: data.secure_url,
+            musica: urlPublica,
             fecha: firebase.database.ServerValue.TIMESTAMP,
             vCount: 0
         }).then(() => {
@@ -18511,14 +18513,20 @@ window.subirVideoServidor = () => {
         }).catch(finalizarError);
     };
 
-    const formData = new FormData();
-    const nombreArchivo = (file.name && file.name.trim()) ? file.name : ('video_' + Date.now() + '.mp4');
-    formData.append('file', file, nombreArchivo);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    const nombreArchivo = (file.name && file.name.trim())
+        ? file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+        : ('video_' + Date.now() + '.mp4');
+    const rutaObjeto = 'feed/' + encodeURIComponent(idAuditor || 'anon') + '/' +
+        Date.now() + '_' + nombreArchivo;
+    const urlPublica = SUPABASE_URL + '/storage/v1/object/public/' + SUPABASE_BUCKET + '/' + rutaObjeto;
 
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`, true);
+    xhr.open('POST', SUPABASE_URL + '/storage/v1/object/' + SUPABASE_BUCKET + '/' + rutaObjeto, true);
     xhr.timeout = 180000;
+    xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_PUBLISHABLE_KEY);
+    xhr.setRequestHeader('apikey', SUPABASE_PUBLISHABLE_KEY);
+    xhr.setRequestHeader('x-upsert', 'false');
+    if (file.type) xhr.setRequestHeader('Content-Type', file.type);
 
     xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
@@ -18528,25 +18536,23 @@ window.subirVideoServidor = () => {
     };
 
     xhr.onload = () => {
-        let data = {};
-        try { data = JSON.parse(xhr.responseText || '{}'); } catch(e) {}
         if (xhr.status < 200 || xhr.status >= 300) {
-            const msg = (data.error && data.error.message) || ('HTTP ' + xhr.status);
-            finalizarError(new Error(msg));
+            let detalle = 'HTTP ' + xhr.status;
+            try {
+                const data = JSON.parse(xhr.responseText || '{}');
+                detalle = (data.message || data.error || detalle);
+            } catch(e) {}
+            finalizarError(new Error(detalle));
             return;
         }
-        if (!data.secure_url) {
-            finalizarError(new Error('Cloudinary no devolvió la URL del video'));
-            return;
-        }
-        publicarVideo(data);
+        publicarVideo(urlPublica);
     };
 
-    xhr.onerror = () => finalizarError(new Error('No se pudo conectar con Cloudinary. Revisa tu conexión a internet.'));
+    xhr.onerror = () => finalizarError(new Error('No se pudo conectar con Supabase. Revisa tu conexión a internet.'));
     xhr.ontimeout = () => finalizarError(new Error('La subida tardó demasiado. Intenta con un video más corto.'));
     xhr.onabort = () => finalizarError(new Error('Subida cancelada'));
 
-    xhr.send(formData);
+    xhr.send(file);
 };
 window.iniciarCompraGooglePlay = () => {
     try { window.playSound('click'); } catch(e){}
